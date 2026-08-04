@@ -17443,6 +17443,75 @@ function openProfileDeleteConfirmModal(profile) {
   });
 }
 
+let logDeleteConfirmResolver = null;
+
+function ensureLogDeleteConfirmModal() {
+  let modal = document.getElementById("logDeleteConfirmModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "logDeleteConfirmModal";
+  // Reuse the established compact confirmation treatment so destructive log
+  // actions stay consistent with profile deletion without a browser alert.
+  modal.className = "profile-delete-confirm-modal log-delete-confirm-modal";
+  modal.setAttribute("aria-hidden", "true");
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="profile-delete-confirm-card" role="dialog" aria-modal="true" aria-labelledby="logDeleteConfirmTitle">
+      <div class="profile-delete-confirm-kicker">Delete Log</div>
+      <h2 id="logDeleteConfirmTitle">Delete this log?</h2>
+      <p id="logDeleteConfirmCopy">This removes the saved reflection and match details from this account.</p>
+      <div class="profile-delete-confirm-actions">
+        <button class="profile-delete-confirm-remove" type="button">Delete Log</button>
+        <button class="profile-delete-confirm-cancel" type="button">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body?.appendChild(modal);
+
+  const resolveModal = (confirmed) => {
+    modal.classList.remove("is-visible");
+    modal.setAttribute("aria-hidden", "true");
+    window.setTimeout(() => {
+      if (!modal.classList.contains("is-visible")) modal.hidden = true;
+    }, 180);
+    const resolver = logDeleteConfirmResolver;
+    logDeleteConfirmResolver = null;
+    resolver?.(confirmed);
+  };
+
+  modal.querySelector(".profile-delete-confirm-cancel")?.addEventListener("click", () => resolveModal(false));
+  modal.querySelector(".profile-delete-confirm-remove")?.addEventListener("click", () => resolveModal(true));
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) resolveModal(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("is-visible")) resolveModal(false);
+  });
+  return modal;
+}
+
+function openLogDeleteConfirmModal(entry = {}) {
+  const modal = ensureLogDeleteConfirmModal();
+  const title = modal.querySelector("#logDeleteConfirmTitle");
+  const copy = modal.querySelector("#logDeleteConfirmCopy");
+  const hasMatchData = Boolean(String(entry?.matchId || entry?.riotMatchId || "").trim());
+  if (title) title.textContent = hasMatchData ? "Delete this match log?" : "Delete this log?";
+  if (copy) {
+    copy.textContent = hasMatchData
+      ? "This removes the saved reflection and its linked match details from this account."
+      : "This removes the saved reflection from this account.";
+  }
+  logDeleteConfirmResolver?.(false);
+  return new Promise((resolve) => {
+    logDeleteConfirmResolver = resolve;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    window.requestAnimationFrame(() => modal.classList.add("is-visible"));
+    window.setTimeout(() => modal.querySelector(".profile-delete-confirm-cancel")?.focus?.(), 30);
+  });
+}
+
 function ensureProfileCleanupVeil() {
   let veil = document.getElementById("profileCleanupVeil");
   if (veil) return veil;
@@ -19798,6 +19867,7 @@ const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1";
 const STORAGE_KEY_LAST_SEEN_APP_BUILD = "rankedcoach_last_seen_app_build_v1";
 const STORAGE_KEY_LAST_AUTH_USER = "rankedcoach_last_auth_user_v1";
+const STORAGE_KEY_PENDING_LOG_DELETES = "rankedcoach_pending_log_deletes_v1";
 const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
 const AUTH_INIT_TIMEOUT_MS = Math.max(800, Number(globalThis.RANKEDCOACH_AUTH_INIT_TIMEOUT_MS) || 3500);
 const AUTH_ACTION_TIMEOUT_MS = Math.max(1200, Number(globalThis.RANKEDCOACH_AUTH_ACTION_TIMEOUT_MS) || 6500);
@@ -19827,6 +19897,41 @@ let rankedCoachAppUpdateCheckTimer = 0;
 let rankedCoachAppUpdateCheckInFlight = false;
 let rankedCoachAppUpdateNoticeShown = false;
 let rankedCoachLastAppUpdateCheckAt = 0;
+
+function readPendingPersistentLogDeleteIds() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_PENDING_LOG_DELETES) || "[]");
+    return new Set((Array.isArray(parsed) ? parsed : [])
+      .map(value => String(value || "").trim())
+      .filter(Boolean));
+  } catch (_error) {
+    return new Set();
+  }
+}
+
+const pendingPersistentLogDeleteIds = readPendingPersistentLogDeleteIds();
+
+function persistPendingPersistentLogDeleteIds() {
+  try {
+    localStorage.setItem(STORAGE_KEY_PENDING_LOG_DELETES, JSON.stringify([...pendingPersistentLogDeleteIds]));
+  } catch (_error) {
+    // The in-memory set still lets this page finish the retry when storage is unavailable.
+  }
+}
+
+function queuePersistentLogDeletion(id = "") {
+  const entryId = String(id || "").trim();
+  if (!entryId) return;
+  pendingPersistentLogDeleteIds.add(entryId);
+  persistPendingPersistentLogDeleteIds();
+}
+
+function resolvePersistentLogDeletion(id = "") {
+  const entryId = String(id || "").trim();
+  if (!entryId) return;
+  pendingPersistentLogDeleteIds.delete(entryId);
+  persistPendingPersistentLogDeleteIds();
+}
 
 let insightFeedbackEntries = readInsightFeedbackEntries();
 
@@ -20227,15 +20332,21 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
       roleImpact: buildStoredRoleImpactSnapshot(match, profile?.trackerAnalytics || null)
     };
   });
-  const synced = policy.syncMatchPlaceholders(logEntries, placeholderMatches, profileId);
+  const synced = policy.syncMatchPlaceholders(logEntries, placeholderMatches, profileId, {
+    pendingLoadoutRoll: getPendingLoadoutRoll(profile)
+  });
   logEntries = sanitizeStoredLogEntries(synced.entries, {
     signedIn: Boolean(currentAuthUser),
     profileId
   });
-  if (!options.skipSave && options.animate !== false && synced.added > 0) {
+  if (!options.skipSave && options.animate !== false && (synced.added > 0 || synced.reconciled > 0)) {
+    const reconciledEntryIds = new Set(synced.reconciledEntryIds || []);
     logEntries
       .filter(entry => String(entry?.profileId || "") === profileId)
-      .filter(entry => entry?.id && !existingEntryIds.has(String(entry.id)))
+      .filter(entry => entry?.id && (
+        !existingEntryIds.has(String(entry.id)) ||
+        reconciledEntryIds.has(String(entry.id))
+      ))
       .forEach(entry => queueLoggingEntryReveal(entry.id, "sync"));
   }
   if (!options.skipSave) {
@@ -20965,6 +21076,14 @@ async function savePersistentAccountState(reason = "state") {
   backendSyncState.savePromise = savePromise;
   try {
     return await savePromise;
+  } catch (error) {
+    // A queued background save must never surface an uncaught rejection.
+    // Keep the local write, tell the player once, and retry when the service
+    // becomes reachable again.
+    reportPersistentAccountSaveFailure("Persistent account save failed unexpectedly", error, { reason });
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    schedulePersistentAccountSaveRetry("cloud-save-unexpected-error");
+    return false;
   } finally {
     backendSyncState.savePromise = null;
     const pendingReason = backendSyncState.pendingSaveReason;
@@ -20988,8 +21107,35 @@ async function performPersistentAccountStateSave(reason = "state") {
     return;
   }
 
-  const user = await getSupabaseUser();
-  if (!user) return;
+  let user = null;
+  try {
+    user = await getSupabaseUser({ reason: "persistent-account-save" });
+  } catch (error) {
+    backendSyncState.lastError = error;
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    notifyAuthReachabilityIssue(getPlayerFacingAuthErrorMessage(
+      error,
+      "Having trouble reaching your account right now — continuing with your local data."
+    ));
+    schedulePersistentAccountSaveRetry("auth-save-timeout");
+    publishRankedCoachSyncDiagnostics?.("cloud-save-auth-delayed");
+    return false;
+  }
+  if (!user) {
+    // getSupabaseUser returns null for a transient Supabase error response as
+    // well as during the offline cooldown. Either way, the local save is safe
+    // and a later retry is preferable to losing the queued cloud update.
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    if (backendSyncState.lastError) {
+      notifyAuthReachabilityIssue(getPlayerFacingAuthErrorMessage(
+        backendSyncState.lastError,
+        "Having trouble reaching your account right now — continuing with your local data."
+      ));
+    }
+    schedulePersistentAccountSaveRetry("auth-save-unavailable");
+    publishRankedCoachSyncDiagnostics?.("cloud-save-auth-unavailable");
+    return false;
+  }
 
   logEntries = sanitizeStoredLogEntries(logEntries, {
     signedIn: true,
@@ -21082,6 +21228,10 @@ async function performPersistentAccountStateSave(reason = "state") {
     }
   }
   if (logRowsSaved) await reconcilePersistentLogRows(user.id, logRows);
+  const pendingLogDeletesSaved = await flushPendingPersistentLogDeletes(user.id, reason);
+  if (!pendingLogDeletesSaved) {
+    allWritesSaved = false;
+  }
 
   const matchRowsSaved = await upsertPersistentMatchRows(matchRows, {
     reason,
@@ -21115,16 +21265,55 @@ async function performPersistentAccountStateSave(reason = "state") {
 
 async function deletePersistentLogEntry(id) {
   if (!id || !supabaseClient?.auth) return;
-  const user = await getSupabaseUser();
-  if (!user) return;
+  try {
+    const user = await getSupabaseUser({ reason: "persistent-log-delete" });
+    if (!user) return;
 
+    const { error } = await supabaseClient
+      .from("reflection_logs")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("id", String(id));
+
+    if (error) {
+      console.warn("Supabase log delete failed", error);
+      schedulePersistentAccountSaveRetry("log-delete-retry");
+      return false;
+    }
+    resolvePersistentLogDeletion(id);
+    return true;
+  } catch (error) {
+    // The local deletion has already succeeded. A later account save will
+    // reconcile the cloud row once auth is reachable again.
+    backendSyncState.pendingSaveReason = "log-delete";
+    notifyAuthReachabilityIssue(getPlayerFacingAuthErrorMessage(
+      error,
+      "Having trouble reaching your account right now — continuing with your local data."
+    ));
+    schedulePersistentAccountSaveRetry("log-delete-auth-delayed");
+    return false;
+  }
+}
+
+async function flushPendingPersistentLogDeletes(userId = "", reason = "state") {
+  const ids = [...pendingPersistentLogDeleteIds];
+  if (!userId || !ids.length || !supabaseClient?.from) return true;
   const { error } = await supabaseClient
     .from("reflection_logs")
     .delete()
-    .eq("user_id", user.id)
-    .eq("id", String(id));
-
-  if (error) console.warn("Supabase log delete failed", error);
+    .eq("user_id", userId)
+    .in("id", ids);
+  if (error) {
+    reportPersistentAccountSaveFailure("Supabase pending log deletion failed", error, {
+      table: "reflection_logs",
+      operation: "delete",
+      reason,
+      rowCount: ids.length
+    });
+    return false;
+  }
+  ids.forEach(resolvePersistentLogDeletion);
+  return true;
 }
 
 async function upsertPersistentMatchRows(rows = [], diagnostics = {}) {
@@ -23677,7 +23866,7 @@ function applyAgentSilhouette(agent) {
 }
 
 function getAgentIconUrl(agent){
-  const key = String(agent || "").toLowerCase();
+  const key = String(agent || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   return key
     ? `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${key}.png`
     : "";
@@ -47736,6 +47925,53 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
 // DELETE LOG ENTRY
 // ========================
 
+function logEntryHasSavedContent(entry = {}) {
+  if (!entry || typeof entry !== "object") return false;
+  const savedText = [
+    entry.notes,
+    entry.agent,
+    entry.role,
+    entry.map,
+    entry.focus,
+    entry.mood,
+    entry.tilt,
+    entry.matchId,
+    entry.riotMatchId,
+    entry.result
+  ].some(value => String(value || "").trim() && String(value || "").trim().toLowerCase() !== "unknown");
+  const savedNumbers = [entry.rating, entry.teamComms, entry.selfComms, entry.rr]
+    .some(value => Number.isFinite(Number(value)));
+  return savedText || savedNumbers || Boolean(entry?.roleImpact && typeof entry.roleImpact === "object");
+}
+
+async function deleteLogEntry(id) {
+  const entryId = String(id || "").trim();
+  const entry = logEntries.find(item => String(item?.id || "") === entryId);
+  if (!entry) return false;
+
+  if (logEntryHasSavedContent(entry) && !await openLogDeleteConfirmModal(entry)) {
+    return false;
+  }
+
+  logEntries = logEntries.filter(item => String(item?.id || "") !== entryId);
+  if (editingLogEntryId === entryId) {
+    editingLogEntryId = null;
+    editingLogEntrySnapshot = null;
+    setLogFormWarning("");
+  }
+  queuePersistentLogDeletion(entryId);
+  saveLogEntries();
+  void deletePersistentLogEntry(entryId);
+  renderLogFeed({ force: true });
+  renderInsights();
+  calculateFocusProgress();
+  updateFocusProgressUI();
+  updateInsightFocusUI();
+  syncWeeklyFocus();
+  showToast("The log was deleted.", { title: "Log removed", variant: "success", durationMs: 2600 });
+  return true;
+}
+
 // ========================
 // EDIT LOG ENTRY
 // ========================
@@ -48351,7 +48587,9 @@ function renderLogFeed(options = {}){
         ? `<img class="log-result-rank-icon" src="${escapeHtml(getRankIconUrl(rankSnapshot.rankLabel))}" alt="${escapeHtml(rankSnapshot.rankLabel)}">`
         : "";
       const isEditingEntry = entry.id === editingLogEntryId;
-      const isPlaceholder = isMatchPlaceholderLogEntry(entry);
+      // A rolled reflection can be linked to a synced match while retaining
+      // player-entered content. It is a real entry, not an empty placeholder.
+      const isPlaceholder = isMatchPlaceholderLogEntry(entry) && entry.isPlayerAuthored !== true;
       const trainingMarker = trainingMarkers.get(entry.id) || null;
       const revealMode = getPendingLoggingEntryRevealMode(entry.id);
       const notesCopy = isPlaceholder
@@ -48401,6 +48639,7 @@ function renderLogFeed(options = {}){
         <div class="log-actions">
           ${hasReportMatch ? `<button class="log-report-btn" type="button">View Report</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
+          <button class="log-delete-btn" type="button">Delete</button>
         </div>
       `;
 
@@ -48458,6 +48697,7 @@ function renderLogFeed(options = {}){
       }
 
       const editBtn = el.querySelector(".log-edit-btn");
+      const deleteBtn = el.querySelector(".log-delete-btn");
       const reportBtn = el.querySelector(".log-report-btn");
       const warmupBtn = el.querySelector(".log-training-fire");
       const postGameBtn = el.querySelector(".log-training-crosshair");
@@ -48468,6 +48708,11 @@ function renderLogFeed(options = {}){
         openMatchSummaryModal(matchContext.match);
       });
       editBtn?.addEventListener("click", () => editLogEntry(entry.id));
+      deleteBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void deleteLogEntry(entry.id);
+      });
       warmupBtn?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();

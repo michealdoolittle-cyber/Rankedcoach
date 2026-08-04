@@ -78,9 +78,88 @@
     };
   }
 
-  function syncMatchPlaceholders(entries = [], matches = [], profileId = "") {
+  function getTimestamp(value = "") {
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : null;
+  }
+
+  function isOnOrAfterPendingLoadoutRoll(entry = {}, pendingLoadoutRoll = null) {
+    const rollTime = getTimestamp(pendingLoadoutRoll?.createdAt);
+    const entryTime = getTimestamp(entry?.createdAt);
+    if (rollTime === null || entryTime === null) return false;
+    // Match the app's existing one-second grace period. Henrik and the client
+    // can serialize the same event with slightly different millisecond values.
+    return entryTime >= rollTime - 1000;
+  }
+
+  function hasLinkedMatch(entry = {}) {
+    return Boolean(clean(entry?.matchId || entry?.riotMatchId));
+  }
+
+  function isSameAgent(left = "", right = "") {
+    return clean(left).toLowerCase() === clean(right).toLowerCase();
+  }
+
+  function findPendingLoadoutDraftIndex(entries = [], match = {}, profileId = "", pendingLoadoutRoll = null) {
+    const ownerProfileId = clean(profileId);
+    const rolledAgent = clean(pendingLoadoutRoll?.agent);
+    const matchAgent = clean(match?.agent);
+    if (!rolledAgent || !matchAgent || !isSameAgent(rolledAgent, matchAgent)) return -1;
+    if (!isOnOrAfterPendingLoadoutRoll(match, pendingLoadoutRoll)) return -1;
+
+    let selectedIndex = -1;
+    let selectedTime = -Infinity;
+    (Array.isArray(entries) ? entries : []).forEach((entry, index) => {
+      if (!entry || typeof entry !== "object") return;
+      if (ownerProfileId && clean(entry.profileId) !== ownerProfileId) return;
+      if (isMatchPlaceholder(entry) || hasLinkedMatch(entry)) return;
+      if (!isSameAgent(entry.agent, matchAgent)) return;
+      if (!isOnOrAfterPendingLoadoutRoll(entry, pendingLoadoutRoll)) return;
+      const entryTime = getTimestamp(entry.createdAt) || -Infinity;
+      if (entryTime > selectedTime) {
+        selectedIndex = index;
+        selectedTime = entryTime;
+      }
+    });
+    return selectedIndex;
+  }
+
+  function mergeMatchPlaceholderIntoDraft(draft = {}, placeholder = {}) {
+    const authoredAt = clean(draft.authoredAt) || clean(draft.createdAt) || new Date().toISOString();
+    return {
+      ...draft,
+      matchId: placeholder.matchId,
+      riotMatchId: placeholder.matchId,
+      profileId: placeholder.profileId || draft.profileId,
+      source: PLACEHOLDER_SOURCE,
+      isMatchPlaceholder: true,
+      isPlayerAuthored: true,
+      lockedOutcome: true,
+      createdAt: placeholder.createdAt || draft.createdAt,
+      authoredAt,
+      result: placeholder.result,
+      isPlacementMatch: placeholder.isPlacementMatch === true,
+      rr: placeholder.rr,
+      roleImpact: placeholder.roleImpact || null,
+      agent: placeholder.agent || draft.agent,
+      role: placeholder.role || draft.role,
+      map: placeholder.map || draft.map,
+      // Preserve the player-authored reflection exactly as written.
+      focus: draft.focus || "",
+      rating: draft.rating ?? null,
+      mood: draft.mood || "",
+      tilt: draft.tilt || "",
+      teamComms: draft.teamComms ?? null,
+      selfComms: draft.selfComms ?? null,
+      notes: draft.notes || "",
+      warmup: draft.warmup === true
+    };
+  }
+
+  function syncMatchPlaceholders(entries = [], matches = [], profileId = "", options = {}) {
     const ownerProfileId = clean(profileId);
     const existing = Array.isArray(entries) ? entries.filter(Boolean) : [];
+    const pendingLoadoutRoll = options?.pendingLoadoutRoll || null;
     const matchesById = new Map(
       (Array.isArray(matches) ? matches : [])
         .map(match => [clean(match?.matchId || match?.id), match])
@@ -110,6 +189,7 @@
         .map(entry => clean(entry.matchId || entry.riotMatchId))
         .filter(Boolean)
     );
+    const reconciledEntryIds = [];
     const additions = [];
 
     (Array.isArray(matches) ? matches : []).forEach(match => {
@@ -117,13 +197,25 @@
       if (!matchId || linkedMatchIds.has(matchId)) return;
       const placeholder = createMatchPlaceholder(match, ownerProfileId);
       if (!placeholder) return;
+
+      const draftIndex = findPendingLoadoutDraftIndex(updatedEntries, match, ownerProfileId, pendingLoadoutRoll);
+      if (draftIndex >= 0) {
+        const draft = updatedEntries[draftIndex];
+        updatedEntries[draftIndex] = mergeMatchPlaceholderIntoDraft(draft, placeholder);
+        linkedMatchIds.add(matchId);
+        reconciledEntryIds.push(clean(draft.id));
+        return;
+      }
+
       linkedMatchIds.add(matchId);
       additions.push(placeholder);
     });
 
     return {
       entries: [...updatedEntries, ...additions],
-      added: additions.length
+      added: additions.length,
+      reconciled: reconciledEntryIds.length,
+      reconciledEntryIds
     };
   }
 
@@ -134,6 +226,9 @@
     isPlayerAuthored,
     sanitizeLogEntries,
     createMatchPlaceholder,
+    isOnOrAfterPendingLoadoutRoll,
+    findPendingLoadoutDraftIndex,
+    mergeMatchPlaceholderIntoDraft,
     syncMatchPlaceholders
   });
 })();

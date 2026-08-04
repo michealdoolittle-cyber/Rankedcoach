@@ -167,6 +167,18 @@ async function run() {
     await placeholder.locator(".log-edit-btn").click();
     assert.equal(await page.locator("#logMap").inputValue(), "Haven");
     assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
+    await page.click('[data-mobile-logging-view="feed"]');
+    await page.locator(".log-entry-placeholder").first().waitFor({ state: "visible" });
+    await placeholder.locator(".log-delete-btn").click();
+    const deleteModal = page.locator("#logDeleteConfirmModal");
+    await deleteModal.waitFor({ state: "visible" });
+    await deleteModal.locator(".profile-delete-confirm-remove").click();
+    await page.waitForFunction(() => ![...document.querySelectorAll(".log-entry")]
+      .some(entry => entry.dataset.logEntryId === "ranked-match-log:profile-log-test:match-1"));
+    const persistedLogs = await page.evaluate(() => JSON.parse(
+      localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
+    ));
+    assert.equal(persistedLogs.some(entry => entry.id === "ranked-match-log:profile-log-test:match-1"), false);
     await page.click('[data-mobile-page="home"]');
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("active"));
     await page.click('.graph-btn[data-size="5"]');
@@ -176,7 +188,7 @@ async function run() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);
-    console.log("Log isolation browser check passed: verified and unverified RR states render honestly with no overflow/errors.");
+    console.log("Log isolation browser check passed: verified and unverified RR states render honestly, deletion persists locally, with no overflow/errors.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -60171,6 +60171,28 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-live-b
   background:linear-gradient(135deg, rgba(8,145,178,.28), rgba(15,23,42,.8));
 }
 
+.log-delete-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  padding:0 10px;
+  border:1px solid rgba(248,113,113,.46);
+  border-radius:10px;
+  background:linear-gradient(135deg, rgba(127,29,29,.3), rgba(15,23,42,.82));
+  color:#fecaca;
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.log-delete-btn:hover,
+.log-delete-btn:focus-visible{
+  border-color:rgba(254,202,202,.78);
+  box-shadow:0 0 14px rgba(248,113,113,.16);
+}
+
 .log-report-btn:hover,
 .log-report-btn:focus-visible{
   border-color:rgba(94,234,212,.68);
