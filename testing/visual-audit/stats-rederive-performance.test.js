@@ -270,6 +270,7 @@ async function run() {
       `Profile-load migration should catch the single stale record before Stats reads it: ${JSON.stringify(startupEvents)}`
     );
     await page.evaluate(() => { window.__rankedCoachRawRehydrateEvents = []; });
+    await page.evaluate(() => window.RankedCoachStatsPipelinePerf?.resetCounters?.());
 
     const firstStatsOpenMs = await page.evaluate(async () => {
       const start = performance.now();
@@ -278,6 +279,7 @@ async function run() {
       return performance.now() - start;
     });
     await page.waitForSelector("#statsRoleProgressRow .stats-role-pill", { timeout: 15000 });
+    const firstStatsCounters = await page.evaluate(() => window.RankedCoachStatsPipelinePerf?.snapshot?.() || {});
 
     for (let i = 0; i < 3; i += 1) {
       await dismissBlockingOverlays(page);
@@ -289,8 +291,17 @@ async function run() {
     }
 
     const renderPathEvents = await page.evaluate(() => window.__rankedCoachRawRehydrateEvents.slice());
+    const repeatedStatsCounters = await page.evaluate(() => window.RankedCoachStatsPipelinePerf?.snapshot?.() || {});
     assert.equal(renderPathEvents.length, 0, `Stats render path must not rederive stored raw payloads: ${JSON.stringify(renderPathEvents)}`);
     assert.ok(firstStatsOpenMs < 1800, `Stats page should open quickly against a 421-match profile, saw ${firstStatsOpenMs.toFixed(1)}ms`);
+    assert.ok(
+      repeatedStatsCounters.playerModelComputes <= firstStatsCounters.playerModelComputes + 1,
+      `Repeated Stats opens should reuse the memoized player model: ${JSON.stringify({ firstStatsCounters, repeatedStatsCounters })}`
+    );
+    assert.ok(
+      repeatedStatsCounters.scopedComputes <= firstStatsCounters.scopedComputes + 1,
+      `Repeated Stats opens should reuse scoped stats data: ${JSON.stringify({ firstStatsCounters, repeatedStatsCounters })}`
+    );
 
     const explicitResult = await page.evaluate(() => {
       window.__rankedCoachRawRehydrateEvents = [];

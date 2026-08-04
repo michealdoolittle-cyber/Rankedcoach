@@ -4,6 +4,38 @@
   const SCHEMA_VERSION = 3;
   const SOURCE_VALUES = new Set(["manual", "tracker_screenshot", "riot_sync", "henrik_sync", "demo", "legacy"]);
   const RESULT_VALUES = new Set(["win", "loss", "draw", "unknown"]);
+  const VALORANT_WEAPON_UUID_LABELS = Object.freeze({
+    "29a0cfab-485b-f5d5-779a-b59f85e204a8": "Classic",
+    "42da8ccc-40d5-affc-beec-15aa47b42eda": "Shorty",
+    "44d4e95c-4157-0037-81b2-17841bf2e8e3": "Frenzy",
+    "1baa85b4-4c70-1284-64bb-6481dfc3bb4e": "Ghost",
+    "e336c6b8-418d-9340-d77f-7a9e4cfe0702": "Sheriff",
+    "f7e1b454-4ad4-1063-ec0a-159e56b58941": "Stinger",
+    "462080d1-4035-2937-7c09-27aa2a5c27a7": "Spectre",
+    "910be174-449b-c412-ab22-d0873436b21b": "Bucky",
+    "ec845bf4-4f79-ddda-a3da-0db3774b2794": "Judge",
+    "ae3de142-4d85-2547-dd26-4e90bed35cf7": "Bulldog",
+    "4ade7faa-4cf1-8376-95ef-39884480959b": "Guardian",
+    "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c": "Outlaw",
+    "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a": "Phantom",
+    "9c82e19d-4575-0200-1a81-3eacf00cf872": "Vandal",
+    "55d8a0f4-4274-ca67-fe2c-06ab45efdf58": "Ares",
+    "63e6c2b6-4a8e-869c-3d4c-e38355226584": "Odin",
+    "c4883e50-4494-202c-3ec3-6b8a9284f00b": "Marshal",
+    "a03b24d3-4319-996d-0f8c-94bbfba1dfc7": "Operator",
+    "2f59173c-4bed-b6c3-2191-dea9b58be9c7": "Melee"
+  });
+  const VALORANT_WEAPON_NAME_LABELS = Object.freeze(Object.fromEntries(
+    Object.values(VALORANT_WEAPON_UUID_LABELS).map(label => [label.toLowerCase().replace(/[^a-z0-9]+/g, ""), label])
+  ));
+  const HENRIK_DAMAGE_SLOT_LABELS = Object.freeze({
+    ability1: "Ability 1",
+    ability2: "Ability 2",
+    grenadeability: "Signature Ability",
+    signatureability: "Signature Ability",
+    ultimate: "Ultimate",
+    melee: "Melee"
+  });
 
   function uuid() {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -17,6 +49,38 @@
   function cleanString(value, fallback = null) {
     const text = String(value ?? "").trim();
     return text || fallback;
+  }
+
+  function normalizeLookupKey(value = "") {
+    return cleanString(value, "")?.toLowerCase().replace(/[^a-z0-9]+/g, "") || "";
+  }
+
+  function looksLikeRawUuid(value = "") {
+    return /^[0-9a-f-]{24,}$/i.test(String(value || "").trim());
+  }
+
+  function resolveKillWeaponLabel(...candidates) {
+    for (const candidate of candidates) {
+      const text = cleanString(candidate, "");
+      if (!text) continue;
+      const lower = text.toLowerCase();
+      if (VALORANT_WEAPON_UUID_LABELS[lower]) return VALORANT_WEAPON_UUID_LABELS[lower];
+      const normalized = normalizeLookupKey(text);
+      if (HENRIK_DAMAGE_SLOT_LABELS[normalized]) return HENRIK_DAMAGE_SLOT_LABELS[normalized];
+      if (VALORANT_WEAPON_NAME_LABELS[normalized]) return VALORANT_WEAPON_NAME_LABELS[normalized];
+      if (!looksLikeRawUuid(text)) return text;
+    }
+    return "";
+  }
+
+  function resolveKillWeaponType(rawType = "", weaponName = "", weaponId = "") {
+    const type = cleanString(rawType, "");
+    if (type) return type;
+    const normalizedId = normalizeLookupKey(weaponId);
+    const normalizedName = normalizeLookupKey(weaponName);
+    if (HENRIK_DAMAGE_SLOT_LABELS[normalizedId] || HENRIK_DAMAGE_SLOT_LABELS[normalizedName]) return "Ability";
+    if (weaponName || weaponId) return "Weapon";
+    return "";
   }
 
   function readNumber(value, fallback = null) {
@@ -162,19 +226,22 @@
   function normalizeKillEvent(kill = {}) {
     const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
     const finishingDamage = kill.finishingDamage && typeof kill.finishingDamage === "object" ? kill.finishingDamage : {};
-    const weaponName = cleanString(
-      kill.weaponName
-      || kill.damageWeapon
-      || weapon.name
-      || (finishingDamage.damageType === "Weapon" ? finishingDamage.damageItemName : "")
-    );
     const weaponId = cleanString(
       kill.weaponId
       || weapon.id
       || weapon.uuid
-      || (finishingDamage.damageType === "Weapon" ? finishingDamage.damageItem : "")
+      || (finishingDamage.damageType === "Weapon" || finishingDamage.damageType === "Ability" ? finishingDamage.damageItem : "")
     );
-    const weaponType = cleanString(kill.weaponType || weapon.type || finishingDamage.damageType);
+    const weaponName = resolveKillWeaponLabel(
+      kill.weaponName,
+      kill.damageWeapon,
+      weapon.name,
+      weapon.displayName,
+      finishingDamage.damageItemName,
+      typeof kill.weapon === "string" ? kill.weapon : "",
+      weaponId
+    );
+    const weaponType = resolveKillWeaponType(kill.weaponType || weapon.type || finishingDamage.damageType, weaponName, weaponId);
     return {
       killer: normalizeParticipantId(kill.killer || kill.killerPuuid || kill.killer_puuid || kill.killerId || kill.killer_id),
       victim: normalizeParticipantId(kill.victim || kill.victimPuuid || kill.victim_puuid || kill.victimId || kill.victim_id),
@@ -759,14 +826,16 @@
 
   function normalizeV4Kill(kill = {}) {
     const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
+    const weaponId = cleanString(weapon.id || weapon.uuid);
+    const weaponName = resolveKillWeaponLabel(weapon.name, weapon.displayName, weaponId);
     return {
       killer: getV4PlayerId(kill.killer),
       victim: getV4PlayerId(kill.victim),
       assistants: (Array.isArray(kill.assistants) ? kill.assistants : []).map(getV4PlayerId).filter(Boolean),
       roundTime: readNumber(kill.time_in_round_in_ms),
-      weapon: cleanString(weapon.name),
-      weaponId: cleanString(weapon.id || weapon.uuid),
-      weaponType: cleanString(weapon.type),
+      weapon: weaponName,
+      weaponId,
+      weaponType: resolveKillWeaponType(weapon.type, weaponName, weaponId),
       secondaryFireMode: Boolean(kill.secondary_fire_mode)
     };
   }

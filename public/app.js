@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-stats-rederive-perf-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260804-stats-pipeline-perf-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -4700,7 +4700,7 @@ function buildCoachingEvidenceLayer({
     (safeNumber(overview.adr) ? 20 : 0) +
     (safeNumber(overview.hs) ? 14 : 0) +
     (safeNumber(overview.winrate) ? 18 : 0) +
-    (safeNumber(importedAnalytics?.overview?.attackKAST) || safeNumber(importedAnalytics?.overview?.defenseKAST) ? 14 : 0) +
+    (Number.isFinite(Number(overview.overallKAST)) || Number.isFinite(Number(overview.attackKAST)) || Number.isFinite(Number(overview.defenseKAST)) ? 14 : 0) +
     (safeNumber(coachingContext?.weaponRounds) ? 14 : 0)
   );
   const sample = buildSampleConfidenceContext({
@@ -5882,6 +5882,7 @@ function summarizeContextMatches(matchEntries = []) {
   const hs = averageValue(matchEntries.map(match => safeNumber(getMatchCore(match).hs)));
   const wins = matchEntries.filter(match => getMatchCore(match).result === "win").length;
   const losses = matchEntries.filter(match => getMatchCore(match).result === "loss").length;
+  const kast = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(matchEntries) || null;
 
   return {
     matchesPlayed,
@@ -5894,6 +5895,9 @@ function summarizeContextMatches(matchEntries = []) {
     acs,
     hs,
     winrate: safeDivide(wins * 100, matchesPlayed),
+    kast: kast?.overall?.totalRounds ? safeNumber(kast.overall.percentage) : NaN,
+    attackKAST: kast?.attack?.totalRounds ? safeNumber(kast.attack.percentage) : NaN,
+    defenseKAST: kast?.defense?.totalRounds ? safeNumber(kast.defense.percentage) : NaN,
     wins,
     losses
   };
@@ -5903,21 +5907,21 @@ function buildBenchmarkMetricScores(matchSummary = {}, roleName = "Unknown", imp
   const roleKey = getCompassRoleKey(roleName);
   const modifiers = COMPASS_ROLE_EXPECTATION_MODIFIERS[roleKey] || COMPASS_ROLE_EXPECTATION_MODIFIERS.unknown;
   const importedOverview = importedAnalytics?.overview || {};
-  const percentiles = importedOverview?.percentiles || {};
-  const avgKast = averageValue([
-    safeNumber(importedOverview.attackKAST),
-    safeNumber(importedOverview.defenseKAST),
-    safeNumber(importedOverview.kast)
-  ].filter(value => value > 0));
-  const econValue = safeNumber(importedOverview.econ) > 100
+  const hasRankedSample = safeNumber(matchSummary.matchesPlayed) > 0;
+  const percentiles = hasRankedSample ? (importedOverview?.percentiles || {}) : {};
+  const avgKast = firstFiniteNumber(
+    matchSummary.kast,
+    matchSummary.overallKAST
+  );
+  const econValue = hasRankedSample && safeNumber(importedOverview.econ) > 100
     ? safeNumber(importedOverview.econ) / 25
-    : safeNumber(importedOverview.econ);
-  const acsValue = safeNumber(matchSummary.acs) || safeNumber(importedOverview.scorePerRound) || safeNumber(importedOverview.acs);
-  const kdValue = safeNumber(matchSummary.kd) || safeNumber(importedOverview.kd);
-  const assistsValue = safeNumber(matchSummary.assistsPerMatch) || safeNumber(importedOverview.assistsPerMatch);
-  const deathsValue = safeNumber(matchSummary.deathsPerMatch) || safeNumber(importedOverview.deathsPerMatch);
-  const hsValue = safeNumber(matchSummary.hs) || safeNumber(importedOverview.hs);
-  const winrateValue = safeNumber(matchSummary.winrate) || safeNumber(importedOverview.winrate);
+    : (hasRankedSample ? safeNumber(importedOverview.econ) : 0);
+  const acsValue = hasRankedSample ? safeNumber(matchSummary.acs) : 0;
+  const kdValue = hasRankedSample ? safeNumber(matchSummary.kd) : 0;
+  const assistsValue = hasRankedSample ? safeNumber(matchSummary.assistsPerMatch) : 0;
+  const deathsValue = hasRankedSample ? safeNumber(matchSummary.deathsPerMatch) : 0;
+  const hsValue = hasRankedSample ? safeNumber(matchSummary.hs) : 0;
+  const winrateValue = hasRankedSample ? safeNumber(matchSummary.winrate) : 0;
   const benchmarkScores = {
     acs: scoreMetricAgainstBenchmark(
       acsValue,
@@ -5940,7 +5944,7 @@ function buildBenchmarkMetricScores(matchSummary = {}, roleName = "Unknown", imp
       adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.hs, modifiers.hs)
     ),
     winrate: scoreMetricAgainstBenchmark(winrateValue, COMPASS_STAT_BENCHMARKS.winrate),
-    kast: avgKast ? scoreMetricAgainstBenchmark(avgKast, COMPASS_STAT_BENCHMARKS.kast) : 50,
+    kast: Number.isFinite(Number(avgKast)) ? scoreMetricAgainstBenchmark(avgKast, COMPASS_STAT_BENCHMARKS.kast) : 50,
     econ: econValue ? scoreMetricAgainstBenchmark(econValue, COMPASS_STAT_BENCHMARKS.econ) : 50
   };
 
@@ -5960,6 +5964,11 @@ function buildRoleAdjustedMetricScores(matchSummary = {}, baselineSummary = {}, 
   };
   const modifiers = roleModifiers[String(roleName || "unknown").toLowerCase()] || roleModifiers.unknown;
   const importedOverview = importedAnalytics?.overview || {};
+  const hasRankedSample = safeNumber(matchSummary.matchesPlayed) > 0;
+  const avgKast = firstFiniteNumber(
+    matchSummary.kast,
+    matchSummary.overallKAST
+  );
 
   return {
     acs: normalizeMetricAgainstBaseline(safeNumber(matchSummary.acs) * modifiers.acs, safeNumber(baselineSummary.acs), Math.max(8, safeNumber(baselineSummary.acs) * 0.16), { center: 52, scale: 16 }),
@@ -5968,8 +5977,8 @@ function buildRoleAdjustedMetricScores(matchSummary = {}, baselineSummary = {}, 
     deaths: normalizeMetricAgainstBaseline(safeNumber(matchSummary.deathsPerMatch) / Math.max(0.72, modifiers.deaths), safeNumber(baselineSummary.deathsPerMatch), 1.8, { center: 52, scale: 15, inverse: true }),
     hs: normalizeMetricAgainstBaseline(safeNumber(matchSummary.hs) * modifiers.hs, safeNumber(baselineSummary.hs), 6, { center: 48, scale: 14 }),
     winrate: normalizeMetricAgainstBaseline(safeNumber(matchSummary.winrate), safeNumber(baselineSummary.winrate, 50), 12, { center: 50, scale: 14 }),
-    kast: safeNumber(importedOverview.attackKAST) || safeNumber(importedOverview.defenseKAST) ? clampScore(averageValue([importedOverview.attackKAST, importedOverview.defenseKAST])) : 50,
-    econ: safeNumber(importedOverview.econ) ? clampScore(importedOverview.econ) : 50
+    kast: Number.isFinite(Number(avgKast)) ? clampScore(avgKast) : 50,
+    econ: hasRankedSample && safeNumber(importedOverview.econ) ? clampScore(importedOverview.econ) : 50
   };
 }
 
@@ -5986,6 +5995,7 @@ function buildCompassMetricScores(matchSummary = {}, baselineSummary = {}, roleN
 function summarizeAdvancedContextMatches(matchEntries = []) {
   const matchesPlayed = matchEntries.length;
   const roundEntries = matchEntries.flatMap(match => match?.advanced?.rounds || []);
+  const kastMetrics = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(matchEntries) || null;
   const attackBlocks = matchEntries.map(match => match?.advanced?.attack || {}).filter(Boolean);
   const defenseBlocks = matchEntries.map(match => match?.advanced?.defense || {}).filter(Boolean);
   const totalAttackRounds = attackBlocks.reduce((sum, block) => sum + safeNumber(block?.roundsPlayed), 0);
@@ -6051,8 +6061,8 @@ function summarizeAdvancedContextMatches(matchEntries = []) {
     defenseFirstBloodRate: safeDivide(defenseFirstBloods * 100, totalDefenseRounds),
     attackOpeningSurvival: 100 - safeDivide(attackFirstDeaths * 100, totalAttackRounds),
     defenseOpeningSurvival: 100 - safeDivide(defenseFirstDeaths * 100, totalDefenseRounds),
-    attackKAST: weightedAverage(attackBlocks, "kast", "roundsPlayed"),
-    defenseKAST: weightedAverage(defenseBlocks, "kast", "roundsPlayed"),
+    attackKAST: kastMetrics?.attack?.totalRounds ? safeNumber(kastMetrics.attack.percentage) : NaN,
+    defenseKAST: kastMetrics?.defense?.totalRounds ? safeNumber(kastMetrics.defense.percentage) : NaN,
     attackADR: weightedAverage(attackBlocks, "damagePerRound", "roundsPlayed"),
     defenseADR: weightedAverage(defenseBlocks, "damagePerRound", "roundsPlayed"),
     fullBuyWinRate: safeDivide(buyBuckets.full.won * 100, buyBuckets.full.played),
@@ -6571,9 +6581,8 @@ function getMatchAdvancedImpactSignals(match = {}) {
   const totalRounds = attackRounds + defenseRounds;
   const firstBloods = safeNumber(attack.firstBloods) + safeNumber(defense.firstBloods);
   const firstDeaths = safeNumber(attack.firstDeaths) + safeNumber(defense.firstDeaths);
-  const avgKast = totalRounds
-    ? safeDivide((safeNumber(attack.kast) * attackRounds) + (safeNumber(defense.kast) * defenseRounds), totalRounds)
-    : averageValue([safeNumber(attack.kast), safeNumber(defense.kast)].filter(value => value > 0));
+  const matchKast = globalThis.RankedCoachRoundMetrics?.computeMatchKast?.(match) || null;
+  const avgKast = firstFiniteNumber(matchKast?.overall?.percentage);
   const roundWinPct = totalRounds
     ? safeDivide((safeNumber(attack.roundsWon) + safeNumber(defense.roundsWon)) * 100, totalRounds)
     : 0;
@@ -6644,6 +6653,7 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
   const kd = safeDivide(kills, Math.max(1, deaths));
   const econ = safeNumber(stats.econRating?.value, safeNumber(importedAnalytics?.overview?.econ) > 100 ? safeNumber(importedAnalytics?.overview?.econ) / 25 : safeNumber(importedAnalytics?.overview?.econ));
   const advancedSignals = getMatchAdvancedImpactSignals(match);
+  const kastScore = Number.isFinite(Number(advancedSignals.avgKast)) ? clampScore(advancedSignals.avgKast) : 50;
   const resultScore = getMatchResultContextScore(core.result);
   const scoreMap = {
     acs: scoreMetricAgainstBenchmark(acs, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.acs, modifiers.acs)),
@@ -6651,7 +6661,7 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
     assists: scoreMetricAgainstBenchmark(assists, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.assists, modifiers.assists)),
     deaths: scoreMetricAgainstBenchmark(deaths, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.deaths, modifiers.deaths)),
     hs: scoreMetricAgainstBenchmark(hs, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.hs, modifiers.hs)),
-    kast: clampScore(advancedSignals.avgKast),
+    kast: kastScore,
     opening: advancedSignals.openingScore,
     econ: econ ? scoreMetricAgainstBenchmark(econ, COMPASS_STAT_BENCHMARKS.econ) : 50,
     result: resultScore
@@ -6662,7 +6672,7 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
     assists,
     deaths,
     hs,
-    kast: advancedSignals.avgKast,
+    kast: Number.isFinite(Number(advancedSignals.avgKast)) ? advancedSignals.avgKast : null,
     opening: {
       score: advancedSignals.openingScore,
       firstBloods: advancedSignals.firstBloods,
@@ -7096,22 +7106,18 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const averageAcs = orderedMatches.length ? totalAcs / Math.max(1, orderedMatches.length) : 0;
 
   const overview = {
-    matchesPlayed: orderedMatches.length || safeNumber(importedAnalytics?.overview?.matchesPlayed),
-    matchesWon: wins || safeNumber(importedAnalytics?.overview?.matchesWon),
-    matchesLost: losses || safeNumber(importedAnalytics?.overview?.matchesLost),
-    kd: orderedMatches.length ? (totalDeaths ? totalKills / totalDeaths : totalKills) : safeNumber(importedAnalytics?.overview?.kd),
-    adr: orderedMatches.length ? totalAdr / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.adr),
-    hs: totalHsCount ? totalHs / totalHsCount : firstFiniteNumber(importedAnalytics?.overview?.hs),
+    matchesPlayed: orderedMatches.length,
+    matchesWon: wins,
+    matchesLost: losses,
+    kd: orderedMatches.length ? (totalDeaths ? totalKills / totalDeaths : totalKills) : 0,
+    adr: orderedMatches.length ? totalAdr / Math.max(1, orderedMatches.length) : 0,
+    hs: totalHsCount ? totalHs / totalHsCount : NaN,
     hsSampleCount: totalHsCount,
     assists: orderedMatches.length ? totalAssists / Math.max(1, orderedMatches.length) : 0,
-    winrate: orderedMatches.length ? (wins / Math.max(1, orderedMatches.length)) * 100 : safeNumber(importedAnalytics?.overview?.winrate),
-    attackKAST: roundMetrics?.attack?.totalRounds
-      ? safeNumber(roundMetrics.attack.percentage)
-      : safeNumber(importedAnalytics?.overview?.attackKAST),
-    defenseKAST: roundMetrics?.defense?.totalRounds
-      ? safeNumber(roundMetrics.defense.percentage)
-      : safeNumber(importedAnalytics?.overview?.defenseKAST),
-    overallKAST: roundMetrics?.overall?.totalRounds ? safeNumber(roundMetrics.overall.percentage) : 0,
+    winrate: orderedMatches.length ? (wins / Math.max(1, orderedMatches.length)) * 100 : 0,
+    attackKAST: roundMetrics?.attack?.totalRounds ? safeNumber(roundMetrics.attack.percentage) : NaN,
+    defenseKAST: roundMetrics?.defense?.totalRounds ? safeNumber(roundMetrics.defense.percentage) : NaN,
+    overallKAST: roundMetrics?.overall?.totalRounds ? safeNumber(roundMetrics.overall.percentage) : NaN,
     kastTradeSavedRounds: safeNumber(roundMetrics?.overall?.tradeSavedRounds),
     econ: safeNumber(importedAnalytics?.overview?.econ),
     roundsPlayed: safeNumber(roundSignals?.totalRounds),
@@ -7673,7 +7679,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     (safeNumber(overview.kd) ? 12 : 0) +
     (safeNumber(overview.adr) ? 12 : 0) +
     (safeNumber(overview.hs) ? 8 : 0) +
-    (averageValue([overview.attackKAST, overview.defenseKAST].filter(value => safeNumber(value) > 0)) ? 10 : 0)
+    (Number.isFinite(Number(overview.overallKAST)) || Number.isFinite(Number(overview.attackKAST)) || Number.isFinite(Number(overview.defenseKAST)) ? 10 : 0)
   );
   const confidenceScore = clampPercent(
     (matchConfidenceScore * 0.45) +
@@ -7734,7 +7740,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     }
   };
 
-  const avgKast = averageValue([overview.attackKAST, overview.defenseKAST].filter(value => safeNumber(value) > 0));
+  const avgKast = firstFiniteNumber(
+    overview.overallKAST
+  );
   const deathsPerMatch = overview.matchesPlayed
     ? safeDivide(totalDeaths, overview.matchesPlayed)
     : averageValue((importedAnalytics?.agents || []).map(agent => safeDivide(agent?.deaths, agent?.matchesPlayed)));
@@ -8450,11 +8458,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
   const senseRaw = averageValue([
     avgKast ? clampMetric(avgKast, 0, 100) : 0,
-    clampMetric(safeNumber(overview.winrate) + 12, 0, 100),
-    clampMetric(averageValue([
-      safeNumber(overview.attackKAST),
-      safeNumber(overview.defenseKAST)
-    ].filter(value => value > 0)), 0, 100)
+    clampMetric(safeNumber(overview.winrate) + 12, 0, 100)
   ].filter(value => value > 0));
 
   const teamplayRaw = averageValue([
@@ -8527,8 +8531,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       gamesense: {
         title: "Game Sense",
         weighting: [
-          statItem("Attack KAST", `${Math.round(safeNumber(overview.attackKAST))}%`, "Attack-side survival, trades, and assists from imported analytics."),
-          statItem("Defense KAST", `${Math.round(safeNumber(overview.defenseKAST))}%`, "Defense-side survival, trades, and assists from imported analytics."),
+          statItem("Attack KAST", Number.isFinite(Number(overview.attackKAST)) ? `${Math.round(safeNumber(overview.attackKAST))}%` : "--", "Attack-side survival, trades, and assists from retained round data."),
+          statItem("Defense KAST", Number.isFinite(Number(overview.defenseKAST)) ? `${Math.round(safeNumber(overview.defenseKAST))}%` : "--", "Defense-side survival, trades, and assists from retained round data."),
           statItem("Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Winning more rounds and matches raises the game sense score.")
         ],
         stats: [
@@ -8948,20 +8952,34 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
 function getPlayerModel() {
   const scoped = getScopedStatsData();
-  return buildPlayerModel(scoped.matches, scoped.logs, scoped.analytics);
+  const cacheKey = [
+    activeProfileId || "",
+    statsPipelineSourceGeneration,
+    statsPipelineLogGeneration,
+    activeStatsActKey || "",
+    activeStatsActLabel || "",
+    scoped.selectedAct || ""
+  ].join("|");
+  if (playerModelMemo?.key === cacheKey) return playerModelMemo.model;
+  statsPipelinePerfCounters.playerModelComputes += 1;
+  const model = buildPlayerModel(scoped.matches, scoped.logs, scoped.analytics);
+  playerModelMemo = { key: cacheKey, model };
+  return model;
 }
 
 function buildRoundDerivedAnalytics(matchList = [], currentAct = "Current Window", acts = []) {
   const advanced = summarizeAdvancedContextMatches(matchList);
   const rounds = globalThis.RankedCoachRoundMetrics?.aggregateMatchRoundMetrics?.(matchList) || null;
+  const kast = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(matchList) || null;
   if (!rounds?.matches) return { currentAct, acts };
   return {
     currentAct,
     acts,
     roundMetrics: rounds,
     overview: {
-      attackKAST: advanced.attackKAST,
-      defenseKAST: advanced.defenseKAST,
+      attackKAST: kast?.attack?.totalRounds ? safeNumber(kast.attack.percentage) : NaN,
+      defenseKAST: kast?.defense?.totalRounds ? safeNumber(kast.defense.percentage) : NaN,
+      overallKAST: kast?.overall?.totalRounds ? safeNumber(kast.overall.percentage) : NaN,
       econ: advanced.fullBuyWinRate,
       fullBuyWinRate: advanced.fullBuyWinRate,
       ecoWinRate: advanced.ecoWinRate,
@@ -8987,6 +9005,45 @@ function buildRoundDerivedAnalytics(matchList = [], currentAct = "Current Window
   };
 }
 
+function getLogEntrySeasonKey(entry = {}) {
+  return String(
+    entry?.seasonKey ||
+    entry?.statsSeasonKey ||
+    entry?.metadata?.seasonKey ||
+    entry?.metadata?.statsSeasonKey ||
+    ""
+  ).trim();
+}
+
+function stampLogEntrySeasonIdentity(entry = {}, profile = getActiveProfile()) {
+  if (!entry || typeof entry !== "object") return entry;
+  const descriptor = getStatsSelectedActDescriptor(profile, {
+    ignoreActiveSelection: false,
+    matches: Array.isArray(profile?.matches) ? profile.matches : matches
+  });
+  if (!descriptor?.key) return entry;
+  entry.seasonKey = descriptor.key;
+  entry.act = descriptor.label || entry.act || "";
+  entry.metadata = {
+    ...(entry.metadata || {}),
+    seasonKey: descriptor.key,
+    act: descriptor.label || entry.metadata?.act || entry.act || ""
+  };
+  return entry;
+}
+
+function logEntryBelongsToSelectedStatsAct(entry = {}, selectedDescriptor = {}) {
+  const selectedKey = String(selectedDescriptor?.key || "").trim();
+  if (!selectedKey) return true;
+  const entrySeasonKey = getLogEntrySeasonKey(entry);
+  if (entrySeasonKey) return entrySeasonKey === selectedKey;
+  // Legacy player-authored logs created before season keys only stored a display
+  // label. Keep those readable, but all newly-written logs are stamped with
+  // seasonKey via stampLogEntrySeasonIdentity().
+  const selectedLabel = String(selectedDescriptor?.label || "").trim();
+  return normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedLabel;
+}
+
 function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const importedAnalytics = profile?.trackerAnalytics || null;
   const rawSourceMatches = Array.isArray(options?.matches)
@@ -8995,6 +9052,25 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
       ? profile.matches
       : (matches || []);
   const sourceMatches = rawSourceMatches;
+  const sourceLogs = Array.isArray(options?.logs)
+    ? options.logs
+    : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
+  const canUseMemo = !Array.isArray(options?.matches) && !Array.isArray(options?.logs);
+  const generations = canUseMemo
+    ? ensureStatsPipelineSourceGeneration(sourceMatches, sourceLogs)
+    : { sourceGeneration: statsPipelineSourceGeneration, logGeneration: statsPipelineLogGeneration };
+  const memoKey = canUseMemo ? [
+    String(profile?.id || activeProfileId || ""),
+    generations.sourceGeneration,
+    generations.logGeneration,
+    activeStatsActKey || "",
+    activeStatsActLabel || "",
+    options?.rankedOnly === false ? "all-queues" : "ranked"
+  ].join("|") : "";
+  if (canUseMemo && scopedStatsDataMemo.has(memoKey)) {
+    return scopedStatsDataMemo.get(memoKey);
+  }
+  statsPipelinePerfCounters.scopedComputes += 1;
   const rankedOnly = options?.rankedOnly !== false;
   const rankedPerformanceMatches = rankedOnly
     ? sourceMatches.filter(isRankedPerformanceMatch)
@@ -9014,14 +9090,11 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const selectedActKey = selectedDescriptor?.key || "";
   const actOptions = actDescriptors.map(descriptor => descriptor.label);
   const shouldFilterByAct = Boolean(selectedActKey && actDescriptors.some(descriptor => descriptor.key === selectedActKey));
-  const sourceLogs = Array.isArray(options?.logs)
-    ? options.logs
-    : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
   const actMatches = (shouldFilterByAct
     ? rankedPerformanceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedActKey, { profile, actOptions: actDescriptors }))
     : rankedPerformanceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
-    ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
+    ? sourceLogs.filter((entry) => logEntryBelongsToSelectedStatsAct(entry, selectedDescriptor))
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
   const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || getStatsFallbackSeasonLabel(profile, { analytics: importedAnalytics }), actOptions);
@@ -9035,12 +9108,14 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     currentAct: selectedAct || getStatsFallbackSeasonLabel(profile, { analytics: importedAnalytics }) || "Current Window",
     acts: actOptions
   };
-  return {
+  const scopedData = {
     selectedAct: scopedAnalytics.currentAct,
     matches: actMatches,
     logs: scopedLogs,
     analytics: scopedAnalytics
   };
+  if (canUseMemo) scopedStatsDataMemo.set(memoKey, scopedData);
+  return scopedData;
 }
 
 function summarizeAgentMapPerformance(matchEntries = matches) {
@@ -12936,9 +13011,6 @@ function refreshActiveProfileDataSurfaces(options = {}) {
 
   recomputeFromMatches?.();
   initStatsPage?.();
-  renderStatsAgents?.();
-  renderStatsMaps?.();
-  renderStatsWeapons?.();
   renderInsights?.();
   renderLogFeed?.({ force: true });
   updateDisplays?.();
@@ -18275,6 +18347,127 @@ let spinIconLocked = false;
 
 let matches = [];
 
+let statsPipelineSourceGeneration = 0;
+let statsPipelineLogGeneration = 0;
+let statsPipelineMatchSignature = null;
+let statsPipelineLogSignature = null;
+const scopedStatsDataMemo = new Map();
+let playerModelMemo = null;
+const statsPipelinePerfCounters = {
+  sourceInvalidations: 0,
+  logInvalidations: 0,
+  scopedComputes: 0,
+  playerModelComputes: 0
+};
+
+function getMatchStatsSignatureToken(match = {}) {
+  const record = match?.matchRecord || {};
+  const metadata = match?.metadata || {};
+  const stats = record?.stats || {};
+  const rank = record?.rank || {};
+  const queue = match?.queue || metadata?.queue || record?.queue || {};
+  const id = String(match?.matchId || match?.id || metadata?.matchId || record?.id || record?.legacyMatchId || "");
+  return [
+    id,
+    match?.createdAt || match?.playedAt || metadata?.playedAt || record?.playedAt || "",
+    match?.source || metadata?.source || record?.source || "",
+    queue?.id || queue?.name || queue?.mode || queue?.modeType || "",
+    match?.season || metadata?.season || record?.season || "",
+    match?.act || metadata?.act || record?.act || "",
+    match?.result || metadata?.result || record?.result || "",
+    match?.agent || metadata?.agent || record?.agent || "",
+    match?.role || metadata?.role || record?.role || "",
+    match?.map || metadata?.map || metadata?.mapName || record?.map || "",
+    match?.rr ?? rank?.rrDelta ?? "",
+    match?.rrVerified ?? rank?.verified ?? "",
+    match?.kills ?? stats?.kills ?? "",
+    match?.deaths ?? stats?.deaths ?? "",
+    match?.assists ?? stats?.assists ?? "",
+    match?.acs ?? stats?.acs ?? "",
+    match?.adr ?? stats?.adr ?? "",
+    match?.hsPercent ?? match?.hs ?? stats?.hsPercent ?? "",
+    match?.storedRawRehydrateVersion ?? metadata?.storedRawRehydrateVersion ?? record?.storedRawRehydrateVersion ?? "",
+    match?.weaponBackfillUnavailable ?? metadata?.weaponBackfillUnavailable ?? "",
+    match?.hsBackfillUnavailable ?? metadata?.hsBackfillUnavailable ?? "",
+    Array.isArray(record?.roundByRound) ? record.roundByRound.length : "",
+    Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds.length : ""
+  ].join("~");
+}
+
+function buildStatsMatchSignature(matchList = []) {
+  const list = Array.isArray(matchList) ? matchList : [];
+  return `${list.length}|${list.map(getMatchStatsSignatureToken).join("|")}`;
+}
+
+function buildStatsLogSignature(entries = []) {
+  const list = Array.isArray(entries) ? entries : [];
+  return `${list.length}|${list.map(entry => [
+    entry?.id || "",
+    entry?.profileId || "",
+    entry?.createdAt || entry?.date || "",
+    entry?.matchId || entry?.metadata?.matchId || "",
+    entry?.agent || "",
+    entry?.role || "",
+    entry?.map || "",
+    entry?.focus || "",
+    entry?.rating ?? "",
+    entry?.mood || "",
+    entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act || ""
+  ].join("~")).join("|")}`;
+}
+
+function clearStatsPipelineMemo() {
+  scopedStatsDataMemo.clear();
+  playerModelMemo = null;
+}
+
+function ensureStatsPipelineSourceGeneration(matchList = [], logList = []) {
+  const nextMatchSignature = buildStatsMatchSignature(matchList);
+  const nextLogSignature = buildStatsLogSignature(logList);
+  if (nextMatchSignature !== statsPipelineMatchSignature) {
+    statsPipelineMatchSignature = nextMatchSignature;
+    statsPipelineSourceGeneration += 1;
+    statsPipelinePerfCounters.sourceInvalidations += 1;
+    clearStatsPipelineMemo();
+  }
+  if (nextLogSignature !== statsPipelineLogSignature) {
+    statsPipelineLogSignature = nextLogSignature;
+    statsPipelineLogGeneration += 1;
+    statsPipelinePerfCounters.logInvalidations += 1;
+    clearStatsPipelineMemo();
+  }
+  return {
+    sourceGeneration: statsPipelineSourceGeneration,
+    logGeneration: statsPipelineLogGeneration
+  };
+}
+
+function getStatsPipelinePerfSnapshot() {
+  return {
+    sourceGeneration: statsPipelineSourceGeneration,
+    logGeneration: statsPipelineLogGeneration,
+    cacheEntries: scopedStatsDataMemo.size,
+    playerModelCached: Boolean(playerModelMemo),
+    ...statsPipelinePerfCounters
+  };
+}
+
+globalThis.RankedCoachStatsPipelinePerf = {
+  resetCounters() {
+    statsPipelinePerfCounters.sourceInvalidations = 0;
+    statsPipelinePerfCounters.logInvalidations = 0;
+    statsPipelinePerfCounters.scopedComputes = 0;
+    statsPipelinePerfCounters.playerModelComputes = 0;
+  },
+  snapshot: getStatsPipelinePerfSnapshot,
+  invalidate() {
+    statsPipelineMatchSignature = null;
+    statsPipelineLogSignature = null;
+    statsPipelineSourceGeneration += 1;
+    clearStatsPipelineMemo();
+  }
+};
+
 // ========================
 // ACTIVE FOCUS SYSTEM
 // ========================
@@ -19878,6 +20071,7 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     .filter(isRankedPerformanceMatch)
     .map(match => {
     const core = getMatchCore(match);
+    const seasonIdentity = getMatchSeasonIdentity(match);
     const placeholderRr = isVerifiedHenrikRrMatch(match)
       ? getOptionalFiniteNumber(match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta ?? match?.rr)
       : getOptionalFiniteNumber(match?.rr);
@@ -19890,6 +20084,8 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
       agent: core.agent,
       role: core.role,
       map: core.map,
+      seasonKey: seasonIdentity?.key || "",
+      act: seasonIdentity?.label || "",
       roleImpact: buildStoredRoleImpactSnapshot(match, profile?.trackerAnalytics || null)
     };
   });
@@ -47314,6 +47510,7 @@ if(!entry.focus || entry.focus === "Select Focus"){
   entry.focus = "Discipline";
 }
 entry.focus = normalizeFocusCategoryValue(entry.focus, "Discipline");
+stampLogEntrySeasonIdentity(entry, getActiveProfile());
 
   if (isEditing) {
     let replaced = false;
@@ -57157,7 +57354,9 @@ function applyImportedMatches(matchList = [], options = {}){
   } else if (options.animationMode) {
     chartAnimationMode = options.animationMode;
   }
-  refreshActiveProfileDataSurfaces({ chartAnimationMode });
+  if (options.deferSurfaceRefresh !== true) {
+    refreshActiveProfileDataSurfaces({ chartAnimationMode });
+  }
   scheduleRiotAutoSync();
 }
 
@@ -57354,12 +57553,14 @@ async function importActiveProfileMatches(options = {}){
         animatePlaceholders: options.mode === "refresh"
       });
       saveProfiles();
-      refreshActiveProfileDataSurfaces({
-        chartAnimationMode: options.mode === "refresh"
-          ? CHART_ANIMATION_MODE_LATEST_ONLY
-          : null
-      });
-      await waitForActiveProfileSurfacePaint();
+      if (options.deferSurfaceRefresh !== true) {
+        refreshActiveProfileDataSurfaces({
+          chartAnimationMode: options.mode === "refresh"
+            ? CHART_ANIMATION_MODE_LATEST_ONLY
+            : null
+        });
+        await waitForActiveProfileSurfacePaint();
+      }
       return {
         count: 0,
         checked: safeNumber(pullResult?.checked),
@@ -57401,12 +57602,13 @@ async function importActiveProfileMatches(options = {}){
 
     applyImportedMatches(matchList, {
       source: "henrik",
+      deferSurfaceRefresh: options.deferSurfaceRefresh === true,
       animationMode: options.mode === "refresh"
         ? CHART_ANIMATION_MODE_LATEST_ONLY
         : null
     });
 
-    if (!needsHistoryBackfill && newlyImportedMatches.length) {
+    if (!needsHistoryBackfill && newlyImportedMatches.length && options.deferSurfaceRefresh !== true) {
       refreshActiveProfileDataSurfaces({
         chartAnimationMode: options.mode === "refresh"
           ? CHART_ANIMATION_MODE_LATEST_ONLY
@@ -57448,12 +57650,15 @@ async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync",
+    deferSurfaceRefresh: options.deferSurfaceRefresh === true,
     onRehydrateProgress: options.onRehydrateProgress
   });
-  refreshActiveProfileDataSurfaces?.({
-    chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
-    animatePlaceholders: false
-  });
+  if (options.deferSurfaceRefresh !== true) {
+    refreshActiveProfileDataSurfaces?.({
+      chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+      animatePlaceholders: false
+    });
+  }
   return {
     ...result,
     syncedAt: nowISO(),
@@ -57654,7 +57859,8 @@ async function performRiotSync(options = {}) {
     mode = "sync",
     allowDemoFallback = true,
     verifyWarmup = true,
-    prefillReflection = true
+    prefillReflection = true,
+    deferSurfaceRefresh = false
   } = options;
   const activeProfile = getActiveProfile();
   const hasRiotId = Boolean(String(activeProfile?.riotId || "").trim());
@@ -57735,6 +57941,7 @@ async function performRiotSync(options = {}) {
       syncActiveProfileMatches({
         mode,
         allowDemoFallback: canUseDemoFallback,
+        deferSurfaceRefresh,
         onRehydrateProgress: progress => {
           options.onRehydrateProgress?.(progress);
           if (!showSyncLoading) return;
@@ -57755,11 +57962,13 @@ async function performRiotSync(options = {}) {
       setAppLoadingEventBanner("game");
     }
     if (prefillReflection) prefillLatestImportedReflection();
-    refreshActiveProfileDataSurfaces?.({
-      reason: "riot-sync",
-      animate: false,
-      preserveActivePage: true
-    });
+    if (!deferSurfaceRefresh) {
+      refreshActiveProfileDataSurfaces?.({
+        reason: "riot-sync",
+        animate: false,
+        preserveActivePage: true
+      });
+    }
 
     if (!silent) {
       if (result?.syncError) {
@@ -57842,6 +58051,7 @@ async function syncProfileRetainedHistory(options = {}) {
       allowDemoFallback: false,
       verifyWarmup: false,
       prefillReflection: false,
+      deferSurfaceRefresh: true,
       onRehydrateProgress: progress => {
         const rehydratePercent = 8 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 8);
         options.onProgress?.({
@@ -57908,6 +58118,13 @@ async function syncProfileRetainedHistory(options = {}) {
       ? "Preparing your latest game in the reflection form..."
       : "Finalizing season stats and coaching reads..."
   });
+  refreshActiveProfileDataSurfaces?.({
+    reason: "retained-history-complete",
+    chartAnimationMode: totalImported ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+    animatePlaceholders: false,
+    preserveActivePage: true
+  });
+  await waitForActiveProfileSurfacePaint?.();
   return { success: Boolean(lastResult), totalImported, totalChecked, lastResult, prefilled };
 }
 
@@ -59107,7 +59324,6 @@ function renderStatsRoleProgress() {
   const activeProfile = getActiveProfile();
   const model = getPlayerModel();
   const roles = (model?.roles || []).slice();
-  const importedRoles = activeProfile?.trackerAnalytics?.roles || [];
   const roleSamples = new Map();
   const sessionRoleSamples = new Map();
   const roleOrder = ["duelist", "controller", "initiator", "sentinel"];
@@ -59170,7 +59386,6 @@ function renderStatsRoleProgress() {
   };
   const findRoleEntry = (roleKey) => (
     roles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
-    || importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
     || null
   );
   const roleCards = roleOrder.map((roleKey) => {
