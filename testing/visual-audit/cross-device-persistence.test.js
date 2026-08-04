@@ -59,7 +59,39 @@ function supabaseStub(options = {}) {
     rating: 4,
     notes: "Cloud reflection"
   };
+  const historyLogCount = Math.max(0, Number(options.historyLogCount) || 0);
+  const cloudLogs = [
+    cloudLog,
+    ...Array.from({ length: historyLogCount }, (_item, index) => ({
+      ...cloudLog,
+      id: `cloud-history-log-${index + 1}`,
+      createdAt: new Date(Date.UTC(2026, 6, 1, 12, 0, index)).toISOString(),
+      notes: `Historical reflection ${index + 1}`
+    }))
+  ];
   const failAppStateSave = options.failAppStateSave === true;
+  const normalizedRows = options.normalizedRows === true;
+  const normalizedProfileRow = {
+    user_id: "cross-device-user",
+    riot_id: "",
+    region: "NA",
+    profile_json: cloudProfile
+  };
+  const normalizedLogRows = cloudLogs.map(log => ({
+    id: log.id,
+    user_id: "cross-device-user",
+    profile_id: cloudProfile.id,
+    entry_json: log,
+    created_at: log.createdAt
+  }));
+  const normalizedMatchRow = {
+    id: "cross-device-user:riot:cloud-match-with-rounds",
+    user_id: "cross-device-user",
+    profile_id: cloudProfile.id,
+    riot_match_id: "cloud-match-with-rounds",
+    match_json: cloudProfile.matches[0],
+    played_at: "2026-07-13T14:00:00.000Z"
+  };
   return `
     globalThis.__cloudWrites = [];
     globalThis.supabase = {
@@ -69,7 +101,7 @@ function supabaseStub(options = {}) {
           user_id: "cross-device-user",
           active_profile_id: "cloud-profile",
           profiles_json: [cloudProfile],
-          log_entries_json: [cloudLog],
+          log_entries_json: cloudLogs,
           theme_builder_json: {},
           theme_builder_ui_json: {}
         })};
@@ -80,6 +112,7 @@ function supabaseStub(options = {}) {
             update() { return this; }, delete() { return this; },
             maybeSingle() {
               if (table === "vip_app_state") return new Promise(resolve => setTimeout(() => resolve({ data: appState, error: null }), 900));
+              if (${JSON.stringify(normalizedRows)} && table === "users_profiles") return Promise.resolve({ data: ${JSON.stringify(normalizedProfileRow)}, error: null });
               return Promise.resolve({ data: null, error: null });
             },
             single() { return Promise.resolve({ data: null, error: null }); },
@@ -99,7 +132,16 @@ function supabaseStub(options = {}) {
               return Promise.resolve({ data: null, error: null });
             },
             insert() { return Promise.resolve({ data: null, error: null }); },
-            then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); }
+            then(resolve) {
+              const rows = ${JSON.stringify(normalizedRows)}
+                ? table === "reflection_logs"
+                  ? ${JSON.stringify(normalizedLogRows)}
+                  : table === "match_snapshots"
+                    ? [${JSON.stringify(normalizedMatchRow)}]
+                    : []
+                : [];
+              return Promise.resolve({ data: rows, error: null }).then(resolve);
+            }
           };
         }
         return {
@@ -124,12 +166,12 @@ function supabaseStub(options = {}) {
   `;
 }
 
-async function openDevice(browser, { staleLocal = false, quotaLimited = false, failAppStateSave = false } = {}) {
+async function openDevice(browser, { staleLocal = false, quotaLimited = false, failAppStateSave = false, normalizedRows = false, historyLogCount = 0 } = {}) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const consoleErrors = [];
   page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("pageerror", error => consoleErrors.push(error.message));
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub({ failAppStateSave }) }));
+  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub({ failAppStateSave, normalizedRows, historyLogCount }) }));
   await page.addInitScript(({ hasStaleLocal, quotaLimited }) => {
     localStorage.clear();
     localStorage.setItem("valtracker_entry_choice_v1", "account");
@@ -196,6 +238,58 @@ async function run() {
     assert.deepEqual(second.consoleErrors, []);
     await second.page.close();
 
+    const baseline = await openDevice(browser, { normalizedRows: true });
+    assert.equal(baseline.state.writes.some(write => write.table === "reflection_logs"), false, JSON.stringify(baseline.state.writes));
+    assert.equal(baseline.state.writes.some(write => write.table === "match_snapshots"), false, JSON.stringify(baseline.state.writes));
+    assert.equal(baseline.state.diagnostics.lastBackendSaveMetrics.logRows, 0);
+    assert.equal(baseline.state.diagnostics.lastBackendSaveMetrics.matchRows, 0);
+    assert.equal(baseline.state.diagnostics.lastBackendSaveMetrics.totalLogRows, 1);
+    assert.equal(baseline.state.diagnostics.lastBackendSaveMetrics.totalMatchRows, 1);
+    assert.deepEqual(baseline.consoleErrors, []);
+
+    await baseline.page.click('[data-page="logging"]');
+    const warmupSkip = baseline.page.locator("#dailyWarmupSkip");
+    if (await warmupSkip.isVisible().catch(() => false)) await warmupSkip.click();
+    await baseline.page.evaluate(() => {
+      document.getElementById("logAgentDisplay").dataset.agent = "Sova";
+    });
+    await baseline.page.selectOption("#logFocusSelect", "Map Awareness");
+    await baseline.page.fill("#logMap", "Haven");
+    await baseline.page.click('#logRatingRow [data-rating="4"]');
+    await baseline.page.click('#logMoodRow [data-mood="Focused"]');
+    await baseline.page.click('#logTeamCommsRow [data-team-comms="3"]');
+    await baseline.page.click('#logSelfCommsRow [data-self-comms="3"]');
+    await baseline.page.fill("#logNotes", "Delta persistence test reflection.");
+    await baseline.page.click("#logSaveBtn");
+    await baseline.page.waitForFunction(() => globalThis.__cloudWrites
+      .some(write => write.table === "reflection_logs" && write.rows.length === 1), null, { timeout: 10000 });
+    const deltaWrites = await baseline.page.evaluate(() => globalThis.__cloudWrites);
+    const deltaLogWrites = deltaWrites.filter(write => write.table === "reflection_logs");
+    assert.equal(deltaLogWrites.length, 1);
+    assert.equal(deltaLogWrites[0].rows.length, 1);
+    assert.equal(deltaWrites.some(write => write.table === "match_snapshots"), false, JSON.stringify(deltaWrites));
+    assert.deepEqual(baseline.consoleErrors, []);
+    await baseline.page.close();
+
+    const historicalFeed = await openDevice(browser, { normalizedRows: true, historyLogCount: 240 });
+    await historicalFeed.page.click('[data-page="logging"]');
+    const historyWarmupSkip = historicalFeed.page.locator("#dailyWarmupSkip");
+    if (await historyWarmupSkip.isVisible().catch(() => false)) await historyWarmupSkip.click();
+    await historicalFeed.page.waitForFunction(() => document.querySelectorAll("#logFeed .log-entry").length === 80, null, { timeout: 10000 });
+    const historyFeedState = await historicalFeed.page.evaluate(() => ({
+      renderedEntries: document.querySelectorAll("#logFeed .log-entry").length,
+      footnote: document.querySelector("#logFeed .log-feed-footnote")?.textContent || "",
+      writes: globalThis.__cloudWrites,
+      diagnostics: globalThis.RankedCoachSyncDiagnosticsState
+    }));
+    assert.equal(historyFeedState.renderedEntries, 80);
+    assert.match(historyFeedState.footnote, /newest 80 of 241 synced logs/i);
+    assert.equal(historyFeedState.writes.some(write => write.table === "reflection_logs"), false);
+    assert.equal(historyFeedState.diagnostics.lastBackendSaveMetrics.totalLogRows, 241);
+    assert.equal(historyFeedState.diagnostics.lastBackendSaveMetrics.logRows, 0);
+    assert.deepEqual(historicalFeed.consoleErrors, []);
+    await historicalFeed.page.close();
+
     const quota = await openDevice(browser, { quotaLimited: true });
     assert.equal(quota.state.localCacheHasDuplicateRounds, false);
     assert.equal(quota.state.writes.some(write => write.table === "vip_app_state" && JSON.stringify(write.rows).includes("ROUND_PAYLOAD_MARKER")), false);
@@ -212,7 +306,7 @@ async function run() {
     assert.equal(partial.state.diagnostics.lastBackendSaveFailures.some(item => item.table === "vip_app_state" && item.status === 500), true);
     assert.deepEqual(partial.consoleErrors, []);
     await partial.page.close();
-    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, quota-limited local caches compact safely, app-state payloads stay lightweight, and normalized saves continue after app-state failure.");
+    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, no-op saves skip normalized archive writes, one reflection saves one row, large log history renders a bounded feed, quota-limited local caches compact safely, and normalized saves continue after app-state failure.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

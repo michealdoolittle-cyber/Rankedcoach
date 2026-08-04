@@ -19406,8 +19406,14 @@ function getChartSourceEntries(size = currentSize) {
     ? liveMatches
     : profileMatches;
   const profileHasHenrikContext = hasHenrikChartContext(profile);
+  // Resolve the selected act once. Calling matchBelongsToSelectedStatsAct for
+  // every chart entry re-built the complete act-option list for every match,
+  // turning a simple Home-tab return into an O(n²) full-history walk.
   const selectedSeasonLabel = getChartSelectedSeasonLabel(profile);
   const canFilterBySeason = Boolean(selectedSeasonLabel && selectedSeasonLabel !== "Current Season");
+  const selectedSeasonKey = canFilterBySeason
+    ? getStatsActSelectionKey(selectedSeasonLabel, profile)
+    : "";
 
   let runningRR = 0;
   const orderedSourceMatches = sourceMatches
@@ -19432,7 +19438,11 @@ function getChartSourceEntries(size = currentSize) {
   });
 
   let seasonEntries = canFilterBySeason
-    ? allEntries.filter((entry) => matchBelongsToSelectedStatsAct(entry.match, selectedSeasonLabel, { profile }))
+    ? allEntries.filter((entry) => (
+      !shouldSuppressDemoFixtureStats(entry.match, profile)
+      && Boolean(selectedSeasonKey)
+      && getMatchSeasonKey(entry.match) === selectedSeasonKey
+    ))
     : allEntries;
   if (canFilterBySeason && !seasonEntries.length && allEntries.some(entry => (
     isHenrikSyncMatch(entry?.match)
@@ -19871,6 +19881,9 @@ const STORAGE_KEY_PENDING_LOG_DELETES = "rankedcoach_pending_log_deletes_v1";
 const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
 const AUTH_INIT_TIMEOUT_MS = Math.max(800, Number(globalThis.RANKEDCOACH_AUTH_INIT_TIMEOUT_MS) || 3500);
 const AUTH_ACTION_TIMEOUT_MS = Math.max(1200, Number(globalThis.RANKEDCOACH_AUTH_ACTION_TIMEOUT_MS) || 6500);
+const RANKED_MATCH_PLACEHOLDER_WINDOW_DAYS = 30;
+const LOG_FEED_ALL_HISTORY_MAX_SESSIONS = 14;
+const LOG_FEED_ALL_HISTORY_MAX_ENTRIES = 80;
 
 const backendSyncState = {
   applyingRemote: false,
@@ -19882,7 +19895,12 @@ const backendSyncState = {
   lastError: null,
   lastSaveMetrics: null,
   lastSaveFailures: [],
-  lastLocalSaveAt: 0
+  lastLocalSaveAt: 0,
+  normalizedRowsUserId: "",
+  normalizedMatchRowsInitialized: false,
+  normalizedLogRowsInitialized: false,
+  pendingNormalizedMatchRowIds: new Set(),
+  pendingNormalizedLogRowIds: new Set()
 };
 
 let persistentAccountRealtimeChannel = null;
@@ -19931,6 +19949,47 @@ function resolvePersistentLogDeletion(id = "") {
   if (!entryId) return;
   pendingPersistentLogDeleteIds.delete(entryId);
   persistPendingPersistentLogDeleteIds();
+}
+
+function ensureNormalizedRowSyncState(userId = "") {
+  const normalizedUserId = String(userId || "").trim();
+  if (!normalizedUserId || backendSyncState.normalizedRowsUserId === normalizedUserId) return;
+  backendSyncState.normalizedRowsUserId = normalizedUserId;
+  backendSyncState.normalizedMatchRowsInitialized = false;
+  backendSyncState.normalizedLogRowsInitialized = false;
+  backendSyncState.pendingNormalizedMatchRowIds = new Set();
+  backendSyncState.pendingNormalizedLogRowIds = new Set();
+}
+
+function markPersistentLogRowsDirty(entryIds = []) {
+  const userId = String(currentAuthUser?.id || "").trim();
+  if (!userId) return;
+  ensureNormalizedRowSyncState(userId);
+  (Array.isArray(entryIds) ? entryIds : [entryIds]).forEach(entryId => {
+    const normalizedId = String(entryId || "").trim();
+    if (normalizedId) backendSyncState.pendingNormalizedLogRowIds.add(normalizedId);
+  });
+}
+
+function markPersistentMatchRowsDirty(rowIds = []) {
+  const userId = String(currentAuthUser?.id || "").trim();
+  if (!userId) return;
+  ensureNormalizedRowSyncState(userId);
+  (Array.isArray(rowIds) ? rowIds : [rowIds]).forEach(rowId => {
+    const normalizedId = String(rowId || "").trim();
+    if (normalizedId) backendSyncState.pendingNormalizedMatchRowIds.add(normalizedId);
+  });
+}
+
+function markNormalizedRowsSaved(userId = "", type = "", rows = []) {
+  ensureNormalizedRowSyncState(userId);
+  const normalizedType = String(type || "").toLowerCase();
+  const target = normalizedType === "match"
+    ? backendSyncState.pendingNormalizedMatchRowIds
+    : backendSyncState.pendingNormalizedLogRowIds;
+  (Array.isArray(rows) ? rows : []).forEach(row => target.delete(String(row?.id || "").trim()));
+  if (normalizedType === "match") backendSyncState.normalizedMatchRowsInitialized = true;
+  if (normalizedType === "log") backendSyncState.normalizedLogRowsInitialized = true;
 }
 
 let insightFeedbackEntries = readInsightFeedbackEntries();
@@ -20304,6 +20363,31 @@ function getProfileLogEntries(profileId = activeProfileId, options = {}) {
   });
 }
 
+function getMatchPlaceholderTimestamp(match = {}) {
+  // Do not use getMatchCore here: its display-friendly fallback is `nowISO()`,
+  // which would incorrectly turn an undated historical record into a new
+  // reflection prompt.
+  const rawDate = match?.matchRecord?.playedAt
+    || match?.matchRecord?.createdAt
+    || match?.metadata?.playedAt
+    || match?.metadata?.createdAt
+    || match?.playedAt
+    || match?.createdAt
+    || "";
+  const timestamp = new Date(rawDate).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function isRecentRankedMatchForPlaceholder(match = {}, options = {}) {
+  if (!isRankedPerformanceMatch(match)) return false;
+  const windowDays = Math.max(
+    1,
+    Math.min(90, safeNumber(options.placeholderWindowDays, RANKED_MATCH_PLACEHOLDER_WINDOW_DAYS))
+  );
+  const cutoff = Date.now() - (windowDays * 86400000);
+  return getMatchPlaceholderTimestamp(match) >= cutoff;
+}
+
 function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfile(), options = {}) {
   const policy = globalThis.RankedCoachLogPolicy;
   const profileId = String(profile?.id || "").trim();
@@ -20311,7 +20395,10 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
   const existingEntryIds = new Set((logEntries || []).map(entry => String(entry?.id || "")).filter(Boolean));
 
   const placeholderMatches = (Array.isArray(matchList) ? matchList : [])
-    .filter(isRankedPerformanceMatch)
+    // Stats retain the complete upstream archive. Logging only creates a
+    // reflection prompt for recent games, so a historical backfill cannot
+    // flood the player with hundreds of unsolicited cards.
+    .filter(match => isRecentRankedMatchForPlaceholder(match, options))
     .map(match => {
     const core = getMatchCore(match);
     const seasonIdentity = getMatchSeasonIdentity(match);
@@ -20339,6 +20426,17 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     signedIn: Boolean(currentAuthUser),
     profileId
   });
+  if (synced.added > 0 || synced.reconciled > 0) {
+    const changedEntryIds = logEntries
+      .filter(entry => String(entry?.profileId || "") === profileId)
+      .filter(entry => {
+        const entryId = String(entry?.id || "");
+        return !existingEntryIds.has(entryId)
+          || (synced.reconciledEntryIds || []).includes(entryId);
+      })
+      .map(entry => entry.id);
+    markPersistentLogRowsDirty(changedEntryIds);
+  }
   if (!options.skipSave && options.animate !== false && (synced.added > 0 || synced.reconciled > 0)) {
     const reconciledEntryIds = new Set(synced.reconciledEntryIds || []);
     logEntries
@@ -20368,8 +20466,10 @@ function shouldSyncStatsLoggingParityForProfile(profile = {}, options = {}) {
 
 function commitProfileMatchesWithLoggingParity(profile, nextMatches = [], options = {}) {
   if (!profile || typeof profile !== "object") return [];
+  const previousMatches = Array.isArray(profile.matches) ? profile.matches.slice() : [];
   const committed = (Array.isArray(nextMatches) ? nextMatches : []).filter(Boolean);
   profile.matches = committed.slice();
+  markChangedPersistentMatchRows(profile, previousMatches, committed);
   if (String(profile.id || "") === String(activeProfileId || "")) {
     matches = committed.slice();
   }
@@ -20511,16 +20611,27 @@ function summarizePersistentAccountSaveMetrics(input = {}) {
   const compactActiveProfile = input.compactActiveProfile || null;
   const logRows = Array.isArray(input.logRows) ? input.logRows : [];
   const matchRows = Array.isArray(input.matchRows) ? input.matchRows : [];
-  const fullProfilesBytes = measurePersistentJsonPayloadBytes(fullState.profiles || []);
+  const totalLogRows = Math.max(0, safeNumber(input.totalLogRows, logRows.length));
+  const totalMatchRows = Math.max(0, safeNumber(input.totalMatchRows, matchRows.length));
+  const shouldMeasureFullArchive = input.measureFullArchive === true;
+  const fullProfilesBytes = shouldMeasureFullArchive
+    ? measurePersistentJsonPayloadBytes(fullState.profiles || [])
+    : null;
   const cloudProfilesBytes = measurePersistentJsonPayloadBytes(state.profiles || []);
   return {
     reason: input.reason || "state",
     profiles: Array.isArray(state.profiles) ? state.profiles.length : 0,
     logRows: logRows.length,
     matchRows: matchRows.length,
+    totalLogRows,
+    totalMatchRows,
+    skippedLogRows: Math.max(0, totalLogRows - logRows.length),
+    skippedMatchRows: Math.max(0, totalMatchRows - matchRows.length),
     fullProfilesBytes,
     cloudProfilesBytes,
-    cloudProfilesReductionBytes: Math.max(0, fullProfilesBytes - cloudProfilesBytes),
+    cloudProfilesReductionBytes: Number.isFinite(fullProfilesBytes)
+      ? Math.max(0, fullProfilesBytes - cloudProfilesBytes)
+      : null,
     activeProfileBytes: measurePersistentJsonPayloadBytes(activeProfile || {}),
     compactActiveProfileBytes: measurePersistentJsonPayloadBytes(compactActiveProfile || {}),
     appStatePayloadBytes: measurePersistentJsonPayloadBytes({
@@ -20985,52 +21096,97 @@ function queuePersistentAccountSave(reason = "state") {
   }, 550);
 }
 
-function buildLogRowsForSupabase(userId) {
-  return (logEntries || []).map((entry) => ({
-    id: String(entry.id || uuid()),
-    user_id: userId,
-    profile_id: String(entry.profileId || activeProfileId || "default"),
-    match_id: entry.matchId || null,
-    agent: entry.agent || null,
-    role: entry.role || null,
-    map: entry.map || null,
-    focus: entry.focus || null,
-    rating: Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null,
-    mood: entry.mood || null,
-    team_comms: entry.teamComms || null,
-    self_comms: entry.selfComms || null,
-    notes: entry.notes || "",
-    warmup: Boolean(entry.warmup),
-    entry_json: entry,
-    created_at: entry.createdAt || nowISO(),
-    updated_at: nowISO()
-  }));
+function buildLogRowsForSupabase(userId, options = {}) {
+  const onlyRowIds = options.onlyRowIds instanceof Set ? options.onlyRowIds : null;
+  return (logEntries || [])
+    .filter(entry => !onlyRowIds || onlyRowIds.has(String(entry?.id || "").trim()))
+    .map((entry) => ({
+      id: String(entry.id || uuid()),
+      user_id: userId,
+      profile_id: String(entry.profileId || activeProfileId || "default"),
+      match_id: entry.matchId || null,
+      agent: entry.agent || null,
+      role: entry.role || null,
+      map: entry.map || null,
+      focus: entry.focus || null,
+      rating: Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null,
+      mood: entry.mood || null,
+      team_comms: entry.teamComms || null,
+      self_comms: entry.selfComms || null,
+      notes: entry.notes || "",
+      warmup: Boolean(entry.warmup),
+      entry_json: entry,
+      created_at: entry.createdAt || nowISO(),
+      updated_at: nowISO()
+    }));
 }
 
-function buildMatchRowsForSupabase(userId) {
+function getPersistentMatchArchiveIdentity(profile = {}, match = {}, index = 0) {
+  const source = match?.source || match?.metadata?.source || profile.importSource || "app";
+  const sourceKey = String(source || "").toLowerCase();
+  const riotMatchId = String(
+    match?.metadata?.matchId ||
+    match?.matchId ||
+    (sourceKey === "henrik_sync" ? match?.id : "") ||
+    ""
+  ).trim();
+  const matchId = String(riotMatchId || match?.id || `${profile.id}_${index}`);
+  return { source, riotMatchId, matchId };
+}
+
+function buildPersistentMatchArchiveRowId(userId = "", profile = {}, match = {}, index = 0) {
+  const identity = getPersistentMatchArchiveIdentity(profile, match, index);
+  const profileId = String(profile?.id || "default");
+  return (
+    globalThis.RankedCoachPersistencePolicy?.buildMatchArchiveRowId ||
+    globalThis.RankedCoachPersistencePolicy?.buildScopedMatchRowId
+  )?.(
+    String(userId || ""),
+    profileId,
+    identity.matchId,
+    identity.riotMatchId
+  ) || `${userId}:${profileId}:${identity.matchId}`;
+}
+
+function getPersistentMatchFingerprint(match = {}) {
+  try {
+    return JSON.stringify(match || {});
+  } catch (_error) {
+    return String(match?.id || match?.matchId || "");
+  }
+}
+
+function markChangedPersistentMatchRows(profile = {}, previousMatches = [], nextMatches = []) {
+  const userId = String(currentAuthUser?.id || "").trim();
+  if (!userId || !profile?.id) return;
+  const previousByRowId = new Map((Array.isArray(previousMatches) ? previousMatches : []).map((match, index) => [
+    buildPersistentMatchArchiveRowId(userId, profile, match, index),
+    match
+  ]));
+  const changedRowIds = (Array.isArray(nextMatches) ? nextMatches : [])
+    .map((match, index) => ({
+      id: buildPersistentMatchArchiveRowId(userId, profile, match, index),
+      match
+    }))
+    .filter(({ id, match }) => {
+      const previous = previousByRowId.get(id);
+      return !previous || (previous !== match && getPersistentMatchFingerprint(previous) !== getPersistentMatchFingerprint(match));
+    })
+    .map(({ id }) => id);
+  markPersistentMatchRowsDirty(changedRowIds);
+}
+
+function buildMatchRowsForSupabase(userId, options = {}) {
   const rows = [];
-  (profiles || []).forEach((profile) => {
+  const onlyRowIds = options.onlyRowIds instanceof Set ? options.onlyRowIds : null;
+  const sourceProfiles = Array.isArray(options.profiles) ? options.profiles : profiles;
+  (sourceProfiles || []).forEach((profile) => {
     (profile.matches || []).forEach((match, index) => {
-      const core = getMatchCore(match);
-      const source = match?.source || match?.metadata?.source || profile.importSource || "app";
-      const sourceKey = String(source || "").toLowerCase();
-      const riotMatchId = String(
-        match?.metadata?.matchId ||
-        match?.matchId ||
-        (sourceKey === "henrik_sync" ? match?.id : "") ||
-        ""
-      ).trim();
-      const matchId = String(riotMatchId || match?.id || `${profile.id}_${index}`);
+      const { source, riotMatchId } = getPersistentMatchArchiveIdentity(profile, match, index);
       const profileId = String(profile.id || "default");
-      const rowId = (
-        globalThis.RankedCoachPersistencePolicy?.buildMatchArchiveRowId ||
-        globalThis.RankedCoachPersistencePolicy?.buildScopedMatchRowId
-      )?.(
-        userId,
-        profileId,
-        matchId,
-        riotMatchId
-      ) || `${userId}:${profileId}:${matchId}`;
+      const rowId = buildPersistentMatchArchiveRowId(userId, profile, match, index);
+      if (onlyRowIds && !onlyRowIds.has(rowId)) return;
+      const core = getMatchCore(match);
       const rawRrChange = match?.rr;
       rows.push({
         id: rowId,
@@ -21059,6 +21215,33 @@ function buildMatchRowsForSupabase(userId) {
     });
   });
   return globalThis.RankedCoachPersistencePolicy?.dedupeRowsById?.(rows) || rows;
+}
+
+// A signed-in device normally downloads the normalized archive before it
+// writes anything. Treat those downloaded ids as the save baseline so a
+// cosmetic preference change does not re-upload every retained match and log.
+// Rows created locally during hydration (for example, a fresh recent-match
+// reflection prompt) stay dirty and are sent on the next save.
+function primeNormalizedRowSyncStateFromRemote(userId = "", normalizedState = null) {
+  if (!userId || !normalizedState?.recoveredFromNormalizedTables) return;
+  ensureNormalizedRowSyncState(userId);
+  const remoteLogIds = new Set((normalizedState.normalizedLogRowIds || []).map(id => String(id || "").trim()).filter(Boolean));
+  const remoteMatchIds = new Set((normalizedState.normalizedMatchRowIds || []).map(id => String(id || "").trim()).filter(Boolean));
+  const localLogRows = buildLogRowsForSupabase(userId);
+  const localMatchRows = buildMatchRowsForSupabase(userId);
+
+  backendSyncState.pendingNormalizedLogRowIds = new Set(
+    localLogRows
+      .map(row => String(row?.id || "").trim())
+      .filter(id => id && !remoteLogIds.has(id))
+  );
+  backendSyncState.pendingNormalizedMatchRowIds = new Set(
+    localMatchRows
+      .map(row => String(row?.id || "").trim())
+      .filter(id => id && !remoteMatchIds.has(id))
+  );
+  backendSyncState.normalizedLogRowsInitialized = true;
+  backendSyncState.normalizedMatchRowsInitialized = true;
 }
 
 async function savePersistentAccountState(reason = "state") {
@@ -21142,20 +21325,29 @@ async function performPersistentAccountStateSave(reason = "state") {
     profileId: activeProfileId
   });
 
-  const state = serializePersistentAccountState();
+  ensureNormalizedRowSyncState(user.id);
   const cloudState = serializePersistentAccountState({ cloudAccountState: true });
   const active = getActiveProfile();
   const compactActiveProfile = active ? compactProfilesForCloudAccountState([active])[0] || null : null;
-  const logRows = buildLogRowsForSupabase(user.id);
-  const matchRows = buildMatchRowsForSupabase(user.id);
+  const totalLogRows = (logEntries || []).length;
+  const totalMatchRows = (profiles || []).reduce((sum, profile) => sum + (Array.isArray(profile?.matches) ? profile.matches.length : 0), 0);
+  const logRowIdsToSave = backendSyncState.normalizedLogRowsInitialized
+    ? new Set(backendSyncState.pendingNormalizedLogRowIds)
+    : null;
+  const matchRowIdsToSave = backendSyncState.normalizedMatchRowsInitialized
+    ? new Set(backendSyncState.pendingNormalizedMatchRowIds)
+    : null;
+  const logRows = buildLogRowsForSupabase(user.id, { onlyRowIds: logRowIdsToSave });
+  const matchRows = buildMatchRowsForSupabase(user.id, { onlyRowIds: matchRowIdsToSave });
   const saveMetrics = summarizePersistentAccountSaveMetrics({
     reason,
-    fullState: state,
     state: cloudState,
     activeProfile: active,
     compactActiveProfile,
     logRows,
-    matchRows
+    matchRows,
+    totalLogRows,
+    totalMatchRows
   });
   backendSyncState.lastSaveMetrics = saveMetrics;
   backendSyncState.lastSaveFailures = [];
@@ -21210,6 +21402,7 @@ async function performPersistentAccountStateSave(reason = "state") {
     }
   }
 
+  const attemptedLogRowUpsert = logRows.length > 0;
   let logRowsSaved = true;
   if (logRows.length) {
     const { error } = await supabaseClient
@@ -21227,7 +21420,15 @@ async function performPersistentAccountStateSave(reason = "state") {
       });
     }
   }
-  if (logRowsSaved) await reconcilePersistentLogRows(user.id, logRows);
+  if (logRowsSaved) {
+    markNormalizedRowsSaved(user.id, "log", logRows);
+    // Reconciliation only runs when a log row actually changed. Passing the
+    // complete current ids keeps its demo-row cleanup behavior without
+    // treating a delta-only save as permission to delete the rest of history.
+    if (attemptedLogRowUpsert) {
+      await reconcilePersistentLogRows(user.id, buildLogRowsForSupabase(user.id));
+    }
+  }
   const pendingLogDeletesSaved = await flushPendingPersistentLogDeletes(user.id, reason);
   if (!pendingLogDeletesSaved) {
     allWritesSaved = false;
@@ -21239,6 +21440,8 @@ async function performPersistentAccountStateSave(reason = "state") {
   });
   if (!matchRowsSaved) {
     allWritesSaved = false;
+  } else {
+    markNormalizedRowsSaved(user.id, "match", matchRows);
   }
   // match_snapshots is the permanent archive. Do not prune older rows just
   // because the current client profile window got compacted or Henrik's
@@ -21462,6 +21665,8 @@ async function loadNormalizedPersistentAccountState(user) {
     activeProfileId: baseProfile?.id || recoveredProfiles[0]?.id || null,
     profiles: recoveredProfiles,
     logEntries: logRows.map(restorePersistentLogRow),
+    normalizedLogRowIds: logRows.map(row => String(row?.id || "")).filter(Boolean),
+    normalizedMatchRowIds: matchRows.map(row => String(row?.id || "")).filter(Boolean),
     recoveredFromNormalizedTables: true
   };
 }
@@ -21502,12 +21707,14 @@ async function loadPersistentAccountState(user) {
       themeBuilderUiState: data.theme_builder_ui_json
     }, normalizedState);
     applyPersistentAccountState(mergedState);
+    primeNormalizedRowSyncStateFromRemote(user.id, normalizedState);
     return { shouldSave: true, loadedRemote: true, reason: "auth-merge" };
   }
 
   const recoveredState = normalizedState;
   if (recoveredState) {
     applyPersistentAccountState(recoveredState);
+    primeNormalizedRowSyncStateFromRemote(user.id, recoveredState);
     return { shouldSave: true, loadedRemote: true, reason: "auth-normalized-recovery" };
   }
 
@@ -47885,6 +48092,7 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
   if (!isEditing || completesPlaceholder) {
     queueLoggingEntryReveal(entry.id, "save");
   }
+  markPersistentLogRowsDirty(entry.id);
   renderLogFeed();
   renderInsights();
   calculateFocusProgress();
@@ -48109,6 +48317,41 @@ function getLogSessions() {
     .sort((a, b) => new Date(b.key) - new Date(a.key));
 }
 
+function getLogSessionsForRender() {
+  const allSessions = getLogSessions();
+  const filteredSessions = allSessions.filter(session =>
+    activeLogSessionFilter === "all" || session.key === activeLogSessionFilter
+  );
+  const totalEntries = filteredSessions.reduce((sum, session) => sum + session.entries.length, 0);
+  if (activeLogSessionFilter !== "all") {
+    return {
+      sessions: filteredSessions,
+      totalEntries,
+      renderedEntries: totalEntries,
+      hiddenEntries: 0,
+      totalSessions: filteredSessions.length
+    };
+  }
+
+  let remainingEntries = LOG_FEED_ALL_HISTORY_MAX_ENTRIES;
+  const sessions = [];
+  for (const session of filteredSessions.slice(0, LOG_FEED_ALL_HISTORY_MAX_SESSIONS)) {
+    if (remainingEntries <= 0) break;
+    const entries = session.entries.slice(0, remainingEntries);
+    if (!entries.length) continue;
+    sessions.push({ ...session, entries });
+    remainingEntries -= entries.length;
+  }
+  const renderedEntries = sessions.reduce((sum, session) => sum + session.entries.length, 0);
+  return {
+    sessions,
+    totalEntries,
+    renderedEntries,
+    hiddenEntries: Math.max(0, totalEntries - renderedEntries),
+    totalSessions: filteredSessions.length
+  };
+}
+
 function getLogAverageSummary() {
   const entries = getProfileLogEntries(activeProfileId, { authoredOnly: true });
   const now = new Date();
@@ -48129,12 +48372,22 @@ function getLogAverageSummary() {
   };
 }
 
-function renderLogFeedFootnote() {
+function renderLogFeedFootnote(options = {}) {
   const summary = getLogAverageSummary();
-  const totalEntries = getProfileLogEntries().length;
-  const sessionCount = getLogSessions().length;
+  const totalEntries = Number.isFinite(Number(options.totalEntries))
+    ? Number(options.totalEntries)
+    : getProfileLogEntries().length;
+  const renderedEntries = Number.isFinite(Number(options.renderedEntries))
+    ? Number(options.renderedEntries)
+    : totalEntries;
+  const hiddenEntries = Math.max(0, totalEntries - renderedEntries);
+  const sessionCount = Number.isFinite(Number(options.totalSessions))
+    ? Number(options.totalSessions)
+    : getLogSessions().length;
   const scopeCopy = activeLogSessionFilter === "all" && totalEntries
-    ? ` Showing all ${totalEntries} synced log${totalEntries === 1 ? "" : "s"} across ${sessionCount} session${sessionCount === 1 ? "" : "s"}.`
+    ? hiddenEntries
+      ? ` Showing the newest ${renderedEntries} of ${totalEntries} synced logs across ${sessionCount} sessions. Choose a date in the calendar for older logs.`
+      : ` Showing all ${totalEntries} synced log${totalEntries === 1 ? "" : "s"} across ${sessionCount} session${sessionCount === 1 ? "" : "s"}.`
     : "";
   return `
     <div class="log-feed-footnote">
@@ -48526,16 +48779,15 @@ function renderLogFeed(options = {}){
     return;
   }
 
-  const sessions = getLogSessions().filter(session =>
-    activeLogSessionFilter === "all" || session.key === activeLogSessionFilter
-  );
+  const renderScope = getLogSessionsForRender();
+  const sessions = renderScope.sessions;
 
   if(!sessions.length){
     container.innerHTML = `
       <div class="log-empty">
         No logs for ${escapeHtml(formatCurrentSessionLabel(activeLogSessionFilter))}.
       </div>
-      ${renderLogFeedFootnote()}
+      ${renderLogFeedFootnote(renderScope)}
     `;
     return;
   }
@@ -48732,7 +48984,7 @@ function renderLogFeed(options = {}){
   });
 
   container.appendChild(fragment);
-  container.insertAdjacentHTML("beforeend", renderLogFeedFootnote());
+  container.insertAdjacentHTML("beforeend", renderLogFeedFootnote(renderScope));
   flushLoggingEntryRevealAnimations(container, revealJobs);
 
 }
@@ -54255,7 +54507,7 @@ function addRRChange(delta, meta = {}){
 
   const rr = safeNumber(delta);
 
-  matches.push({
+  const addedMatch = {
 
     id: uuid(),
 
@@ -54280,7 +54532,10 @@ function addRRChange(delta, meta = {}){
 
     createdAt: nowISO()
 
-  });
+  };
+  matches.push(addedMatch);
+  const activeProfile = getActiveProfile?.();
+  if (activeProfile) markPersistentMatchRowsDirty(buildPersistentMatchArchiveRowId(currentAuthUser?.id, activeProfile, addedMatch, matches.length - 1));
 
   recomputeFromMatches();
 
