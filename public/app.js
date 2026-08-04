@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260804-raw-rehydrate-gate-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260804-uncapped-backfill-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -14676,8 +14676,8 @@ function matchRecordNeedsStoredRawRehydrate(record = {}, options = {}) {
   if (backfillUnavailable && currentVersion && options.force !== true) return false;
   if (!hasStoredRaw || !rawPayloadComplete) return true;
   return options.force === true
-    || matchRecordNeedsHsBackfill(record)
-    || matchRecordNeedsWeaponBackfill(record)
+    || (!getMatchHsBackfillUnavailable(record) && matchRecordNeedsHsBackfill(record))
+    || (!getMatchWeaponBackfillUnavailable(record) && matchRecordNeedsWeaponBackfill(record))
     || matchRecordNeedsQueueBackfill(record)
     || !currentVersion;
 }
@@ -14742,6 +14742,23 @@ function getMatchWeaponBackfillUnavailable(record = {}) {
   );
 }
 
+function getMatchHsBackfillUnavailable(record = {}) {
+  return Boolean(
+    record?.hsBackfillUnavailable === true
+    || record?.importMeta?.hsBackfillUnavailable === true
+  );
+}
+
+function getMatchMetadataBackfillUnavailable(match = {}) {
+  const record = getMatchSummaryRecord(match);
+  return Boolean(
+    match?.metadataBackfillUnavailable === true
+    || match?.metadata?.metadataBackfillUnavailable === true
+    || record?.metadataBackfillUnavailable === true
+    || record?.importMeta?.metadataBackfillUnavailable === true
+  );
+}
+
 function getMatchSummaryStableId(match = {}) {
   return String(
     match?.matchId
@@ -14756,16 +14773,132 @@ function getMatchSummaryStableId(match = {}) {
 
 function getWeaponBackfillMatchIds(matchList = []) {
   return [...new Set((Array.isArray(matchList) ? matchList : [])
-    .filter(match => matchRecordNeedsWeaponBackfill(getMatchSummaryRecord(match)))
+    .filter(match => {
+      const record = getMatchSummaryRecord(match);
+      return !getMatchWeaponBackfillUnavailable(record)
+        && matchRecordNeedsWeaponBackfill(record);
+    })
     .map(getMatchSummaryStableId)
     .filter(Boolean))];
 }
 
 function getHsBackfillMatchIds(matchList = []) {
   return [...new Set((Array.isArray(matchList) ? matchList : [])
-    .filter(match => matchRecordNeedsHsBackfill(getMatchSummaryRecord(match)))
+    .filter(match => {
+      const record = getMatchSummaryRecord(match);
+      return !getMatchHsBackfillUnavailable(record)
+        && matchRecordNeedsHsBackfill(record);
+    })
     .map(getMatchSummaryStableId)
     .filter(Boolean))];
+}
+
+function getMetadataBackfillMatchIds(matchList = []) {
+  return [...new Set((Array.isArray(matchList) ? matchList : [])
+    .filter(match => !getMatchSeasonKey(match) && !getMatchMetadataBackfillUnavailable(match))
+    .map(getMatchSummaryStableId)
+    .filter(Boolean))];
+}
+
+function getStableBackfillMatchIds(matchIds = []) {
+  return [...new Set((Array.isArray(matchIds) ? matchIds : [])
+    .map(value => String(value || "").trim())
+    .filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function inspectProfileMatchBackfill(profile = {}, matchList = [], options = {}) {
+  const list = Array.isArray(matchList) ? matchList : [];
+  const isConfirmed = options.force !== true
+    && safeNumber(profile?.matchBackfillScanVersion) >= MATCH_BACKFILL_SCAN_VERSION
+    && Math.max(0, safeNumber(profile?.matchBackfillScanMatchCount)) === list.length;
+
+  if (isConfirmed) {
+    return {
+      needsBackfill: false,
+      checked: 0,
+      skipped: true,
+      metadataMatchIds: [],
+      weaponMatchIds: [],
+      hsMatchIds: []
+    };
+  }
+
+  const metadataMatchIds = getMetadataBackfillMatchIds(list);
+  const weaponMatchIds = getWeaponBackfillMatchIds(list);
+  const hsMatchIds = getHsBackfillMatchIds(list);
+  return {
+    needsBackfill: metadataMatchIds.length > 0 || weaponMatchIds.length > 0 || hsMatchIds.length > 0,
+    checked: list.length,
+    skipped: false,
+    metadataMatchIds,
+    weaponMatchIds,
+    hsMatchIds
+  };
+}
+
+function completeProfileMatchBackfillScan(profile = {}, matchList = []) {
+  if (!profile || typeof profile !== "object") return;
+  profile.matchBackfillScanVersion = MATCH_BACKFILL_SCAN_VERSION;
+  profile.matchBackfillScanCompleteAt = nowISO();
+  profile.matchBackfillScanMatchCount = Array.isArray(matchList) ? matchList.length : 0;
+  profile.matchBackfillRefreshCursor = 0;
+}
+
+function prepareProfileMatchBackfillScan(profile = {}, matchList = [], options = {}) {
+  const inspection = inspectProfileMatchBackfill(profile, matchList, options);
+  if (inspection.skipped) return { ...inspection, changed: false };
+
+  if (!inspection.needsBackfill) {
+    const confirmationNeedsUpdate = safeNumber(profile?.matchBackfillScanVersion) < MATCH_BACKFILL_SCAN_VERSION
+      || Math.max(0, safeNumber(profile?.matchBackfillScanMatchCount)) !== (Array.isArray(matchList) ? matchList.length : 0);
+    if (confirmationNeedsUpdate) completeProfileMatchBackfillScan(profile, matchList);
+    return { ...inspection, changed: confirmationNeedsUpdate };
+  }
+
+  const hadConfirmation = safeNumber(profile?.matchBackfillScanVersion) > 0
+    || Math.max(0, safeNumber(profile?.matchBackfillScanMatchCount)) > 0
+    || String(profile?.matchBackfillScanCompleteAt || "").trim();
+  if (hadConfirmation) {
+    profile.matchBackfillScanVersion = 0;
+    profile.matchBackfillScanCompleteAt = "";
+    profile.matchBackfillScanMatchCount = 0;
+  }
+  return { ...inspection, changed: Boolean(hadConfirmation) };
+}
+
+function takeRotatingMatchBackfillBatch(profile = {}, matchIds = [], limit = MATCH_BACKFILL_REFRESH_LIMIT) {
+  const stableMatchIds = getStableBackfillMatchIds(matchIds);
+  if (!stableMatchIds.length) {
+    if (profile && typeof profile === "object") profile.matchBackfillRefreshCursor = 0;
+    return [];
+  }
+  const batchSize = Math.max(1, Math.min(stableMatchIds.length, Math.floor(Number(limit) || MATCH_BACKFILL_REFRESH_LIMIT)));
+  const cursor = Math.max(0, Math.floor(safeNumber(profile?.matchBackfillRefreshCursor))) % stableMatchIds.length;
+  const selected = Array.from({ length: batchSize }, (_item, index) => stableMatchIds[(cursor + index) % stableMatchIds.length]);
+  if (profile && typeof profile === "object") {
+    profile.matchBackfillRefreshCursor = (cursor + selected.length) % stableMatchIds.length;
+  }
+  return selected;
+}
+
+function buildProfileMatchRefreshPlan(profile = {}, sources = {}, options = {}) {
+  const candidateIds = getStableBackfillMatchIds([
+    ...(sources.metadataMatchIds || []),
+    ...(sources.weaponMatchIds || []),
+    ...(sources.hsMatchIds || []),
+    ...(sources.storedRawMatchIds || [])
+  ]);
+  const refreshMatchIds = takeRotatingMatchBackfillBatch(
+    profile,
+    candidateIds,
+    options.limit ?? MATCH_BACKFILL_REFRESH_LIMIT
+  );
+  return {
+    candidateIds,
+    refreshMatchIds,
+    limit: Math.max(1, Math.floor(Number(options.limit) || MATCH_BACKFILL_REFRESH_LIMIT))
+  };
 }
 
 function markWeaponBackfillUnavailable(matchList = [], matchIds = []) {
@@ -14822,6 +14955,40 @@ function markHsBackfillUnavailable(matchList = [], matchIds = []) {
       metadata: {
         ...(match.metadata || {}),
         hsBackfillUnavailable: true
+      }
+    };
+  });
+}
+
+function markMetadataBackfillUnavailable(matchList = [], matchIds = []) {
+  const targets = new Set((Array.isArray(matchIds) ? matchIds : [])
+    .map(value => String(value || "").trim())
+    .filter(Boolean));
+  if (!targets.size) return Array.isArray(matchList) ? matchList : [];
+  const checkedAt = nowISO();
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const matchId = getMatchSummaryStableId(match);
+    if (!targets.has(matchId) || getMatchSeasonKey(match) || getMatchMetadataBackfillUnavailable(match)) return match;
+    const record = getMatchSummaryRecord(match);
+    const nextRecord = record && typeof record === "object"
+      ? {
+          ...record,
+          metadataBackfillUnavailable: true,
+          metadataBackfillCheckedAt: checkedAt,
+          importMeta: {
+            ...(record.importMeta || {}),
+            metadataBackfillUnavailable: true,
+            metadataBackfillCheckedAt: checkedAt
+          }
+        }
+      : null;
+    return {
+      ...match,
+      ...(nextRecord ? { matchRecord: nextRecord } : {}),
+      metadata: {
+        ...(match.metadata || {}),
+        metadataBackfillUnavailable: true,
+        metadataBackfillCheckedAt: checkedAt
       }
     };
   });
@@ -15057,6 +15224,27 @@ if (globalThis.__rankedCoachEnablePerfTestHooks) {
     getActiveProfileStoredRawRehydrateState() {
       const profile = getActiveProfile?.();
       return inspectProfileStoredRawRehydrate(profile, profile?.matches || []);
+    },
+    prepareActiveProfileMatchBackfillScan(options = {}) {
+      const profile = getActiveProfile?.();
+      return prepareProfileMatchBackfillScan(profile, profile?.matches || [], options);
+    },
+    getActiveProfileMatchBackfillState(options = {}) {
+      const profile = getActiveProfile?.();
+      return inspectProfileMatchBackfill(profile, profile?.matches || [], options);
+    },
+    buildActiveProfileMatchRefreshPlan(options = {}) {
+      const profile = getActiveProfile?.();
+      const inspection = inspectProfileMatchBackfill(profile, profile?.matches || [], options);
+      return {
+        inspection,
+        ...buildProfileMatchRefreshPlan(profile, {
+          metadataMatchIds: inspection.metadataMatchIds,
+          weaponMatchIds: inspection.weaponMatchIds,
+          hsMatchIds: inspection.hsMatchIds,
+          storedRawMatchIds: options.storedRawMatchIds || []
+        }, options)
+      };
     },
     getActiveProfileForStoredRawTest() {
       return getActiveProfile?.() || null;
@@ -18977,6 +19165,11 @@ const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
 const HENRIK_HISTORY_BACKFILL_VERSION = 4;
 const STORED_RAW_REHYDRATE_VERSION = 2;
+// Historical records are immutable. This version gives each account one
+// deliberate pass after a backfill formula changes, then avoids walking its
+// entire retained archive on every normal sync.
+const MATCH_BACKFILL_SCAN_VERSION = 1;
+const MATCH_BACKFILL_REFRESH_LIMIT = 16;
 const RIOT_INCOMPLETE_RAW_RETRY_MS = 45000;
 const RIOT_INCOMPLETE_RAW_RETRY_LIMIT = 2;
 const HENRIK_HISTORY_MAX_START = 1000;
@@ -50303,6 +50496,10 @@ function normalizeProfileRecord(profile = {}) {
     storedRawRehydrateCompleteAt: String(profile.storedRawRehydrateCompleteAt || ""),
     storedRawRehydrateMatchCount: Math.max(0, safeNumber(profile.storedRawRehydrateMatchCount)),
     storedRawIncompleteRetryCount: Math.max(0, safeNumber(profile.storedRawIncompleteRetryCount)),
+    matchBackfillScanVersion: Math.max(0, safeNumber(profile.matchBackfillScanVersion)),
+    matchBackfillScanCompleteAt: String(profile.matchBackfillScanCompleteAt || ""),
+    matchBackfillScanMatchCount: Math.max(0, safeNumber(profile.matchBackfillScanMatchCount)),
+    matchBackfillRefreshCursor: Math.max(0, Math.floor(safeNumber(profile.matchBackfillRefreshCursor))),
     lastDailyProfileSyncDate: String(profile.lastDailyProfileSyncDate || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
@@ -58099,12 +58296,10 @@ async function importActiveProfileMatches(options = {}){
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
-    const metadataRefreshMatchIds = existingMatches
-      .filter(match => !getMatchSeasonKey(match))
-      .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
-      .filter(Boolean);
-    const weaponBackfillMatchIds = getWeaponBackfillMatchIds(existingMatches);
-    const hsBackfillMatchIds = getHsBackfillMatchIds(existingMatches);
+    const profileBackfillPrep = prepareProfileMatchBackfillScan(profile, existingMatches);
+    const metadataRefreshMatchIds = profileBackfillPrep.metadataMatchIds;
+    const weaponBackfillMatchIds = profileBackfillPrep.weaponMatchIds;
+    const hsBackfillMatchIds = profileBackfillPrep.hsMatchIds;
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
     const beginsNewHistoryVersion = needsHistoryVersionUpgrade
       && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
@@ -58122,13 +58317,17 @@ async function importActiveProfileMatches(options = {}){
     // pass, target the outstanding records directly.
     const storedRawRefreshMatchIds = needsHistoryBackfill
       ? []
-      : (storedRawPrep.fetchMatchIds || []).slice(0, 12);
-    const refreshMatchIds = [...new Set([
-      ...metadataRefreshMatchIds,
-      ...weaponBackfillMatchIds,
-      ...hsBackfillMatchIds,
-      ...storedRawRefreshMatchIds
-    ])];
+      : (storedRawPrep.fetchMatchIds || []);
+    // Keep every backfill reason behind one rotating cap. The old code capped
+    // only stored raw payloads, allowing HS, weapon, and metadata scans to
+    // enqueue an unbounded number of identical raw Henrik requests.
+    const refreshPlan = buildProfileMatchRefreshPlan(profile, {
+      metadataMatchIds: metadataRefreshMatchIds,
+      weaponMatchIds: weaponBackfillMatchIds,
+      hsMatchIds: hsBackfillMatchIds,
+      storedRawMatchIds: storedRawRefreshMatchIds
+    });
+    const refreshMatchIds = refreshPlan.refreshMatchIds;
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
@@ -58187,6 +58386,9 @@ async function importActiveProfileMatches(options = {}){
     const unrecoveredHsBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => hsBackfillMatchIds.includes(value));
+    const unrecoveredMetadataBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
+      .map(value => String(value || "").trim())
+      .filter(value => metadataRefreshMatchIds.includes(value));
     const unrecoveredStoredRawBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => storedRawRefreshMatchIds.includes(value));
@@ -58199,6 +58401,9 @@ async function importActiveProfileMatches(options = {}){
       }
       if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markHsBackfillUnavailable(enrichedExisting, unrecoveredHsBackfillIds);
+      }
+      if (unrecoveredMetadataBackfillIds.length && pullResult?.refreshSearchComplete) {
+        enrichedExisting = markMetadataBackfillUnavailable(enrichedExisting, unrecoveredMetadataBackfillIds);
       }
       if (unrecoveredStoredRawBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markStoredRawPayloadBackfillUnavailable(enrichedExisting, unrecoveredStoredRawBackfillIds);
@@ -58223,6 +58428,7 @@ async function importActiveProfileMatches(options = {}){
             skipBackend: true
           });
         }
+        prepareProfileMatchBackfillScan(profile, profile.matches, { purgeDemo: false });
       }
       saveProfiles();
       if (options.deferSurfaceRefresh !== true) {
@@ -58270,6 +58476,9 @@ async function importActiveProfileMatches(options = {}){
     }
     if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markHsBackfillUnavailable(matchList, unrecoveredHsBackfillIds);
+    }
+    if (unrecoveredMetadataBackfillIds.length && pullResult?.refreshSearchComplete) {
+      matchList = markMetadataBackfillUnavailable(matchList, unrecoveredMetadataBackfillIds);
     }
     if (unrecoveredStoredRawBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markStoredRawPayloadBackfillUnavailable(matchList, unrecoveredStoredRawBackfillIds);
@@ -58321,6 +58530,7 @@ async function importActiveProfileMatches(options = {}){
           skipBackend: true
         });
       }
+      prepareProfileMatchBackfillScan(profile, profile.matches, { purgeDemo: false });
       saveProfiles();
     }
     scheduleRiotAutoSync();

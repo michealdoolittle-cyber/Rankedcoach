@@ -363,9 +363,78 @@ async function run() {
       `Records without a stored raw payload must be routed to Henrik backfill: ${JSON.stringify(missingPayloadResult)}`);
     assert.notEqual(await page.evaluate(() => window.RankedCoachPerfTestHooks.getActiveProfileStoredRawVersion()), 2,
       "A profile with a missing raw payload must not be stamped as fully rehydrated.");
+
+    const boundedBackfill = await page.evaluate(() => {
+      const profile = window.RankedCoachPerfTestHooks.getActiveProfileForStoredRawTest();
+      const template = JSON.parse(JSON.stringify(profile.matches[1]));
+      profile.matches = Array.from({ length: 200 }, (_item, index) => {
+        const id = `hs-backfill-${String(index).padStart(3, "0")}`;
+        const match = JSON.parse(JSON.stringify(template));
+        match.id = id;
+        match.matchId = id;
+        match.hsPercent = null;
+        match.metadata.matchId = id;
+        match.matchRecord.id = id;
+        match.matchRecord.legacyMatchId = id;
+        match.matchRecord.stats.hsPercent = null;
+        match.matchRecord.importMeta = {};
+        return match;
+      });
+      profile.matchBackfillScanVersion = 0;
+      profile.matchBackfillScanMatchCount = 0;
+      profile.matchBackfillScanCompleteAt = "";
+      profile.matchBackfillRefreshCursor = 0;
+      const first = window.RankedCoachPerfTestHooks.buildActiveProfileMatchRefreshPlan({ limit: 16 });
+      const second = window.RankedCoachPerfTestHooks.buildActiveProfileMatchRefreshPlan({ limit: 16 });
+      const firstBatchSet = new Set(first.refreshMatchIds);
+      const nextExpectedId = first.candidateIds[16];
+      profile.matches.forEach(match => {
+        match.hsPercent = 25;
+        match.matchRecord.stats.hsPercent = 25;
+      });
+      const completed = window.RankedCoachPerfTestHooks.prepareActiveProfileMatchBackfillScan();
+      const skipped = window.RankedCoachPerfTestHooks.prepareActiveProfileMatchBackfillScan();
+      profile.matchBackfillScanVersion = 0;
+      const versionInvalidated = window.RankedCoachPerfTestHooks.prepareActiveProfileMatchBackfillScan();
+      const added = JSON.parse(JSON.stringify(profile.matches[0]));
+      added.id = "hs-backfill-newly-added";
+      added.matchId = added.id;
+      added.metadata.matchId = added.id;
+      added.matchRecord.id = added.id;
+      added.matchRecord.legacyMatchId = added.id;
+      profile.matches.push(added);
+      const countInvalidated = window.RankedCoachPerfTestHooks.prepareActiveProfileMatchBackfillScan();
+      const completePlan = window.RankedCoachPerfTestHooks.buildActiveProfileMatchRefreshPlan({ limit: 16 });
+      return {
+        first,
+        second,
+        overlap: second.refreshMatchIds.filter(id => firstBatchSet.has(id)),
+        nextExpectedId,
+        completed,
+        skipped,
+        versionInvalidated,
+        countInvalidated,
+        completePlan
+      };
+    });
+    assert.equal(boundedBackfill.first.inspection.hsMatchIds.length, 200, JSON.stringify(boundedBackfill.first));
+    assert.equal(boundedBackfill.first.refreshMatchIds.length, 16, JSON.stringify(boundedBackfill.first));
+    assert.equal(boundedBackfill.second.refreshMatchIds.length, 16, JSON.stringify(boundedBackfill.second));
+    assert.deepEqual(boundedBackfill.overlap, [], `A capped backfill must rotate instead of repeating the same batch: ${JSON.stringify(boundedBackfill)}`);
+    assert.equal(boundedBackfill.second.refreshMatchIds.includes(boundedBackfill.nextExpectedId), true,
+      `The first match excluded by the cap must be selected on the next sync: ${JSON.stringify(boundedBackfill)}`);
+    assert.equal(boundedBackfill.completed.checked, 200, JSON.stringify(boundedBackfill.completed));
+    assert.equal(boundedBackfill.completed.needsBackfill, false, JSON.stringify(boundedBackfill.completed));
+    assert.equal(boundedBackfill.skipped.skipped, true, JSON.stringify(boundedBackfill.skipped));
+    assert.equal(boundedBackfill.skipped.checked, 0, JSON.stringify(boundedBackfill.skipped));
+    assert.equal(boundedBackfill.versionInvalidated.skipped, false, JSON.stringify(boundedBackfill.versionInvalidated));
+    assert.equal(boundedBackfill.versionInvalidated.checked, 200, JSON.stringify(boundedBackfill.versionInvalidated));
+    assert.equal(boundedBackfill.countInvalidated.skipped, false, JSON.stringify(boundedBackfill.countInvalidated));
+    assert.equal(boundedBackfill.countInvalidated.checked, 201, JSON.stringify(boundedBackfill.countInvalidated));
+    assert.deepEqual(boundedBackfill.completePlan.refreshMatchIds, [], JSON.stringify(boundedBackfill.completePlan));
     assert.deepEqual(issues, []);
 
-    console.log(`Stats rederive performance passed: profile load rehydrated 1 stale record, repeated Stats opens did 0 raw rehydrates, first open ${firstStatsOpenMs.toFixed(1)}ms, repeat migration no-opped, and a no-payload record was routed to Henrik backfill.`);
+    console.log(`Stats rederive performance passed: profile load rehydrated 1 stale record, repeated Stats opens did 0 raw rehydrates, first open ${firstStatsOpenMs.toFixed(1)}ms, repeat migration no-opped, no-payload records were routed to Henrik backfill, and the combined refresh queue capped/rotated 200 HS backfills.`);
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
