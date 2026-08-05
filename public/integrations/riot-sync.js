@@ -113,6 +113,28 @@
     };
   }
 
+  function createRawHydrationFailure(matchId = "", error = null, options = {}) {
+    const skipped = options.skipped === true;
+    const circuit = options.circuit || {};
+    return {
+      matchId,
+      stage: "raw-round-data",
+      error: skipped
+        ? "Optional round detail was skipped after the data provider became temporarily unavailable."
+        : error?.message || "Round detail could not be loaded.",
+      code: String(error?.code || circuit?.code || (skipped ? "raw_hydration_circuit_open" : "henrik_request_failed")),
+      status: Number(error?.status || circuit?.status) || 0,
+      retryable: skipped || isTransientSyncError(error),
+      skipped
+    };
+  }
+
+  function shouldOpenRawHydrationCircuit(failure = {}) {
+    return failure?.stage === "raw-round-data"
+      && failure?.skipped !== true
+      && isTransientSyncError(failure);
+  }
+
   async function hydrateStoredHenrikMatch(descriptor = {}, context = {}) {
     const matchId = getStoredRefreshMatchId(descriptor);
     const record = getStoredRefreshRecord(descriptor);
@@ -122,6 +144,16 @@
       matchId: record?.matchId || matchId
     };
     const localContext = getStoredRefreshRankContext(record);
+    if (context.rawHydrationCircuit?.open) {
+      return {
+        record: fallbackRecord,
+        failure: createRawHydrationFailure(matchId, null, {
+          skipped: true,
+          circuit: context.rawHydrationCircuit
+        }),
+        directRawSucceeded: false
+      };
+    }
     try {
       if (!context.hydrateRoundData) {
         return { record: fallbackRecord, failure: null, directRawSucceeded: false };
@@ -149,11 +181,7 @@
     } catch (error) {
       return {
         record: fallbackRecord,
-        failure: {
-          matchId,
-          stage: "raw-round-data",
-          error: error?.message || "Round detail could not be loaded."
-        },
+        failure: createRawHydrationFailure(matchId, error),
         directRawSucceeded: false
       };
     }
@@ -170,6 +198,15 @@
         mmrSnapshot: context.mmrByMatchId?.get(matchId) || null
       });
       if (!context.hydrateRoundData) return { record: v4Record, failure: null };
+      if (context.rawHydrationCircuit?.open) {
+        return {
+          record: v4Record,
+          failure: createRawHydrationFailure(matchId, null, {
+            skipped: true,
+            circuit: context.rawHydrationCircuit
+          })
+        };
+      }
 
       try {
         const rawPayload = await requestJsonWithRetry("/api/henrik/raw", { matchId, region: context.region }, {
@@ -198,11 +235,7 @@
       } catch (error) {
         return {
           record: v4Record,
-          failure: {
-            matchId,
-            stage: "raw-round-data",
-            error: error?.message || "Round detail could not be loaded."
-          }
+          failure: createRawHydrationFailure(matchId, error)
         };
       }
     } catch (error) {
@@ -216,6 +249,13 @@
   async function hydratePendingHenrikMatches(pendingMatches = [], context = {}) {
     const source = Array.isArray(pendingMatches) ? pendingMatches : [];
     const hydrated = new Array(source.length);
+    const rawHydrationCircuit = context.rawHydrationCircuit || {
+      open: false,
+      code: "",
+      status: 0,
+      message: "",
+      matchId: ""
+    };
     let nextIndex = 0;
     const workerCount = Math.min(source.length, getRawHydrationConcurrency(context.options));
 
@@ -223,7 +263,18 @@
       while (nextIndex < source.length) {
         const index = nextIndex;
         nextIndex += 1;
-        hydrated[index] = await hydratePendingHenrikMatch(source[index], context);
+        const result = await hydratePendingHenrikMatch(source[index], {
+          ...context,
+          rawHydrationCircuit
+        });
+        hydrated[index] = result;
+        if (!rawHydrationCircuit.open && shouldOpenRawHydrationCircuit(result?.failure)) {
+          rawHydrationCircuit.open = true;
+          rawHydrationCircuit.code = String(result.failure.code || "henrik_request_failed");
+          rawHydrationCircuit.status = Number(result.failure.status) || 0;
+          rawHydrationCircuit.message = String(result.failure.error || "");
+          rawHydrationCircuit.matchId = String(result.failure.matchId || "");
+        }
       }
     }
 
@@ -674,6 +725,13 @@
     const rawHydrationConcurrency = getRawHydrationConcurrency(options);
     const rawMatchTimeoutMs = getRawHydrationTimeoutMs(options);
     const rawMatchRetryDelaysMs = getRawHydrationRetryDelays(options);
+    const rawHydrationCircuit = {
+      open: false,
+      code: "",
+      status: 0,
+      message: "",
+      matchId: ""
+    };
     const hydratedPendingMatches = await hydratePendingHenrikMatches(hydrationQueue, {
       puuid,
       region,
@@ -681,6 +739,7 @@
       hydrateRoundData,
       rawMatchTimeoutMs,
       rawMatchRetryDelaysMs,
+      rawHydrationCircuit,
       options
     });
     const directRefreshSucceededMatchIds = [];
@@ -718,6 +777,12 @@
       refreshSearchComplete,
       rawHydrationConcurrency: hydrateRoundData ? rawHydrationConcurrency : 0,
       rawMatchTimeoutMs: hydrateRoundData ? rawMatchTimeoutMs : 0,
+      rawHydrationCircuit: {
+        opened: rawHydrationCircuit.open === true,
+        code: rawHydrationCircuit.code,
+        status: rawHydrationCircuit.status,
+        skipped: failures.filter(failure => failure?.skipped === true).length
+      },
       mmrHistory,
       mmrHistoryError: Object.entries(mmrHistoryErrors)
         .filter(([, message]) => message)

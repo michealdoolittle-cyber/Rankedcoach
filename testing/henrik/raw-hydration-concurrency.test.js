@@ -76,16 +76,24 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
   });
   const elapsedMs = Date.now() - startedAt;
 
-  assert.equal(rawCalls, matchIds.length);
+  assert.ok(rawCalls >= 4 && rawCalls < matchIds.length,
+    `a transient provider failure should open the shared circuit before all optional raw requests run (${rawCalls}/${matchIds.length})`);
   assert.equal(rawMaxInFlight, 3, "raw payload hydration should use the configured bounded pool");
   assert.ok(elapsedMs < 350, `parallel batch should not take sequential time (${elapsedMs}ms)`);
   assert.equal(result.rawHydrationConcurrency, 3);
   assert.equal(result.rawMatchTimeoutMs, 9000);
+  assert.equal(result.rawHydrationCircuit?.opened, true);
+  assert.equal(result.rawHydrationCircuit?.code, "henrik_503");
+  assert.ok(result.rawHydrationCircuit?.skipped > 0);
   assert.equal(result.records.length, matchIds.length, "one raw failure must retain its aggregate V4 record");
   assert.deepEqual(result.records.map(record => record.id), matchIds, "parallel hydration must preserve history order");
   assert.equal(result.records.find(record => record.id === "raw-batch-4").origin, "aggregate");
-  assert.equal(result.failures.filter(failure => failure.stage === "raw-round-data").length, 1);
-  assert.equal(result.failures.find(failure => failure.matchId === "raw-batch-4").error, "temporary raw payload failure");
+  const rawFailures = result.failures.filter(failure => failure.stage === "raw-round-data");
+  const providerFailures = rawFailures.filter(failure => failure.skipped !== true);
+  assert.equal(providerFailures.length, 1);
+  assert.equal(providerFailures[0].matchId, "raw-batch-4");
+  assert.equal(providerFailures[0].error, "temporary raw payload failure");
+  assert.ok(rawFailures.filter(failure => failure.skipped === true).length > 0);
 
   console.log(`Raw hydration concurrency passed: ${rawMaxInFlight} in flight, ${elapsedMs}ms for ${matchIds.length} matches, and failure fallback retained the aggregate record.`);
 })().catch(error => {

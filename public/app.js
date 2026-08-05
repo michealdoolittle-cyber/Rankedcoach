@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260805-logging-desktop-refresh-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260805-logging-launcher-sync-02";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -2388,7 +2388,7 @@ function setLoggingFormMode(mode = "postmatch") {
   if (saveButton) saveButton.textContent = isWarmup ? "Save Warm-Up" : "Save Reflection";
 }
 
-function setDesktopLoggingLauncherHeader() {
+function setLoggingLauncherHeader() {
   const cardTitle = document.getElementById("loggingCardTitle");
   const cardSub = document.getElementById("loggingCardSub");
   if (cardTitle) cardTitle.textContent = "Session Log";
@@ -2402,8 +2402,8 @@ function setDesktopLoggingView(view = "launcher", options = {}) {
   page.dataset.loggingDesktopView = resolvedView;
   if (resolvedView === "launcher") {
     setLoggingFormMode("postmatch");
-    setDesktopLoggingLauncherHeader();
-    renderDesktopLoggingLauncher();
+    setLoggingLauncherHeader();
+    renderLoggingLauncher();
   }
   if (options.scroll === true) {
     window.requestAnimationFrame(() => {
@@ -2415,11 +2415,10 @@ function setDesktopLoggingView(view = "launcher", options = {}) {
   }
 }
 
-function renderDesktopLoggingLauncher() {
+function renderLoggingLauncher() {
   const page = document.getElementById("page-logging");
   const launcher = document.getElementById("loggingDesktopLauncher");
-  if (!page || !launcher || !isDesktopLoggingViewport()) return;
-  setDesktopLoggingLauncherHeader();
+  if (!page || !launcher) return;
 
   const warmup = getTodayWarmupReflection();
   const pending = getNewestPendingMatchReflection();
@@ -2448,6 +2447,36 @@ function renderDesktopLoggingLauncher() {
     postMatchTile.setAttribute("aria-disabled", pending ? "false" : "true");
     postMatchTile.dataset.logEntryId = pending?.id || "";
   }
+}
+
+function setMobileLoggingFormStage(stage = "launcher", options = {}) {
+  const page = document.getElementById("page-logging");
+  if (!page || !isMobileLayoutViewport()) return;
+  const resolvedStage = stage === "form" ? "form" : "launcher";
+  page.dataset.mobileLoggingView = "form";
+  page.dataset.mobileLoggingFormStage = resolvedStage;
+  if (resolvedStage === "launcher") {
+    setLoggingFormMode("postmatch");
+    setLoggingLauncherHeader();
+    renderLoggingLauncher();
+  }
+  ensureMobileLoggingTabs();
+  if (options.scroll === true) {
+    window.requestAnimationFrame(() => {
+      (resolvedStage === "launcher"
+        ? document.getElementById("loggingDesktopLauncher")
+        : page.querySelector(".logging-card"))
+        ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    });
+  }
+}
+
+function setLoggingLauncherFormView(options = {}) {
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("form", options);
+    return;
+  }
+  setMobileLoggingFormStage("form", options);
 }
 
 function resetLoggingFormForNewEntry(mode = "postmatch") {
@@ -2480,26 +2509,28 @@ function resetLoggingFormForNewEntry(mode = "postmatch") {
   updateLoggingDebriefPreview?.();
 }
 
-function openDesktopLoggingLauncherTarget(target = "") {
-  if (!isDesktopLoggingViewport()) return;
+function openLoggingLauncherTarget(target = "") {
+  if (!isDesktopLoggingViewport() && !isMobileLayoutViewport()) return;
   if (target === "postmatch") {
     const pending = getNewestPendingMatchReflection();
     if (!pending?.id) return;
     editLogEntry(pending.id, { scroll: true });
+    setLoggingLauncherFormView({ scroll: true });
     return;
   }
   if (target === "warmup") {
     const warmup = getTodayWarmupReflection();
     if (warmup?.id) {
       editLogEntry(warmup.id, { scroll: true });
+      setLoggingLauncherFormView({ scroll: true });
       return;
     }
     resetLoggingFormForNewEntry("warmup");
-    setDesktopLoggingView("form", { scroll: true });
+    setLoggingLauncherFormView({ scroll: true });
   }
 }
 
-function ensureDesktopLoggingLauncher() {
+function ensureLoggingLauncher() {
   const launcher = document.getElementById("loggingDesktopLauncher");
   if (!launcher) return;
   if (!launcher.dataset.bound) {
@@ -2508,19 +2539,22 @@ function ensureDesktopLoggingLauncher() {
       tile.addEventListener("click", event => {
         if (tile.getAttribute("aria-disabled") === "true") return;
         event.preventDefault();
-        const pendingEntryId = String(tile.dataset.logEntryId || "").trim();
-        if (tile.dataset.loggingDesktopLaunch === "postmatch" && pendingEntryId) {
-          editLogEntry(pendingEntryId, { scroll: true });
-          return;
-        }
-        openDesktopLoggingLauncherTarget(tile.dataset.loggingDesktopLaunch || "");
+        openLoggingLauncherTarget(tile.dataset.loggingDesktopLaunch || "");
       }, { capture: true });
     });
   }
   if (isDesktopLoggingViewport()) {
     const page = document.getElementById("page-logging");
     if (page && !page.dataset.loggingDesktopView) page.dataset.loggingDesktopView = "launcher";
-    renderDesktopLoggingLauncher();
+    if (page?.dataset.loggingDesktopView !== "form") setLoggingLauncherHeader();
+    renderLoggingLauncher();
+    return;
+  }
+  if (isMobileLayoutViewport()) {
+    const page = document.getElementById("page-logging");
+    if (page && !page.dataset.mobileLoggingFormStage) page.dataset.mobileLoggingFormStage = "launcher";
+    if (page?.dataset.mobileLoggingFormStage !== "form") setLoggingLauncherHeader();
+    renderLoggingLauncher();
   }
 }
 
@@ -2528,7 +2562,7 @@ function ensureMobileLoggingTabs() {
   const page = document.getElementById("page-logging");
   const layout = page?.querySelector(".logging-layout");
   if (!page || !layout) return;
-  ensureDesktopLoggingLauncher();
+  ensureLoggingLauncher();
   if (!isMobileLayoutViewport()) {
     document.getElementById("mobileLoggingTabs")?.remove();
     return;
@@ -2557,6 +2591,7 @@ function ensureMobileLoggingTabs() {
   }
 
   if (!page.dataset.mobileLoggingView) page.dataset.mobileLoggingView = "form";
+  if (!page.dataset.mobileLoggingFormStage) page.dataset.mobileLoggingFormStage = "launcher";
   tabs.querySelectorAll("[data-mobile-logging-view]").forEach((button) => {
     const isActive = button.dataset.mobileLoggingView === page.dataset.mobileLoggingView;
     button.classList.toggle("active", isActive);
@@ -48579,6 +48614,10 @@ function scrollLoggingFormToTopAfterSave() {
     setDesktopLoggingView("launcher", { scroll: true });
     return;
   }
+  if (isMobileLayoutViewport()) {
+    setMobileLoggingFormStage("launcher", { scroll: true });
+    return;
+  }
   if (page?.dataset) page.dataset.mobileLoggingView = "form";
   ensureMobileLoggingTabs();
 
@@ -48620,8 +48659,8 @@ function isFiniteLogNumber(value) {
 
 function snapLoggingFormToTarget(target = null) {
   const page = document.getElementById("page-logging");
-  if (isDesktopLoggingViewport()) {
-    setDesktopLoggingView("form");
+  if (isDesktopLoggingViewport() || isMobileLayoutViewport()) {
+    setLoggingLauncherFormView();
   }
   if (page?.dataset) page.dataset.mobileLoggingView = "form";
   ensureMobileLoggingTabs();
@@ -48849,7 +48888,7 @@ function editLogEntry(id, options = {}){
   editingLogEntryId = entry.id;
   editingLogEntrySnapshot = { ...entry };
   setLoggingFormMode(entry.warmup === true ? "warmup" : "postmatch");
-  if (isDesktopLoggingViewport()) setDesktopLoggingView("form");
+  setLoggingLauncherFormView();
 
   const focusSelect = document.getElementById("logFocusSelect");
   const preview = document.getElementById("focusPreviewText");
@@ -49424,7 +49463,7 @@ function renderLogFeed(options = {}){
   container.innerHTML = "";
   loggingFeedDirty = false;
   loggingFeedRendered = true;
-  if (isDesktopLoggingViewport()) renderDesktopLoggingLauncher();
+  renderLoggingLauncher();
 
   const profileEntries = getProfileLogEntries();
   const trainingMarkers = getDailyTrainingFeedMarkers(profileEntries, getActiveProfile());

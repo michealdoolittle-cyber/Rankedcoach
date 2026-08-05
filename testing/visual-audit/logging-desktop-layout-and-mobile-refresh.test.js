@@ -240,9 +240,33 @@ async function run() {
     await mobile.page.evaluate(() => globalThis.RankedCoachDailyEntrance?.skipAll?.());
     await mobile.page.waitForTimeout(80);
     assert.equal(await mobile.page.locator("#mobileLoggingTabs").isVisible(), true);
+    assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), true);
+    assert.equal(await mobile.page.locator("#page-logging .logging-form").isVisible(), false);
+    const mobileLauncherBox = await mobile.page.locator("#loggingDesktopLauncher").boundingBox();
+    assert.ok(mobileLauncherBox, "mobile launcher should have a visible box");
+    assert.ok(
+      mobileLauncherBox.y >= 0 && mobileLauncherBox.y + mobileLauncherBox.height <= 844,
+      `mobile launcher must fit without scrolling: ${JSON.stringify(mobileLauncherBox)}`
+    );
+    await mobile.page.screenshot({ path: path.join(screenshotDir, "logging-mobile-launcher.png"), fullPage: true });
+
+    await mobile.page.locator('[data-logging-desktop-launch="postmatch"]').click();
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
     assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), false);
     assert.equal(await mobile.page.locator("#page-logging .logging-form").isVisible(), true);
-    await mobile.page.screenshot({ path: path.join(screenshotDir, "logging-mobile-form.png"), fullPage: true });
+    assert.equal(await mobile.page.locator("#logMap").inputValue(), "Ascent");
+    await mobile.page.locator('#logRatingRow [data-rating="4"]').click();
+    await mobile.page.locator('#logMoodRow [data-mood="Focused"]').click();
+    await mobile.page.locator('#logTeamCommsRow [data-team-comms="4"]').click();
+    await mobile.page.locator('#logSelfCommsRow [data-self-comms="4"]').click();
+    await mobile.page.locator("#logNotes").fill("Completed this synced match from the mobile launcher.");
+    await mobile.page.locator("#logSaveBtn").click();
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "launcher");
+    assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), true);
+
+    await mobile.page.locator('[data-logging-desktop-launch="warmup"]').click();
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
+    assert.match(await mobile.page.locator("#loggingCardTitle").innerText(), /warm-up reflection/i);
 
     await mobile.page.locator('[data-mobile-page="stats"]').click({ force: true });
     await mobile.page.evaluate(() => {

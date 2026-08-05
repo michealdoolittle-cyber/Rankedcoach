@@ -81,8 +81,10 @@ async function run() {
   const server = await startServer();
   const browser = await chromium.launch({ args: ["--host-resolver-rules=MAP rankedcoach.test 127.0.0.1"] });
   let failureMode = true;
+  let rawFailureMode = false;
   let accountRequests = 0;
   let competitiveMatchRequests = 0;
+  let rawRequests = 0;
   const dialogs = [];
   const consoleErrors = [];
   try {
@@ -120,6 +122,16 @@ async function run() {
         body: JSON.stringify(failureMode
           ? { ok: false, error: "Riot's data provider is busy right now. Try again shortly.", code: "henrik_429", status: 429, retryable: true }
           : { ok: true, data: [] })
+      });
+    });
+    await page.route("**/api/henrik/raw", route => {
+      rawRequests += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(rawFailureMode
+          ? { ok: false, error: "Riot's data provider is busy right now. Try again shortly.", code: "henrik_429", status: 429, retryable: true }
+          : { ok: true, data: {} })
       });
     });
     await page.addInitScript(() => {
@@ -187,6 +199,40 @@ async function run() {
     assert.equal(accountRequests, 1, "The saved PUUID should prevent a second account lookup.");
     assert.equal(competitiveMatchRequests, competitiveRequestsAfterFailure + 1);
     assert.ok(dialogs.some(message => /already up to date/i.test(message)), JSON.stringify(dialogs));
+
+    rawFailureMode = true;
+    rawRequests = 0;
+    const rawCircuit = await page.evaluate(async ({ puuid }) => {
+      const refreshMatchRecords = Array.from({ length: 16 }, (_item, index) => ({
+        matchId: `stored-raw-${index}`,
+        record: {
+          id: `stored-raw-${index}`,
+          matchId: `stored-raw-${index}`,
+          schemaVersion: 1,
+          agent: "Sova",
+          map: "Ascent"
+        }
+      }));
+      const result = await globalThis.RankedCoachRiotSync.pullMatches({
+        puuid,
+        region: "na",
+        historyLimit: 1,
+        refreshMatchIds: refreshMatchRecords.map(item => item.matchId),
+        refreshMatchRecords,
+        hydrateRoundData: true
+      });
+      return {
+        recordCount: result.records.length,
+        circuit: result.rawHydrationCircuit,
+        skipped: result.failures.filter(item => item?.skipped === true).length,
+        failures: result.failures.map(item => ({ code: item.code, status: item.status, skipped: item.skipped }))
+      };
+    }, { puuid });
+    assert.equal(rawCircuit.recordCount, 16, "A raw outage must preserve V4/stored records.");
+    assert.equal(rawCircuit.circuit.opened, true);
+    assert.equal(rawCircuit.circuit.code, "henrik_429");
+    assert.ok(rawCircuit.skipped > 0, JSON.stringify(rawCircuit));
+    assert.ok(rawRequests <= 12, `Raw circuit should stop the remaining queue after the six-worker first wave, saw ${rawRequests} requests.`);
 
     console.log("Riot sync browser check passed: friendly toast, no raw alert, persisted PUUID, no repeated account lookup, and zero console errors.");
   } finally {

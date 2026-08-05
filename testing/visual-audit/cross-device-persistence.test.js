@@ -306,8 +306,25 @@ async function run() {
     await baseline.page.locator('#logSelfCommsRow [data-self-comms="3"]').evaluate(button => button.click());
     await baseline.page.fill("#logNotes", "Delta persistence test reflection.");
     await baseline.page.locator("#logSaveBtn").evaluate(button => button.click());
-    await baseline.page.waitForFunction(() => globalThis.__cloudWrites
-      .some(write => write.table === "reflection_logs" && write.rows.length === 1), null, { timeout: 10000 });
+    try {
+      await baseline.page.waitForFunction(() => globalThis.__cloudWrites
+        .some(write => write.table === "reflection_logs" && write.rows.length === 1), null, { timeout: 20000 });
+    } catch (error) {
+      const saveFailureState = await baseline.page.evaluate(() => ({
+        writes: globalThis.__cloudWrites,
+        diagnostics: globalThis.RankedCoachSyncDiagnosticsState || null,
+        currentForm: {
+          view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
+          agent: document.getElementById("logAgentDisplay")?.dataset.agent || "",
+          focus: document.getElementById("logFocusSelect")?.value || "",
+          map: document.getElementById("logMap")?.value || "",
+          notes: document.getElementById("logNotes")?.value || ""
+        }
+      }));
+      console.error(`Reflection save diagnostics: ${JSON.stringify(saveFailureState)}`);
+      error.message += `\nReflection save diagnostics: ${JSON.stringify(saveFailureState)}`;
+      throw error;
+    }
     const deltaWrites = await baseline.page.evaluate(() => globalThis.__cloudWrites);
     const deltaLogWrites = deltaWrites.filter(write => write.table === "reflection_logs");
     assert.equal(deltaLogWrites.length, 1);

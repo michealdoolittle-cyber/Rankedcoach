@@ -512,6 +512,8 @@ async function run() {
     await mobile.click('[data-mobile-page="logging"]');
     await mobile.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     await mobile.waitForTimeout(3000);
+    await mobile.locator('[data-logging-desktop-launch="warmup"]').click();
+    await mobile.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
     await mobile.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-mobile.png") });
     await mobile.click("#loggingTrainingMenuBtn");
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
@@ -527,6 +529,8 @@ async function run() {
       notes: "Mobile manual game after warm-up."
     });
     assert.ok(mobileTrainingGameId);
+    await mobile.locator('[data-logging-desktop-launch="warmup"]').click();
+    await mobile.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
     await mobile.click("#loggingTrainingMenuBtn");
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });

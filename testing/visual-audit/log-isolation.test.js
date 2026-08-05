@@ -175,17 +175,18 @@ async function run() {
     const logsBeforePendingRollSave = await page.evaluate(() => JSON.parse(
       localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
     ));
-    await page.locator("#logSaveBtn").click();
-    await page.waitForFunction(() => document.getElementById("logFormWarning")?.textContent?.includes("rolled loadout"));
+    await page.locator('[data-logging-desktop-launch="postmatch"]').click();
+    await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
+    assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
     const logsAfterPendingRollSave = await page.evaluate(() => JSON.parse(
       localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
     ));
-    assert.equal(logsAfterPendingRollSave.length, logsBeforePendingRollSave.length, "a pending loadout cannot create a pre-match log row");
+    assert.equal(logsAfterPendingRollSave.length, logsBeforePendingRollSave.length, "opening a pending reflection must not create a duplicate log row");
     assert.doesNotMatch(debriefMeta, /null|â|Ã/);
     await page.click('[data-mobile-logging-view="feed"]');
-    const verifiedPlaceholder = page.locator('[data-log-entry-id="ranked-match-log:profile-log-test:match-1"]');
-    const unverifiedPlaceholder = page.locator('[data-log-entry-id="ranked-match-log:profile-log-test:match-2"]');
-    const pureDraft = page.locator('[data-log-entry-id="player-draft:profile-log-test:pending"]');
+    const verifiedPlaceholder = page.locator('#logFeed .log-entry[data-log-entry-id="ranked-match-log:profile-log-test:match-1"]');
+    const unverifiedPlaceholder = page.locator('#logFeed .log-entry[data-log-entry-id="ranked-match-log:profile-log-test:match-2"]');
+    const pureDraft = page.locator('#logFeed .log-entry[data-log-entry-id="player-draft:profile-log-test:pending"]');
     await verifiedPlaceholder.waitFor({ state: "visible" });
     await unverifiedPlaceholder.waitFor({ state: "visible" });
     await pureDraft.waitFor({ state: "visible" });
@@ -194,7 +195,7 @@ async function run() {
     assert.equal(await unavailableRr.innerText(), "RR UNAVAILABLE");
     assert.ok(await unavailableRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
     assert.match(await verifiedPlaceholder.innerText(), /Add your reflection for this ranked match\./);
-    assert.equal(await verifiedPlaceholder.locator(".log-edit-btn").innerText(), "ADD REFLECTION");
+    assert.equal(await verifiedPlaceholder.locator(".log-edit-btn").innerText(), "EDITING");
     assert.match(await verifiedPlaceholder.innerText(), /Haven/);
     assert.doesNotMatch(await verifiedPlaceholder.innerText(), /undefined|null/);
     assert.equal(await verifiedPlaceholder.locator(".log-delete-btn").count(), 0, "protected ranked RR records must not expose a delete action");
@@ -236,7 +237,7 @@ async function run() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);
-    console.log("Log isolation browser check passed: protected RR entries hide delete without a badge, entries without a verified RR snapshot remain deletable, and a pending roll cannot create a pre-match log row.");
+    console.log("Log isolation browser check passed: protected RR entries hide delete without a badge, entries without a verified RR snapshot remain deletable, and opening a pending reflection does not duplicate a log row.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

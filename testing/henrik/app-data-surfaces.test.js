@@ -291,7 +291,7 @@ async function run() {
     }
     await mobilePage.click('[data-mobile-page="stats"]');
     await mobilePage.click("#statsActMobileTrigger");
-    await mobilePage.click('[data-stats-act-option="Season 2025 Act 6"]');
+    await mobilePage.getByRole("option", { name: "Season 2025 Act 6" }).click();
     await mobilePage.waitForTimeout(600);
     assert.equal(await mobilePage.locator("#statsActSelector option").count(), acts.length);
     assert.match(await mobilePage.locator("#statsHistoryBoundaryNote").innerText(), /May 28, 2024/);
