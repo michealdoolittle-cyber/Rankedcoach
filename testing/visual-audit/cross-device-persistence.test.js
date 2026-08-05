@@ -97,13 +97,14 @@ function supabaseStub(options = {}) {
     globalThis.supabase = {
       createClient() {
         const user = { id: "cross-device-user", email: "sync@example.com", user_metadata: { account_name: "Cloud Player" } };
-        const appState = ${JSON.stringify({
+        globalThis.__cloudAppState = ${JSON.stringify({
           user_id: "cross-device-user",
           active_profile_id: "cloud-profile",
           profiles_json: [cloudProfile],
           log_entries_json: cloudLogs,
           theme_builder_json: {},
-          theme_builder_ui_json: {}
+          theme_builder_ui_json: {},
+          updated_at: "2026-08-04T12:00:00.000Z"
         })};
         function query(table) {
           return {
@@ -111,7 +112,7 @@ function supabaseStub(options = {}) {
             select() { return this; }, eq() { return this; }, order() { return this; }, limit() { return this; }, in() { return this; },
             update() { return this; }, delete() { return this; },
             maybeSingle() {
-              if (table === "vip_app_state") return new Promise(resolve => setTimeout(() => resolve({ data: appState, error: null }), 900));
+              if (table === "vip_app_state") return new Promise(resolve => setTimeout(() => resolve({ data: globalThis.__cloudAppState, error: null }), 900));
               if (${JSON.stringify(normalizedRows)} && table === "users_profiles") return Promise.resolve({ data: ${JSON.stringify(normalizedProfileRow)}, error: null });
               return Promise.resolve({ data: null, error: null });
             },
@@ -247,9 +248,49 @@ async function run() {
     assert.equal(baseline.state.diagnostics.lastBackendSaveMetrics.totalMatchRows, 1);
     assert.deepEqual(baseline.consoleErrors, []);
 
+    // Realtime is intentionally absent from this fixture. A later remote
+    // revision must still reach an already-open device through the lightweight
+    // app-state revision poll, without a hard reload.
+    await baseline.page.evaluate(() => {
+      const current = globalThis.__cloudAppState;
+      globalThis.__cloudAppState = {
+        ...current,
+        updated_at: "2026-08-04T12:01:00.000Z",
+        log_entries_json: [...current.log_entries_json, {
+          id: "live-revision-warmup",
+          profileId: "cloud-profile",
+          source: "manual",
+          createdAt: "2026-08-04T12:01:00.000Z",
+          agent: "Sova",
+          map: "Haven",
+          focus: "Map Awareness",
+          notes: "Warm-up saved from another open device.",
+          warmup: true
+        }]
+      };
+    });
+    const liveRevisionObserved = await baseline.page.waitForFunction(() => JSON.parse(
+      localStorage.getItem("valtracker_log_entries_v2:cross-device-user") || "[]"
+    ).some(entry => entry.id === "live-revision-warmup"), null, { timeout: 20000 }).then(() => true).catch(() => false);
+    const liveRevisionState = await baseline.page.evaluate(() => ({
+      observed: JSON.parse(localStorage.getItem("valtracker_log_entries_v2:cross-device-user") || "[]")
+        .some(entry => entry.id === "live-revision-warmup"),
+      revision: globalThis.__cloudAppState?.updated_at || "",
+      diagnostics: globalThis.RankedCoachSyncDiagnosticsState || null,
+      visibility: document.visibilityState
+    }));
+    assert.equal(liveRevisionObserved && liveRevisionState.observed, true, JSON.stringify(liveRevisionState));
+    assert.deepEqual(baseline.consoleErrors, []);
+
+    await baseline.page.evaluate(() => {
+      const modal = document.getElementById("dailyWarmupModal");
+      if (modal?.classList.contains("active")) document.getElementById("dailyWarmupSkip")?.click();
+    });
     await baseline.page.click('[data-page="logging"]');
-    const warmupSkip = baseline.page.locator("#dailyWarmupSkip");
-    if (await warmupSkip.isVisible().catch(() => false)) await warmupSkip.click();
+    await baseline.page.evaluate(() => {
+      const modal = document.getElementById("dailyWarmupModal");
+      if (modal?.classList.contains("active")) document.getElementById("dailyWarmupSkip")?.click();
+    });
     await baseline.page.evaluate(() => {
       document.getElementById("logAgentDisplay").dataset.agent = "Sova";
     });
@@ -306,7 +347,7 @@ async function run() {
     assert.equal(partial.state.diagnostics.lastBackendSaveFailures.some(item => item.table === "vip_app_state" && item.status === 500), true);
     assert.deepEqual(partial.consoleErrors, []);
     await partial.page.close();
-    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, no-op saves skip normalized archive writes, one reflection saves one row, large log history renders a bounded feed, quota-limited local caches compact safely, and normalized saves continue after app-state failure.");
+    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, the live revision fallback updates an already-open device without realtime or reload, no-op saves skip normalized archive writes, one reflection saves one row, large log history renders a bounded feed, quota-limited local caches compact safely, and normalized saves continue after app-state failure.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

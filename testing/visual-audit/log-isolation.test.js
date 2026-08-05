@@ -129,6 +129,18 @@ async function run() {
       role: "Duelist",
       map: "Bind",
       notes: ""
+    }, {
+      id: "player-draft:profile-log-test:pending",
+      profileId,
+      source: "player-reflection",
+      isPlayerAuthored: true,
+      createdAt: new Date(Date.now() - 120000).toISOString(),
+      result: "",
+      rr: null,
+      agent: "",
+      role: "",
+      map: "",
+      notes: ""
     }]));
   });
 
@@ -154,31 +166,50 @@ async function run() {
     assert.equal(debriefMeta, "Add a rating, mood, or map to see it here.");
     assert.doesNotMatch(debriefMeta, /null|â|Ã/);
     await page.click('[data-mobile-logging-view="feed"]');
-    const placeholder = page.locator(".log-entry-placeholder").first();
-    await placeholder.waitFor({ state: "visible" });
+    const verifiedPlaceholder = page.locator('[data-log-entry-id="ranked-match-log:profile-log-test:match-1"]');
+    const unverifiedPlaceholder = page.locator('[data-log-entry-id="ranked-match-log:profile-log-test:match-2"]');
+    const pureDraft = page.locator('[data-log-entry-id="player-draft:profile-log-test:pending"]');
+    await verifiedPlaceholder.waitFor({ state: "visible" });
+    await unverifiedPlaceholder.waitFor({ state: "visible" });
+    await pureDraft.waitFor({ state: "visible" });
     const unverifiedRr = page.locator(".log-result-rr-unverified");
     assert.equal(await unverifiedRr.count(), 1);
     assert.equal(await unverifiedRr.innerText(), "RR unverified");
     assert.ok(await unverifiedRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
-    assert.match(await placeholder.innerText(), /Add your reflection for this ranked match\./);
-    assert.equal(await placeholder.locator(".log-edit-btn").innerText(), "Add Reflection");
-    assert.match(await placeholder.innerText(), /Haven/);
-    assert.doesNotMatch(await placeholder.innerText(), /undefined|null/);
-    await placeholder.locator(".log-edit-btn").click();
+    assert.match(await verifiedPlaceholder.innerText(), /Add your reflection for this ranked match\./);
+    assert.equal(await verifiedPlaceholder.locator(".log-edit-btn").innerText(), "Add Reflection");
+    assert.match(await verifiedPlaceholder.innerText(), /Haven/);
+    assert.doesNotMatch(await verifiedPlaceholder.innerText(), /undefined|null/);
+    assert.equal(await verifiedPlaceholder.locator(".log-delete-btn").count(), 0, "verified ranked RR records must not expose a delete action");
+    assert.equal(await verifiedPlaceholder.locator(".log-delete-lock").innerText(), "VERIFIED MATCH");
+    await verifiedPlaceholder.locator(".log-edit-btn").click();
     assert.equal(await page.locator("#logMap").inputValue(), "Haven");
     assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
     await page.click('[data-mobile-logging-view="feed"]');
-    await page.locator(".log-entry-placeholder").first().waitFor({ state: "visible" });
-    await placeholder.locator(".log-delete-btn").click();
+    await unverifiedPlaceholder.waitFor({ state: "visible" });
+    assert.equal(await unverifiedPlaceholder.locator(".log-delete-btn").count(), 1, "unverified ranked entries remain deletable");
+    assert.equal(await pureDraft.locator(".log-delete-btn").count(), 1, "pure reflection drafts remain deletable");
+    await unverifiedPlaceholder.locator(".log-delete-btn").click();
     const deleteModal = page.locator("#logDeleteConfirmModal");
     await deleteModal.waitFor({ state: "visible" });
     await deleteModal.locator(".profile-delete-confirm-remove").click();
     await page.waitForFunction(() => ![...document.querySelectorAll(".log-entry")]
-      .some(entry => entry.dataset.logEntryId === "ranked-match-log:profile-log-test:match-1"));
+      .some(entry => entry.dataset.logEntryId === "ranked-match-log:profile-log-test:match-2"));
     const persistedLogs = await page.evaluate(() => JSON.parse(
       localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
     ));
-    assert.equal(persistedLogs.some(entry => entry.id === "ranked-match-log:profile-log-test:match-1"), false);
+    assert.equal(persistedLogs.some(entry => entry.id === "ranked-match-log:profile-log-test:match-2"), false);
+    assert.equal(persistedLogs.some(entry => entry.id === "ranked-match-log:profile-log-test:match-1"), true);
+    await pureDraft.waitFor({ state: "visible" });
+    await pureDraft.locator(".log-delete-btn").click();
+    await deleteModal.waitFor({ state: "visible" });
+    await deleteModal.locator(".profile-delete-confirm-remove").click();
+    await page.waitForFunction(() => ![...document.querySelectorAll(".log-entry")]
+      .some(entry => entry.dataset.logEntryId === "player-draft:profile-log-test:pending"));
+    const persistedAfterDraftDelete = await page.evaluate(() => JSON.parse(
+      localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
+    ));
+    assert.equal(persistedAfterDraftDelete.some(entry => entry.id === "player-draft:profile-log-test:pending"), false);
     await page.click('[data-mobile-page="home"]');
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("active"));
     await page.click('.graph-btn[data-size="5"]');
@@ -188,7 +219,7 @@ async function run() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);
-    console.log("Log isolation browser check passed: verified and unverified RR states render honestly, deletion persists locally, with no overflow/errors.");
+    console.log("Log isolation browser check passed: verified RR entries are protected, unverified entries remain deletable, and both states render honestly with no overflow/errors.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

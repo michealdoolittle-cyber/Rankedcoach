@@ -75,7 +75,94 @@
     return [450];
   }
 
+  function getStoredRefreshMatchId(item = {}) {
+    return String(
+      item?.matchId
+      || item?.id
+      || item?.record?.id
+      || item?.record?.matchId
+      || item?.record?.legacyMatchId
+      || ""
+    ).trim();
+  }
+
+  function getStoredRefreshRecord(item = {}) {
+    const candidate = item?.record || item?.matchRecord || item;
+    if (candidate?.schemaVersion) return candidate;
+    if (candidate?.matchRecord?.schemaVersion) return candidate.matchRecord;
+    return candidate && typeof candidate === "object" ? candidate : {};
+  }
+
+  function getStoredRefreshV4Payload(record = {}) {
+    const candidate = record?.rawHenrikPayload || record?.matchRecord?.rawHenrikPayload || null;
+    const data = candidate?.data && typeof candidate.data === "object" ? candidate.data : candidate;
+    return data?.metadata?.match_id && Array.isArray(data?.players) ? candidate : null;
+  }
+
+  function getStoredRefreshRankContext(record = {}) {
+    const rank = record?.rank && typeof record.rank === "object" ? record.rank : {};
+    return {
+      rank: rank.rank || record?.rankLabel || record?.tier || "",
+      rr: rank.rr ?? record?.rrTotal ?? null,
+      rrDelta: rank.rrDelta ?? record?.verifiedRrDelta ?? record?.rr ?? null,
+      rankElo: rank.elo ?? record?.rankElo ?? null,
+      rrVerified: rank.verified === true || record?.rrVerified === true,
+      rankDataSource: rank.source || record?.rankDataSource || "",
+      rankCapturedAt: rank.capturedAt || record?.rankCapturedAt || "",
+      isPlacementMatch: record?.isPlacementMatch === true
+    };
+  }
+
+  async function hydrateStoredHenrikMatch(descriptor = {}, context = {}) {
+    const matchId = getStoredRefreshMatchId(descriptor);
+    const record = getStoredRefreshRecord(descriptor);
+    const fallbackRecord = {
+      ...record,
+      id: record?.id || matchId,
+      matchId: record?.matchId || matchId
+    };
+    const localContext = getStoredRefreshRankContext(record);
+    try {
+      if (!context.hydrateRoundData) {
+        return { record: fallbackRecord, failure: null, directRawSucceeded: false };
+      }
+      const rawPayload = await requestJsonWithRetry("/api/henrik/raw", { matchId, region: context.region }, {
+        ...context.options,
+        matchTimeoutMs: context.rawMatchTimeoutMs,
+        matchRetryDelaysMs: context.rawMatchRetryDelaysMs
+      });
+      return {
+        record: mapHenrikRawMatch(rawPayload, {
+          puuid: context.puuid,
+          // Raw round payloads do not contain all V4 aggregate fields. Reuse a
+          // previously stored V4 response when available; otherwise preserve
+          // the verified local context rather than re-paging the history API.
+          parsedMatch: getStoredRefreshV4Payload(record) || {},
+          agent: record?.agent || "",
+          role: record?.role || "",
+          map: record?.map || "",
+          ...localContext
+        }),
+        failure: null,
+        directRawSucceeded: true
+      };
+    } catch (error) {
+      return {
+        record: fallbackRecord,
+        failure: {
+          matchId,
+          stage: "raw-round-data",
+          error: error?.message || "Round detail could not be loaded."
+        },
+        directRawSucceeded: false
+      };
+    }
+  }
+
   async function hydratePendingHenrikMatch(parsedMatch = {}, context = {}) {
+    if (parsedMatch?.__rankedCoachStoredRefresh === true) {
+      return hydrateStoredHenrikMatch(parsedMatch, context);
+    }
     const matchId = getParsedMatchId(parsedMatch);
     try {
       const v4Record = mapHenrikV4Match(parsedMatch, {
@@ -433,6 +520,11 @@
     const pageSize = Math.min(10, historyLimit);
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
+    const storedRefreshById = new Map(
+      (Array.isArray(options.refreshMatchRecords) ? options.refreshMatchRecords : [])
+        .map(item => [getStoredRefreshMatchId(item), item])
+        .filter(([matchId]) => Boolean(matchId))
+    );
     const includeKnownMatches = options.includeKnownMatches === true;
     let puuid = String(options.puuid || "").trim();
     let account = null;
@@ -488,7 +580,17 @@
     }
 
     const parsedMatchIds = () => new Set(parsedMatches.map(getParsedMatchId).filter(Boolean));
-    let unresolvedRefreshMatchIds = [...refreshMatchIds].filter(matchId => !parsedMatchIds().has(matchId));
+    // Backfill candidates are already canonical local records. Do not page
+    // through Henrik's history merely to rediscover their ids before calling
+    // the raw endpoint; that made a 16-record batch fan into ~10 sequential
+    // /matches calls on long histories. A just-fetched V4 summary remains the
+    // preferred source when it is already in the initial history window.
+    const directStoredRefreshIds = new Set(
+      [...refreshMatchIds].filter(matchId => storedRefreshById.has(matchId) && !parsedMatchIds().has(matchId))
+    );
+    let unresolvedRefreshMatchIds = [...refreshMatchIds].filter(matchId => (
+      !parsedMatchIds().has(matchId) && !directStoredRefreshIds.has(matchId)
+    ));
     let refreshSearchChecked = 0;
     let refreshSearchComplete = unresolvedRefreshMatchIds.length === 0;
     if (unresolvedRefreshMatchIds.length && options.searchRefreshMatchIds !== false) {
@@ -555,6 +657,15 @@
       const matchId = getParsedMatchId(match);
       return matchId && (includeKnownMatches || !knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
     });
+    const directStoredRefreshes = [...directStoredRefreshIds]
+      .map(matchId => storedRefreshById.get(matchId))
+      .filter(Boolean)
+      .map(item => ({
+        __rankedCoachStoredRefresh: true,
+        matchId: getStoredRefreshMatchId(item),
+        record: getStoredRefreshRecord(item)
+      }));
+    const hydrationQueue = [...pendingMatches, ...directStoredRefreshes];
     const records = [];
     const failures = [
       ...refreshSearchFailures,
@@ -563,7 +674,7 @@
     const rawHydrationConcurrency = getRawHydrationConcurrency(options);
     const rawMatchTimeoutMs = getRawHydrationTimeoutMs(options);
     const rawMatchRetryDelaysMs = getRawHydrationRetryDelays(options);
-    const hydratedPendingMatches = await hydratePendingHenrikMatches(pendingMatches, {
+    const hydratedPendingMatches = await hydratePendingHenrikMatches(hydrationQueue, {
       puuid,
       region,
       mmrByMatchId,
@@ -572,12 +683,17 @@
       rawMatchRetryDelaysMs,
       options
     });
+    const directRefreshSucceededMatchIds = [];
     hydratedPendingMatches.forEach(result => {
       if (result?.record) records.push(result.record);
       if (result?.failure) failures.push(result.failure);
+      if (result?.directRawSucceeded && result?.record) {
+        const matchId = String(result.record?.id || result.record?.matchId || "").trim();
+        if (matchId) directRefreshSucceededMatchIds.push(matchId);
+      }
     });
 
-    if (pendingMatches.length && !records.length) {
+    if (hydrationQueue.length && !records.length) {
       throw new Error(failures[0]?.error || "Recent competitive matches could not be loaded.");
     }
 
@@ -595,6 +711,8 @@
       historyExhausted,
       historyWindowComplete: historyExhausted && !matchSyncError,
       refreshMatchIds: [...refreshMatchIds],
+      directRefreshMatchIds: [...directStoredRefreshIds],
+      directRefreshSucceededMatchIds: [...new Set(directRefreshSucceededMatchIds)],
       unresolvedRefreshMatchIds,
       refreshSearchChecked,
       refreshSearchComplete,

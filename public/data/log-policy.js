@@ -45,7 +45,16 @@
       .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
   }
 
-  function createMatchPlaceholder(match = {}, profileId = "") {
+  function getPendingLoadoutFocusForMatch(match = {}, pendingLoadoutRoll = null) {
+    const focus = clean(pendingLoadoutRoll?.focus);
+    if (!focus) return "";
+    if (!isSameAgent(pendingLoadoutRoll?.agent, match?.agent)) return "";
+    // A new roll must never be attached to an older synced match merely
+    // because the player chose the same agent again later in the day.
+    return isOnOrAfterPendingLoadoutRoll(match, pendingLoadoutRoll) ? focus : "";
+  }
+
+  function createMatchPlaceholder(match = {}, profileId = "", options = {}) {
     const matchId = clean(match.matchId || match.id);
     const ownerProfileId = clean(profileId);
     if (!matchId) return null;
@@ -67,7 +76,7 @@
       agent: clean(match.agent),
       role: clean(match.role),
       map: clean(match.map),
-      focus: "",
+      focus: getPendingLoadoutFocusForMatch(match, options?.pendingLoadoutRoll),
       rating: null,
       mood: "",
       tilt: "",
@@ -195,7 +204,7 @@
     (Array.isArray(matches) ? matches : []).forEach(match => {
       const matchId = clean(match?.matchId || match?.id);
       if (!matchId || linkedMatchIds.has(matchId)) return;
-      const placeholder = createMatchPlaceholder(match, ownerProfileId);
+      const placeholder = createMatchPlaceholder(match, ownerProfileId, { pendingLoadoutRoll });
       if (!placeholder) return;
 
       const draftIndex = findPendingLoadoutDraftIndex(updatedEntries, match, ownerProfileId, pendingLoadoutRoll);
@@ -227,6 +236,7 @@
     sanitizeLogEntries,
     createMatchPlaceholder,
     isOnOrAfterPendingLoadoutRoll,
+    getPendingLoadoutFocusForMatch,
     findPendingLoadoutDraftIndex,
     mergeMatchPlaceholderIntoDraft,
     syncMatchPlaceholders

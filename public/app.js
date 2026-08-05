@@ -14901,6 +14901,18 @@ function buildProfileMatchRefreshPlan(profile = {}, sources = {}, options = {}) 
   };
 }
 
+function getStillMissingMatchBackfillIds(matchList = [], candidateIds = [], needsBackfill = () => false) {
+  const candidates = new Set((Array.isArray(candidateIds) ? candidateIds : [])
+    .map(value => String(value || "").trim())
+    .filter(Boolean));
+  if (!candidates.size || typeof needsBackfill !== "function") return [];
+  return (Array.isArray(matchList) ? matchList : [])
+    .filter(match => candidates.has(getMatchSummaryStableId(match)))
+    .filter(match => needsBackfill(getMatchSummaryRecord(match), match))
+    .map(getMatchSummaryStableId)
+    .filter(Boolean);
+}
+
 function markWeaponBackfillUnavailable(matchList = [], matchIds = []) {
   const targets = new Set((Array.isArray(matchIds) ? matchIds : []).map(value => String(value || "").trim()).filter(Boolean));
   if (!targets.size) return Array.isArray(matchList) ? matchList : [];
@@ -19002,7 +19014,9 @@ let activeInsightFilter = "all";
 let cachedInsights = [];
 let currentAuthUser = null;
 const ACCOUNT_STATE_RELOAD_SLEEP_MS = 30 * 1000;
+const ACCOUNT_STATE_REVISION_POLL_MS = 12 * 1000;
 let lastAccountStateLoadAt = 0;
+let lastPersistentAccountRemoteRevision = "";
 const ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED = false;
 let accountSecurityPreferencesBackendAvailable = ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED;
 let accountSecurityPreferencesMissingNoticeShown = false;
@@ -21285,6 +21299,10 @@ function queuePersistentAccountSave(reason = "state") {
   backendSyncState.lastSaveReason = reason;
   window.clearTimeout(backendSyncState.saveTimer);
   backendSyncState.saveTimer = window.setTimeout(() => {
+    // The handle itself is no longer pending once it has fired. Leaving this
+    // stale numeric handle behind made live/realtime refreshes believe a save
+    // was perpetually queued and skip every remote update.
+    backendSyncState.saveTimer = null;
     void savePersistentAccountState(reason);
   }, 550);
 }
@@ -21892,6 +21910,7 @@ async function loadPersistentAccountState(user) {
   }
 
   if (data) {
+    lastPersistentAccountRemoteRevision = String(data.updated_at || data.saved_at || lastPersistentAccountRemoteRevision || "");
     const mergedState = mergePersistentAccountStateWithNormalizedTables({
       activeProfileId: data.active_profile_id,
       profiles: data.profiles_json,
@@ -21964,11 +21983,13 @@ async function handleSignedInUser(user) {
 
 let accountStateFocusRefreshPromise = null;
 let accountStateAutoRefreshTimer = 0;
+let persistentAccountRevisionPollRetryTimer = 0;
 
 function stopPersistentAccountAutoRefresh() {
-  if (!accountStateAutoRefreshTimer) return;
-  window.clearInterval(accountStateAutoRefreshTimer);
+  if (accountStateAutoRefreshTimer) window.clearInterval(accountStateAutoRefreshTimer);
   accountStateAutoRefreshTimer = 0;
+  window.clearTimeout(persistentAccountRevisionPollRetryTimer);
+  persistentAccountRevisionPollRetryTimer = 0;
 }
 
 function startPersistentAccountAutoRefresh() {
@@ -21976,22 +21997,60 @@ function startPersistentAccountAutoRefresh() {
   if (!currentAuthUser?.id || !supabaseClient?.auth) return;
   accountStateAutoRefreshTimer = window.setInterval(() => {
     if (document.visibilityState !== "visible") return;
-    void refreshPersistentAccountStateOnFocus("auto");
-  }, ACCOUNT_STATE_RELOAD_SLEEP_MS);
+    void pollPersistentAccountStateRevision();
+  }, ACCOUNT_STATE_REVISION_POLL_MS);
 }
 
-async function refreshPersistentAccountStateOnFocus(reason = "focus") {
+async function pollPersistentAccountStateRevision() {
+  const user = currentAuthUser;
+  if (!user?.id || !supabaseClient?.from || backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
+  if (backendSyncState.savePromise || backendSyncState.saveTimer || accountStateFocusRefreshPromise) {
+    // A device that has just saved must not miss another device's revision.
+    // Wait for the local write to settle, then retry this cheap one-row check.
+    window.clearTimeout(persistentAccountRevisionPollRetryTimer);
+    persistentAccountRevisionPollRetryTimer = window.setTimeout(() => {
+      persistentAccountRevisionPollRetryTimer = 0;
+      void pollPersistentAccountStateRevision();
+    }, 1000);
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient
+      .from("vip_app_state")
+      .select("updated_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error) throw error;
+    const remoteRevision = String(data?.updated_at || "").trim();
+    if (!remoteRevision || !lastPersistentAccountRemoteRevision) {
+      lastPersistentAccountRemoteRevision = remoteRevision || lastPersistentAccountRemoteRevision;
+      return;
+    }
+    if (remoteRevision <= lastPersistentAccountRemoteRevision) return;
+    // A revision is explicit evidence that another device saved. It must not
+    // be held behind the normal 30-second focus-refresh cooldown.
+    await refreshPersistentAccountStateOnFocus("revision-poll", { force: true });
+  } catch (error) {
+    // Realtime remains the primary path. A failed lightweight fallback check
+    // must not interrupt the visible device or turn a brief offline interval
+    // into a noisy player-facing error.
+    backendSyncState.lastError = error;
+    console.warn("Supabase account revision check failed", error);
+  }
+}
+
+async function refreshPersistentAccountStateOnFocus(reason = "focus", options = {}) {
   if (!currentAuthUser?.id || !supabaseClient?.auth) return;
   if (isAuthReachabilityOfflineCooldownActive()) return;
   if (backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
   if (backendSyncState.saveTimer || backendSyncState.savePromise) return;
-  if (shouldSkipRecentAccountStateReload(currentAuthUser)) return;
+  if (options?.force !== true && shouldSkipRecentAccountStateReload(currentAuthUser)) return;
   if (accountStateFocusRefreshPromise) return accountStateFocusRefreshPromise;
 
   accountStateFocusRefreshPromise = (async () => {
     const user = await getSupabaseUser();
     if (!user) return;
-    if (shouldSkipRecentAccountStateReload(user)) return;
+    if (options?.force !== true && shouldSkipRecentAccountStateReload(user)) return;
     await loadPersistentAccountState(user);
     markAccountStateLoadComplete();
     updateAuthUI?.(user);
@@ -22028,6 +22087,7 @@ async function initializeSignedInAccount(user, options = {}) {
     "Saved profiles with more matches and notes can take a little longer to load back in."
   );
 
+  let newlyImportedReflection = null;
   try {
     setLoginInitializationProgress(
       18,
@@ -22064,7 +22124,7 @@ async function initializeSignedInAccount(user, options = {}) {
         "Coach",
         "If your Riot profile is linked, we confirm the latest account read before opening your pages."
       );
-      await syncProfileRetainedHistory({
+      const retainedSync = await syncProfileRetainedHistory({
         mode: "refresh",
         onProgress: progress => setLoginInitializationProgress(
           Math.min(86, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 16)),
@@ -22073,6 +22133,11 @@ async function initializeSignedInAccount(user, options = {}) {
           "RankedCoach is finishing the retained competitive history before opening your dashboard."
         )
       });
+      // A new completed match should land in its prepared reflection after
+      // sign-in. A no-op retained-history check keeps the user's last page.
+      if (safeNumber(retainedSync?.totalImported) > 0 && retainedSync?.prefilled) {
+        newlyImportedReflection = retainedSync.prefilled;
+      }
     } else {
       setLoginInitializationProgress(
         72,
@@ -22094,6 +22159,9 @@ async function initializeSignedInAccount(user, options = {}) {
     initStatsPage?.();
     renderLogFeed?.();
     renderChart?.(currentSize);
+    if (newlyImportedReflection) {
+      activatePage?.("logging", { source: "login-new-match" });
+    }
     queuePersistentAccountSave?.(options.reason || "login-initialization");
     markAccountStateLoadComplete();
   } finally {
@@ -48345,10 +48413,29 @@ function logEntryHasSavedContent(entry = {}) {
   return savedText || savedNumbers || Boolean(entry?.roleImpact && typeof entry.roleImpact === "object");
 }
 
+function isProtectedVerifiedRankedLogEntry(entry = {}) {
+  const context = getLogEntryMatchContext(entry);
+  const match = context?.match;
+  if (!match || !isRankedPerformanceMatch(match) || isPlacementRankedMatch(match)) return false;
+  if (!isVerifiedHenrikRrMatch(match)) return false;
+  return Number.isFinite(getOptionalFiniteNumber(
+    entry?.rr ?? match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta ?? match?.rr
+  ));
+}
+
 async function deleteLogEntry(id) {
   const entryId = String(id || "").trim();
   const entry = logEntries.find(item => String(item?.id || "") === entryId);
   if (!entry) return false;
+
+  if (isProtectedVerifiedRankedLogEntry(entry)) {
+    showToast("Verified ranked match records stay in your coaching history. You can still edit your reflection.", {
+      title: "Verified match protected",
+      variant: "warning",
+      durationMs: 4200
+    });
+    return false;
+  }
 
   if (logEntryHasSavedContent(entry) && !await openLogDeleteConfirmModal(entry)) {
     return false;
@@ -49035,6 +49122,7 @@ function renderLogFeed(options = {}){
       // A rolled reflection can be linked to a synced match while retaining
       // player-entered content. It is a real entry, not an empty placeholder.
       const isPlaceholder = isMatchPlaceholderLogEntry(entry) && entry.isPlayerAuthored !== true;
+      const isDeleteProtected = isProtectedVerifiedRankedLogEntry(entry);
       const trainingMarker = trainingMarkers.get(entry.id) || null;
       const revealMode = getPendingLoggingEntryRevealMode(entry.id);
       const notesCopy = isPlaceholder
@@ -49084,7 +49172,9 @@ function renderLogFeed(options = {}){
         <div class="log-actions">
           ${hasReportMatch ? `<button class="log-report-btn" type="button">View Report</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
-          <button class="log-delete-btn" type="button">Delete</button>
+          ${isDeleteProtected
+            ? '<span class="log-delete-lock" title="Verified ranked match records stay in your coaching history.">Verified match</span>'
+            : '<button class="log-delete-btn" type="button">Delete</button>'}
         </div>
       `;
 
@@ -58328,6 +58418,14 @@ async function importActiveProfileMatches(options = {}){
       storedRawMatchIds: storedRawRefreshMatchIds
     });
     const refreshMatchIds = refreshPlan.refreshMatchIds;
+    const refreshMatchIdSet = new Set(refreshMatchIds);
+    const refreshMatchRecords = existingMatches
+      .filter(match => refreshMatchIdSet.has(getMatchSummaryStableId(match)))
+      .map(match => ({
+        matchId: getMatchSummaryStableId(match),
+        record: getMatchSummaryRecord(match)
+      }))
+      .filter(item => item.matchId && item.record);
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
@@ -58336,6 +58434,7 @@ async function importActiveProfileMatches(options = {}){
       historyStart,
       knownMatchIds,
       refreshMatchIds,
+      refreshMatchRecords,
       refreshSearchLimit: 1000,
       includeKnownMatches: needsHistoryVersionUpgrade,
       // Versioned history migrations intentionally revisit known retained
@@ -58392,6 +58491,11 @@ async function importActiveProfileMatches(options = {}){
     const unrecoveredStoredRawBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => storedRawRefreshMatchIds.includes(value));
+    const directRawSucceededMatchIds = (Array.isArray(pullResult?.directRefreshSucceededMatchIds)
+      ? pullResult.directRefreshSucceededMatchIds
+      : [])
+      .map(value => String(value || "").trim())
+      .filter(Boolean);
     if (!canonicalRecords.length) {
       let enrichedExisting = typeof enrichMmr === "function"
         ? enrichMmr(existingMatches, mmrHistory)
@@ -58483,6 +58587,35 @@ async function importActiveProfileMatches(options = {}){
     if (unrecoveredStoredRawBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markStoredRawPayloadBackfillUnavailable(matchList, unrecoveredStoredRawBackfillIds);
     }
+    // The direct raw path intentionally avoids re-paging history for stored
+    // records. Henrik Raw can provide round/weapon data but does not always
+    // include the V4 aggregate fields required for an older HS/raw-payload
+    // repair. Mark only a successfully fetched record that still lacks the
+    // specific field as unavailable so it cannot become an endless retry.
+    const directWeaponUnavailable = getStillMissingMatchBackfillIds(
+      matchList,
+      directRawSucceededMatchIds.filter(id => weaponBackfillMatchIds.includes(id)),
+      matchRecordNeedsWeaponBackfill
+    );
+    const directHsUnavailable = getStillMissingMatchBackfillIds(
+      matchList,
+      directRawSucceededMatchIds.filter(id => hsBackfillMatchIds.includes(id)),
+      matchRecordNeedsHsBackfill
+    );
+    const directMetadataUnavailable = getStillMissingMatchBackfillIds(
+      matchList,
+      directRawSucceededMatchIds.filter(id => metadataRefreshMatchIds.includes(id)),
+      (_record, match) => !getMatchSeasonKey(match)
+    );
+    const directStoredRawUnavailable = getStillMissingMatchBackfillIds(
+      matchList,
+      directRawSucceededMatchIds.filter(id => storedRawRefreshMatchIds.includes(id)),
+      record => matchRecordNeedsStoredRawRehydrate(record)
+    );
+    if (directWeaponUnavailable.length) matchList = markWeaponBackfillUnavailable(matchList, directWeaponUnavailable);
+    if (directHsUnavailable.length) matchList = markHsBackfillUnavailable(matchList, directHsUnavailable);
+    if (directMetadataUnavailable.length) matchList = markMetadataBackfillUnavailable(matchList, directMetadataUnavailable);
+    if (directStoredRawUnavailable.length) matchList = markStoredRawPayloadBackfillUnavailable(matchList, directStoredRawUnavailable);
 
     applyImportedMatches(matchList, {
       source: "henrik",
@@ -58556,7 +58689,13 @@ async function importActiveProfileMatches(options = {}){
     }
 
     return {
-      count: importedMatches.length,
+      // `count` is player-facing "new matches", not the number of retained
+      // records reprocessed for a raw backfill. Keeping those distinct stops a
+      // background repair from opening the Logging form as though a new game
+      // had just finished.
+      count: newlyImportedMatches.length,
+      processedCount: importedMatches.length,
+      newMatchCount: newlyImportedMatches.length,
       checked: safeNumber(pullResult?.checked),
       source: "henrik",
       historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),

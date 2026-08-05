@@ -81,6 +81,18 @@ assert.equal(unmatched.reconciled, 0);
 assert.equal(unmatched.added, 1);
 assert.equal(unmatched.entries.length, 2);
 assert.ok(unmatched.entries.some(entry => entry.matchId === "henrik-match-tejo-1"));
+assert.equal(
+  unmatched.entries.find(entry => entry.matchId === "henrik-match-tejo-1")?.focus,
+  "Credit / Ult Economy",
+  "A fresh synced placeholder must inherit a same-agent pending loadout focus even when no manual draft exists."
+);
+
+const mismatchedRoll = policy.syncMatchPlaceholders([], [{ ...incomingMatch, id: "henrik-match-sova-2", agent: "Sova" }], profileId, { pendingLoadoutRoll });
+assert.equal(
+  mismatchedRoll.entries[0]?.focus,
+  "",
+  "A loadout focus must not spill into a different agent's synced match."
+);
 
 // With no rolled draft, normal placeholder creation remains unchanged.
 const normalPlaceholder = policy.syncMatchPlaceholders([], [incomingMatch], profileId);
@@ -94,6 +106,11 @@ assert.match(appSource, /async function performPersistentAccountStateSave[\s\S]*
 assert.match(appSource, /auth-save-timeout/);
 assert.match(appSource, /schedulePersistentAccountSaveRetry\("auth-save-unavailable"\)/);
 assert.match(appSource, /function deleteLogEntry\(/);
+assert.match(appSource, /function isProtectedVerifiedRankedLogEntry\(/);
+assert.match(appSource, /Verified match protected/);
 assert.match(appSource, /queuePersistentLogDeletion\(entryId\)/);
+assert.match(appSource, /const retainedSync = await syncProfileRetainedHistory\(/);
+assert.match(appSource, /safeNumber\(retainedSync\?\.totalImported\) > 0 && retainedSync\?\.prefilled/);
+assert.match(appSource, /activatePage\?\.\("logging", \{ source: "login-new-match" \}\)/);
 
-console.log("Logging reconciliation checks passed: rolled drafts merge safely, normal placeholders remain intact, deletes queue cloud removal, and auth save timeouts retry.");
+console.log("Logging reconciliation checks passed: rolled drafts merge safely, fresh placeholders inherit same-agent focus, verified RR entries are guarded, new login imports route to reflection, normal placeholders remain intact, deletes queue cloud removal, and auth save timeouts retry.");
