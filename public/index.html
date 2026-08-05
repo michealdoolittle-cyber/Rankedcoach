@@ -1970,16 +1970,31 @@ stroke-linejoin="round"/>
     <div class="card logging-card">
       <div class="card-header">
         <div>
-          <div class="card-title">Match Reflection</div>
-          <div class="card-sub">Quick post-match coaching notes.</div>
+          <div id="loggingCardTitle" class="card-title">Match Reflection</div>
+          <div id="loggingCardSub" class="card-sub">Quick post-match coaching notes.</div>
         </div>
+      </div>
+
+      <div id="loggingDesktopLauncher" class="logging-desktop-launcher" aria-label="Choose a logging task">
+        <button type="button" class="logging-launch-tile logging-launch-tile-warmup" data-logging-desktop-launch="warmup">
+          <span class="logging-launch-kicker">Today's preparation</span>
+          <strong>Warm-Up</strong>
+          <span class="logging-launch-copy">Open your warm-up reflection and training plan.</span>
+          <span class="logging-launch-status" id="loggingWarmupLaunchStatus">Ready when you are</span>
+        </button>
+        <button type="button" class="logging-launch-tile logging-launch-tile-postmatch" data-logging-desktop-launch="postmatch">
+          <span class="logging-launch-kicker">Synced match</span>
+          <strong>Post Match</strong>
+          <span class="logging-launch-copy">Open the newest match that needs your reflection.</span>
+          <span class="logging-launch-status" id="loggingPostMatchLaunchStatus">Checking synced matches</span>
+        </button>
       </div>
 
       <div class="logging-form">
         <div class="logging-hero">
           <div class="logging-hero-copy">
-            <div class="logging-hero-kicker">Session Debrief</div>
-            <div class="logging-hero-title">Lock in your match details.</div>
+            <div id="loggingHeroKicker" class="logging-hero-kicker">Session Debrief</div>
+            <div id="loggingHeroTitle" class="logging-hero-title">Lock in your match details.</div>
           </div>
           <div class="logging-live-card" id="loggingLiveCard">
             <div class="logging-live-pill" id="loggingLiveTone">Waiting For Reflection</div>
@@ -2295,7 +2310,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260803-data-integrity-01"></script>
   <script src="integrations/riot-sync.js?v=20260804-raw-parallel-01"></script>
   <script src="daily-entrance-motion.js?v=20260731-verification-loading-02"></script>
-  <script type="module" src="app.js?v=20260805-logging-single-entry-01"></script>
+  <script type="module" src="app.js?v=20260805-logging-desktop-refresh-01"></script>
   <script type="module" src="knowledge-review.js?v=20260803-auth-abort-fallback-01"></script>
 </body>
 </html>

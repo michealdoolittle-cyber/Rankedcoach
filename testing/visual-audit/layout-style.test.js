@@ -290,6 +290,16 @@ async function activateCoveragePage(page, pageKey) {
   await page.waitForTimeout(80);
 }
 
+async function ensureLoggingFormSurface(page) {
+  const viewport = page.viewportSize();
+  if (!viewport || viewport.width <= 820) return;
+  const launcher = page.locator('[data-logging-desktop-launch="warmup"]');
+  if (!await launcher.isVisible().catch(() => false)) return;
+  await launcher.evaluate(button => button.click());
+  await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
+  await page.locator(".logging-hero").waitFor({ state: "visible", timeout: 5000 });
+}
+
 async function waitForViewportScale(page, width, height) {
   await page.waitForFunction(({ width: expectedWidth, height: expectedHeight }) => {
     const root = getComputedStyle(document.documentElement);
@@ -496,6 +506,7 @@ async function captureSurfaceExtremeAttempt(page, pageKey, selector, mode, style
     const computed = getComputedStyle(target);
     const leafComputed = getComputedStyle(leaf);
     const formControl = leaf instanceof HTMLInputElement || leaf instanceof HTMLTextAreaElement || leaf instanceof HTMLSelectElement;
+    const leafIsRendered = leafRect.width > 2 && leafRect.height > 2;
     const clipsLeafX = ["hidden", "clip", "scroll", "auto"].includes(leafComputed.overflowX);
     const clipsLeafY = ["hidden", "clip", "scroll", "auto"].includes(leafComputed.overflowY);
     const ancestors = [];
@@ -524,7 +535,7 @@ async function captureSurfaceExtremeAttempt(page, pageKey, selector, mode, style
       leafClientWidth: leaf.clientWidth,
       leafScrollHeight: leaf.scrollHeight,
       leafClientHeight: leaf.clientHeight,
-      outsideTarget: !frameOnly && (leafRect.left < targetRect.left - 1 || leafRect.right > targetRect.right + 1 || leafRect.top < targetRect.top - 1 || leafRect.bottom > targetRect.bottom + 1),
+      outsideTarget: !frameOnly && leafIsRendered && (leafRect.left < targetRect.left - 1 || leafRect.right > targetRect.right + 1 || leafRect.top < targetRect.top - 1 || leafRect.bottom > targetRect.bottom + 1),
       clip: computed.clipPath,
       borderWidth: computed.borderTopWidth,
       background: computed.backgroundImage || computed.backgroundColor,
@@ -968,6 +979,7 @@ async function runPhaseTwoCoverage(page, browser) {
     await assertTagSemanticColors(page, [".insight-tag", ".insight-meta-pill", ".insight-source", ".trend-signal-tone"], style);
     await captureSurfaceSet(page, "insights", phaseTwoSurfaces.insights, style, tiles);
     await activateCoveragePage(page, "logging");
+    await ensureLoggingFormSurface(page);
     await captureSurfaceSet(page, "logging", phaseTwoSurfaces.logging, style, tiles);
     await activateCoveragePage(page, "library");
     await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.reset());

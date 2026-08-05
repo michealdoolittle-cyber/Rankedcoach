@@ -9914,6 +9914,109 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   margin:clamp(108px, 15vw, 168px) 0 10px;
 }
 
+/* Desktop Logging launcher + explicit app-update action. The final display
+   guard below keeps saved layout styles from turning the form permanent. */
+.app-toast-action{
+  pointer-events:auto;
+  align-self:center;
+  min-height:34px;
+  padding:0 12px;
+  border:1px solid color-mix(in srgb, var(--accent, #ff4655) 65%, rgba(255,255,255,.2));
+  border-radius:9px;
+  background:color-mix(in srgb, var(--accent, #ff4655) 22%, rgba(15,23,42,.96));
+  color:var(--text-main,#f8fafc);
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.app-toast:has(.app-toast-action){
+  grid-template-columns:auto minmax(0, 1fr) auto;
+}
+
+.logging-desktop-launcher{
+  display:none;
+}
+
+@media (min-width:821px){
+  #page-logging[data-logging-desktop-view="launcher"] .logging-desktop-launcher{
+    grid-template-rows:repeat(2, minmax(0, 1fr));
+    flex:1 1 auto;
+    min-height:0;
+    gap:12px;
+    margin-top:12px;
+  }
+
+  #page-logging .logging-launch-tile{
+    width:100%;
+    min-height:0;
+    padding:22px 24px;
+    border:1px solid rgba(148,163,184,.28);
+    border-radius:16px;
+    background:
+      linear-gradient(135deg, rgba(15,23,42,.94), rgba(2,6,23,.97));
+    color:var(--text-main,#f8fafc);
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:8px;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+
+  #page-logging .logging-launch-tile:hover,
+  #page-logging .logging-launch-tile:focus-visible{
+    border-color:color-mix(in srgb, var(--accent,#22d3ee) 72%, white);
+    background:
+      radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent,#22d3ee) 17%, transparent), transparent 36%),
+      linear-gradient(135deg, rgba(20,32,53,.98), rgba(2,6,23,.98));
+    box-shadow:0 14px 28px rgba(2,6,23,.34), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  #page-logging .logging-launch-tile.is-complete{
+    border-color:rgba(34,197,94,.48);
+  }
+
+  #page-logging .logging-launch-tile.is-ready{
+    border-color:rgba(255,70,85,.62);
+  }
+
+  #page-logging .logging-launch-tile[aria-disabled="true"]{
+    cursor:default;
+    opacity:.72;
+  }
+
+  #page-logging .logging-launch-kicker{
+    color:var(--text-muted,#94a3b8);
+    font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  #page-logging .logging-launch-tile strong{
+    color:var(--text-main,#f8fafc);
+    font:900 clamp(26px,2vw,38px)/.94 var(--font-display,"Rajdhani",sans-serif);
+    letter-spacing:.025em;
+    text-transform:uppercase;
+  }
+
+  #page-logging .logging-launch-copy{
+    color:var(--text-muted,#cbd5e1);
+    font-size:14px;
+    font-weight:700;
+    line-height:1.35;
+  }
+
+  #page-logging .logging-launch-status{
+    margin-top:auto;
+    color:var(--accent,#22d3ee);
+    font:800 12px/1.35 var(--font-body,"Rajdhani",sans-serif);
+  }
+}
+
 .auth-intent-message{
   border:1px solid rgba(34,211,238,.46);
   border-radius:14px;
@@ -61127,4 +61230,16 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     flex:0 0 auto !important;
     border-radius:8px !important;
   }
+}
+
+/* Keep the desktop launcher above older logging-form display rules. */
+@media (min-width:821px){
+  #page-logging[data-logging-desktop-view="launcher"] .logging-form{ display:none !important; }
+  #page-logging[data-logging-desktop-view="launcher"] .logging-desktop-launcher{ display:grid !important; }
+  #page-logging[data-logging-desktop-view="form"] .logging-desktop-launcher{ display:none !important; }
+  #page-logging[data-logging-desktop-view="form"] .logging-form{ display:grid !important; }
+}
+
+@media (max-width:820px){
+  #page-logging .logging-desktop-launcher{ display:none !important; }
 }

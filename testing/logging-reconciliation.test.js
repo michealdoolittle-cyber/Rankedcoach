@@ -92,7 +92,7 @@ assert.equal(normalPlaceholder.entries[0].isMatchPlaceholder, true);
 assert.equal(normalPlaceholder.entries[0].isPlayerAuthored, false);
 
 const appSource = fs.readFileSync(path.join(root, "public", "app.js"), "utf8");
-assert.match(appSource, /if \(!editingId && getPendingLoadoutRoll\(\)\)/);
+assert.match(appSource, /if \(!editingId && loggingFormMode !== "warmup" && getPendingLoadoutRoll\(\)\)/);
 assert.match(appSource, /function getSyncedLogEntryForMatch\(/);
 assert.match(appSource, /function openSyncedMatchReflectionFlow\(/);
 assert.match(appSource, /openSyncedMatchReflectionFlow\(newlyImportedReflection/);

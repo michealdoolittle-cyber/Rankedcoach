@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260804-uncapped-backfill-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260805-logging-desktop-refresh-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -461,10 +461,13 @@ function resolveWarmupTrainingEntry(entries = [], record = null) {
   return ordered[0] || null;
 }
 
-function persistWarmupTrainingEntry(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
+function persistWarmupTrainingEntry(profile = getActiveProfile?.(), date = formatLocalDateKey(), preferredEntryId = "") {
   const record = getDailyWarmupRecord(profile, date);
   if (!profile?.id || !record || record.warmupLogEntryId) return null;
-  const linkedEntry = resolveWarmupTrainingEntry(getDailyTrainingEntries(date, profile.id), record);
+  const entries = getDailyTrainingEntries(date, profile.id);
+  const preferredId = String(preferredEntryId || "").trim();
+  const linkedEntry = entries.find(entry => String(entry?.id || "") === preferredId)
+    || resolveWarmupTrainingEntry(entries, record);
   if (!linkedEntry?.id) return null;
   writeDailyWarmupRecord(profile, { date, warmupLogEntryId: String(linkedEntry.id) });
   return linkedEntry;
@@ -2338,10 +2341,194 @@ function ensureMobileHeaderSyncButton() {
   return mobileHeaderSyncButton;
 }
 
+function isDesktopLoggingViewport() {
+  return !isMobileLayoutViewport();
+}
+
+function getNewestPendingMatchReflection() {
+  const profileId = String(activeProfileId || getActiveProfile?.()?.id || "").trim();
+  return getProfileLogEntries(profileId)
+    .filter(entry => isMatchPlaceholderLogEntry(entry))
+    .sort((a, b) => {
+      const bTime = getMatchPlaceholderTimestamp(getLogEntryMatchContext(b)?.match || b);
+      const aTime = getMatchPlaceholderTimestamp(getLogEntryMatchContext(a)?.match || a);
+      return bTime - aTime || new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0);
+    })[0] || null;
+}
+
+function getTodayWarmupReflection() {
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return null;
+  const record = getDailyWarmupRecord?.(profile);
+  return resolveWarmupTrainingEntry?.(
+    getDailyTrainingEntries?.(formatLocalDateKey?.(), profile.id) || [],
+    record
+  ) || null;
+}
+
+function setLoggingFormMode(mode = "postmatch") {
+  loggingFormMode = mode === "warmup" ? "warmup" : "postmatch";
+  const isWarmup = loggingFormMode === "warmup";
+  const cardTitle = document.getElementById("loggingCardTitle");
+  const cardSub = document.getElementById("loggingCardSub");
+  const heroKicker = document.getElementById("loggingHeroKicker");
+  const heroTitle = document.getElementById("loggingHeroTitle");
+  const saveButton = document.getElementById("logSaveBtn");
+  const form = document.querySelector("#page-logging .logging-form");
+
+  form?.classList.toggle("is-warmup-reflection", isWarmup);
+  if (cardTitle) cardTitle.textContent = isWarmup ? "Warm-Up Reflection" : "Match Reflection";
+  if (cardSub) cardSub.textContent = isWarmup
+    ? "Capture the preparation you want ready for your next match."
+    : "Quick post-match coaching notes.";
+  if (heroKicker) heroKicker.textContent = isWarmup ? "Session Preparation" : "Session Debrief";
+  if (heroTitle) heroTitle.textContent = isWarmup
+    ? "Set up the details you want to carry into ranked."
+    : "Lock in your match details.";
+  if (saveButton) saveButton.textContent = isWarmup ? "Save Warm-Up" : "Save Reflection";
+}
+
+function setDesktopLoggingLauncherHeader() {
+  const cardTitle = document.getElementById("loggingCardTitle");
+  const cardSub = document.getElementById("loggingCardSub");
+  if (cardTitle) cardTitle.textContent = "Session Log";
+  if (cardSub) cardSub.textContent = "Choose a warm-up or synced match reflection.";
+}
+
+function setDesktopLoggingView(view = "launcher", options = {}) {
+  const page = document.getElementById("page-logging");
+  if (!page || !isDesktopLoggingViewport()) return;
+  const resolvedView = view === "form" ? "form" : "launcher";
+  page.dataset.loggingDesktopView = resolvedView;
+  if (resolvedView === "launcher") {
+    setLoggingFormMode("postmatch");
+    setDesktopLoggingLauncherHeader();
+    renderDesktopLoggingLauncher();
+  }
+  if (options.scroll === true) {
+    window.requestAnimationFrame(() => {
+      (resolvedView === "launcher"
+        ? document.getElementById("loggingDesktopLauncher")
+        : page.querySelector(".logging-card"))
+        ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    });
+  }
+}
+
+function renderDesktopLoggingLauncher() {
+  const page = document.getElementById("page-logging");
+  const launcher = document.getElementById("loggingDesktopLauncher");
+  if (!page || !launcher || !isDesktopLoggingViewport()) return;
+  setDesktopLoggingLauncherHeader();
+
+  const warmup = getTodayWarmupReflection();
+  const pending = getNewestPendingMatchReflection();
+  const warmupTile = launcher.querySelector('[data-logging-desktop-launch="warmup"]');
+  const postMatchTile = launcher.querySelector('[data-logging-desktop-launch="postmatch"]');
+  const warmupStatus = document.getElementById("loggingWarmupLaunchStatus");
+  const postMatchStatus = document.getElementById("loggingPostMatchLaunchStatus");
+
+  if (warmupStatus) {
+    warmupStatus.textContent = warmup
+      ? "Today's warm-up is saved — open it to review or refine it."
+      : "Choose drills and capture your warm-up before you queue.";
+  }
+  if (postMatchStatus) {
+    const match = pending ? getLogEntryMatchContext(pending)?.match : null;
+    const agent = String(pending?.agent || match?.agent || "").trim();
+    const map = String(pending?.map || match?.map || match?.metadata?.map || "").trim();
+    postMatchStatus.textContent = pending
+      ? `${[agent, map].filter(Boolean).join(" on ") || "Your latest synced match"} is ready for reflection.`
+      : "No synced match currently needs a reflection.";
+  }
+  if (warmupTile) warmupTile.classList.toggle("is-complete", Boolean(warmup));
+  if (postMatchTile) {
+    postMatchTile.classList.toggle("is-ready", Boolean(pending));
+    postMatchTile.classList.toggle("is-complete", !pending);
+    postMatchTile.setAttribute("aria-disabled", pending ? "false" : "true");
+    postMatchTile.dataset.logEntryId = pending?.id || "";
+  }
+}
+
+function resetLoggingFormForNewEntry(mode = "postmatch") {
+  editingLogEntryId = null;
+  editingLogEntrySnapshot = null;
+  setLoggingFormMode(mode);
+  setLogFormWarning?.("");
+  const logMap = document.getElementById("logMap");
+  const logNotes = document.getElementById("logNotes");
+  const logFocusSelect = document.getElementById("logFocusSelect");
+  const preview = document.getElementById("focusPreviewText");
+  if (logMap) logMap.value = "";
+  updateLogMapPreview?.("");
+  if (logNotes) logNotes.value = "";
+  if (logFocusSelect) logFocusSelect.value = "";
+  if (preview) preview.textContent = "Focus Category";
+  preview?.classList?.add("is-placeholder");
+  setCustomFocusCommitted?.("");
+  updateLogAgentDisplay?.("");
+  selectedLogRating = null;
+  selectedLogMood = null;
+  selectedLogTeamComms = null;
+  selectedLogSelfComms = null;
+  setExclusiveChipSelection?.("[data-rating]", null, "rating");
+  setExclusiveChipSelection?.("[data-mood]", null, "mood");
+  setExclusiveChipSelection?.("[data-team-comms]", null, "teamComms");
+  setExclusiveChipSelection?.("[data-self-comms]", null, "selfComms");
+  setLoggingQuickMenuOpen?.(false);
+  syncLoggingQuickChipStates?.();
+  updateLoggingDebriefPreview?.();
+}
+
+function openDesktopLoggingLauncherTarget(target = "") {
+  if (!isDesktopLoggingViewport()) return;
+  if (target === "postmatch") {
+    const pending = getNewestPendingMatchReflection();
+    if (!pending?.id) return;
+    editLogEntry(pending.id, { scroll: true });
+    return;
+  }
+  if (target === "warmup") {
+    const warmup = getTodayWarmupReflection();
+    if (warmup?.id) {
+      editLogEntry(warmup.id, { scroll: true });
+      return;
+    }
+    resetLoggingFormForNewEntry("warmup");
+    setDesktopLoggingView("form", { scroll: true });
+  }
+}
+
+function ensureDesktopLoggingLauncher() {
+  const launcher = document.getElementById("loggingDesktopLauncher");
+  if (!launcher) return;
+  if (!launcher.dataset.bound) {
+    launcher.dataset.bound = "true";
+    launcher.querySelectorAll("[data-logging-desktop-launch]").forEach(tile => {
+      tile.addEventListener("click", event => {
+        if (tile.getAttribute("aria-disabled") === "true") return;
+        event.preventDefault();
+        const pendingEntryId = String(tile.dataset.logEntryId || "").trim();
+        if (tile.dataset.loggingDesktopLaunch === "postmatch" && pendingEntryId) {
+          editLogEntry(pendingEntryId, { scroll: true });
+          return;
+        }
+        openDesktopLoggingLauncherTarget(tile.dataset.loggingDesktopLaunch || "");
+      }, { capture: true });
+    });
+  }
+  if (isDesktopLoggingViewport()) {
+    const page = document.getElementById("page-logging");
+    if (page && !page.dataset.loggingDesktopView) page.dataset.loggingDesktopView = "launcher";
+    renderDesktopLoggingLauncher();
+  }
+}
+
 function ensureMobileLoggingTabs() {
   const page = document.getElementById("page-logging");
   const layout = page?.querySelector(".logging-layout");
   if (!page || !layout) return;
+  ensureDesktopLoggingLauncher();
   if (!isMobileLayoutViewport()) {
     document.getElementById("mobileLoggingTabs")?.remove();
     return;
@@ -13091,7 +13278,7 @@ function installMobileHomePullToRefresh() {
     indicator = document.createElement("div");
     indicator.id = "mobilePullRefreshIndicator";
     indicator.className = "mobile-pull-refresh-indicator";
-    indicator.textContent = "Pull to refresh";
+    indicator.textContent = "Pull to sync";
     document.body.appendChild(indicator);
   }
 
@@ -13104,7 +13291,7 @@ function installMobileHomePullToRefresh() {
 
   root.addEventListener("touchstart", (event) => {
     if (!isMobileLayoutViewport()) return;
-    if (getActivePageElement()?.id !== "page-home") return;
+    if (event.target?.closest?.("input, textarea, select, button, a, [contenteditable='true'], .modal")) return;
     const scrollTop = root.scrollTop || document.documentElement.scrollTop || 0;
     if (scrollTop > 2) return;
     startY = event.touches?.[0]?.clientY || 0;
@@ -13120,7 +13307,7 @@ function installMobileHomePullToRefresh() {
     const progress = Math.min(1, distance / 88);
     indicator.classList.add("is-visible");
     indicator.classList.toggle("is-ready", progress >= 1);
-    indicator.textContent = progress >= 1 ? "Release to refresh" : "Pull to refresh";
+    indicator.textContent = progress >= 1 ? "Release to sync" : "Pull to sync";
     indicator.style.setProperty("--pull-progress", String(progress));
   }, { passive: true });
 
@@ -13130,7 +13317,7 @@ function installMobileHomePullToRefresh() {
     resetPull();
     if (shouldRefresh) {
       indicator.classList.add("is-visible", "is-refreshing");
-      indicator.textContent = "Refreshing...";
+      indicator.textContent = "Syncing profile data...";
       void forceRefreshActiveProfile("pull").finally(() => {
         window.setTimeout(resetPull, 450);
       });
@@ -13333,6 +13520,7 @@ function showToast(message, options = {}) {
   const toast = document.createElement("div");
   const title = String(options.title || "").trim();
   const iconUrl = String(options.iconUrl || "").trim();
+  const actionLabel = String(options.actionLabel || "").trim();
   const durationMs = Math.max(1800, Math.min(4200, safeNumber(options.durationMs) || 2600));
   toast.className = "app-toast";
   toast.dataset.variant = String(options.variant || "default");
@@ -13344,14 +13532,25 @@ function showToast(message, options = {}) {
       ${title ? `<div class="app-toast-title">${escapeHtml(title)}</div>` : ""}
       <div class="app-toast-copy">${escapeHtml(message)}</div>
     </div>
+    ${actionLabel ? `<button type="button" class="app-toast-action">${escapeHtml(actionLabel)}</button>` : ""}
   `;
   stack.appendChild(toast);
   window.requestAnimationFrame(() => toast.classList.add("is-visible"));
+  let dismissTimer = 0;
   const dismiss = () => {
+    if (dismissTimer) window.clearTimeout(dismissTimer);
     toast.classList.add("is-leaving");
     window.setTimeout(() => toast.remove(), 220);
   };
-  window.setTimeout(dismiss, durationMs);
+  const action = toast.querySelector(".app-toast-action");
+  if (action && typeof options.onAction === "function") {
+    action.addEventListener("click", event => {
+      event.preventDefault();
+      dismiss();
+      options.onAction();
+    });
+  }
+  dismissTimer = window.setTimeout(dismiss, durationMs);
 }
 
 function triggerPremiumMoment(kind = "result", options = {}) {
@@ -19047,6 +19246,7 @@ let currentMap = "";
 let logEntries = [];
 let editingLogEntryId = null;
 let editingLogEntrySnapshot = null;
+let loggingFormMode = "postmatch";
 let profiles = [];
 let activeProfileId = null;
 let activeInsightFilter = "all";
@@ -21160,6 +21360,12 @@ function noteRankedCoachLoadedBuild() {
   }
 }
 
+function reloadRankedCoachForUpdate() {
+  // This is intentionally separate from data sync: a deployed JavaScript
+  // build only arrives after a real document reload.
+  window.location.reload();
+}
+
 async function checkRankedCoachAppUpdate(options = {}) {
   if (rankedCoachAppUpdateCheckInFlight) return;
   const minInterval = options.force ? 0 : 5 * 60 * 1000;
@@ -21178,9 +21384,11 @@ async function checkRankedCoachAppUpdate(options = {}) {
     if (remoteVersion && loadedVersion && remoteVersion !== loadedVersion && !rankedCoachAppUpdateNoticeShown) {
       rankedCoachAppUpdateNoticeShown = true;
       setAppLoadingEventBanner("update");
-      showToast("Refresh when ready to load the newest RankedCoach build.", {
+      showToast("A newer RankedCoach build is ready to load.", {
         title: "App update available",
         variant: "warning",
+        actionLabel: "Reload",
+        onAction: reloadRankedCoachForUpdate,
         durationMs: 4200
       });
     }
@@ -48357,7 +48565,8 @@ function getLogFormValues(){
     notes: logNotes?.value?.trim() || "",
     playstyleTags: deriveLoggingPlaystyleTags(logNotes?.value || ""),
     role: activeRole || "",
-    warmup: Boolean((logNotes?.value || "").toLowerCase().includes("warmup")) && isFirstGameOfCurrentSession()
+    warmup: loggingFormMode === "warmup"
+      || (Boolean((logNotes?.value || "").toLowerCase().includes("warmup")) && isFirstGameOfCurrentSession())
   };
 }
 
@@ -48366,6 +48575,10 @@ function getLogFormValues(){
 // ========================
 function scrollLoggingFormToTopAfterSave() {
   const page = document.getElementById("page-logging");
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("launcher", { scroll: true });
+    return;
+  }
   if (page?.dataset) page.dataset.mobileLoggingView = "form";
   ensureMobileLoggingTabs();
 
@@ -48407,6 +48620,9 @@ function isFiniteLogNumber(value) {
 
 function snapLoggingFormToTarget(target = null) {
   const page = document.getElementById("page-logging");
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("form");
+  }
   if (page?.dataset) page.dataset.mobileLoggingView = "form";
   ensureMobileLoggingTabs();
 
@@ -48464,7 +48680,7 @@ function validateLogFormBeforeSave(entry = {}) {
 function addLogEntry(){
 
   const editingId = editingLogEntryId;
-  if (!editingId && getPendingLoadoutRoll()) {
+  if (!editingId && loggingFormMode !== "warmup" && getPendingLoadoutRoll()) {
     setLogFormWarning("Your rolled loadout will attach to the next synced match. Complete this reflection after its Match Report opens.");
     snapLoggingFormToTarget(document.getElementById("logSaveBtn"));
     return;
@@ -48513,8 +48729,8 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
     logEntries.unshift(entry);
   }
 
-  if (!isEditing) {
-    persistWarmupTrainingEntry(getActiveProfile(), getTrainingEntryDate(entry));
+  if (!isEditing || completesPlaceholder) {
+    persistWarmupTrainingEntry(getActiveProfile(), getTrainingEntryDate(entry), entry.id);
   }
 
   editingLogEntryId = null;
@@ -48546,34 +48762,7 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
   updateFocusProgressUI();
   updateInsightFocusUI();
   syncWeeklyFocus();
-  // reset form
-  const logMap = document.getElementById("logMap");
-  const logNotes = document.getElementById("logNotes");
-  const logFocusSelect = document.getElementById("logFocusSelect");
-  const preview = document.getElementById("focusPreviewText");
-  const logAgentImg = document.getElementById("logAgentImg");
-
-  if(logMap) logMap.value = "";
-  updateLogMapPreview("");
-  if(logNotes) logNotes.value = "";
-  if(logFocusSelect) logFocusSelect.value = "";
-  if(preview) preview.textContent = "Focus Category";
-  preview?.classList?.add("is-placeholder");
-  setCustomFocusCommitted("");
-  updateLogAgentDisplay("");
-
-  selectedLogRating = null;
-  selectedLogMood = null;
-  selectedLogTeamComms = null;
-  selectedLogSelfComms = null;
-
-  setExclusiveChipSelection("[data-rating]", null, "rating");
-  setExclusiveChipSelection("[data-mood]", null, "mood");
-  setExclusiveChipSelection("[data-team-comms]", null, "teamComms");
-  setExclusiveChipSelection("[data-self-comms]", null, "selfComms");
-  setLoggingQuickMenuOpen(false);
-  syncLoggingQuickChipStates();
-  updateLoggingDebriefPreview();
+  resetLoggingFormForNewEntry("postmatch");
   saveLogEntries();
   scrollLoggingFormToTopAfterSave();
 }
@@ -48659,6 +48848,8 @@ function editLogEntry(id, options = {}){
 
   editingLogEntryId = entry.id;
   editingLogEntrySnapshot = { ...entry };
+  setLoggingFormMode(entry.warmup === true ? "warmup" : "postmatch");
+  if (isDesktopLoggingViewport()) setDesktopLoggingView("form");
 
   const focusSelect = document.getElementById("logFocusSelect");
   const preview = document.getElementById("focusPreviewText");
@@ -49233,6 +49424,7 @@ function renderLogFeed(options = {}){
   container.innerHTML = "";
   loggingFeedDirty = false;
   loggingFeedRendered = true;
+  if (isDesktopLoggingViewport()) renderDesktopLoggingLauncher();
 
   const profileEntries = getProfileLogEntries();
   const trainingMarkers = getDailyTrainingFeedMarkers(profileEntries, getActiveProfile());

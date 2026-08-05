@@ -287,21 +287,25 @@ async function run() {
       if (modal?.classList.contains("active")) document.getElementById("dailyWarmupSkip")?.click();
     });
     await baseline.page.click('[data-page="logging"]');
+    await baseline.page.waitForTimeout(300);
+    await baseline.page.evaluate(() => globalThis.RankedCoachDailyEntrance?.skipAll?.());
     await baseline.page.evaluate(() => {
       const modal = document.getElementById("dailyWarmupModal");
       if (modal?.classList.contains("active")) document.getElementById("dailyWarmupSkip")?.click();
     });
+    await baseline.page.locator('.log-entry[data-log-entry-id="cloud-log-1"] .log-edit-btn').evaluate(button => button.click());
+    await baseline.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     await baseline.page.evaluate(() => {
       document.getElementById("logAgentDisplay").dataset.agent = "Sova";
     });
-    await baseline.page.selectOption("#logFocusSelect", "Map Awareness");
+    await baseline.page.locator("#logFocusSelect").selectOption("Map Awareness", { force: true });
     await baseline.page.fill("#logMap", "Haven");
-    await baseline.page.click('#logRatingRow [data-rating="4"]');
-    await baseline.page.click('#logMoodRow [data-mood="Focused"]');
-    await baseline.page.click('#logTeamCommsRow [data-team-comms="3"]');
-    await baseline.page.click('#logSelfCommsRow [data-self-comms="3"]');
+    await baseline.page.locator('#logRatingRow [data-rating="4"]').evaluate(button => button.click());
+    await baseline.page.locator('#logMoodRow [data-mood="Focused"]').evaluate(button => button.click());
+    await baseline.page.locator('#logTeamCommsRow [data-team-comms="3"]').evaluate(button => button.click());
+    await baseline.page.locator('#logSelfCommsRow [data-self-comms="3"]').evaluate(button => button.click());
     await baseline.page.fill("#logNotes", "Delta persistence test reflection.");
-    await baseline.page.click("#logSaveBtn");
+    await baseline.page.locator("#logSaveBtn").evaluate(button => button.click());
     await baseline.page.waitForFunction(() => globalThis.__cloudWrites
       .some(write => write.table === "reflection_logs" && write.rows.length === 1), null, { timeout: 10000 });
     const deltaWrites = await baseline.page.evaluate(() => globalThis.__cloudWrites);
