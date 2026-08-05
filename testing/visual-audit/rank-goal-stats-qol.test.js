@@ -289,7 +289,7 @@ async function run() {
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
     const axisTitle = await page.locator(".chart-axis-title").textContent();
-    assert.match(axisTitle, /Games from Today's session|Matches since Jun 1, 2026/i);
+    assert.match(axisTitle, /Games from Today's session|Games from Season 2026 Act 4|Matches since Jun 1, 2026/i);
     const lifetimeLabels = await page.locator(".chart-lifetime-date-label").allTextContents();
     if (/Matches since Jun 1, 2026/i.test(axisTitle || "")) {
       assert.deepEqual(lifetimeLabels, ["Jun 1, 2026", "Jun 25, 2026"]);
@@ -533,6 +533,28 @@ async function run() {
     await page.locator(".stats-act-mobile-menu-close").click();
     await page.selectOption("#statsActSelector", { label: "Season 2026 Act 3" }, { force: true });
     await page.waitForTimeout(350);
+    // A selected season is an over-time chart scope, not only today's session.
+    // The fixture has 24 retained Act 3 matches (none from today), so the
+    // 10-match chart must still be available and render the latest ten.
+    await page.locator('.nav-btn[data-page="home"]').click();
+    await page.waitForTimeout(350);
+    const seasonalWindowControls = await page.locator('.graph-btn[data-size="10"]').evaluate(button => ({
+      disabled: button.disabled,
+      title: button.title,
+      matchCount: document.querySelectorAll("#chartRow .rr-dot, #chartRow .final-end").length
+    }));
+    assert.equal(seasonalWindowControls.disabled, false, JSON.stringify(seasonalWindowControls));
+    assert.equal(seasonalWindowControls.title, "", JSON.stringify(seasonalWindowControls));
+    await page.locator('.graph-btn[data-size="10"]').click();
+    await page.waitForTimeout(350);
+    const selectedSeasonChart = await page.locator("#chartRow").evaluate(chart => ({
+      dots: chart.querySelectorAll(".rr-dot, .final-end").length,
+      axisTitle: chart.closest(".rr-chart-card")?.querySelector(".chart-axis-title")?.textContent?.trim() || ""
+    }));
+    assert.equal(selectedSeasonChart.dots, 10, JSON.stringify(selectedSeasonChart));
+    assert.match(selectedSeasonChart.axisTitle, /Season 2026 Act 3/i, JSON.stringify(selectedSeasonChart));
+    await page.locator('.nav-btn[data-page="stats"]').click();
+    await page.waitForTimeout(200);
     const weaponFamilyTones = await page.locator(".stats-desktop-weapon-family-meta").evaluateAll(items => items
       .filter(item => !item.textContent.includes("No Data"))
       .map(item => ({

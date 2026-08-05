@@ -349,9 +349,13 @@ async function verifyViewport(browser, viewport, name) {
     const focus = document.getElementById("logFocusSelect");
     const map = document.getElementById("logMap");
     const optionValues = Array.from(focus?.options || []).map(option => option.value);
+    const custom = document.getElementById("logCustomFocus");
+    const customWrap = custom?.closest(".focus-other-wrap");
+    focus.value = "";
+    focus.dispatchEvent(new Event("change", { bubbles: true }));
+    const initialCustomVisible = getComputedStyle(customWrap).display !== "none";
     focus.value = "Other";
     focus.dispatchEvent(new Event("change", { bubbles: true }));
-    const custom = document.getElementById("logCustomFocus");
     custom.value = "Own the first contact";
     custom.dispatchEvent(new Event("input", { bubbles: true }));
     map.value = "Lotus";
@@ -360,13 +364,15 @@ async function verifyViewport(browser, viewport, name) {
     return {
       optionValues,
       selectedFocus: focus.value,
-      customVisible: getComputedStyle(custom).display !== "none",
+      initialCustomVisible,
+      customVisible: getComputedStyle(customWrap).display !== "none",
       mapVisible: !preview.hidden,
       mapSource: preview.getAttribute("src") || ""
     };
   });
   assert.ok(manualFocusAndMap.optionValues.includes("General"), `${name}: General should be selectable in the logging focus control`);
   assert.ok(manualFocusAndMap.optionValues.includes("Other"), `${name}: Other should be selectable in the logging focus control`);
+  assert.equal(manualFocusAndMap.initialCustomVisible, false, `${name}: custom focus input must stay hidden until Other is selected`);
   assert.equal(manualFocusAndMap.selectedFocus, "Other", `${name}: Other should activate the custom-focus path`);
   assert.equal(manualFocusAndMap.customVisible, true, `${name}: Other should reveal its free-text input`);
   assert.equal(manualFocusAndMap.mapVisible, true, `${name}: entered maps should show a logging-pill preview`);
@@ -417,8 +423,13 @@ async function verifyViewport(browser, viewport, name) {
     return {
       notesBottom: notes.bottom,
       actionsTop: actions.top,
+      actionsBottom: actions.bottom,
       actionsRight: Math.round(actions.right),
       entryRight: Math.round(entry.getBoundingClientRect().right),
+      entryTop: entry.getBoundingClientRect().top,
+      entryBottom: entry.getBoundingClientRect().bottom,
+      entryPaddingBottom: getComputedStyle(entry).paddingBottom,
+      bodyBottom: entry.querySelector(".log-body")?.getBoundingClientRect().bottom || 0,
       chipRight: Math.round(chip.right),
       headerRight: Math.round(header.right)
     };
@@ -426,6 +437,37 @@ async function verifyViewport(browser, viewport, name) {
   assert.ok(feedLayout.actionsTop >= feedLayout.notesBottom + 8, `${name}: feed buttons should not cover notes ${JSON.stringify(feedLayout)}`);
   assert.ok(Math.abs(feedLayout.headerRight - feedLayout.actionsRight) <= 18, `${name}: feed buttons should sit bottom-right ${JSON.stringify(feedLayout)}`);
   assert.ok(Math.abs(feedLayout.headerRight - feedLayout.chipRight) <= 28, `${name}: impact chip should be end aligned ${JSON.stringify(feedLayout)}`);
+  if (isMobileViewport) {
+    const mobileFeedDensity = await page.locator("#logFeed .log-entry").first().evaluate(entry => {
+      const entryRect = entry.getBoundingClientRect();
+      const actions = entry.querySelector(".log-actions");
+      const actionRect = actions.getBoundingClientRect();
+      const compactItems = [
+        entry.querySelector(".log-result-rr"),
+        entry.querySelector(".log-role-impact-chip"),
+        ...actions.querySelectorAll("button, span")
+      ].filter(Boolean).map(item => {
+        const style = getComputedStyle(item);
+        const rect = item.getBoundingClientRect();
+        return {
+          text: item.textContent.trim(),
+          whiteSpace: style.whiteSpace,
+          height: Math.round(rect.height),
+          borderWidth: style.borderTopWidth,
+          radius: style.borderTopLeftRadius,
+          overflowsVertically: item.scrollHeight > item.clientHeight + 1
+        };
+      });
+      return {
+        emptyBottomGap: Math.round(entryRect.bottom - actionRect.bottom),
+        compactItems
+      };
+    });
+    assert.ok(mobileFeedDensity.emptyBottomGap <= 18, `${name}: mobile feed should not leave a tall empty action gap ${JSON.stringify(mobileFeedDensity)}`);
+    assert.ok(mobileFeedDensity.compactItems.every(item => item.whiteSpace === "nowrap" && !item.overflowsVertically), `${name}: mobile RR, impact, and feed actions must not wrap ${JSON.stringify(mobileFeedDensity)}`);
+    assert.ok(new Set(mobileFeedDensity.compactItems.map(item => item.height)).size === 1, `${name}: mobile feed pills should share one height ${JSON.stringify(mobileFeedDensity)}`);
+    assert.ok(new Set(mobileFeedDensity.compactItems.map(item => `${item.borderWidth}/${item.radius}`)).size === 1, `${name}: mobile feed pills should share one border treatment ${JSON.stringify(mobileFeedDensity)}`);
+  }
   progress(`[match-summary-smoke] ${name}: feed layout checked`);
 
   const openedReport = await page.evaluate(() => {

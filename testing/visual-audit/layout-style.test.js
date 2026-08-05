@@ -1144,11 +1144,48 @@ async function run() {
     await page.setViewportSize({ width: 1365, height: 768 });
     await waitForViewportScale(page, 1365, 768);
     await page.waitForTimeout(80);
+    await page.evaluate(() => document.querySelector("#page-insights .trend-content")?.classList.add("open"));
     const excludedBefore = await page.evaluate(() => ({
       navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
       navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
       chartClip: getComputedStyle(document.querySelector(".chart-row")).clipPath,
       chartBackground: getComputedStyle(document.querySelector(".chart-row")).backgroundImage,
+      impactCard: (() => {
+        const style = getComputedStyle(document.querySelector(".rr-card .impact-card"));
+        return {
+          clip: style.clipPath,
+          background: style.backgroundImage,
+          border: style.border,
+          borderRadius: style.borderRadius,
+          boxShadow: style.boxShadow,
+          padding: style.padding,
+          font: style.fontFamily
+        };
+      })(),
+      statsSummaryRight: (() => {
+        const style = getComputedStyle(document.querySelector("#page-stats .stats-summary-right > .stats-proof-row"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
+      statsProof: (() => {
+        const style = getComputedStyle(document.querySelector("#page-stats .stats-proof-card"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
+      statsRoleProgress: (() => {
+        const style = getComputedStyle(document.querySelector("#page-stats .stats-role-progress-card"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
+      insightActionHero: (() => {
+        const style = getComputedStyle(document.querySelector("#page-insights .insight-action-hero"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
+      insightsList: (() => {
+        const style = getComputedStyle(document.querySelector("#insightsList"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
+      openTrendContent: (() => {
+        const style = getComputedStyle(document.querySelector("#page-insights .trend-content.open"));
+        return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+      })(),
       impactClip: getComputedStyle(document.querySelector(".impact-bar-outer")).clipPath,
       impactBackground: getComputedStyle(document.querySelector(".impact-bar-outer")).backgroundImage,
       radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,
@@ -1200,6 +1237,42 @@ async function run() {
         navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
         chartClip: getComputedStyle(document.querySelector(".chart-row")).clipPath,
         chartBackground: getComputedStyle(document.querySelector(".chart-row")).backgroundImage,
+        impactCard: (() => {
+          const style = getComputedStyle(document.querySelector(".rr-card .impact-card"));
+          return {
+            clip: style.clipPath,
+            background: style.backgroundImage,
+            border: style.border,
+            borderRadius: style.borderRadius,
+            boxShadow: style.boxShadow,
+            padding: style.padding,
+            font: style.fontFamily
+          };
+        })(),
+        statsSummaryRight: (() => {
+          const style = getComputedStyle(document.querySelector("#page-stats .stats-summary-right > .stats-proof-row"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
+        statsProof: (() => {
+          const style = getComputedStyle(document.querySelector("#page-stats .stats-proof-card"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
+        statsRoleProgress: (() => {
+          const style = getComputedStyle(document.querySelector("#page-stats .stats-role-progress-card"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
+        insightActionHero: (() => {
+          const style = getComputedStyle(document.querySelector("#page-insights .insight-action-hero"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
+        insightsList: (() => {
+          const style = getComputedStyle(document.querySelector("#insightsList"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
+        openTrendContent: (() => {
+          const style = getComputedStyle(document.querySelector("#page-insights .trend-content.open"));
+          return { clip: style.clipPath, background: style.backgroundImage, border: style.border, borderRadius: style.borderRadius, boxShadow: style.boxShadow, padding: style.padding, font: style.fontFamily };
+        })(),
         impactClip: getComputedStyle(document.querySelector(".impact-bar-outer")).clipPath,
         impactBackground: getComputedStyle(document.querySelector(".impact-bar-outer")).backgroundImage,
         radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,

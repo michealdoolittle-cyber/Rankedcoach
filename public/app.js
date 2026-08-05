@@ -19488,7 +19488,11 @@ function normalizeChartWindowSize(size = currentSize) {
 }
 
 function getChartSelectedSeasonLabel(profile = getActiveProfile?.()) {
-  const explicit = getStatsSelectedActLabel?.(profile, { ignoreActiveSelection: true });
+  // The Home chart must honor the season the player actively chose on Stats.
+  // Ignoring the active selection here kept the chart pinned to the newest
+  // act, so the 10-game window stayed disabled even when the selected season
+  // had enough retained matches.
+  const explicit = getStatsSelectedActLabel?.(profile);
   if (explicit) return explicit;
   const analytics = profile?.trackerAnalytics || null;
   return String(analytics?.currentAct || activeStatsActLabel || "Current Season").trim();
@@ -19685,8 +19689,16 @@ function getChartSourceEntries(size = currentSize) {
   }
   const todayKey = formatLocalDateKey(new Date());
   const todayEntries = seasonEntries.filter(entry => getChartMatchLocalDateKey(entry.match) === todayKey);
+  // A season selection is an explicit request to inspect that act over time.
+  // Keep the day-only session view for the unfiltered default, but let the
+  // recent-window controls use every retained match from the selected season.
+  // Otherwise a player with 11 games in the act can never open the 10-game
+  // chart after midnight (or after a refresh on a different day).
   const currentSessionEntries = normalizedSize === "all" ? [] : todayEntries;
-  const scopedEntries = normalizedSize === "all" ? allEntries : currentSessionEntries;
+  const usesSelectedSeasonScope = normalizedSize !== "all" && canFilterBySeason;
+  const scopedEntries = normalizedSize === "all"
+    ? allEntries
+    : (usesSelectedSeasonScope ? seasonEntries : currentSessionEntries);
   const hasHenrikMatches = scopedEntries.some(entry =>
     isHenrikSyncMatch(entry?.match) || isVerifiedHenrikRrMatch(entry?.match)
   ) || (profileHasHenrikContext && scopedEntries.length > 0);
@@ -19700,16 +19712,18 @@ function getChartSourceEntries(size = currentSize) {
     : scopedEntries;
   const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-  const scopeLabel = normalizedSize === "all" ? "Retained profile history" : "Today's session";
+  const scopeLabel = normalizedSize === "all"
+    ? "Retained profile history"
+    : (usesSelectedSeasonScope ? selectedSeasonLabel : "Today's session");
 
   return {
     entries,
     scopeEntries: scopedEntries,
     scopeLabel,
     seasonLabel: selectedSeasonLabel,
-    isCurrentSessionScoped: normalizedSize !== "all",
+    isCurrentSessionScoped: normalizedSize !== "all" && !usesSelectedSeasonScope,
     isRecentAccountWindow: false,
-    isSeasonScoped: normalizedSize !== "all",
+    isSeasonScoped: usesSelectedSeasonScope,
     matchCount: entries.length,
     totalMatchCount: scopedEntries.length,
     verifiedRrCount,
@@ -24612,6 +24626,11 @@ function setupLogFocusCustomDropdown() {
   const select = document.getElementById("logFocusSelect");
   const shell = select?.closest(".focus-select-shell");
   if (!select || !shell) return;
+
+  // A fresh form (or a form switched away from Other) must never inherit a
+  // previous custom-focus editing state.  Without this reset, mobile could
+  // render the custom field beside the Browse trigger before Other was chosen.
+  if (String(select.value || "") !== "Other") resetFixedFocusEditState();
 
   select.classList.add("log-focus-native-select");
   select.setAttribute("aria-hidden", "true");
@@ -54802,7 +54821,10 @@ function updateDisplays(){
   if(drawCountEl) drawCountEl.textContent = draws;
   if(totalGamesEl) totalGamesEl.textContent = sessionEntries.length;
 
-  refreshImprovementTimeline({ animate: true });
+  // Rendering summary values is a routine refresh, not a new improvement
+  // event. Replaying the pill roulette here made ordinary page updates look
+  // like a new result was arriving.
+  refreshImprovementTimeline({ animate: false });
   updateNavRRToRank();
   updateNavRRToGoalRank();
   renderCoachReadinessUI();
@@ -54892,7 +54914,9 @@ function recomputeFromMatches(){
   updateNavRRToRank();
   updateNavRRToGoalRank();
   renderCoachReadinessUI();
-  refreshImprovementTimeline({ animate: true });
+  // Recalculation happens for storage, sync, and UI refreshes. Only explicit
+  // user actions or a confirmed post-game reveal should play the roulette.
+  refreshImprovementTimeline({ animate: false });
 }
 
 // ========================
@@ -55261,7 +55285,11 @@ if(chartHeight){
 // ========================
 
 if(!chartEntries.length){
-  updateRRMatchStats(null);
+  // A new day can leave the session chart empty while the account still has
+  // retained matches. Keep the latest real match's impact report visible
+  // rather than wiping the role meter to the empty state.
+  const fallbackMatch = refreshLatestRRMatchPanel?.();
+  if (!fallbackMatch) updateRRMatchStats(null);
   chartRow.classList.remove("chart-intro-active");
   setChartTooltipSuppressed(true);
   forceChartIntroAnimation = false;

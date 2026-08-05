@@ -443,7 +443,6 @@ body:is([data-layout-style="hazardrim"],[data-layout-shape="hazardrim"]){
 }
 
 body:is([data-layout-style],[data-layout-shape]) :is(
-  #page-insights .trend-content.open,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
   #page-home .loadout-card,
@@ -506,8 +505,6 @@ body:is([data-layout-style],[data-layout-shape]) :is(
    CSS discards; the global layout rule then fell through to its white border.
    Scope the layout surface to desktop rather than trying to undo it later. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape]) :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
   #page-logging .logging-card,
   #page-logging .logging-hero,
   #page-logging .log-entry,
@@ -535,9 +532,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[
 }
 
 body:is([data-layout-style],[data-layout-shape]) :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
-  #page-insights .trend-content.open,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
   #page-home .loadout-card,
@@ -596,7 +590,6 @@ body:is(
   [data-layout-style="hazardrim"],
   [data-layout-shape="hazardrim"]
 ) :is(
-  #page-insights .trend-content.open,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
   #page-home .loadout-card,
@@ -656,8 +649,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout):is(
   [data-layout-style="hazardrim"],
   [data-layout-shape="hazardrim"]
 ) :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
   #page-logging .logging-card,
   #page-logging .logging-hero,
   #page-logging .log-entry,
@@ -763,8 +754,6 @@ body:is([data-layout-style],[data-layout-shape]) :is(
 }
 
 body:is([data-layout-style="hazardedge"],[data-layout-shape="hazardedge"]) :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
   #page-logging .logging-hero,
   #page-logging .log-entry
 ){
@@ -890,9 +879,6 @@ body[data-layout-texture="frostedglass"]{
 }
 
 body[data-layout-texture] :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
-  #page-insights .trend-content.open,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
   #page-home .loadout-card,
@@ -953,9 +939,6 @@ body[data-layout-texture] :is(
 }
 
 body[data-layout-texture] :is(
-  #page-insights .insight-action-hero,
-  #page-insights .insight-card,
-  #page-insights .trend-content.open,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
   #page-home .loadout-card,
@@ -1185,8 +1168,6 @@ body[data-layout-texture] :is(
 }
 
 body[data-layout-font-active="true"] :is(
-  #page-insights .insight-title,
-  #page-insights .card-sub,
   #page-home .weekly-focus-card .card-title,
   #page-home .weekly-focus-card .weekly-focus-key,
   #page-home .improvement-card .card-title,
@@ -1199,7 +1180,6 @@ body[data-layout-font-active="true"] :is(
   #page-stats .stats-summary-card strong,
   #page-stats :is(.stats-performance-card,.stats-breakdown-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) > .card-header .card-title,
   #page-stats .stats-season-title,
-  #page-insights .insight-action-kicker,
   #page-logging .logging-hero-title,
   #page-logging .logging-live-card strong,
   #page-logging .log-entry strong,
@@ -1345,33 +1325,7 @@ body:is([data-layout-style],[data-layout-shape]) :is(
   padding-left:var(--layout-surface-safe-left) !important;
 }
 
-html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card
-){
-  --accent:var(--layout-accent);
-  --accent-2:var(--layout-accent-2);
-  position:relative;
-  isolation:isolate;
-  clip-path:var(--layout-surface-clip) !important;
-  border:var(--layout-surface-border-width) solid var(--layout-surface-border-color) !important;
-  border-left-width:var(--layout-surface-border-left-width) !important;
-  border-left-color:var(--layout-surface-border-left-color) !important;
-  border-radius:var(--layout-surface-radius) !important;
-  background:var(--layout-surface-background) !important;
-  box-shadow:var(--layout-surface-shadow) !important;
-  box-sizing:border-box;
-  padding-top:var(--layout-surface-safe-top) !important;
-  padding-right:var(--layout-surface-safe-right) !important;
-  padding-bottom:var(--layout-surface-safe-bottom) !important;
-  padding-left:var(--layout-surface-safe-left) !important;
-}
-
 body:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card,
   #page-library .gamesense-tactical-card,
   #page-library .gamesense-collection-card,
   .gamesense-skin-preview-card
@@ -1404,34 +1358,7 @@ body:is(
   mix-blend-mode:screen;
 }
 
-html:not(.is-mobile-layout) body:not(.is-mobile-layout):is(
-  [data-layout-style="steelrivetframe"],
-  [data-layout-shape="steelrivetframe"],
-  [data-layout-style="prismrim"],
-  [data-layout-shape="prismrim"],
-  [data-layout-style="hazardrim"],
-  [data-layout-shape="hazardrim"]
-) :is(
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card
-)::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
-  clip-path:var(--layout-surface-clip);
-  border:4px solid transparent;
-  background:var(--layout-rim-background) border-box;
-  opacity:.42;
-  mix-blend-mode:screen;
-}
-
 body[data-layout-texture] :is(
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card,
   #page-library .gamesense-tactical-card,
   #page-library .gamesense-collection-card,
   .gamesense-skin-preview-card
@@ -1450,9 +1377,6 @@ body[data-layout-texture] :is(
 }
 
 body[data-layout-texture] :is(
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card,
   #page-library .gamesense-tactical-card,
   #page-library .gamesense-collection-card,
   .gamesense-skin-preview-card
@@ -1463,9 +1387,6 @@ body[data-layout-texture] :is(
 
 body[data-layout-font-active="true"] :is(
   #page-home .compass-title,
-  #page-home .impact-card .timeline-title,
-  #page-stats .stats-proof-card :is(strong,.card-title),
-  #page-stats .stats-role-progress-card :is(strong,.card-title),
   #page-library .gamesense-tactical-card strong,
   #page-library .gamesense-collection-card strong,
   .gamesense-skin-preview-card strong

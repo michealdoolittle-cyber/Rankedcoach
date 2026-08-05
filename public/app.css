@@ -60277,6 +60277,20 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-tab-pa
   display:none !important;
 }
 
+/* The custom field exists in the DOM so an existing reflection can reopen it,
+   but it is never part of the normal Focus Category row. This must hold on
+   every viewport: legacy grid rules otherwise exposed it beside Browse before
+   the player selected Other. */
+#page-logging .focus-wrapper:not(.is-custom-focus-editing) > .focus-other-wrap{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper.is-custom-focus-editing .focus-preview-text{
+  display:none !important;
+}
+
 #page-logging .focus-other-input{
   width:100% !important;
   min-width:0 !important;
@@ -61060,4 +61074,72 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   background:
     linear-gradient(90deg, rgba(148,163,184,.1) 1px, transparent 1px),
     linear-gradient(180deg, rgba(148,163,184,.1) 1px, transparent 1px) !important;
+}
+
+/* Final mobile feed density override. Keep this after the legacy cleanup
+   blocks above: actions remain in normal flow after notes, avoiding both
+   overlap and a second, empty action reserve. */
+@media (max-width:760px){
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-entry{
+    min-height:0 !important;
+    padding:12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-entry .log-body{
+    padding-bottom:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-entry .log-header{
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    min-width:0 !important;
+    margin-bottom:8px !important;
+    flex-wrap:nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-meta-agent{
+    flex:0 0 24px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.log-result-rr,.log-role-impact-chip,.log-report-btn,.log-edit-btn,.log-delete-lock){
+    box-sizing:border-box !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-height:32px !important;
+    padding:0 9px !important;
+    border-width:1px !important;
+    border-radius:8px !important;
+    font:900 10px/1 var(--font-display,"Rajdhani",sans-serif) !important;
+    letter-spacing:.07em !important;
+    text-transform:uppercase !important;
+    white-space:nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-result-rr{
+    flex:0 0 auto !important;
+    gap:5px !important;
+    margin-left:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-role-impact-chip{
+    flex:0 1 auto !important;
+    min-width:0 !important;
+    margin-left:auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-actions{
+    position:static !important;
+    margin-top:10px !important;
+    justify-content:flex-end !important;
+    gap:6px !important;
+    min-height:32px !important;
+    flex-wrap:nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-actions > :is(button,span){
+    flex:0 0 auto !important;
+    border-radius:8px !important;
+  }
 }
