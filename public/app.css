@@ -18028,7 +18028,7 @@ min-height:0;
   color:#cbd5e1;
 }
 
-.log-result-rr-unverified{
+.log-result-rr-unavailable{
   color:rgba(203,213,225,.72);
   border-color:rgba(148,163,184,.22);
   background:rgba(15,23,42,.56);
@@ -60175,21 +60175,6 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-tab-pa
   box-shadow:0 0 14px rgba(248,113,113,.16);
 }
 
-.log-delete-lock{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:28px;
-  padding:0 10px;
-  border:1px solid rgba(251,191,36,.42);
-  border-radius:10px;
-  background:rgba(120,53,15,.16);
-  color:#fde68a;
-  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-
 .log-report-btn:hover,
 .log-report-btn:focus-visible{
   border-color:rgba(94,234,212,.68);
@@ -61102,7 +61087,7 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     flex:0 0 24px !important;
   }
 
-  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.log-result-rr,.log-role-impact-chip,.log-report-btn,.log-edit-btn,.log-delete-lock){
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.log-result-rr,.log-role-impact-chip,.log-report-btn,.log-edit-btn){
     box-sizing:border-box !important;
     display:inline-flex !important;
     align-items:center !important;

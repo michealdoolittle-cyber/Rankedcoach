@@ -69,6 +69,14 @@ async function run() {
       importSource: "henrik",
       lastSyncSource: "henrik",
       lastWarmupPromptDate: todayKey,
+      pendingLoadoutRoll: {
+        agent: "Tejo",
+        focus: "Map Awareness",
+        role: "Initiator",
+        dateKey: todayKey,
+        createdAt: new Date().toISOString(),
+        source: "test"
+      },
       matches: [{
         id: "match-1",
         matchId: "match-1",
@@ -164,6 +172,15 @@ async function run() {
     await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     const debriefMeta = await page.locator("#loggingLiveMeta").innerText();
     assert.equal(debriefMeta, "Add a rating, mood, or map to see it here.");
+    const logsBeforePendingRollSave = await page.evaluate(() => JSON.parse(
+      localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
+    ));
+    await page.locator("#logSaveBtn").click();
+    await page.waitForFunction(() => document.getElementById("logFormWarning")?.textContent?.includes("rolled loadout"));
+    const logsAfterPendingRollSave = await page.evaluate(() => JSON.parse(
+      localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
+    ));
+    assert.equal(logsAfterPendingRollSave.length, logsBeforePendingRollSave.length, "a pending loadout cannot create a pre-match log row");
     assert.doesNotMatch(debriefMeta, /null|â|Ã/);
     await page.click('[data-mobile-logging-view="feed"]');
     const verifiedPlaceholder = page.locator('[data-log-entry-id="ranked-match-log:profile-log-test:match-1"]');
@@ -172,22 +189,22 @@ async function run() {
     await verifiedPlaceholder.waitFor({ state: "visible" });
     await unverifiedPlaceholder.waitFor({ state: "visible" });
     await pureDraft.waitFor({ state: "visible" });
-    const unverifiedRr = page.locator(".log-result-rr-unverified");
-    assert.equal(await unverifiedRr.count(), 1);
-    assert.equal(await unverifiedRr.innerText(), "RR unverified");
-    assert.ok(await unverifiedRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
+    const unavailableRr = page.locator(".log-result-rr-unavailable");
+    assert.equal(await unavailableRr.count(), 1);
+    assert.equal(await unavailableRr.innerText(), "RR UNAVAILABLE");
+    assert.ok(await unavailableRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
     assert.match(await verifiedPlaceholder.innerText(), /Add your reflection for this ranked match\./);
-    assert.equal(await verifiedPlaceholder.locator(".log-edit-btn").innerText(), "Add Reflection");
+    assert.equal(await verifiedPlaceholder.locator(".log-edit-btn").innerText(), "ADD REFLECTION");
     assert.match(await verifiedPlaceholder.innerText(), /Haven/);
     assert.doesNotMatch(await verifiedPlaceholder.innerText(), /undefined|null/);
-    assert.equal(await verifiedPlaceholder.locator(".log-delete-btn").count(), 0, "verified ranked RR records must not expose a delete action");
-    assert.equal(await verifiedPlaceholder.locator(".log-delete-lock").innerText(), "VERIFIED MATCH");
+    assert.equal(await verifiedPlaceholder.locator(".log-delete-btn").count(), 0, "protected ranked RR records must not expose a delete action");
+    assert.equal(await verifiedPlaceholder.locator(".log-delete-lock").count(), 0, "protected matches should not reserve space for a status badge");
     await verifiedPlaceholder.locator(".log-edit-btn").click();
     assert.equal(await page.locator("#logMap").inputValue(), "Haven");
     assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
     await page.click('[data-mobile-logging-view="feed"]');
     await unverifiedPlaceholder.waitFor({ state: "visible" });
-    assert.equal(await unverifiedPlaceholder.locator(".log-delete-btn").count(), 1, "unverified ranked entries remain deletable");
+    assert.equal(await unverifiedPlaceholder.locator(".log-delete-btn").count(), 1, "ranked entries without a verified RR snapshot remain deletable");
     assert.equal(await pureDraft.locator(".log-delete-btn").count(), 1, "pure reflection drafts remain deletable");
     await unverifiedPlaceholder.locator(".log-delete-btn").click();
     const deleteModal = page.locator("#logDeleteConfirmModal");
@@ -219,7 +236,7 @@ async function run() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);
-    console.log("Log isolation browser check passed: verified RR entries are protected, unverified entries remain deletable, and both states render honestly with no overflow/errors.");
+    console.log("Log isolation browser check passed: protected RR entries hide delete without a badge, entries without a verified RR snapshot remain deletable, and a pending roll cannot create a pre-match log row.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

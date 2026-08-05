@@ -144,16 +144,21 @@ async function run() {
       theme_builder_ui_json: {},
       updated_at: "2026-08-04T12:00:00.000Z"
     });
+    await imported.page.locator("#matchSummaryModal.active").waitFor({ state: "visible", timeout: 15000 });
+    assert.match(await imported.page.locator("#matchSummaryTitle").innerText(), /Sova on Ascent/i);
+    await imported.page.locator("#matchSummaryModal .match-summary-close").click();
     await imported.page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("active"), null, { timeout: 15000 });
     const importedState = await imported.page.evaluate(() => ({
       page: document.querySelector(".page.active")?.id || "",
       map: document.getElementById("logMap")?.value || "",
       agent: document.getElementById("logAgentDisplay")?.getAttribute("data-agent") || "",
+      editingEntryId: document.querySelector(".log-entry.log-entry-editing")?.dataset?.logEntryId || "",
       profiles: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")
     }));
     assert.equal(importedState.page, "page-logging");
     assert.equal(importedState.map, "Ascent");
     assert.equal(importedState.agent, "Sova");
+    assert.equal(importedState.editingEntryId, "ranked-match-log:login-route-profile:login-route-match-1");
     assert.deepEqual(imported.consoleErrors, []);
     await imported.page.close();
 
@@ -172,7 +177,7 @@ async function run() {
     assert.equal(await noNew.page.evaluate(() => document.querySelector(".page.active")?.id || ""), "page-home", "no-new-match login must preserve the default active page");
     assert.deepEqual(noNew.consoleErrors, []);
     await noNew.page.close();
-    console.log("Login new-match routing passed: a genuine import opens its prepared Logging reflection, while a no-new-match login stays on Home.");
+    console.log("Login new-match routing passed: a genuine import opens Match Report, closing it opens the single prepared Logging reflection, and a no-new-match login stays on Home.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

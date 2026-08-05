@@ -120,7 +120,7 @@ async function run() {
     await page.locator("#page-logging.active").waitFor({ state: "visible" });
     await page.locator(".log-result-rr-placement").waitFor({ state: "visible" });
     assert.equal(await page.locator(".log-result-rr-placement").innerText(), "Placements");
-    assert.equal(await page.locator(".log-result-rr-unverified").count(), 0);
+    assert.equal(await page.locator(".log-result-rr-unavailable").count(), 0);
 
     await page.click('.nav-btn[data-page="home"]');
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");

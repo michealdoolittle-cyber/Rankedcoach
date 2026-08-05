@@ -16330,9 +16330,19 @@ function closeMatchSummaryModal() {
 }
 
 function openMatchSummaryModalBeforeBroadcast(record = null, broadcastOptions = {}) {
-  const playBroadcast = () => queueBroadcastPostgamePackage(record, broadcastOptions);
-  if (!record || !openMatchSummaryModal(record, { onDismiss: playBroadcast })) {
-    playBroadcast();
+  const { onDismiss: afterDismiss, ...packageOptions } = broadcastOptions || {};
+  const complete = () => {
+    // A newly synced match has an explicit next step: its one reflection
+    // record must open for editing as soon as the report closes. Do not let
+    // the longer broadcast package compete with that navigation.
+    if (typeof afterDismiss === "function") {
+      afterDismiss();
+      return;
+    }
+    queueBroadcastPostgamePackage(record, packageOptions);
+  };
+  if (!record || !openMatchSummaryModal(record, { onDismiss: complete })) {
+    complete();
   }
 }
 
@@ -16385,6 +16395,10 @@ function onMatchSaved(record, options = {}) {
     : updatePeakRankAfterMatchSave(options.profile || getActiveProfile());
   const peakData = peakEvent.peakData || computePeakProfileProgress(getActiveProfile());
   const result = String(record?.result || record?.metadata?.result || "").trim().toLowerCase();
+  const syncedReflection = getSyncedLogEntryForMatch(record, options.profile?.id || activeProfileId);
+  const openReflection = syncedReflection
+    ? () => enterSyncedMatchReflectionEditor(syncedReflection, { source: "post-match-report" })
+    : null;
   if (peakEvent.isNewPeak) {
     showToast(`Peak reached: ${peakData?.tierLabel || "New personal best"}.`, {
       title: "New peak rank!",
@@ -16392,7 +16406,7 @@ function onMatchSaved(record, options = {}) {
       variant
     });
     triggerPremiumMoment("peak", { result });
-    openMatchSummaryModalBeforeBroadcast(record, { ...options, isPeakEvent: true, delayMs: 40 });
+    openMatchSummaryModalBeforeBroadcast(record, { ...options, onDismiss: openReflection, isPeakEvent: true, delayMs: 40 });
     pulsePremiumAvatarCelebration();
     scheduleProfileStreakAnnouncement(1150);
     return;
@@ -16405,7 +16419,7 @@ function onMatchSaved(record, options = {}) {
   if (result === "win" || result === "loss") {
     triggerPremiumMoment("result", { result });
   }
-  openMatchSummaryModalBeforeBroadcast(record, { ...options, delayMs: 40 });
+  openMatchSummaryModalBeforeBroadcast(record, { ...options, onDismiss: openReflection, delayMs: 40 });
   scheduleProfileStreakAnnouncement(1150);
 }
 
@@ -20672,31 +20686,56 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     signedIn: Boolean(currentAuthUser),
     profileId
   });
-  if (synced.added > 0 || synced.reconciled > 0) {
-    const changedEntryIds = logEntries
-      .filter(entry => String(entry?.profileId || "") === profileId)
-      .filter(entry => {
-        const entryId = String(entry?.id || "");
-        return !existingEntryIds.has(entryId)
-          || (synced.reconciledEntryIds || []).includes(entryId);
-      })
-      .map(entry => entry.id);
-    markPersistentLogRowsDirty(changedEntryIds);
+  const addedEntryIds = logEntries
+    .filter(entry => String(entry?.profileId || "") === profileId)
+    .filter(entry => entry?.id && !existingEntryIds.has(String(entry.id)))
+    .map(entry => entry.id);
+  if (synced.added > 0) {
+    markPersistentLogRowsDirty(addedEntryIds);
   }
-  if (!options.skipSave && options.animate !== false && (synced.added > 0 || synced.reconciled > 0)) {
-    const reconciledEntryIds = new Set(synced.reconciledEntryIds || []);
-    logEntries
-      .filter(entry => String(entry?.profileId || "") === profileId)
-      .filter(entry => entry?.id && (
-        !existingEntryIds.has(String(entry.id)) ||
-        reconciledEntryIds.has(String(entry.id))
-      ))
-      .forEach(entry => queueLoggingEntryReveal(entry.id, "sync"));
+  if (synced.consumedPendingLoadoutRollMatchId) {
+    // A loadout describes the very next matching game. Once that game creates
+    // its single synced entry, do not let the same roll leak into a later one.
+    clearPendingLoadoutRoll(profile);
+  }
+  if (!options.skipSave && options.animate !== false && synced.added > 0) {
+    addedEntryIds.forEach(entryId => queueLoggingEntryReveal(entryId, "sync"));
   }
   if (!options.skipSave) {
     saveLogEntries({ skipBackend: options.skipBackend === true });
   }
   return synced.added;
+}
+
+function getSyncedLogEntryForMatch(match = {}, profileId = activeProfileId) {
+  const matchId = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
+  if (!matchId) return null;
+  return getProfileLogEntries(profileId).find(entry => (
+    String(entry?.matchId || entry?.riotMatchId || "").trim() === matchId
+  )) || null;
+}
+
+function enterSyncedMatchReflectionEditor(entry = null, options = {}) {
+  const entryId = String(entry?.id || "").trim();
+  if (!entryId) return false;
+  activatePage?.("logging", { source: options.source || "new-match-reflection" });
+  window.requestAnimationFrame(() => {
+    editLogEntry(entryId, { scroll: options.scroll !== false });
+  });
+  return true;
+}
+
+function openSyncedMatchReflectionFlow(entry = null, options = {}) {
+  const match = options.match || getLogEntryMatchContext(entry || {}).match;
+  const openEditor = () => enterSyncedMatchReflectionEditor(entry, {
+    source: options.source || "new-match-reflection",
+    scroll: options.scroll !== false
+  });
+  if (!match || !openMatchSummaryModal(match, { onDismiss: openEditor })) {
+    openEditor();
+    return false;
+  }
+  return true;
 }
 
 function shouldSyncStatsLoggingParityForProfile(profile = {}, options = {}) {
@@ -20764,15 +20803,17 @@ function hasPlayerReflectionDraft() {
 
 function prefillLatestImportedReflection(options = {}) {
   const profileId = String(options.profileId || activeProfileId || "").trim();
-  if (!profileId || hasPlayerReflectionDraft()) return null;
+  if (!profileId || (options.force !== true && hasPlayerReflectionDraft())) return null;
   const today = formatLocalDateKey(new Date());
   const latest = getProfileLogEntries(profileId)
     .filter(entry => isMatchPlaceholderLogEntry(entry) && getTrainingEntryDate(entry) === today)
     .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())[0] || null;
   if (!latest) return null;
   activeLogSessionFilter = today;
-  editLogEntry(latest.id, { scroll: false });
-  if (options.animate !== false) {
+  if (options.edit !== false) {
+    editLogEntry(latest.id, { scroll: false });
+  }
+  if (options.edit !== false && options.animate !== false) {
     window.setTimeout(() => animatePostgameAutofillFields(null, { entry: latest }), 80);
   }
   return latest;
@@ -22198,14 +22239,18 @@ async function initializeSignedInAccount(user, options = {}) {
     initStatsPage?.();
     renderLogFeed?.();
     renderChart?.(currentSize);
-    if (newlyImportedReflection) {
-      activatePage?.("logging", { source: "login-new-match" });
-    }
     queuePersistentAccountSave?.(options.reason || "login-initialization");
     markAccountStateLoadComplete();
   } finally {
     hideLoginInitializationOverlay();
     loginInitializationInFlight = false;
+    if (newlyImportedReflection) {
+      window.setTimeout(() => {
+        openSyncedMatchReflectionFlow(newlyImportedReflection, {
+          source: "login-new-match"
+        });
+      }, 180);
+    }
   }
   runPendingPostAuthAction?.(user);
 }
@@ -48418,9 +48463,15 @@ function validateLogFormBeforeSave(entry = {}) {
 
 function addLogEntry(){
 
+  const editingId = editingLogEntryId;
+  if (!editingId && getPendingLoadoutRoll()) {
+    setLogFormWarning("Your rolled loadout will attach to the next synced match. Complete this reflection after its Match Report opens.");
+    snapLoggingFormToTarget(document.getElementById("logSaveBtn"));
+    return;
+  }
+
   const entry = getLogFormValues();
   if (!validateLogFormBeforeSave(entry)) return;
-  const editingId = editingLogEntryId;
   const isEditing = Boolean(editingId);
   const previousEntry = isEditing
     ? (logEntries.find(existing => existing.id === editingId) || editingLogEntrySnapshot)
@@ -48565,8 +48616,8 @@ async function deleteLogEntry(id) {
   if (!entry) return false;
 
   if (isProtectedVerifiedRankedLogEntry(entry)) {
-    showToast("Verified ranked match records stay in your coaching history. You can still edit your reflection.", {
-      title: "Verified match protected",
+    showToast("This ranked match record stays in your coaching history. You can still edit its reflection.", {
+      title: "Match record protected",
       variant: "warning",
       durationMs: 4200
     });
@@ -49243,12 +49294,12 @@ function renderLogFeed(options = {}){
       const isPlacementMatch = isPlacementRankedMatch(matchContext.match) || entry.isPlacementMatch === true;
       const rrLabel = hasVerifiedRr
         ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
-        : isPlacementMatch ? "Placements" : isSyncedHenrikMatch ? "RR unverified" : "";
+        : isPlacementMatch ? "Placements" : isSyncedHenrikMatch ? "RR unavailable" : "";
       const rrClasses = hasVerifiedRr
         ? `log-result-rr-${resultTone || "neutral"}`
         : isPlacementMatch
           ? "log-result-rr-neutral log-result-rr-placement"
-          : "log-result-rr-neutral log-result-rr-unverified";
+          : "log-result-rr-neutral log-result-rr-unavailable";
       const rankSnapshot = getMatchRankSnapshot(matchContext.match || {});
       const rankIconMarkup = isMeaningfulRankLabel(rankSnapshot?.rankLabel)
         ? `<img class="log-result-rank-icon" src="${escapeHtml(getRankIconUrl(rankSnapshot.rankLabel))}" alt="${escapeHtml(rankSnapshot.rankLabel)}">`
@@ -49308,7 +49359,7 @@ function renderLogFeed(options = {}){
           ${hasReportMatch ? `<button class="log-report-btn" type="button">View Report</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
           ${isDeleteProtected
-            ? '<span class="log-delete-lock" title="Verified ranked match records stay in your coaching history.">Verified match</span>'
+            ? ""
             : '<button class="log-delete-btn" type="button">Delete</button>'}
         </div>
       `;
@@ -59171,7 +59222,14 @@ async function performRiotSync(options = {}) {
     if (safeNumber(result?.count) > 0) {
       setAppLoadingEventBanner("game");
     }
-    if (prefillReflection) prefillLatestImportedReflection();
+    if (prefillReflection) {
+      // A newly synced match owns the report-to-editor handoff.  Do not put
+      // the form into edit mode behind that report before the player closes it.
+      prefillLatestImportedReflection({
+        edit: safeNumber(result?.count) <= 0,
+        force: safeNumber(result?.count) > 0
+      });
+    }
     if (!deferSurfaceRefresh) {
       refreshActiveProfileDataSurfaces?.({
         reason: "riot-sync",
@@ -59318,7 +59376,10 @@ async function syncProfileRetainedHistory(options = {}) {
     saveProfiles();
     void refreshWarmupAutoVerification(syncedProfile, { announce: false });
   }
-  const prefilled = prefillLatestImportedReflection();
+  const prefilled = prefillLatestImportedReflection({
+    edit: totalImported <= 0,
+    force: totalImported > 0
+  });
   options.onProgress?.({
     batch: -1,
     maxBatches,
