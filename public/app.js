@@ -2503,9 +2503,14 @@ function ensureMobileTrendCarousel() {
   cards.forEach((item) => {
     const isFiltered = visibleCards.length && !visibleCards.includes(item);
     const isActive = visibleCards[mobileStatsTrendIndex] === item;
+    const shouldHide = !isActive || isFiltered;
+    if (shouldHide && item.contains(document.activeElement)) {
+      document.activeElement?.blur?.();
+    }
     item.classList.toggle("mobile-trend-filtered", isFiltered);
     item.classList.toggle("is-mobile-trend-active", isActive && !isFiltered);
-    item.setAttribute("aria-hidden", isActive && !isFiltered ? "false" : "true");
+    item.inert = shouldHide;
+    item.setAttribute("aria-hidden", shouldHide ? "true" : "false");
   });
 
   const counter = document.getElementById("mobileTrendCounter");
@@ -4356,6 +4361,21 @@ function getMapIconUrl(mapName) {
   const uuid = MAP_ARTWORK_UUIDS[normalized];
   if (uuid) return `https://media.valorant-api.com/maps/${uuid}/splash.png`;
   return GENERIC_MAP_ARTWORK_URL;
+}
+
+function updateLogMapPreview(mapName = document.getElementById("logMap")?.value || "") {
+  const preview = document.getElementById("logMapPreview");
+  const normalized = String(mapName || "").trim();
+  if (!preview) return;
+  if (!normalized) {
+    preview.hidden = true;
+    preview.removeAttribute("src");
+    preview.alt = "";
+    return;
+  }
+  preview.src = getMapIconUrl(normalized);
+  preview.alt = `${normalized} map`;
+  preview.hidden = false;
 }
 
 function getStatsMapLayoutUrl(mapName) {
@@ -12070,7 +12090,7 @@ function getLockedWeeklyFocus() {
 
 function setLockedWeeklyFocus(focus, confidence = "Low") {
   const normalizedFocus = normalizeFocusCategoryValue(focus, "");
-  if (!normalizedFocus) return;
+  if (!normalizedFocus || isManualLogFocusOption(normalizedFocus)) return;
 
   localStorage.setItem(WEEKLY_FOCUS_KEY, normalizedFocus);
   localStorage.setItem(WEEKLY_FOCUS_WEEK_KEY, getCurrentWeekKey());
@@ -13564,7 +13584,7 @@ function buildLoggingRevealPreviewData(options = {}) {
 
 function applyLoggingPreviewAutofillFields(entry = {}) {
   const agent = String(entry.agent || "").trim();
-  const focus = normalizeFocusCategoryValue(entry.focus || "", "");
+  const focus = normalizeLogFocusValue(entry.focus || "", "");
   const map = String(entry.map || "").trim();
   if (agent && typeof updateLogAgentDisplay === "function") {
     updateLogAgentDisplay(agent);
@@ -13575,19 +13595,19 @@ function applyLoggingPreviewAutofillFields(entry = {}) {
   if (focus) {
     const matchingOption = Array.from(focusSelect?.options || [])
       .find(option => option.value === focus || option.textContent?.trim() === focus);
-    if (focusSelect) {
-      focusSelect.value = matchingOption?.value || "";
-    }
+    if (focusSelect) focusSelect.value = matchingOption?.value || "Other";
     if (focusPreview) {
       focusPreview.textContent = focus;
       focusPreview.classList.remove("is-placeholder");
     }
-    setCustomFocusCommitted?.("");
+    if (matchingOption) setCustomFocusCommitted?.("");
+    else setCustomFocusCommitted?.(focus);
   }
 
   const mapInput = document.getElementById("logMap");
   if (mapInput && map) {
     mapInput.value = map;
+    updateLogMapPreview?.(map);
   }
   updateLoggingDebriefPreview?.();
 }
@@ -14001,8 +14021,8 @@ function getCurrentLoggingFormAgent() {
 function getCurrentLoggingFormFocus() {
   const select = String(document.getElementById("logFocusSelect")?.value || "").trim();
   const preview = String(document.getElementById("focusPreviewText")?.textContent || "").trim();
-  if (select && !/^focus category$/i.test(select)) return normalizeFocusCategoryValue(select, "");
-  if (preview && !/^focus category$/i.test(preview)) return normalizeFocusCategoryValue(preview, "");
+  if (select && !/^focus category$/i.test(select)) return getCurrentLogFocusSelection("");
+  if (preview && !/^focus category$/i.test(preview)) return normalizeLogFocusValue(preview, "");
   return "";
 }
 
@@ -16042,7 +16062,13 @@ function ensureMatchSummaryModal() {
       const nextPressed = !isPressed;
       economyToggle.setAttribute("aria-pressed", nextPressed ? "true" : "false");
       economyToggle.classList.toggle("is-off", !nextPressed);
-      if (chart && layer === "bars") chart.classList.toggle("is-economy-bars-hidden", !nextPressed);
+      if (chart && layer === "bars") {
+        chart.classList.toggle("is-economy-bars-hidden", !nextPressed);
+        if (!nextPressed) {
+          chart.querySelectorAll(".match-summary-credit-bar.is-tooltip-open")
+            .forEach(item => item.classList.remove("is-tooltip-open"));
+        }
+      }
       if (chart && layer === "trend") chart.classList.toggle("is-economy-trend-hidden", !nextPressed);
       return;
     }
@@ -16176,7 +16202,6 @@ function renderMatchSummaryModal(match = {}, options = {}) {
     <section class="match-summary-tab-panel" data-match-summary-panel="stats">${renderMatchSummaryStatsTab(sourceMatch, record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="weapons" hidden>${renderMatchSummaryWeaponsTab(record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="economy" hidden>${renderMatchSummaryEconomyTab(record)}</section>
-    <div class="match-summary-live-banner" aria-hidden="true">Match Report</div>
   `;
   pendingMatchSummaryDismiss = typeof options.onDismiss === "function" ? options.onDismiss : null;
   return modal;
@@ -22240,6 +22265,11 @@ const focusesList = [
   "Behavior Composure"
 ];
 
+// These choices belong to player-authored reflections only.  They must never
+// enter the loadout-roll pool: General intentionally does not prescribe a
+// single skill and Other is supplied by the player in the logging form.
+const MANUAL_LOG_FOCUS_OPTIONS = Object.freeze(["General", "Other"]);
+
 const RETIRED_FOCUS_CATEGORY_MAP = Object.freeze({
   "Crosshair Discipline": "Crosshair Placement",
   "Duel Discipline": "Discipline",
@@ -22303,15 +22333,29 @@ const RETIRED_FOCUS_CATEGORY_MAP = Object.freeze({
   "Round Conversion": "Map Strategy",
   "Economy Coordination": "Credit/Ult Economy",
   "Support Spacing": "Trading",
-  "Useful Calls": "Communication",
-  "general": "Discipline"
+  "Useful Calls": "Communication"
 });
 
 function normalizeFocusCategoryValue(value = "", fallback = "") {
   const raw = String(value || "").trim();
   if (!raw || /^focus category$/i.test(raw) || /^select focus$/i.test(raw)) return fallback;
+  if (/^general$/i.test(raw)) return "General";
   if (focusesList.includes(raw)) return raw;
   return RETIRED_FOCUS_CATEGORY_MAP[raw] || fallback;
+}
+
+function normalizeLogFocusValue(value = "", fallback = "") {
+  const raw = String(value || "").trim();
+  if (!raw || /^other$/i.test(raw)) return fallback;
+  const normalized = normalizeFocusCategoryValue(raw, "");
+  // Player-authored Other values remain exactly what the player entered. They
+  // are valid for a reflection, but are not promoted into coaching/loadout
+  // categories by the canonical normalizer above.
+  return normalized || raw.slice(0, 80) || fallback;
+}
+
+function isManualLogFocusOption(value = "") {
+  return MANUAL_LOG_FOCUS_OPTIONS.includes(String(value || "").trim());
 }
 
 function getLoadoutAgentPool() {
@@ -22331,7 +22375,7 @@ function getLoadoutAgentPool() {
 function getLoadoutFocusPool() {
   const locked = getLockedWeeklyFocus();
   const lockedFocus = normalizeFocusCategoryValue(locked?.label || "");
-  return lockedFocus ? [lockedFocus] : focusesList;
+  return lockedFocus && !isManualLogFocusOption(lockedFocus) ? [lockedFocus] : focusesList;
 }
 
 const agentRoles = {
@@ -22765,6 +22809,17 @@ function applyCompassVisual(values = {}) {
     profileDescriptionEl.textContent = values?.description || buildCompassProfileDescription(values, values?.model || null);
   }
   syncCompassDescriptionToggleState(false);
+  // The shaped Home layouts can make the one-line Skill Snapshot read narrower
+  // than its text after a sync. Reuse the shared fit routine for that one
+  // dynamic line in the next frame instead of leaving an ellipsis or waiting
+  // for the deferred idle sweep.
+  if (profileCopy && isLayoutStyleAutoFitActive?.()) {
+    window.requestAnimationFrame(() => {
+      if (!profileCopy.isConnected || getActivePageElement?.()?.id !== "page-home") return;
+      fitThemeBuilderAutoFitElement?.(profileCopy);
+      themeBuilderAutoFitState?.fitted?.add(profileCopy);
+    });
+  }
 
   [
     { key: "aim", suffix: "Aim" },
@@ -24418,18 +24473,51 @@ function updateLogAgentDisplay(agent){
   updateLoggingDebriefPreview();
 }
 
-function resetFixedFocusEditState(){
-  document.querySelector(".focus-wrapper")?.classList.remove("is-custom-focus-editing", "custom-focus-committed");
+function getLogCustomFocusInput() {
+  return document.getElementById("logCustomFocus");
 }
 
-function setCustomFocusCommitted(){
-  document.querySelector(".focus-wrapper")?.classList.remove("is-custom-focus-editing", "custom-focus-committed");
+function getCurrentLogFocusSelection(fallback = "") {
+  const select = document.getElementById("logFocusSelect");
+  const selected = String(select?.value || "").trim();
+  if (selected === "Other") {
+    return normalizeLogFocusValue(getLogCustomFocusInput()?.value || "", fallback);
+  }
+  return normalizeFocusCategoryValue(selected, fallback);
+}
+
+function resetFixedFocusEditState() {
+  const wrapper = document.querySelector(".focus-wrapper");
+  wrapper?.classList.remove("is-custom-focus-editing", "custom-focus-committed");
+}
+
+function setCustomFocusCommitted(value = "") {
+  const wrapper = document.querySelector(".focus-wrapper");
+  const input = getLogCustomFocusInput();
+  const customFocus = String(value || "").trim().slice(0, 80);
+  if (input) input.value = customFocus;
+  wrapper?.classList.toggle("is-custom-focus-editing", Boolean(customFocus));
+  wrapper?.classList.toggle("custom-focus-committed", Boolean(customFocus));
+}
+
+function openCustomFocusEditor(initialValue = "") {
+  const select = document.getElementById("logFocusSelect");
+  const input = getLogCustomFocusInput();
+  const wrapper = document.querySelector(".focus-wrapper");
+  if (select) select.value = "Other";
+  if (input) input.value = String(initialValue || "").trim().slice(0, 80);
+  wrapper?.classList.add("is-custom-focus-editing");
+  wrapper?.classList.toggle("custom-focus-committed", Boolean(input?.value.trim()));
+  syncLogFocusCustomDropdown();
+  updateLoggingDebriefPreview();
+  window.requestAnimationFrame(() => input?.focus({ preventScroll: true }));
 }
 
 function resetCustomFocusUI(){
   const select = document.getElementById("logFocusSelect");
   setCustomFocusCommitted("");
   resetFixedFocusEditState(false);
+  if (getLogCustomFocusInput()) getLogCustomFocusInput().value = "";
   if(select){
     select.style.display = "";
   }
@@ -24502,8 +24590,8 @@ function syncLogFocusSelectOptions() {
   const select = document.getElementById("logFocusSelect");
   if (!select) return;
 
-  const currentValue = normalizeFocusCategoryValue(select.value || "");
-  const optionValues = ["", ...focusesList];
+  const currentValue = String(select.value || "").trim();
+  const optionValues = ["", ...focusesList, ...MANUAL_LOG_FOCUS_OPTIONS];
 
   select.innerHTML = "";
   optionValues.forEach((value) => {
@@ -24561,6 +24649,13 @@ function setupLogFocusCustomDropdown() {
     `;
     shell.appendChild(customShell);
   }
+  let customFocusWrap = shell.parentElement?.querySelector(".focus-other-wrap");
+  if (!customFocusWrap) {
+    customFocusWrap = document.createElement("label");
+    customFocusWrap.className = "focus-other-wrap";
+    customFocusWrap.innerHTML = `<input id="logCustomFocus" class="focus-other-input logging-input" type="text" maxlength="80" placeholder="Describe your focus">`;
+    shell.parentElement?.appendChild(customFocusWrap);
+  }
   let menu = document.getElementById("logFocusCustomMenu");
   if (!menu) {
     menu = document.createElement("div");
@@ -24572,6 +24667,21 @@ function setupLogFocusCustomDropdown() {
   document.body.appendChild(menu);
 
   const trigger = document.getElementById("logFocusCustomTrigger");
+  const customInput = getLogCustomFocusInput();
+  customInput?.addEventListener("input", () => {
+    const hasValue = Boolean(customInput.value.trim());
+    shell.parentElement?.classList.toggle("custom-focus-committed", hasValue);
+    syncLoggingFocusPreviewText(customInput.value);
+    updateLoggingDebriefPreview();
+  });
+
+  customInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    select.value = "";
+    resetCustomFocusUI();
+  });
+
   if (!trigger || !menu) return;
 
   menu.innerHTML = "";
@@ -24637,7 +24747,7 @@ function syncLoggingFocusPreviewText(value = "") {
     preview.classList.add("is-placeholder");
     return;
   }
-  const resolved = normalizeFocusCategoryValue(value || "", "");
+  const resolved = normalizeLogFocusValue(value || "", "");
   preview.textContent = resolved || "Focus Category";
   preview.classList.toggle("is-placeholder", !resolved);
 }
@@ -24692,7 +24802,7 @@ function updateLoggingDebriefPreview() {
   const focusSelect = document.getElementById("logFocusSelect");
   const map = document.getElementById("logMap")?.value?.trim() || "";
   const notes = document.getElementById("logNotes")?.value?.trim() || "";
-  const focus = normalizeFocusCategoryValue(focusSelect?.value || "", "");
+  const focus = getCurrentLogFocusSelection("");
 
   syncLoggingFocusPreviewText(focus);
 
@@ -43331,7 +43441,6 @@ function isThemeBuilderAutoFitCandidate(element) {
     }
   }
   if (
-    element.id === "compassProfileCopy" ||
     element.id === "improvementCardSub" ||
     element.classList?.contains("weekly-focus-key") ||
     element.classList?.contains("weekly-focus-text")
@@ -43342,7 +43451,7 @@ function isThemeBuilderAutoFitCandidate(element) {
   if (computed.display === "none" || computed.visibility === "hidden" || Number.parseFloat(computed.opacity || "1") === 0) {
     return false;
   }
-  if (String(computed.whiteSpace || "").includes("nowrap")) return false;
+  if (String(computed.whiteSpace || "").includes("nowrap") && element.id !== "compassProfileCopy") return false;
   if (computed.position === "absolute" || computed.position === "fixed") return false;
   const rect = element.getBoundingClientRect();
   if (rect.width < 18 || rect.height < 8) return false;
@@ -43430,8 +43539,8 @@ function fitThemeBuilderAutoFitElement(element) {
     element.id === "compassProfileCopy" &&
     (window.innerHeight || document.documentElement.clientHeight || 0) <= 1100
   ) {
-    minFontSize = Math.min(minFontSize, 14);
-    maxFontSize = Math.min(Math.max(minFontSize, 17), maxFontSize);
+    minFontSize = Math.min(minFontSize, 8);
+    maxFontSize = Math.min(maxFontSize, baseFontSize);
   }
 
   if (
@@ -45779,6 +45888,10 @@ function bindEvents(){
   setupLogFocusCustomDropdown();
 
   document.getElementById("logFocusSelect")?.addEventListener("change", (e) => {
+    if (String(e.currentTarget?.value || "") === "Other") {
+      openCustomFocusEditor();
+      return;
+    }
     setCustomFocusCommitted("");
     resetFixedFocusEditState(false);
     syncLogFocusCustomDropdown();
@@ -45834,7 +45947,11 @@ function bindEvents(){
     });
   });
 
-  document.getElementById("logMap")?.addEventListener("input", updateLoggingDebriefPreview);
+  document.getElementById("logMap")?.addEventListener("input", (event) => {
+    updateLogMapPreview(event.currentTarget?.value || "");
+    updateLoggingDebriefPreview();
+  });
+  updateLogMapPreview();
   document.getElementById("logNotes")?.addEventListener("input", () => {
     syncLoggingQuickChipStates();
     updateLoggingDebriefPreview();
@@ -48147,12 +48264,11 @@ function setExclusiveChipSelection(selector, nextValue, datasetKey){
 // ========================
 function getLogFormValues(){
 
-  const focusSelect = document.getElementById("logFocusSelect");
   const logMap      = document.getElementById("logMap");
   const logNotes    = document.getElementById("logNotes");
   const logAgentDisplay = document.getElementById("logAgentDisplay");
 
-  const focus = normalizeFocusCategoryValue(focusSelect?.value || "", "");
+  const focus = getCurrentLogFocusSelection("");
 
   const editingEntry = editingLogEntryId
     ? (logEntries.find(entry => entry.id === editingLogEntryId) || editingLogEntrySnapshot)
@@ -48304,7 +48420,7 @@ function addLogEntry(){
 if(!entry.focus || entry.focus === "Select Focus"){
   entry.focus = "Discipline";
 }
-entry.focus = normalizeFocusCategoryValue(entry.focus, "Discipline");
+entry.focus = normalizeLogFocusValue(entry.focus, "Discipline");
 stampLogEntrySeasonIdentity(entry, getActiveProfile());
 
   if (isEditing) {
@@ -48368,6 +48484,7 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
   const logAgentImg = document.getElementById("logAgentImg");
 
   if(logMap) logMap.value = "";
+  updateLogMapPreview("");
   if(logNotes) logNotes.value = "";
   if(logFocusSelect) logFocusSelect.value = "";
   if(preview) preview.textContent = "Focus Category";
@@ -48468,7 +48585,7 @@ function editLogEntry(id, options = {}){
 
   const entry = logEntries.find(e => e.id === id);
   if(!entry) return;
-  const normalizedFocus = normalizeFocusCategoryValue(entry.focus || "", "");
+  const savedFocus = normalizeLogFocusValue(entry.focus || "", "");
 
   editingLogEntryId = entry.id;
   editingLogEntrySnapshot = { ...entry };
@@ -48487,22 +48604,22 @@ function editLogEntry(id, options = {}){
   if(focusSelect){
 
     const exists = [...focusSelect.options]
-      .some(opt => opt.value === normalizedFocus);
+      .some(opt => opt.value === savedFocus);
 
     if(exists){
-      focusSelect.value = normalizedFocus;
+      focusSelect.value = savedFocus;
       resetFixedFocusEditState(false);
-      if(preview) preview.textContent = normalizedFocus || "Focus";
+      if(preview) preview.textContent = savedFocus || "Focus";
       setCustomFocusCommitted("");
     } else {
-      focusSelect.value = "";
-      resetFixedFocusEditState(false);
-      setCustomFocusCommitted("");
+      focusSelect.value = "Other";
+      setCustomFocusCommitted(savedFocus);
     }
 
   }
 
   if(logMapEl) logMapEl.value = entry.map || "";
+  updateLogMapPreview(entry.map || "");
   if(notesEl) notesEl.value = entry.notes;
   selectedLogRating = Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null;
   selectedLogMood = entry.mood || null;
@@ -48533,19 +48650,18 @@ function syncLogInputs(){
   if(!focusSelect) return;
 
   if(pendingFocusFromLog){
-    const normalizedPendingFocus = normalizeFocusCategoryValue(pendingFocusFromLog, "");
+    const pendingFocus = normalizeLogFocusValue(pendingFocusFromLog, "");
 
     const exists = [...focusSelect.options]
-      .some(opt => opt.value === normalizedPendingFocus);
+      .some(opt => opt.value === pendingFocus);
 
     if(exists){
-      focusSelect.value = normalizedPendingFocus;
+      focusSelect.value = pendingFocus;
       resetFixedFocusEditState(false);
       setCustomFocusCommitted("");
     } else {
-      focusSelect.value = "";
-      resetFixedFocusEditState(false);
-      setCustomFocusCommitted("");
+      focusSelect.value = "Other";
+      setCustomFocusCommitted(pendingFocus);
     }
 
     pendingFocusFromLog = null;
@@ -54759,9 +54875,9 @@ function recomputeFromMatches(){
   if(drawCountEl) drawCountEl.textContent = draws;
   if(totalGamesEl) totalGamesEl.textContent = sessionEntries.length;
 
-  if(totalRRDisplay && !Number.isFinite(Number(totalRRDisplay.dataset.value))){
-    totalRRDisplay.textContent = sessionRRSum;
-  }
+  // This recalculation runs after every real sync.  The old first-render-only
+  // guard meant an already-initialized display never reflected the next match.
+  forceRRTotalDisplayValue?.(sessionRRSum);
 
   const p = getActiveProfile();
 

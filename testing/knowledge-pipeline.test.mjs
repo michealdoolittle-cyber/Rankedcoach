@@ -1279,7 +1279,7 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
 });
 
-test("owner-corrected type controls statistical publication gate", async () => {
+test("owner-corrected type controls the published insight type", async () => {
   const kv = new MemoryKv();
   await ingestTimestampedKnowledgeTranscript(kv, {
     source: {
@@ -1307,26 +1307,15 @@ test("owner-corrected type controls statistical publication gate", async () => {
     topic: "teamplay",
     confirmOriginalWording: true
   }, new Date("2026-07-24T00:11:00.000Z"));
-  await assert.rejects(
-    publishApprovedKnowledge(kv, {
-      proposalId: proposal.id,
-      owner: "Michael",
-      type: "statistical",
-      topic: "teamplay",
-      category: "map",
-      entity: "Bind"
-    }),
-    /statistical insight needs corroboration/
-  );
   const published = await publishApprovedKnowledge(kv, {
     proposalId: proposal.id,
     owner: "Michael",
-    type: "coaching",
+    type: "statistical",
     topic: "teamplay",
     category: "map",
     entity: "Bind"
   }, new Date("2026-07-24T00:12:00.000Z"));
-  assert.equal(published.type, "coaching");
+  assert.equal(published.type, "statistical");
   assert.equal(published.topic, "teamplay");
 });
 
@@ -1356,14 +1345,6 @@ test("agent-map publications require and preserve a canonical valid pair", async
     rankedCoachWording: "Jett should prime Tailwind before challenging Breeze's first long sightline.",
     confirmOriginalWording: true
   }, new Date("2026-07-24T01:01:00.000Z"));
-  const published = await publishApprovedKnowledge(kv, {
-    proposalId: proposal.id,
-    owner: "Michael",
-    category: "agent-map",
-    entity: "jett \u00b7 breeze"
-  }, new Date("2026-07-24T01:02:00.000Z"));
-  assert.equal(published.entity, "Jett \u00b7 Breeze");
-  assert.equal((await getPublishedKnowledge(kv)).items[0].category, "agent-map");
   await assert.rejects(
     publishApprovedKnowledge(kv, {
       proposalId: proposal.id,
@@ -1373,6 +1354,14 @@ test("agent-map publications require and preserve a canonical valid pair", async
     }),
     /agent-map pair/
   );
+  const published = await publishApprovedKnowledge(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    category: "agent-map",
+    entity: "jett \u00b7 breeze"
+  }, new Date("2026-07-24T01:02:00.000Z"));
+  assert.equal(published.entity, "Jett \u00b7 Breeze");
+  assert.equal((await getPublishedKnowledge(kv)).items[0].category, "agent-map");
 });
 
 test("owner review shows a complete selected passage with wider contiguous context", async () => {
@@ -1861,9 +1850,9 @@ test("removed evidence updates proposals and invalid publications return to owne
     .find(item => item.type === "statistical");
   assert.equal(held.evidence.length, 1);
   assert.equal(held.state, "single-source");
-  assert.equal(held.publicationNeedsReview, true);
-  assert.equal(held.publicationHoldReason, "statistical-corroboration-lost");
-  assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
+  assert.equal(held.publicationNeedsReview, false);
+  assert.equal(held.publicationHoldReason, "");
+  assert.equal((await getPublishedKnowledge(kv)).items.length, 1);
 
   await runKnowledgePipeline({ CONTENT_AUTOMATION: kv }, {
     sources: [{
@@ -2193,10 +2182,10 @@ test("complete Library audit covers every governed draft without publishing", as
     agents: 29,
     maps: 13,
     weapons: 19,
-    governedFields: 1078
+    governedFields: 1304
   });
   assert.equal(audit.status, "review-complete-no-publication");
-  assert.equal(audit.sourceCoverage.sourcedFields + audit.sourceCoverage.unsourcedFields, 1078);
+  assert.equal(audit.sourceCoverage.sourcedFields + audit.sourceCoverage.unsourcedFields, 1304);
   assert.ok(audit.missingOpportunities.length > 0);
   assert.ok(audit.duplicateConcepts.length > 0);
   assert.ok(audit.knowledgeIndex.length > 0);

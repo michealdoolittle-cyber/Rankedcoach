@@ -48,7 +48,11 @@ function startServer() {
 
 function seedProfile() {
   const profileId = "coaching-evidence-regression";
-  const matches = Array.from({ length: 12 }, (_item, index) => ({
+  const matches = Array.from({ length: 12 }, (_item, index) => {
+    const playedAt = new Date(Date.now() - ((11 - index) * 86_400_000));
+    playedAt.setHours(12, 0, 0, 0);
+    const createdAt = playedAt.toISOString();
+    return {
     id: `evidence-match-${index}`,
     matchId: `evidence-match-${index}`,
     source: "henrik_sync",
@@ -63,7 +67,8 @@ function seedProfile() {
     agent: index % 2 ? "Sova" : "Jett",
     role: index % 2 ? "Initiator" : "Duelist",
     map: index % 2 ? "Haven" : "Ascent",
-    createdAt: `2026-07-${String(index + 1).padStart(2, "0")}T12:00:00Z`,
+    act: "Season 2026 Act 4",
+    createdAt,
     metadata: {
       source: "henrik_sync",
       rank: "Diamond 2",
@@ -72,10 +77,11 @@ function seedProfile() {
       role: index % 2 ? "Initiator" : "Duelist",
       map: index % 2 ? "Haven" : "Ascent",
       mapName: index % 2 ? "Haven" : "Ascent",
-      demoAct: "Season 2026 Act 4",
-      playedAt: `2026-07-${String(index + 1).padStart(2, "0")}T12:00:00Z`
+      act: "Season 2026 Act 4",
+      playedAt: createdAt
     }
-  }));
+  };
+  });
   localStorage.setItem("valtracker_entry_choice_v1", "guest");
   localStorage.setItem("valtracker_active_profile_id", profileId);
   localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
@@ -85,6 +91,9 @@ function seedProfile() {
     region: "NA",
     importSource: "henrik",
     lastSyncSource: "henrik",
+    // This test exercises evidence modals; mark today's warm-up prompt as seen so
+    // the asynchronous daily prompt cannot cover the pills under test mid-run.
+    lastWarmupPromptDate: new Date().toISOString().slice(0, 10),
     matches,
     trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4"] }
   }]));

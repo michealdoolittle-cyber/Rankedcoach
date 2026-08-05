@@ -15,7 +15,12 @@ const WEAPON_UUIDS = Object.freeze({
 });
 
 function isoAt(minutes = 0) {
-  return `2026-08-03T16:${String(minutes).padStart(2, "0")}:00.000Z`;
+  // The Home chart is deliberately scoped to the current calendar session.
+  // Keep fixture matches on today's local date so this suite exercises the
+  // player-facing session chart rather than accidentally testing a stale day.
+  const date = new Date();
+  date.setHours(16, minutes, 0, 0);
+  return date.toISOString();
 }
 
 function queueLabel(id = "competitive") {

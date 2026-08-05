@@ -64,6 +64,12 @@
   // and the time it was watched. Keep it bounded so a long-lived profile
   // cannot recreate the local-storage quota issue that match history once had.
   const MAX_WATCHED_PLAYLIST_VIDEOS = 1000;
+  // A complete Henrik V4 match can be several hundred KB. Retaining every raw
+  // payload in localStorage makes a normal 100-match account exceed the browser
+  // quota, which then forces the all-or-nothing emergency compaction path. Keep
+  // the newest raw payloads locally for immediate offline re-derive while the
+  // complete archive remains durable in cloud match_snapshots.
+  const LOCAL_RAW_PAYLOAD_BUDGET_BYTES = 3 * 1024 * 1024;
 
   function normalizeWatchedPlaylistVideos(records = []) {
     const source = Array.isArray(records) ? records : [];
@@ -163,7 +169,7 @@
   }
 
   function compactProfilesForLocalCache(source = [], level = 1) {
-    return (Array.isArray(source) ? source : []).map(profile => {
+    const compactProfiles = (Array.isArray(source) ? source : []).map(profile => {
       if (!profile || typeof profile !== "object") return profile;
       const compact = { ...profile };
       if (level >= 3) {
@@ -174,6 +180,42 @@
       }
       return compact;
     });
+
+    if (level !== 1) return compactProfiles;
+
+    // Apply one budget across every cached profile, preserving the most-recent
+    // raw payloads rather than depending on localStorage to reject an oversized
+    // write. Normalized match data remains available for the whole archive.
+    const rawCandidates = [];
+    compactProfiles.forEach(profile => {
+      (Array.isArray(profile?.matches) ? profile.matches : []).forEach(match => {
+        const rawPayload = match?.matchRecord?.rawHenrikPayload;
+        if (!rawPayload || typeof rawPayload !== "object") return;
+        const playedAt = Date.parse(
+          match?.metadata?.playedAt
+          || match?.matchRecord?.playedAt
+          || match?.playedAt
+          || match?.createdAt
+          || 0
+        ) || 0;
+        rawCandidates.push({ match, rawPayload, playedAt });
+      });
+    });
+
+    let remainingBytes = LOCAL_RAW_PAYLOAD_BUDGET_BYTES;
+    rawCandidates
+      .sort((left, right) => right.playedAt - left.playedAt)
+      .forEach(({ match, rawPayload }) => {
+        const payloadBytes = measureJsonPayloadBytes(rawPayload);
+        if (payloadBytes > 0 && payloadBytes <= remainingBytes) {
+          remainingBytes -= payloadBytes;
+          return;
+        }
+        delete match.matchRecord.rawHenrikPayload;
+        match.rawPayloadCachedLocally = false;
+      });
+
+    return compactProfiles;
   }
 
   // Cloud account state is only the lightweight account/profile shell. Match

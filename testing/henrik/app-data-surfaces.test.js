@@ -216,7 +216,8 @@ async function run() {
     assert.ok(await page.locator("#statsMapsList .stats-map-card:not([disabled])").count() > 0);
     assert.ok(await page.locator("#statsWeaponsList button:not([disabled])").count() > 0);
 
-    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 5" }, { force: true });
+    const season2025Act5Value = await page.locator('#statsActSelector option', { hasText: "Season 2025 Act 5" }).evaluate(option => option.value);
+    await page.selectOption("#statsActSelector", season2025Act5Value, { force: true });
     await page.waitForTimeout(600);
     const comparisonStats = await page.evaluate(() => ({
       selectedAct: document.getElementById("statsActSelector")?.value,
@@ -224,7 +225,7 @@ async function run() {
       activeAgents: [...document.querySelectorAll("#statsAgentsList .stats-agent-mini-card:not([disabled])")].map(card => card.textContent.trim()),
       activeMaps: [...document.querySelectorAll("#statsMapsList .stats-map-card:not([disabled])")].map(card => card.textContent.trim())
     }));
-    assert.equal(comparisonStats.selectedAct, "Season 2025 Act 5");
+    assert.equal(comparisonStats.selectedAct, season2025Act5Value);
     assert.notDeepEqual(comparisonStats.overview, statsDebug.overview);
     assert.notDeepEqual(comparisonStats.activeAgents, statsDebug.activeAgents);
     assert.notDeepEqual(comparisonStats.activeMaps, statsDebug.activeMaps);

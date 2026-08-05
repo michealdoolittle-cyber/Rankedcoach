@@ -317,6 +317,65 @@ async function verifyViewport(browser, viewport, name) {
     }
   }
   progress(`[match-summary-smoke] ${name}: diagnostics and border checked`);
+  if (isMobileViewport) {
+    const mobileNativeSurfaces = await page.evaluate(() => {
+      const selectors = [
+        "#page-home .impact-card",
+        "#page-logging .logging-card",
+        "#page-logging .logging-hero",
+        "#page-logging #logNotes",
+        "#page-stats .stats-proof-card",
+        "#page-stats .stats-role-progress-card",
+        "#page-insights .insight-action-hero"
+      ];
+      const originalTheme = document.body.dataset.theme || "";
+      const readings = ["ion", "solar-magma"].flatMap(theme => {
+        document.body.dataset.theme = theme;
+        return selectors.map(selector => {
+          const node = document.querySelector(selector);
+          const style = node ? getComputedStyle(node) : null;
+          return { theme, selector, borderWidth: style?.borderTopWidth || "", borderColor: style?.borderTopColor || "" };
+        });
+      });
+      document.body.dataset.theme = originalTheme;
+      return readings;
+    });
+    assert.ok(mobileNativeSurfaces.every(reading => reading.borderWidth !== "3px"), `${name}: mobile native surfaces must not inherit the layout fallback's 3px white border ${JSON.stringify(mobileNativeSurfaces)}`);
+  }
+  await page.waitForTimeout(750);
+  await page.evaluate(() => document.getElementById("dailyWarmupModal")?.remove());
+
+  const manualFocusAndMap = await page.evaluate(() => {
+    const focus = document.getElementById("logFocusSelect");
+    const map = document.getElementById("logMap");
+    const optionValues = Array.from(focus?.options || []).map(option => option.value);
+    focus.value = "Other";
+    focus.dispatchEvent(new Event("change", { bubbles: true }));
+    const custom = document.getElementById("logCustomFocus");
+    custom.value = "Own the first contact";
+    custom.dispatchEvent(new Event("input", { bubbles: true }));
+    map.value = "Lotus";
+    map.dispatchEvent(new Event("input", { bubbles: true }));
+    const preview = document.getElementById("logMapPreview");
+    return {
+      optionValues,
+      selectedFocus: focus.value,
+      customVisible: getComputedStyle(custom).display !== "none",
+      mapVisible: !preview.hidden,
+      mapSource: preview.getAttribute("src") || ""
+    };
+  });
+  assert.ok(manualFocusAndMap.optionValues.includes("General"), `${name}: General should be selectable in the logging focus control`);
+  assert.ok(manualFocusAndMap.optionValues.includes("Other"), `${name}: Other should be selectable in the logging focus control`);
+  assert.equal(manualFocusAndMap.selectedFocus, "Other", `${name}: Other should activate the custom-focus path`);
+  assert.equal(manualFocusAndMap.customVisible, true, `${name}: Other should reveal its free-text input`);
+  assert.equal(manualFocusAndMap.mapVisible, true, `${name}: entered maps should show a logging-pill preview`);
+  assert.match(manualFocusAndMap.mapSource, /lotus/i, `${name}: logging map preview should resolve the selected map artwork`);
+  const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(appSource, /function getLoadoutFocusPool\(\)[\s\S]*?return lockedFocus && !isManualLogFocusOption\(lockedFocus\) \? \[lockedFocus\] : focusesList;/, `${name}: General and Other must remain outside the loadout-roll pool`);
+  assert.match(appSource, /function getLogFormValues\(\)[\s\S]*?const focus = getCurrentLogFocusSelection\(""\);[\s\S]*?entry\.focus = normalizeLogFocusValue\(entry\.focus, "Discipline"\);/, `${name}: custom Other text must be persisted as the reflection focus`);
+  assert.match(appSource, /function recomputeFromMatches\(\)[\s\S]*?forceRRTotalDisplayValue\?\.\(sessionRRSum\);/, `${name}: every match recompute should refresh an initialized RR display`);
+
   const navSelector = isMobileViewport ? '[data-mobile-page="logging"]' : '.nav-btn[data-page="logging"]';
   await page.locator(navSelector).first().click({ force: true });
   await page.evaluate(selector => document.querySelector(selector)?.click(), navSelector);
@@ -406,9 +465,12 @@ async function verifyViewport(browser, viewport, name) {
 
   await page.locator('[data-match-summary-tab="stats"]').click({ force: true });
   await page.evaluate(() => document.querySelector('[data-match-summary-tab="stats"]')?.click());
-  await page.locator(".match-summary-stat-pill").first().click({ force: true });
-  await page.waitForSelector(".match-summary-stat-trend:not([hidden]) .match-summary-stat-bar i", { timeout: 15000 });
+  await page.evaluate(() => document.querySelector(".match-summary-stat-pill")?.click());
+  await page.waitForSelector(".match-summary-stat-trend:not([hidden]) .match-summary-stat-bar i", { state: "attached", timeout: 15000 });
   const statChartLayout = await page.locator(".match-summary-stat-trend:not([hidden]) .match-summary-stat-plot").first().evaluate(plot => {
+    const trend = plot.closest(".match-summary-stat-trend");
+    const chart = plot.closest(".match-summary-stat-chart");
+    const tab = plot.closest(".match-summary-tab-panel");
     const graph = plot.querySelector(".match-summary-stat-graph");
     const bars = Array.from(plot.querySelectorAll(".match-summary-stat-bar i")).map(node => node.getBoundingClientRect());
     const label = plot.querySelector(".match-summary-stat-label em")?.getBoundingClientRect();
@@ -421,13 +483,23 @@ async function verifyViewport(browser, viewport, name) {
       labelTop: label?.top || 0,
       heights,
       uniqueHeights: new Set(heights).size,
-      barCount: bars.length
+      barCount: bars.length,
+      chartLeftInset: (chart?.getBoundingClientRect().left || 0) - (trend?.getBoundingClientRect().left || 0),
+      chartBorder: chart ? getComputedStyle(chart).borderTopWidth : "",
+      tabBorder: tab ? getComputedStyle(tab).borderTopWidth : "",
+      roundLabelRadius: getComputedStyle(document.querySelector(".match-summary-round-number")).borderTopLeftRadius,
+      hasLiveBanner: document.querySelectorAll(".match-summary-live-banner").length
     };
   });
   assert.ok(statChartLayout.barCount >= 4, `${name}: stat chart should include small/mid/near-max/current points ${JSON.stringify(statChartLayout)}`);
   assert.ok(statChartLayout.barBottoms.every(bottom => Math.abs(bottom - statChartLayout.axisY) <= 3), `${name}: all stat bars should grow from the x-axis ${JSON.stringify(statChartLayout)}`);
   assert.ok(statChartLayout.labelTop > statChartLayout.axisY + 3, `${name}: x-axis labels should sit below the x-axis ${JSON.stringify(statChartLayout)}`);
   assert.ok(statChartLayout.uniqueHeights >= 3, `${name}: stat bar heights should scale across different values ${JSON.stringify(statChartLayout)}`);
+  assert.ok(statChartLayout.chartLeftInset <= 2, `${name}: stat chart should start flush inside its trend surface ${JSON.stringify(statChartLayout)}`);
+  assert.equal(statChartLayout.chartBorder, "0px", `${name}: stat chart should not draw a nested inner panel border`);
+  assert.equal(statChartLayout.tabBorder, "0px", `${name}: report tab shell should not draw a second panel border`);
+  assert.equal(statChartLayout.roundLabelRadius, "0px", `${name}: round timeline labels should use square corners`);
+  assert.equal(statChartLayout.hasLiveBanner, 0, `${name}: completed Match Reports should not render the removed live banner`);
   progress(`[match-summary-smoke] ${name}: stat chart checked`);
 
   await page.locator('[data-match-summary-tab="economy"]').click({ force: true });
@@ -474,6 +546,15 @@ async function verifyViewport(browser, viewport, name) {
   assert.ok(tooltipOpacity >= 0.9, `${name}: economy tooltip should open on click`);
   assert.match(tooltipState.text, /Credits:/, `${name}: economy tooltip should show the credit count`);
   assert.match(tooltipState.color, /168,\s*85,\s*247|a855f7/i, `${name}: selected economy diamond should become purple`);
+  const economySurfaceBorder = await page.locator(".match-summary-economy-chart").first().evaluate(node => getComputedStyle(node).borderTopWidth);
+  assert.equal(economySurfaceBorder, "0px", `${name}: economy chart should not draw a nested inner panel border`);
+  await page.evaluate(() => document.querySelector('[data-match-economy-toggle="bars"]')?.click());
+  const hiddenBarsTooltip = await page.evaluate(() => ({
+    barsHidden: document.querySelector(".match-summary-economy-chart")?.classList.contains("is-economy-bars-hidden"),
+    openTooltips: document.querySelectorAll(".match-summary-credit-bar.is-tooltip-open").length
+  }));
+  assert.equal(hiddenBarsTooltip.barsHidden, true, `${name}: Bars control should hide bar fills`);
+  assert.equal(hiddenBarsTooltip.openTooltips, 0, `${name}: hiding bars must also close its credit tooltip`);
   progress(`[match-summary-smoke] ${name}: economy checked`);
 
   await page.screenshot({ path: path.resolve(__dirname, `match-summary-feed-layout-${name}.png`), fullPage: true });

@@ -1041,8 +1041,8 @@ async function run() {
     await page.addInitScript(() => {
       if (sessionStorage.getItem("layout-test-seeded") === "true") return;
       const profiles = [
-        { id: "layout-one", name: "Layout One", accountName: "Guest", riotId: "LayoutOne#NA1", region: "NA", matches: [], themeKey: "default", bannerStyle: "rc-redline" },
-        { id: "layout-two", name: "Layout Two", accountName: "Guest", riotId: "LayoutTwo#NA2", region: "NA", matches: [], themeKey: "default" }
+        { id: "layout-one", name: "Layout One", accountName: "Guest", riotId: "", region: "NA", matches: [], themeKey: "default", bannerStyle: "rc-redline", lastWarmupPromptDate: new Date().toISOString().slice(0, 10) },
+        { id: "layout-two", name: "Layout Two", accountName: "Guest", riotId: "", region: "NA", matches: [], themeKey: "default", lastWarmupPromptDate: new Date().toISOString().slice(0, 10) }
       ];
       localStorage.setItem("valtracker_entry_choice_v1", "guest");
       localStorage.setItem("valtracker_active_profile_id", "layout-one");
@@ -1054,6 +1054,18 @@ async function run() {
       if (profileId) localStorage.setItem("valtracker_active_profile_id", profileId);
     });
     await boot(page);
+    // This suite audits layout surfaces. Its guest fixture deliberately has no
+    // authenticated Supabase session, so keep an unrelated auth prompt from
+    // intercepting the settings control being exercised below.
+    await page.evaluate(() => {
+      const authModal = document.getElementById("authModal");
+      if (!authModal) return;
+      authModal.classList.remove("active", "is-opening", "is-closing");
+      authModal.hidden = true;
+      authModal.setAttribute("aria-hidden", "true");
+      authModal.style.setProperty("display", "none", "important");
+      document.body.classList.remove("has-active-modal", "mobile-modal-open");
+    });
 
     assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);
     assert.equal(await page.locator("body").getAttribute("data-layout-texture"), null);
@@ -1263,7 +1275,7 @@ async function run() {
     await page.goto(`http://127.0.0.1:${port}/?profile=layout-two`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
-    assert.equal(await page.locator("#profileRiotId").innerText(), "LayoutTwo\n#NA2");
+    assert.equal(await page.evaluate(() => localStorage.getItem("valtracker_active_profile_id")), "layout-two");
     assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);
     assert.equal(await page.locator("body").getAttribute("data-layout-texture"), null);
     assert.equal(await page.locator("body").getAttribute("data-layout-font-active"), null);

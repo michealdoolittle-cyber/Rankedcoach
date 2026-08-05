@@ -50,7 +50,11 @@ const playlistChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.play
 playlistChannels.forEach(channel => assert(liveVideos.some(video => video.channel === channel), `${channel} must have a live trusted-channel feed.`));
 
 const creatorChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.kind === "creator");
-assert.equal(creatorChannels.length, 10, "The trusted creator allowlist must contain the original eight creators plus Charla7an and Thinking Man's Valorant.");
+assert.deepEqual(
+  creatorChannels.map(channel => channel.name),
+  ["Dopai", "Woohoojin", "Maxie", "Konpeki", "Slayerkey", "Sena", "Rem", "Rooney", "Charla7an", "Thinking Man's Valorant", "zasko III", "zasko II", "OD26"],
+  "The trusted creator allowlist must retain every explicitly approved creator."
+);
 for (const channel of creatorChannels) {
   const sample = liveVideos.find(video => video.channelId === channel.id);
   assert.ok(sample, `${channel.name} must expose a current sample video.`);

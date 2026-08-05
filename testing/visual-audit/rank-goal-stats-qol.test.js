@@ -164,8 +164,8 @@ async function run() {
     });
 
     const focusOptions = await page.locator("#logFocusSelect option").evaluateAll(options => options.map(option => option.value));
-    // Keep the logging selector aligned with the final fixed focus system.
-    assert.equal(focusOptions.length, 11, JSON.stringify(focusOptions));
+    // Fixed coaching categories plus the manual-only General and Other paths.
+    assert.equal(focusOptions.length, 13, JSON.stringify(focusOptions));
     assert.equal(new Set(focusOptions).size, focusOptions.length, JSON.stringify(focusOptions));
     assert.deepEqual(focusOptions, [
       "",
@@ -178,7 +178,9 @@ async function run() {
       "Communication",
       "Discipline",
       "Map Strategy",
-      "Behavior Composure"
+      "Behavior Composure",
+      "General",
+      "Other"
     ]);
 
     assert.equal(await page.locator("#navGoalTargetIcon").getAttribute("alt"), "Diamond 3");

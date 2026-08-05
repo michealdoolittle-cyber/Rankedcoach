@@ -28,8 +28,10 @@ test("owner research tab is hidden by default and loaded through the governed cl
   assert.match(reviewClient, /\/api\/knowledge\/reject/);
   assert.match(reviewClient, /\/api\/knowledge\/approve/);
   assert.match(reviewClient, /\/api\/knowledge\/publish/);
-  assert.match(reviewClient, /const primaryAction = approved \? "publish" : "approve"/);
-  assert.match(reviewClient, /const primaryLabel = approved \? "Publish to Library" : "Approve"/);
+  assert.match(reviewClient, /data-knowledge-action="publish"[\s\S]*?>Publish to Library<\/button>/);
+  assert.match(reviewClient, /data-knowledge-action="discard"[\s\S]*?>Discard<\/button>/);
+  assert.match(reviewClient, /data-knowledge-action="approve"[\s\S]*?>Approve<\/button>/);
+  assert.match(reviewClient, /data-knowledge-action="reject"[\s\S]*?>Reject<\/button>/);
 });
 
 test("player Library consumes only the safe published-knowledge endpoint", async () => {
@@ -38,7 +40,7 @@ test("player Library consumes only the safe published-knowledge endpoint", async
     source("worker/index.js")
   ]);
   assert.match(library, /fetch\("\/api\/content\/knowledge"/);
-  assert.match(library, /Approved coaching updates/);
+  assert.doesNotMatch(library, /Approved coaching updates/);
   assert.match(library, /item\.category === "agent-map"/);
   assert.match(library, /getPublishedKnowledge: \(\) => publishedKnowledge\.slice\(\)/);
   assert.doesNotMatch(library, /knowledge:private:transcript/);
