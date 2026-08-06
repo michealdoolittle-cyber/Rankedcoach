@@ -183,7 +183,13 @@ async function run() {
   fs.mkdirSync(screenshotDir, { recursive: true });
   try {
     const desktop = await openPage(browser, { width: 1440, height: 900 });
-    await desktop.page.locator('.nav-btn[data-page="logging"]').click();
+    await desktop.page.evaluate(() => document.getElementById("dailyWarmupModal")?.remove());
+    await desktop.page.locator('.nav-btn[data-page="logging"]').click({ force: true });
+    await desktop.page.evaluate(() => document.querySelector('.nav-btn[data-page="logging"]')?.click());
+    await desktop.page.waitForFunction(() => {
+      const page = document.getElementById("page-logging");
+      return page?.classList.contains("active") || page?.classList.contains("is-current-page");
+    }, null, { timeout: 10000 });
     await desktop.page.waitForTimeout(300);
     await desktop.page.evaluate(() => globalThis.RankedCoachDailyEntrance?.skipAll?.());
     await desktop.page.waitForTimeout(80);
@@ -197,6 +203,7 @@ async function run() {
     }));
     assert.equal(await desktop.page.locator("#loggingDesktopLauncher").isVisible(), true, JSON.stringify(desktopLauncherState));
     assert.equal(await desktop.page.locator("#page-logging .logging-form").isVisible(), false);
+    assert.match(await desktop.page.locator("#logCalendarTrigger").innerText(), /today/i, "Logging should open on today's session by default");
     await desktop.page.screenshot({ path: path.join(screenshotDir, "logging-desktop-launcher.png"), fullPage: true });
 
     const postMatchState = await desktop.page.evaluate(() => ({
@@ -210,11 +217,16 @@ async function run() {
     await desktop.page.waitForTimeout(250);
     const postMatchOpenState = await desktop.page.evaluate(() => ({
       view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
-      form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display
+      launchOrigin: document.getElementById("page-logging")?.dataset.loggingLaunchOrigin || "",
+      form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display,
+      formBorder: getComputedStyle(document.querySelector("#page-logging .logging-form")).borderTopWidth
     }));
     assert.equal(postMatchOpenState.view, "form", `${JSON.stringify(postMatchOpenState)} ${JSON.stringify(desktop.consoleErrors)}`);
+    assert.equal(postMatchOpenState.launchOrigin, "postmatch", JSON.stringify(postMatchOpenState));
+    assert.notEqual(postMatchOpenState.formBorder, "0px", JSON.stringify(postMatchOpenState));
     assert.equal(await desktop.page.locator("#logMap").inputValue(), "Ascent");
     assert.match(await desktop.page.locator("#focusPreviewText").innerText(), /crosshair placement/i);
+    await desktop.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-desktop-postmatch-expanded.png") });
 
     await desktop.page.locator('#logRatingRow [data-rating="4"]').click();
     await desktop.page.locator('#logMoodRow [data-mood="Focused"]').click();
@@ -225,17 +237,34 @@ async function run() {
     await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "launcher");
     assert.equal(await desktop.page.locator("#page-logging .logging-form").isVisible(), false);
     assert.equal(await desktop.page.locator('[data-logging-desktop-launch="postmatch"]').getAttribute("aria-disabled"), "true");
+    assert.equal(await desktop.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), null);
 
     await desktop.page.locator('[data-logging-desktop-launch="warmup"]').click({ force: true });
     await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     assert.match(await desktop.page.locator("#loggingCardTitle").innerText(), /warm-up reflection/i);
+    assert.equal(await desktop.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), "warmup");
 
+    // Today's session is the normal default, while All History remains an
+    // explicit selection and must surface an older completed reflection.
+    await desktop.page.locator("#logCalendarTrigger").click({ force: true });
+    await desktop.page.locator('#logCalendarPopover [data-log-all]').click({ force: true });
+    await desktop.page.waitForFunction(() => /all history/i.test(document.getElementById("logCalendarTrigger")?.textContent || ""));
     await desktop.page.locator('.log-entry[data-log-entry-id="completed-reflection"] .log-edit-btn').click({ force: true });
     assert.equal(await desktop.page.locator("#logMap").inputValue(), "Bind");
     assert.equal(await desktop.page.locator("#logNotes").inputValue(), "A complete reflection used to verify Edit.");
+    await desktop.page.locator("#logCalendarTrigger").click({ force: true });
+    const today = await desktop.page.locator("#logCalendarPopover .logging-calendar-day.is-today").getAttribute("data-log-date");
+    await desktop.page.locator(`#logCalendarPopover [data-log-date="${today}"]`).click({ force: true });
+    assert.match(await desktop.page.locator("#logCalendarTrigger").innerText(), /today/i, "The player can explicitly return to today's session");
 
     const mobile = await openPage(browser, { width: 390, height: 844 });
-    await mobile.page.locator('[data-mobile-page="logging"]').click();
+    await mobile.page.evaluate(() => document.getElementById("dailyWarmupModal")?.remove());
+    await mobile.page.locator('[data-mobile-page="logging"]').click({ force: true });
+    await mobile.page.evaluate(() => document.querySelector('[data-mobile-page="logging"]')?.click());
+    await mobile.page.waitForFunction(() => {
+      const page = document.getElementById("page-logging");
+      return page?.classList.contains("active") || page?.classList.contains("is-current-page");
+    }, null, { timeout: 10000 });
     await mobile.page.waitForTimeout(300);
     await mobile.page.evaluate(() => globalThis.RankedCoachDailyEntrance?.skipAll?.());
     await mobile.page.waitForTimeout(80);
@@ -255,6 +284,27 @@ async function run() {
     assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), false);
     assert.equal(await mobile.page.locator("#page-logging .logging-form").isVisible(), true);
     assert.equal(await mobile.page.locator("#logMap").inputValue(), "Ascent");
+    assert.equal(await mobile.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), "postmatch");
+    const mobileMapPreview = await mobile.page.evaluate(() => {
+      const pill = document.querySelector("#page-logging .logging-map-pill");
+      const preview = document.getElementById("logMapPreview");
+      const pillRect = pill?.getBoundingClientRect();
+      const previewRect = preview?.getBoundingClientRect();
+      const style = preview ? getComputedStyle(preview) : null;
+      return {
+        pill: pillRect?.toJSON() || null,
+        preview: previewRect?.toJSON() || null,
+        position: style?.position || "",
+        top: style?.top || "",
+        right: style?.right || "",
+        hidden: preview?.hidden ?? true
+      };
+    });
+    assert.equal(mobileMapPreview.hidden, false, JSON.stringify(mobileMapPreview));
+    assert.equal(mobileMapPreview.position, "absolute", JSON.stringify(mobileMapPreview));
+    assert.ok(mobileMapPreview.preview.right <= mobileMapPreview.pill.right - 4, JSON.stringify(mobileMapPreview));
+    assert.ok(Math.abs((mobileMapPreview.preview.top + mobileMapPreview.preview.height / 2) - (mobileMapPreview.pill.top + mobileMapPreview.pill.height / 2)) <= 4, JSON.stringify(mobileMapPreview));
+    await mobile.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-mobile-postmatch-expanded.png") });
     await mobile.page.locator('#logRatingRow [data-rating="4"]').click();
     await mobile.page.locator('#logMoodRow [data-mood="Focused"]').click();
     await mobile.page.locator('#logTeamCommsRow [data-team-comms="4"]').click();
@@ -263,6 +313,7 @@ async function run() {
     await mobile.page.locator("#logSaveBtn").click();
     await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "launcher");
     assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), true);
+    assert.equal(await mobile.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), null);
 
     await mobile.page.locator('[data-logging-desktop-launch="warmup"]').click();
     await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");

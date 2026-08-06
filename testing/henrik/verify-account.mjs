@@ -207,6 +207,104 @@ function loadStoredProfileSnapshot(filePath, riotId = "") {
   return profile;
 }
 
+function readStoredRecord(match = {}) {
+  return match?.matchRecord && typeof match.matchRecord === "object" ? match.matchRecord : match;
+}
+
+function readStoredBoolean(record = {}, key = "") {
+  return record?.[key] === true || record?.importMeta?.[key] === true;
+}
+
+function storedTrackedKillNeedsWeapon(record = {}) {
+  const trackedPuuid = cleanString(record?.trackedPlayer?.puuid).toLowerCase();
+  const samePlayer = value => cleanString(value?.puuid || value?.id || value).toLowerCase() === trackedPuuid;
+  return (Array.isArray(record?.roundByRound) ? record.roundByRound : []).some(round => (
+    (Array.isArray(round?.kills) ? round.kills : []).some(kill => {
+      const killer = kill?.killer || kill?.killerPuuid || kill?.killer_id || "";
+      if (trackedPuuid && !samePlayer(killer)) return false;
+      const weapon = kill?.weapon;
+      const weaponName = cleanString(weapon?.name || weapon?.displayName || weapon || kill?.weaponName);
+      const weaponId = cleanString(weapon?.id || weapon?.uuid || kill?.weaponId || kill?.weapon_id);
+      return !weaponName && !weaponId;
+    })
+  ));
+}
+
+function storedRecordNeedsHsBackfill(record = {}) {
+  const stats = record?.stats || {};
+  const hasCoreStats = ["kills", "deaths", "assists", "acs"].every(key => Number.isFinite(Number(stats?.[key])));
+  const value = stats?.hsPercent;
+  return hasCoreStats && (value === null || value === undefined || Number.isNaN(Number(value)));
+}
+
+function summarizeStoredProfileBacklog(profile = {}, options = {}) {
+  if (!profile || !Array.isArray(profile.matches)) return null;
+  const summary = {
+    totalMatches: profile.matches.length,
+    rawFetchNeeded: 0,
+    rawRederiveNeeded: 0,
+    rawUnavailable: 0,
+    weaponBackfillNeeded: 0,
+    weaponUnavailable: 0,
+    hsBackfillNeeded: 0,
+    hsUnavailable: 0,
+    metadataBackfillNeeded: 0,
+    metadataUnavailable: 0
+  };
+  const targetRawVersion = Math.max(1, Number(options.storedRawVersion) || 2);
+  profile.matches.forEach(match => {
+    const record = readStoredRecord(match);
+    const source = cleanString(record?.source || match?.source).toLowerCase();
+    if (source !== "henrik_sync") return;
+    const rawPresent = Boolean(record?.rawHenrikPayload);
+    const rawComplete = record?.rawPayloadComplete === true;
+    const rawUnavailable = readStoredBoolean(record, "rawPayloadBackfillUnavailable");
+    const rawVersion = Number(record?.storedRawRehydrateVersion ?? record?.importMeta?.storedRawRehydrateVersion ?? 0);
+    if (!rawPresent || !rawComplete) {
+      if (rawUnavailable) summary.rawUnavailable += 1;
+      else summary.rawFetchNeeded += 1;
+    } else if (rawVersion < targetRawVersion) {
+      summary.rawRederiveNeeded += 1;
+    }
+
+    const weaponUnavailable = readStoredBoolean(record, "weaponBackfillUnavailable");
+    if (storedTrackedKillNeedsWeapon(record)) {
+      if (weaponUnavailable) summary.weaponUnavailable += 1;
+      else summary.weaponBackfillNeeded += 1;
+    }
+
+    const hsUnavailable = readStoredBoolean(record, "hsBackfillUnavailable");
+    if (storedRecordNeedsHsBackfill(record)) {
+      if (hsUnavailable) summary.hsUnavailable += 1;
+      else summary.hsBackfillNeeded += 1;
+    }
+
+    const hasSeason = cleanString(match?.season || match?.metadata?.season || record?.season || record?.act);
+    const metadataUnavailable = Boolean(
+      match?.metadataBackfillUnavailable === true
+      || match?.metadata?.metadataBackfillUnavailable === true
+      || readStoredBoolean(record, "metadataBackfillUnavailable")
+    );
+    if (!hasSeason) {
+      if (metadataUnavailable) summary.metadataUnavailable += 1;
+      else summary.metadataBackfillNeeded += 1;
+    }
+  });
+  return summary;
+}
+
+function printStoredProfileBacklog(profile, options = {}) {
+  const summary = summarizeStoredProfileBacklog(profile, options);
+  if (!summary) return;
+  console.log("\nStored profile sync-backlog baseline:");
+  console.log(`  retained matches: ${summary.totalMatches}`);
+  console.log(`  raw payload fetches pending: ${summary.rawFetchNeeded} (unavailable: ${summary.rawUnavailable})`);
+  console.log(`  raw payload re-derives pending: ${summary.rawRederiveNeeded}`);
+  console.log(`  weapon backfills pending: ${summary.weaponBackfillNeeded} (unavailable: ${summary.weaponUnavailable})`);
+  console.log(`  headshot backfills pending: ${summary.hsBackfillNeeded} (unavailable: ${summary.hsUnavailable})`);
+  console.log(`  metadata backfills pending: ${summary.metadataBackfillNeeded} (unavailable: ${summary.metadataUnavailable})`);
+}
+
 function verifyStoredProfileSnapshot(reporter, profile, expectedMatches, options) {
   if (!profile) {
     console.log("SKIP stored-profile persistence verification (pass --stored-profile <exported-profile.json> to inspect an actual saved account).");
@@ -374,6 +472,7 @@ async function main() {
   );
 
   const storedProfile = loadStoredProfileSnapshot(options.storedProfilePath, options.riotId);
+  printStoredProfileBacklog(storedProfile, options);
   verifyStoredProfileSnapshot(reporter, storedProfile, expectedRanked, options);
 
   const failures = reporter.print();

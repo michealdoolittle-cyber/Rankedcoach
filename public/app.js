@@ -2400,6 +2400,11 @@ function setDesktopLoggingView(view = "launcher", options = {}) {
   if (!page || !isDesktopLoggingViewport()) return;
   const resolvedView = view === "form" ? "form" : "launcher";
   page.dataset.loggingDesktopView = resolvedView;
+  if (resolvedView === "form" && options.launchOrigin) {
+    page.dataset.loggingLaunchOrigin = options.launchOrigin;
+  } else if (resolvedView === "launcher") {
+    delete page.dataset.loggingLaunchOrigin;
+  }
   if (resolvedView === "launcher") {
     setLoggingFormMode("postmatch");
     setLoggingLauncherHeader();
@@ -2455,6 +2460,11 @@ function setMobileLoggingFormStage(stage = "launcher", options = {}) {
   const resolvedStage = stage === "form" ? "form" : "launcher";
   page.dataset.mobileLoggingView = "form";
   page.dataset.mobileLoggingFormStage = resolvedStage;
+  if (resolvedStage === "form" && options.launchOrigin) {
+    page.dataset.loggingLaunchOrigin = options.launchOrigin;
+  } else if (resolvedStage === "launcher") {
+    delete page.dataset.loggingLaunchOrigin;
+  }
   if (resolvedStage === "launcher") {
     setLoggingFormMode("postmatch");
     setLoggingLauncherHeader();
@@ -2515,18 +2525,18 @@ function openLoggingLauncherTarget(target = "") {
     const pending = getNewestPendingMatchReflection();
     if (!pending?.id) return;
     editLogEntry(pending.id, { scroll: true });
-    setLoggingLauncherFormView({ scroll: true });
+    setLoggingLauncherFormView({ scroll: true, launchOrigin: "postmatch" });
     return;
   }
   if (target === "warmup") {
     const warmup = getTodayWarmupReflection();
     if (warmup?.id) {
       editLogEntry(warmup.id, { scroll: true });
-      setLoggingLauncherFormView({ scroll: true });
+      setLoggingLauncherFormView({ scroll: true, launchOrigin: "warmup" });
       return;
     }
     resetLoggingFormForNewEntry("warmup");
-    setLoggingLauncherFormView({ scroll: true });
+    setLoggingLauncherFormView({ scroll: true, launchOrigin: "warmup" });
   }
 }
 
@@ -19294,7 +19304,9 @@ let lastPersistentAccountRemoteRevision = "";
 const ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED = false;
 let accountSecurityPreferencesBackendAvailable = ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED;
 let accountSecurityPreferencesMissingNoticeShown = false;
-let activeLogSessionFilter = "all";
+// The Logging page is a session journal.  Open it on today's session by
+// default; "All History" remains an explicit, persistent user choice.
+let activeLogSessionFilter = formatLocalDateKey(new Date());
 let activeLogCalendarMonth = new Date();
 
 globalThis.RankedCoachAuthBridge = Object.freeze({
@@ -20165,12 +20177,26 @@ function positionTooltipToHit(hit, options = {}){
     const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
     const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
     const maxMarkerScreenX = Math.min(window.innerWidth - viewportPad - markerRadiusPx, svgRect.right - markerRadiusPx);
+    // Desktop keeps a marker/tooltip pair side by side. On mobile that
+    // collision treatment made the rank marker drift between the newest two
+    // RR dots. The marker must remain attached to its match; only the tooltip
+    // is allowed to move for the smaller viewport.
+    const keepMarkerAnchored = isMobileLayoutViewport();
     const selectedGroupOffsetPx = 0;
     const groupLeft = x - (groupWidthPx / 2) + selectedGroupOffsetPx;
-    const desiredMarkerScreenX = Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
-    const desiredLeft = Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
+    const desiredMarkerScreenX = keepMarkerAnchored
+      // The RR point already includes plot padding. Do not edge-clamp a mobile
+      // marker: at the final point that turned a rank icon into an in-between
+      // marker, which is less useful than letting its arrow sit near the edge.
+      ? x
+      : Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
+    const desiredLeft = keepMarkerAnchored
+      ? Math.max(minTipLeft, Math.min(maxTipLeft, x))
+      : Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
     const selectedMarkerCx = viewBox.x + (((desiredMarkerScreenX - svgRect.left) / svgRect.width) * viewBox.width);
-    let selectedMarkerCy = markerCy;
+    let selectedMarkerCy = keepMarkerAnchored
+      ? Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32))
+      : markerCy;
     let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
     const tipHalfHeightChartUnits = ((tipHeight / 2) / svgRect.height) * viewBox.height;
     const selectedNeedsBelow = markerCy < anchorCy
@@ -20185,8 +20211,12 @@ function positionTooltipToHit(hit, options = {}){
       right: Math.max(desiredMarkerScreenX + markerRightWidthPx, desiredLeft + (tipWidth / 2))
     };
     updateNearbyChartRankMarkerFade(svg, marker, selectedGroupBounds, markerScreenY);
+    const mobileTooltipY = markerScreenY - markerRadiusPx - tipHeight / 2 - 8;
     tip.style.left = Math.max(minTipLeft, Math.min(maxTipLeft, desiredLeft)) + "px";
-    tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, markerScreenY)) + "px";
+    tip.style.top = Math.max(
+      viewportPad + tipHeight / 2,
+      Math.min(window.innerHeight - viewportPad - tipHeight / 2, keepMarkerAnchored ? mobileTooltipY : markerScreenY)
+    ) + "px";
     tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
     tip.style.transform = "var(--chart-tooltip-base-transform)";
     if (pop) animateChartTooltipPop();
@@ -22411,6 +22441,7 @@ async function initializeSignedInAccount(user, options = {}) {
   );
 
   let newlyImportedReflection = null;
+  let newlyImportedMatchReport = null;
   try {
     setLoginInitializationProgress(
       18,
@@ -22449,6 +22480,10 @@ async function initializeSignedInAccount(user, options = {}) {
       );
       const retainedSync = await syncProfileRetainedHistory({
         mode: "refresh",
+        // The retained-history coordinator finishes all batches first. Hold
+        // its one report until the account overlay is gone, then open the
+        // exact newly-imported match rather than a generic latest placeholder.
+        deferMatchReport: true,
         onProgress: progress => setLoginInitializationProgress(
           Math.min(86, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 16)),
           progress.message,
@@ -22458,7 +22493,13 @@ async function initializeSignedInAccount(user, options = {}) {
       });
       // A new completed match should land in its prepared reflection after
       // sign-in. A no-op retained-history check keeps the user's last page.
-      if (safeNumber(retainedSync?.totalImported) > 0 && retainedSync?.prefilled) {
+      if (retainedSync?.newestNewMatch) {
+        newlyImportedMatchReport = {
+          match: retainedSync.newestNewMatch,
+          importedCount: retainedSync.newestNewMatchCount,
+          profile: getActiveProfile()
+        };
+      } else if (safeNumber(retainedSync?.totalImported) > 0 && retainedSync?.prefilled) {
         newlyImportedReflection = retainedSync.prefilled;
       }
     } else {
@@ -22487,7 +22528,15 @@ async function initializeSignedInAccount(user, options = {}) {
   } finally {
     hideLoginInitializationOverlay();
     loginInitializationInFlight = false;
-    if (newlyImportedReflection) {
+    if (newlyImportedMatchReport?.match) {
+      window.setTimeout(() => {
+        onMatchSaved(newlyImportedMatchReport.match, {
+          importedCount: Math.max(1, safeNumber(newlyImportedMatchReport.importedCount)),
+          profile: newlyImportedMatchReport.profile || getActiveProfile(),
+          mode: "refresh"
+        });
+      }, 180);
+    } else if (newlyImportedReflection) {
       window.setTimeout(() => {
         openSyncedMatchReflectionFlow(newlyImportedReflection, {
           source: "login-new-match"
@@ -23620,7 +23669,12 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
   if (!point?.rankChange?.iconUrl) return "";
   const direction = point.rankChange.direction === "down" ? "down" : "up";
   const markerBelow = point.y - 34 < PAD_TOP + 18;
-  const markerX = Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x));
+  // Mobile has enough right plot padding for the marker itself. Keeping it at
+  // the exact RR point is more important than shifting it inward, which made
+  // a fresh-rank icon read as though it belonged to the previous match.
+  const markerX = isMobileLayoutViewport()
+    ? point.x
+    : Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x));
   const markerY = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, point.y + (markerBelow ? 32 : -32)));
   const arrow = direction === "down" ? "↓" : "↑";
   const arrowX = markerX - 19;
@@ -49305,7 +49359,7 @@ function renderLogSessionSelector() {
   const sessions = getLogSessions();
   const countMap = getLogCountByDate();
   const normalizedFilter = String(activeLogSessionFilter || "").trim();
-  activeLogSessionFilter = normalizedFilter || "all";
+  activeLogSessionFilter = normalizedFilter || getCurrentSessionDateKey();
 
   if (select) {
     select.innerHTML = "";
@@ -51527,7 +51581,7 @@ function setActiveProfile(id){
   if (shouldSyncStatsLoggingParityForProfile(next)) {
     syncRankedMatchPlaceholderLogs(matches, next);
   }
-  activeLogSessionFilter = "all";
+  activeLogSessionFilter = getCurrentSessionDateKey();
 
   recomputeFromMatches();
 
@@ -59122,6 +59176,14 @@ async function importActiveProfileMatches(options = {}){
       count: newlyImportedMatches.length,
       processedCount: importedMatches.length,
       newMatchCount: newlyImportedMatches.length,
+      latestNewMatch: newlyImportedMatches.slice().sort((a, b) => (
+        getMatchSortTimestamp(a) - getMatchSortTimestamp(b)
+      )).pop() || null,
+      // Keep this separate from `historyBackfilled`: a final page can complete
+      // a migration while still containing only historical records. The
+      // retained-history coordinator uses this to avoid treating first-time
+      // archive imports as a just-finished game.
+      historyBackfillBatch: needsHistoryBackfill,
       checked: safeNumber(pullResult?.checked),
       source: "henrik",
       historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
@@ -59528,6 +59590,77 @@ async function syncProfileRetainedHistory(options = {}) {
   let totalImported = 0;
   let totalChecked = 0;
   let lastResult = null;
+  let newestGenuineMatch = null;
+  let genuineImportedCount = 0;
+
+  const rememberGenuineNewMatch = (result = {}) => {
+    if (result?.historyBackfillBatch === true || !result?.latestNewMatch) return;
+    genuineImportedCount += Math.max(0, safeNumber(result?.newMatchCount ?? result?.count));
+    if (!newestGenuineMatch || getMatchSortTimestamp(result.latestNewMatch) > getMatchSortTimestamp(newestGenuineMatch)) {
+      newestGenuineMatch = result.latestNewMatch;
+    }
+  };
+
+  const finalizeRetainedHistory = async (finalOptions = {}) => {
+    const syncedProfile = getActiveProfile();
+    if (syncedProfile) {
+      syncedProfile.lastDailyProfileSyncDate = formatLocalDateKey(new Date());
+      saveProfiles();
+      void refreshWarmupAutoVerification(syncedProfile, { announce: false });
+    }
+
+    // A real match found during an already-established retained-history
+    // window gets one report after the complete paginated run. Historical
+    // archive/backfill pages intentionally never take over the player flow.
+    const syncedReflection = newestGenuineMatch
+      ? getSyncedLogEntryForMatch(newestGenuineMatch, syncedProfile?.id || activeProfileId)
+      : null;
+    const prefilled = syncedReflection || prefillLatestImportedReflection({
+      edit: totalImported <= 0,
+      force: totalImported > 0
+    });
+    if (syncedReflection) activeLogSessionFilter = formatLocalDateKey(new Date());
+
+    options.onProgress?.({
+      batch: -1,
+      maxBatches,
+      retainedCount: Array.isArray(syncedProfile?.matches) ? syncedProfile.matches.length : 0,
+      percent: 94,
+      message: syncedReflection
+        ? "Preparing your newest game report..."
+        : prefilled
+          ? "Preparing your latest game in the reflection form..."
+          : "Finalizing season stats and coaching reads..."
+    });
+    refreshActiveProfileDataSurfaces?.({
+      reason: "retained-history-complete",
+      chartAnimationMode: totalImported ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+      animatePlaceholders: false,
+      preserveActivePage: true
+    });
+    await waitForActiveProfileSurfacePaint?.();
+
+    if (newestGenuineMatch && options.deferMatchReport !== true) {
+      onMatchSaved(newestGenuineMatch, {
+        importedCount: Math.max(1, genuineImportedCount),
+        profile: syncedProfile,
+        mode: options.mode || "refresh"
+      });
+    }
+
+    return {
+      success: Boolean(lastResult),
+      partial: finalOptions.partial === true,
+      totalImported,
+      totalChecked,
+      lastResult,
+      prefilled,
+      syncedReflection,
+      newestNewMatch: newestGenuineMatch,
+      newestNewMatchCount: genuineImportedCount,
+      ...(finalOptions.playerError ? { playerError: finalOptions.playerError } : {})
+    };
+  };
 
   for (let batch = 0; batch < maxBatches; batch += 1) {
     const current = getActiveProfile();
@@ -59575,6 +59708,7 @@ async function syncProfileRetainedHistory(options = {}) {
     lastResult = result;
     totalImported += safeNumber(result.count);
     totalChecked += safeNumber(result.checked);
+    rememberGenuineNewMatch(result);
     const batchCompletePercent = Math.min(88, 12 + Math.round((Math.min(totalChecked, estimatedHistoryWindow) / estimatedHistoryWindow) * 76));
     options.onProgress?.({
       batch: batch + 1,
@@ -59587,47 +59721,16 @@ async function syncProfileRetainedHistory(options = {}) {
     });
     const latestProfile = getActiveProfile();
     if (result.syncError) {
-      prefillLatestImportedReflection();
-      return {
-        success: totalChecked > 0,
+      return finalizeRetainedHistory({
         partial: true,
-        totalImported,
-        totalChecked,
-        lastResult,
         playerError: getPlayerFacingRiotSyncError(result.syncError)
-      };
+      });
     }
     if (latestProfile?.henrikHistoryBackfillCompleteAt || safeNumber(result.checked) === 0) break;
     await new Promise(resolve => window.setTimeout(resolve, 220));
   }
 
-  const syncedProfile = getActiveProfile();
-  if (syncedProfile) {
-    syncedProfile.lastDailyProfileSyncDate = formatLocalDateKey(new Date());
-    saveProfiles();
-    void refreshWarmupAutoVerification(syncedProfile, { announce: false });
-  }
-  const prefilled = prefillLatestImportedReflection({
-    edit: totalImported <= 0,
-    force: totalImported > 0
-  });
-  options.onProgress?.({
-    batch: -1,
-    maxBatches,
-    retainedCount: Array.isArray(syncedProfile?.matches) ? syncedProfile.matches.length : 0,
-    percent: 94,
-    message: prefilled
-      ? "Preparing your latest game in the reflection form..."
-      : "Finalizing season stats and coaching reads..."
-  });
-  refreshActiveProfileDataSurfaces?.({
-    reason: "retained-history-complete",
-    chartAnimationMode: totalImported ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
-    animatePlaceholders: false,
-    preserveActivePage: true
-  });
-  await waitForActiveProfileSurfacePaint?.();
-  return { success: Boolean(lastResult), totalImported, totalChecked, lastResult, prefilled };
+  return finalizeRetainedHistory();
 }
 
 function scheduleDailyProfileSync() {

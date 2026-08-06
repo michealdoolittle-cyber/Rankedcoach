@@ -132,6 +132,11 @@ async function run() {
       riotId: "Route#TEST",
       region: "NA",
       puuid,
+      importSource: "henrik",
+      lastSyncSource: "henrik",
+      henrikHistoryBackfillVersion: 4,
+      henrikHistoryBackfillTargetVersion: 4,
+      henrikHistoryBackfillCompleteAt: new Date(Date.now() - 86400000).toISOString(),
       lastWarmupPromptDate: todayKey(),
       matches: []
     };
