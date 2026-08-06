@@ -98,6 +98,29 @@ async function run() {
 
     await page.locator("#chartRow .rr-hit").last().click({ force: true });
     await page.waitForTimeout(120);
+    const newestTooltip = await page.evaluate(() => {
+      const tooltip = document.getElementById("chartTooltip");
+      const style = tooltip ? getComputedStyle(tooltip) : null;
+      return {
+        visible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+        text: tooltip?.textContent || ""
+      };
+    });
+    assert.equal(newestTooltip.visible, true, `newest RR dot should show a tooltip: ${JSON.stringify(newestTooltip)}`);
+    assert.match(newestTooltip.text, /Diamond 1|RR/i, JSON.stringify(newestTooltip));
+
+    await page.locator("#chartRow .rr-hit").first().click({ force: true });
+    await page.waitForTimeout(120);
+    const earlierTooltip = await page.evaluate(() => {
+      const tooltip = document.getElementById("chartTooltip");
+      const style = tooltip ? getComputedStyle(tooltip) : null;
+      return {
+        visible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+        text: tooltip?.textContent || ""
+      };
+    });
+    assert.equal(earlierTooltip.visible, true, `non-newest RR dot should show a tooltip: ${JSON.stringify(earlierTooltip)}`);
+    assert.match(earlierTooltip.text, /Gold 3|RR/i, JSON.stringify(earlierTooltip));
     const selectedGeometry = await page.evaluate(() => {
       const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
       const marker = hit?.closest("svg")?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);

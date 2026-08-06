@@ -27035,28 +27035,6 @@ body[data-theme="reaver"] .agent-modal-inner{
   display:none !important;
 }
 
-.logging-live-card{
-  min-height:clamp(176px, 13vw, 190px);
-  padding:20px 22px;
-}
-
-.logging-live-pill{
-  min-height:40px;
-  padding:8px 14px;
-  font-size:clamp(14px, 0.78vw, 17px);
-}
-
-.logging-live-focus{
-  font-size:clamp(24px, 1.34vw, 30px);
-  line-height:1.16;
-}
-
-.logging-live-meta{
-  color:#d6e0ec;
-  font-size:clamp(16px, 0.95vw, 20px);
-  line-height:1.35;
-}
-
 @media (max-width: 1280px){
   .insight-trends{
     grid-template-columns:1fr;
@@ -61872,12 +61850,12 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
    into the Logging launcher it must participate in that column's layout on
    every breakpoint; otherwise the mobile overlay rules pull it back over the
    app header. Keep this last so it wins over those legacy modal rules. */
-#page-logging[data-logging-launcher-embed="warmup"] .logging-launcher-embedded{
+#page-logging[data-logging-launcher-embed] .logging-launcher-embedded{
   position:relative !important;
   isolation:isolate;
 }
 
-#page-logging[data-logging-launcher-embed="warmup"] .logging-launcher-embedded .daily-warmup-card{
+#page-logging[data-logging-launcher-embed] .logging-launcher-embedded .daily-warmup-card{
   position:relative !important;
   inset:auto !important;
   z-index:auto !important;
@@ -61885,4 +61863,69 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   height:100% !important;
   min-height:0 !important;
   max-height:none !important;
+}
+
+/* Keep the live Session Read inside the hero at every responsive layout. The
+   previous global override inflated this card after the hero grid was sized. */
+#page-logging .logging-hero{
+  display:grid !important;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  min-width:0;
+  max-width:100%;
+}
+
+#page-logging .logging-hero-copy,
+#page-logging .logging-live-card{
+  min-width:0;
+  max-width:100%;
+}
+
+#page-logging .logging-live-card{
+  min-height:104px !important;
+  padding:14px 16px;
+  box-sizing:border-box;
+}
+
+#page-logging .logging-launch-training-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:auto;
+}
+
+#page-logging .logging-launch-training-icon{
+  display:inline-grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  color:var(--accent,#22d3ee);
+  font-size:18px;
+}
+
+#page-logging .logging-launch-training-crosshair svg{
+  width:20px;
+  height:20px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+}
+
+.app-toast[data-variant="sync-complete"]{
+  border-color:color-mix(in srgb, #34d399 68%, rgba(255,255,255,.24));
+  background:
+    radial-gradient(circle at 12% 14%, rgba(52,211,153,.23), transparent 42%),
+    radial-gradient(circle at 88% 82%, rgba(56,189,248,.16), transparent 38%),
+    linear-gradient(135deg, rgba(5,28,31,.98), rgba(7,17,31,.98));
+  box-shadow:0 18px 42px rgba(2,6,23,.48), 0 0 0 1px rgba(52,211,153,.12), inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+.app-toast[data-variant="sync-complete"] .app-toast-title,
+.app-toast[data-variant="sync-complete"] .app-toast-copy{
+  color:#d1fae5;
+}
+
+@media (max-width:820px){
+  html body.is-mobile-layout #page-logging .logging-hero{
+    grid-template-columns:minmax(0,1fr) !important;
+  }
 }

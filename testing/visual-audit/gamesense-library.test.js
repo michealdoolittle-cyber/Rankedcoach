@@ -1689,9 +1689,7 @@ async function run() {
 
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.locator("#page-logging.active").waitFor({ state: "visible" });
-    await desktop.locator('[data-logging-desktop-launch="postmatch"]').evaluate(button => button.click());
-    await desktop.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
-    await desktop.locator('[data-logging-embedded-action="start-postmatch"]').click();
+    await desktop.locator("#logFeed .log-edit-btn").first().click({ force: true });
     await desktop.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     await desktop.locator("#logFocusCustomTrigger").click();
     assert.equal(await desktop.locator("#logFocusCustomMenu").isVisible(), true);

@@ -1051,6 +1051,7 @@ function toggleDailyPostgameTraining() {
   renderLoggingTrainingMenuState(getActiveProfile());
   renderLogFeed?.({ force: true });
   hideModalById?.("dailyWarmupModal");
+  if (isDailyTrainingEmbeddedInLogging()) returnToLoggingLauncherAfterEmbeddedExperience();
   showToast?.(removing ? "Post-game training marker removed." : "Post-game aim training linked to your latest game.", {
     tone: removing ? "neutral" : "success"
   });
@@ -2059,14 +2060,62 @@ function renderProfileRiotId(target, riotId = "") {
   target.title = normalized;
 }
 
-function writeMobileProfileRating(model = getCoachReadinessModel()) {
+let profileReadinessAnimationFrame = 0;
+let profileReadinessDisplayValue = null;
+
+function writeProfileReadinessPercent(percent = 0) {
+  const value = Math.max(0, Math.min(100, Math.round(safeNumber(percent))));
+  [
+    "coachReadinessValue",
+    "profileRatingValue",
+    "profileRatingDropdownValue",
+    "mobileProfileRatingValue"
+  ].forEach(id => {
+    const target = document.getElementById(id);
+    if (target) target.textContent = `${value}%`;
+  });
+  ["coachReadinessFill", "profileRatingFill", "mobileProfileRatingFill"].forEach(id => {
+    const fill = document.getElementById(id);
+    if (!fill) return;
+    fill.style.setProperty("--profile-progress", String(value));
+    fill.style.width = `${value}%`;
+  });
+}
+
+function animateProfileReadinessPercent(percent = 0) {
+  const target = Math.max(0, Math.min(100, Math.round(safeNumber(percent))));
+  const initial = Number.isFinite(profileReadinessDisplayValue) ? profileReadinessDisplayValue : target;
+  if (profileReadinessAnimationFrame) {
+    cancelAnimationFrame(profileReadinessAnimationFrame);
+    profileReadinessAnimationFrame = 0;
+  }
+  if (initial === target || (typeof isRankedCoachReducedMotionEnabled === "function" && isRankedCoachReducedMotionEnabled())) {
+    profileReadinessDisplayValue = target;
+    writeProfileReadinessPercent(target);
+    return;
+  }
+  const startedAt = performance.now();
+  const duration = Math.max(360, Math.min(820, 280 + Math.abs(target - initial) * 14));
+  const tick = now => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(initial + ((target - initial) * eased));
+    profileReadinessDisplayValue = current;
+    writeProfileReadinessPercent(current);
+    if (progress < 1) profileReadinessAnimationFrame = requestAnimationFrame(tick);
+    else profileReadinessAnimationFrame = 0;
+  };
+  profileReadinessAnimationFrame = requestAnimationFrame(tick);
+}
+
+function writeMobileProfileRating(model = getCoachReadinessModel(), options = {}) {
   const value = document.getElementById("mobileProfileRatingValue");
   const copy = document.getElementById("mobileProfileRatingCopy");
   const fill = document.getElementById("mobileProfileRatingFill");
   const unlocks = document.getElementById("mobileProfileRatingUnlocks");
-  if (value) value.textContent = `${model.percent}%`;
+  if (value && options.writePercent !== false) value.textContent = `${model.percent}%`;
   if (copy) copy.textContent = model.copy;
-  if (fill) {
+  if (fill && options.writePercent !== false) {
     fill.style.setProperty("--profile-progress", String(model.percent));
     fill.style.width = `${model.percent}%`;
   }
@@ -2404,15 +2453,11 @@ function setLoggingLauncherHeader() {
   const cardTitle = document.getElementById("loggingCardTitle");
   const cardSub = document.getElementById("loggingCardSub");
   if (cardTitle) cardTitle.textContent = "Session Log";
-  if (cardSub) cardSub.textContent = "Choose a warm-up or synced match reflection.";
+  if (cardSub) cardSub.textContent = "Choose warm-up or post-match aim training.";
 }
 
 function getLoggingLauncherEmbeddedHost() {
   return document.getElementById("loggingLauncherEmbedded");
-}
-
-function getLoggingPostMatchEmbeddedView() {
-  return document.getElementById("loggingPostMatchEmbedded");
 }
 
 function isDailyTrainingEmbeddedInLogging() {
@@ -2422,7 +2467,6 @@ function isDailyTrainingEmbeddedInLogging() {
 
 function restoreDailyTrainingModalFromLoggingLauncher() {
   const host = getLoggingLauncherEmbeddedHost();
-  const postMatch = getLoggingPostMatchEmbeddedView();
   const modal = document.getElementById("dailyWarmupModal");
   const card = host?.querySelector(".daily-warmup-card");
   if (card && modal) modal.appendChild(card);
@@ -2430,7 +2474,6 @@ function restoreDailyTrainingModalFromLoggingLauncher() {
     host.hidden = true;
     host.replaceChildren();
   }
-  if (postMatch) postMatch.hidden = true;
   document.getElementById("loggingDesktopLauncher")?.classList.remove("is-embedded");
   document.getElementById("page-logging")?.removeAttribute("data-logging-launcher-embed");
 }
@@ -2454,7 +2497,7 @@ function scrollLoggingLauncherIntoView() {
   });
 }
 
-function openLoggingWarmupExperience() {
+function openLoggingTrainingExperience(mode = "warmup") {
   const profile = getActiveProfile?.();
   const launcher = document.getElementById("loggingDesktopLauncher");
   const host = getLoggingLauncherEmbeddedHost();
@@ -2468,7 +2511,8 @@ function openLoggingWarmupExperience() {
     setMobileLoggingFormStage("launcher", { preserveEmbedded: true });
   }
   restoreDailyTrainingModalFromLoggingLauncher();
-  setDailyTrainingModalMode("warmup", { date: formatLocalDateKey(), dismissBehavior: "close" });
+  const resolvedMode = mode === "postgame" ? "postgame" : "warmup";
+  setDailyTrainingModalMode(resolvedMode, { date: formatLocalDateKey(), dismissBehavior: "close" });
   resetDailyWarmupModal(profile, formatLocalDateKey());
   modal.style.display = "none";
   modal.hidden = true;
@@ -2476,57 +2520,18 @@ function openLoggingWarmupExperience() {
   host.appendChild(card);
   host.hidden = false;
   launcher.classList.add("is-embedded");
-  document.getElementById("page-logging")?.setAttribute("data-logging-launcher-embed", "warmup");
+  document.getElementById("page-logging")?.setAttribute("data-logging-launcher-embed", resolvedMode);
   scrollLoggingLauncherIntoView();
   host.querySelector("#dailyWarmupTitle")?.focus?.({ preventScroll: true });
   return true;
 }
 
-function renderLoggingPostMatchEmbeddedView(pending = getNewestPendingMatchReflection()) {
-  const target = document.getElementById("loggingPostMatchEmbedMatch");
-  if (!target) return;
-  const match = pending ? getLogEntryMatchContext(pending)?.match : null;
-  const agent = String(pending?.agent || match?.agent || "").trim() || "Your agent";
-  const map = String(pending?.map || match?.map || match?.metadata?.map || "").trim() || "Synced map";
-  const result = String(pending?.result || match?.metadata?.result || match?.result || "").trim();
-  const playedAt = match?.metadata?.game_start_patched || match?.metadata?.started_at || match?.playedAt || pending?.createdAt || "";
-  const date = playedAt ? formatDateLabel(playedAt) : "Latest synced match";
-  const details = [agent, map, result ? result.toUpperCase() : "Ready for reflection"].filter(Boolean);
-  target.innerHTML = `
-    <span class="logging-postmatch-match-kicker">Ready to review</span>
-    <strong>${escapeHtml(details.join(" · "))}</strong>
-    <span>${escapeHtml(date)}</span>
-  `;
+function openLoggingWarmupExperience() {
+  return openLoggingTrainingExperience("warmup");
 }
 
 function openLoggingPostMatchExperience() {
-  const pending = getNewestPendingMatchReflection();
-  const launcher = document.getElementById("loggingDesktopLauncher");
-  const embedded = getLoggingPostMatchEmbeddedView();
-  if (!pending?.id || !launcher || !embedded) return false;
-  if (isDesktopLoggingViewport()) {
-    setDesktopLoggingView("launcher", { preserveEmbedded: true });
-  } else {
-    setMobileLoggingFormStage("launcher", { preserveEmbedded: true });
-  }
-  restoreDailyTrainingModalFromLoggingLauncher();
-  renderLoggingPostMatchEmbeddedView(pending);
-  embedded.hidden = false;
-  launcher.classList.add("is-embedded");
-  document.getElementById("page-logging")?.setAttribute("data-logging-launcher-embed", "postmatch");
-  scrollLoggingLauncherIntoView();
-  embedded.querySelector("[data-logging-embedded-action]")?.focus?.({ preventScroll: true });
-  return true;
-}
-
-function openLoggingPostMatchReflection() {
-  const pending = getNewestPendingMatchReflection();
-  if (!pending?.id) return false;
-  restoreDailyTrainingModalFromLoggingLauncher();
-  editLogEntry(pending.id, { scroll: true });
-  setLoggingLauncherFormView({ scroll: true });
-  document.getElementById("page-logging")?.setAttribute("data-logging-return-to-launcher", "true");
-  return true;
+  return openLoggingTrainingExperience("postgame");
 }
 
 function setDesktopLoggingView(view = "launcher", options = {}) {
@@ -2561,32 +2566,35 @@ function renderLoggingLauncher() {
   const launcher = document.getElementById("loggingDesktopLauncher");
   if (!page || !launcher) return;
 
-  const warmup = getTodayWarmupReflection();
-  const pending = getNewestPendingMatchReflection();
+  const profile = getActiveProfile?.();
+  const record = getDailyWarmupRecord?.(profile);
+  const streaks = getProfileTrainingStreaks?.(profile) || { warmups: 0, aimWeeks: 0 };
+  const warmupComplete = isDailyWarmupCompleted?.(record);
+  const postGameComplete = record?.postGameAimTrainingCommitted === true;
   const warmupTile = launcher.querySelector('[data-logging-desktop-launch="warmup"]');
   const postMatchTile = launcher.querySelector('[data-logging-desktop-launch="postmatch"]');
   const warmupStatus = document.getElementById("loggingWarmupLaunchStatus");
   const postMatchStatus = document.getElementById("loggingPostMatchLaunchStatus");
+  const warmupIcon = document.getElementById("loggingWarmupLaunchIcon");
+  const postMatchIcon = document.getElementById("loggingPostMatchLaunchIcon");
+
+  if (warmupIcon) warmupIcon.textContent = document.getElementById("loggingTrainingMenuFire")?.textContent?.trim() || "🔥";
+  if (postMatchIcon) postMatchIcon.innerHTML = getTrainingCrosshairMarkup();
 
   if (warmupStatus) {
-    warmupStatus.textContent = warmup
-      ? "Today's warm-up is saved — open it to review or refine it."
-      : "Choose drills and capture your warm-up before you queue.";
+    warmupStatus.textContent = `${safeNumber(streaks.warmups)} day${safeNumber(streaks.warmups) === 1 ? "" : "s"} streak`;
   }
   if (postMatchStatus) {
-    const match = pending ? getLogEntryMatchContext(pending)?.match : null;
-    const agent = String(pending?.agent || match?.agent || "").trim();
-    const map = String(pending?.map || match?.map || match?.metadata?.map || "").trim();
-    postMatchStatus.textContent = pending
-      ? `${[agent, map].filter(Boolean).join(" on ") || "Your latest synced match"} is ready for reflection.`
-      : "No synced match currently needs a reflection.";
+    postMatchStatus.textContent = `${safeNumber(streaks.aimWeeks)} week${safeNumber(streaks.aimWeeks) === 1 ? "" : "s"} streak`;
   }
-  if (warmupTile) warmupTile.classList.toggle("is-complete", Boolean(warmup));
+  if (warmupTile) {
+    warmupTile.classList.toggle("is-complete", warmupComplete);
+    warmupTile.setAttribute("aria-disabled", "false");
+  }
   if (postMatchTile) {
-    postMatchTile.classList.toggle("is-ready", Boolean(pending));
-    postMatchTile.classList.toggle("is-complete", !pending);
-    postMatchTile.setAttribute("aria-disabled", pending ? "false" : "true");
-    postMatchTile.dataset.logEntryId = pending?.id || "";
+    postMatchTile.classList.toggle("is-ready", !postGameComplete);
+    postMatchTile.classList.toggle("is-complete", postGameComplete);
+    postMatchTile.setAttribute("aria-disabled", "false");
   }
 }
 
@@ -2686,11 +2694,6 @@ function ensureLoggingLauncher() {
         event.preventDefault();
         returnToLoggingLauncherAfterEmbeddedExperience();
         return;
-      }
-      const action = event.target.closest("[data-logging-embedded-action]");
-      if (action?.dataset.loggingEmbeddedAction === "start-postmatch") {
-        event.preventDefault();
-        openLoggingPostMatchReflection();
       }
     });
   }
@@ -13771,6 +13774,25 @@ function showToast(message, options = {}) {
   dismissTimer = window.setTimeout(dismiss, durationMs);
 }
 
+let fullySyncedToastFingerprint = "";
+
+function showFullySyncedToast(result = {}) {
+  if (result?.syncError) return false;
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return false;
+  const syncStamp = String(result?.syncedAt || profile.lastSyncAt || "").trim();
+  if (!syncStamp) return false;
+  const fingerprint = `${profile.id}:${syncStamp}`;
+  if (fullySyncedToastFingerprint === fingerprint) return false;
+  fullySyncedToastFingerprint = fingerprint;
+  showToast("App has been Fully Synced.", {
+    title: "Sync complete",
+    variant: "sync-complete",
+    durationMs: 3400
+  });
+  return true;
+}
+
 function triggerPremiumMoment(kind = "result", options = {}) {
   const overlay = document.getElementById("premiumMomentOverlay");
   if (!overlay || isRankedCoachReducedMotionEnabled()) return;
@@ -16967,12 +16989,7 @@ function renderCoachReadinessUI() {
 
     card.dataset.readinessPercent = String(model.percent);
     card.classList.toggle("is-ready", model.percent >= 100);
-    if (value) value.textContent = `${model.percent}%`;
     if (copy) copy.textContent = model.copy;
-    if (fill) {
-      fill.style.setProperty("--profile-progress", String(model.percent));
-      fill.style.width = `${model.percent}%`;
-    }
     writeUnlocks(unlocks);
   }
 
@@ -16984,17 +17001,12 @@ function renderCoachReadinessUI() {
     const unlocks = document.getElementById("profileRatingUnlocks");
     widget.dataset.readinessPercent = String(model.percent);
     widget.classList.toggle("is-ready", model.percent >= 100);
-    if (widgetValue) widgetValue.textContent = `${model.percent}%`;
-    if (dropdownValue) dropdownValue.textContent = `${model.percent}%`;
     if (copy) copy.textContent = model.copy;
-    if (fill) {
-      fill.style.setProperty("--profile-progress", String(model.percent));
-      fill.style.width = `${model.percent}%`;
-    }
     writeUnlocks(unlocks, { includeActivity: true });
   }
 
-  writeMobileProfileRating?.(model);
+  animateProfileReadinessPercent(model.percent);
+  writeMobileProfileRating?.(model, { writePercent: false });
   scheduleProfileStreakAnnouncement(1300);
 }
 
@@ -26387,6 +26399,12 @@ function getChartHitFromTarget(target) {
 }
 
 function getChartDotFromHit(hit) {
+  const matchIndex = String(hit?.dataset?.matchIndex || hit?.dataset?.index || "");
+  if (matchIndex) {
+    const indexedDot = Array.from(chartRow?.querySelectorAll?.(".rr-dot, .final-end") || [])
+      .find(dot => String(dot.dataset?.matchIndex || dot.dataset?.index || "") === matchIndex);
+    if (indexedDot) return indexedDot;
+  }
   const siblingDot = hit?.nextElementSibling;
   if (siblingDot?.classList?.contains("rr-dot") || siblingDot?.classList?.contains("final-end")) {
     return siblingDot;
@@ -57630,80 +57648,26 @@ bindPageNavigationEvents();
 // STATS PAGE INIT (REAL DATA)
 // ========================
 
+function renderStatsOverviewTiles(model = getPlayerModel(), scopedMatches = getScopedStatsData(getActiveProfile()).matches || []) {
+  const overview = model?.overview || {};
+  const matchCount = Array.isArray(scopedMatches) ? scopedMatches.length : 0;
+  const kast = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(scopedMatches) || null;
+  const values = {
+    statKD: overview.matchesPlayed ? overview.kd.toFixed(2) : "--",
+    statWinrate: overview.matchesPlayed ? `${Math.round(overview.winrate)}%` : "--",
+    statKAST: kast?.overall?.totalRounds ? `${Math.round(kast.overall.percentage)}%` : "--",
+    statACS: overview.matchesPlayed && Number.isFinite(Number(overview.acs)) ? `${Math.round(overview.acs)}` : "--",
+    statHS: overview.matchesPlayed && Number.isFinite(Number(overview.hs)) ? `${Math.round(overview.hs)}%` : "--",
+    statMatchesPlayed: matchCount ? `${matchCount}` : "--"
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const target = document.getElementById(id);
+    if (target) target.textContent = value;
+  });
+}
+
 function initStatsPage(){
   return initStatsPageModel();
-  renderStatsSummaryMeta();
-  renderStatsPeakProgress();
-  renderStatsRoleProgress();
-  renderStatsPerformance();
-  renderStatsBreakdown();
-
-  const kdEl  = document.getElementById("statKD");
-  const wrEl  = document.getElementById("statWinrate");
-  const adrEl = document.getElementById("statADR");
-  const hsEl  = document.getElementById("statHS");
-
-  if(!kdEl || !matches || !matches.length){
-    if(kdEl){
-      kdEl.textContent = "--";
-      wrEl.textContent = "--";
-      adrEl.textContent = "--";
-      hsEl.textContent = "--";
-    }
-    return;
-  }
-
-  let kills = 0;
-  let deaths = 0;
-  let wins = 0;
-  let total = matches.length;
-
-  let adrTotal = 0;
-  let hsTotal = 0;
-  let hsCount = 0;
-
-  (matches || []).forEach(m => {
-
-    const seg = m.segments?.[0]?.stats;
-    if(!seg) return;
-
-    const k = Number(seg.kills?.value || 0);
-    const d = Number(seg.deaths?.value || 0);
-    const adr = Number(seg.scorePerRound?.value || 0);
-    const hs = firstFiniteNumber(seg.headshotsPercentage?.value);
-
-    kills += k;
-    deaths += d;
-    adrTotal += adr;
-
-    if(Number.isFinite(hs)){
-      hsTotal += hs;
-      hsCount++;
-    }
-
-    if(m.metadata?.result === "win"){
-      wins++;
-    }
-
-  });
-
-  // ========================
-  // CALCULATIONS
-  // ========================
-
-  const kd = deaths ? (kills / deaths) : kills;
-  const wr = total ? (wins / total) * 100 : 0;
-  const adrAvg = total ? (adrTotal / total) : 0;
-  const hsAvg = hsCount ? (hsTotal / hsCount) : NaN;
-
-  // ========================
-  // APPLY
-  // ========================
-
-  kdEl.textContent  = kd.toFixed(2);
-  wrEl.textContent  = Math.round(wr) + "%";
-  adrEl.textContent = Math.round(adrAvg);
-  hsEl.textContent  = Number.isFinite(hsAvg) ? `${Math.round(hsAvg)}%` : "--";
 }
 
 // ========================
@@ -60138,6 +60102,8 @@ async function performRiotSync(options = {}) {
         animate: false,
         preserveActivePage: true
       });
+      await waitForActiveProfileSurfacePaint?.();
+      showFullySyncedToast(result);
     }
 
     if (!silent) {
@@ -60152,11 +60118,9 @@ async function performRiotSync(options = {}) {
           durationMs: 4200
         });
       } else if (result?.source === "demo-fixture") {
-        alert(`Live match sync is unavailable, so ${result.count} demo matches were loaded from the example dataset.`);
-      } else {
-        alert(result.count
-          ? `${mode === "refresh" ? "Synced" : "Imported"} ${result.count} new competitive ${result.count === 1 ? "match" : "matches"}.`
-          : "Your recent competitive matches are already up to date.");
+        showToast("Example data was loaded because live match sync is unavailable on this development build.", {
+          title: "Demo data loaded"
+        });
       }
     }
 
@@ -60248,6 +60212,7 @@ async function syncProfileRetainedHistory(options = {}) {
       preserveActivePage: true
     });
     await waitForActiveProfileSurfacePaint?.();
+    if (lastResult && !lastResult.syncError) showFullySyncedToast(lastResult);
 
     if (newestGenuineMatch && options.deferMatchReport !== true) {
       onMatchSaved(newestGenuineMatch, {
@@ -60936,25 +60901,9 @@ function initStatsPageModel() {
   ensureMobileTrendCarousel();
   ensureMobileStatsBreakdownCarousel();
 
-  const kdEl = document.getElementById("statKD");
-  const wrEl = document.getElementById("statWinrate");
-  const adrEl = document.getElementById("statADR");
-  const hsEl = document.getElementById("statHS");
-  const firstBloodsEl = document.getElementById("statFirstBloods");
-  const damagePerRoundEl = document.getElementById("statDamagePerRound");
   const model = getPlayerModel();
-  const overview = model?.overview || {};
   const scopedMatches = getScopedStatsData(getActiveProfile()).matches || [];
-  const firstBloods = scopedMatches.reduce((total, match) => total + safeNumber(getMatchAdvancedImpactSignals(match).firstBloods), 0);
-
-  if (!kdEl) return;
-
-  kdEl.textContent = overview.matchesPlayed ? overview.kd.toFixed(2) : "--";
-  wrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.winrate)}%` : "--";
-  adrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
-  hsEl.textContent = overview.matchesPlayed && Number.isFinite(Number(overview.hs)) ? `${Math.round(overview.hs)}%` : "--";
-  if (firstBloodsEl) firstBloodsEl.textContent = overview.matchesPlayed ? `${Math.round(firstBloods)}` : "--";
-  if (damagePerRoundEl) damagePerRoundEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
+  renderStatsOverviewTiles(model, scopedMatches);
 }
 
 let renderStatsPerformance = renderStatsPerformanceModel;

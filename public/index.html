@@ -76,7 +76,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260806-theme-launcher-01">
+  <link rel="stylesheet" href="app.css?v=20260806-launcher-stats-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -1401,8 +1401,8 @@ STATS PAGE
                 </div>
 
                 <div class="stat-block">
-                  <span class="stat-label">ADR</span>
-                  <span class="stat-value" id="statADR">--</span>
+                  <span class="stat-label">Average KAST</span>
+                  <span class="stat-value" id="statKAST">--</span>
                 </div>
 
                 <div class="stat-block">
@@ -1410,14 +1410,14 @@ STATS PAGE
                   <span class="stat-value" id="statHS">--</span>
                 </div>
 
-                <div class="stat-block stat-block-first-bloods">
-                  <span class="stat-label">First Bloods</span>
-                  <span class="stat-value" id="statFirstBloods">--</span>
+                <div class="stat-block stat-block-acs">
+                  <span class="stat-label">ACS</span>
+                  <span class="stat-value" id="statACS">--</span>
                 </div>
 
-                <div class="stat-block stat-block-dpr">
-                  <span class="stat-label">Damage / Round</span>
-                  <span class="stat-value" id="statDamagePerRound">--</span>
+                <div class="stat-block stat-block-matches-played">
+                  <span class="stat-label">Total Matches Played</span>
+                  <span class="stat-value" id="statMatchesPlayed">--</span>
                 </div>
               </div>
             </div>
@@ -2007,30 +2007,16 @@ stroke-linejoin="round"/>
         <button type="button" class="logging-launch-tile logging-launch-tile-warmup" data-logging-desktop-launch="warmup">
           <span class="logging-launch-kicker">Today's preparation</span>
           <strong>Warm-Up</strong>
-          <span class="logging-launch-copy">Open your warm-up reflection and training plan.</span>
-          <span class="logging-launch-status" id="loggingWarmupLaunchStatus">Ready when you are</span>
+          <span class="logging-launch-copy">Build your pre-match drill plan before you queue.</span>
+          <span class="logging-launch-training-meta"><span id="loggingWarmupLaunchIcon" class="logging-launch-training-icon" aria-hidden="true">🔥</span><span class="logging-launch-status" id="loggingWarmupLaunchStatus">0 day streak</span></span>
         </button>
         <button type="button" class="logging-launch-tile logging-launch-tile-postmatch" data-logging-desktop-launch="postmatch">
-          <span class="logging-launch-kicker">Synced match</span>
-          <strong>Post Match</strong>
-          <span class="logging-launch-copy">Open the newest match that needs your reflection.</span>
-          <span class="logging-launch-status" id="loggingPostMatchLaunchStatus">Checking synced matches</span>
+          <span class="logging-launch-kicker">After ranked</span>
+          <strong>Post-Match Training</strong>
+          <span class="logging-launch-copy">Log a short aim session after your final game.</span>
+          <span class="logging-launch-training-meta"><span id="loggingPostMatchLaunchIcon" class="logging-launch-training-icon logging-launch-training-crosshair" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v5M2 12h5M17 12h5"></path></svg></span><span class="logging-launch-status" id="loggingPostMatchLaunchStatus">0 week streak</span></span>
         </button>
         <section id="loggingLauncherEmbedded" class="logging-launcher-embedded" hidden aria-live="polite"></section>
-        <section id="loggingPostMatchEmbedded" class="logging-postmatch-embedded" hidden aria-live="polite">
-          <div class="logging-embedded-heading">
-            <div>
-              <span class="logging-embedded-kicker">Synced match review</span>
-              <strong>Post-Match Reflection</strong>
-            </div>
-            <button type="button" class="logging-embedded-back" data-logging-embedded-dismiss>Back to choices</button>
-          </div>
-          <div class="logging-postmatch-match" id="loggingPostMatchEmbedMatch"></div>
-          <p class="logging-postmatch-copy">Your match facts are ready. Add your read while the rounds are still fresh, then save it back to your coaching journal.</p>
-          <div class="logging-postmatch-actions">
-            <button type="button" class="logging-postmatch-primary" data-logging-embedded-action="start-postmatch">Open reflection</button>
-          </div>
-        </section>
       </div>
 
       <div class="logging-form">
@@ -2353,7 +2339,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260803-data-integrity-01"></script>
   <script src="integrations/riot-sync.js?v=20260806-theme-launcher-01"></script>
   <script src="daily-entrance-motion.js?v=20260731-verification-loading-02"></script>
-  <script type="module" src="app.js?v=20260806-theme-launcher-01"></script>
+  <script type="module" src="app.js?v=20260806-launcher-stats-01"></script>
   <script type="module" src="knowledge-review.js?v=20260803-auth-abort-fallback-01"></script>
 </body>
 </html>

@@ -169,7 +169,9 @@ async function readStatsSurface(page) {
       summary: {
         kd: document.getElementById("statKD")?.textContent?.trim() || "",
         winRate: document.getElementById("statWinrate")?.textContent?.trim() || "",
-        adr: document.getElementById("statADR")?.textContent?.trim() || "",
+        kast: document.getElementById("statKAST")?.textContent?.trim() || "",
+        acs: document.getElementById("statACS")?.textContent?.trim() || "",
+        matchesPlayed: document.getElementById("statMatchesPlayed")?.textContent?.trim() || "",
         hs: document.getElementById("statHS")?.textContent?.trim() || ""
       },
       roleProgress,

@@ -951,7 +951,7 @@
 
   async function sequenceStats(run, root) {
     const summary = root.querySelector(".stats-summary-card");
-    const leftCounters = queryAll(root, "#statKD, #statWinrate, #statADR, #statHS, #statFirstBloods, #statDamagePerRound");
+    const leftCounters = queryAll(root, "#statKD, #statWinrate, #statKAST, #statACS, #statHS, #statMatchesPlayed");
     const trendCard = root.querySelector(".stats-performance-card");
     const patternCard = root.querySelector(".stats-breakdown-card");
     const trendItems = queryAll(root, "#statsPerformanceChart > *");

@@ -348,8 +348,9 @@ async function run() {
     }));
     assert.deepEqual(desktopPageMotion, { direction: "forward", outgoing: false, incoming: true });
     await page.waitForTimeout(650);
-    assert.equal(await page.locator("#statFirstBloods").count(), 1);
-    assert.equal(await page.locator("#statDamagePerRound").count(), 1);
+    assert.equal(await page.locator("#statKAST").count(), 1);
+    assert.equal(await page.locator("#statACS").count(), 1);
+    assert.equal(await page.locator("#statMatchesPlayed").count(), 1);
     assert.match(await page.locator("#statsHistoryBoundaryNote").innerText(), /Riot's upstream match-history feed.*active retention limit of roughly 2 years.*available history begins Jun 1, 2026/is);
     const breakdownVisuals = await page.locator("#statsBreakdown").evaluate(container => ({
       cards: container.querySelectorAll(".stats-breakdown-cardlet").length,

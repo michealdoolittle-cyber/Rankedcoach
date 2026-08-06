@@ -295,9 +295,7 @@ async function ensureLoggingFormSurface(page) {
   if (!viewport || viewport.width <= 820) return;
   const launcher = page.locator('[data-logging-desktop-launch="postmatch"]');
   if (!await launcher.isVisible().catch(() => false)) return;
-  await launcher.evaluate(button => button.click());
-  await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
-  await page.locator('[data-logging-embedded-action="start-postmatch"]').click();
+  await page.locator("#logFeed .log-edit-btn").first().click({ force: true });
   await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
   await page.locator(".logging-hero").waitFor({ state: "visible", timeout: 5000 });
 }

@@ -153,9 +153,17 @@ async function seedProfile(page, id) {
 }
 
 async function submitManualReflection(page, { agent, focus, map, rating, mood, notes }) {
-  await page.locator('[data-logging-desktop-launch="postmatch"]').evaluate(button => button.click());
-  await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
-  await page.locator('[data-logging-embedded-action="start-postmatch"]').evaluate(button => button.click());
+  // This helper creates a new test log. The production reflection route is
+  // feed → Edit; the launcher intentionally owns neither a reflection tile nor
+  // a direct-entry action, so open the test form explicitly here.
+  await page.evaluate(() => {
+    const logging = document.getElementById("page-logging");
+    if (document.body.classList.contains("is-mobile-layout")) {
+      logging.dataset.mobileLoggingFormStage = "form";
+    } else {
+      logging.dataset.loggingDesktopView = "form";
+    }
+  });
   await page.waitForFunction(() => getComputedStyle(document.querySelector("#page-logging .logging-form")).display !== "none");
   const loggingView = await page.evaluate(() => ({
     view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
