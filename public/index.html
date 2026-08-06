@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260806-ghost-profile-logging-01">
+  <link rel="stylesheet" href="app.css?v=20260806-progressive-sync-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -254,6 +254,8 @@ AUTH MODAL
       <div class="login-init-copy" id="loginInitCopy">“Play with purpose, mute negativity, and keep improving.”</div>
       <div class="login-init-detail" id="loginInitDetail">— Valorant Mental Coach</div>
     </div>
+    <div class="login-init-sync-status" id="loginInitSyncStatus">Opening your RankedCoach account.</div>
+    <div class="login-init-sync-detail" id="loginInitSyncDetail">Checking the saved profile on this device.</div>
     <div class="login-init-progress-meta"><span>Account loading</span><strong id="loginInitProgressPercent">8%</strong></div>
     <div class="login-init-progress is-busy" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
       <div class="login-init-progress-bar" id="loginInitProgressBar" style="width:8%"></div>
@@ -268,6 +270,11 @@ AUTH MODAL
 </div>
 
 <div id="premiumMomentOverlay" class="premium-moment-overlay" aria-hidden="true"></div>
+<div id="backgroundSyncStatus" class="background-sync-status" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span class="background-sync-status-spinner" aria-hidden="true"></span>
+  <span class="background-sync-status-copy" id="backgroundSyncStatusCopy">Syncing your saved data…</span>
+  <strong class="background-sync-status-percent" id="backgroundSyncStatusPercent"></strong>
+</div>
 <div id="appToastStack" class="app-toast-stack" aria-live="polite" aria-atomic="true"></div>
 
 <div id="dailyWarmupModal" class="lens-modal-overlay daily-warmup-overlay modal-full" aria-hidden="true" style="display:none;">
@@ -2308,9 +2315,9 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-collections.js?v=20260801-match-summary-02"></script>
 <script>window.RankedCoachCrosshairBackendEnabled = true;</script>
   <script src="library/gamesense-library.js?v=20260803-data-integrity-01"></script>
-  <script src="integrations/riot-sync.js?v=20260804-raw-parallel-01"></script>
+  <script src="integrations/riot-sync.js?v=20260806-progressive-sync-01"></script>
   <script src="daily-entrance-motion.js?v=20260731-verification-loading-02"></script>
-  <script type="module" src="app.js?v=20260806-ghost-profile-logging-01"></script>
+  <script type="module" src="app.js?v=20260806-progressive-sync-01"></script>
   <script type="module" src="knowledge-review.js?v=20260803-auth-abort-fallback-01"></script>
 </body>
 </html>

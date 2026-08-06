@@ -10097,6 +10097,87 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   line-height:1.34;
 }
 
+.login-init-sync-status{
+  margin-top:12px;
+  color:#f8fafc;
+  font-size:13px;
+  font-weight:950;
+  line-height:1.28;
+}
+
+.login-init-sync-detail{
+  min-height:17px;
+  margin-top:4px;
+  color:rgba(191,219,254,.92);
+  font-size:11px;
+  font-weight:760;
+  line-height:1.35;
+}
+
+.background-sync-status{
+  position:fixed;
+  z-index:10040;
+  top:calc(env(safe-area-inset-top, 0px) + 14px);
+  left:50%;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:min(520px, calc(100vw - 28px));
+  min-height:42px;
+  padding:10px 13px;
+  border:1px solid color-mix(in srgb, var(--accent, #ff4655) 42%, rgba(148,163,184,.48));
+  border-radius:13px;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--surface-card, #0b1220) 92%, var(--accent, #ff4655) 8%), rgba(2,6,23,.94));
+  box-shadow:0 14px 38px rgba(0,0,0,.34);
+  color:var(--text-main,#f8fafc);
+  pointer-events:none;
+  transform:translate(-50%, -10px);
+  opacity:0;
+  transition:opacity .18s ease, transform .2s cubic-bezier(.22,1,.36,1);
+}
+
+.background-sync-status.is-visible{
+  opacity:1;
+  transform:translate(-50%, 0);
+}
+
+.background-sync-status[hidden]{
+  display:none;
+}
+
+.background-sync-status-spinner{
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+  border:2px solid color-mix(in srgb, var(--accent-2, #f97316) 30%, transparent);
+  border-top-color:var(--accent-2,#f97316);
+  border-radius:50%;
+  animation:backgroundSyncSpin .8s linear infinite;
+}
+
+.background-sync-status-copy{
+  min-width:0;
+  flex:1 1 auto;
+  overflow:hidden;
+  color:#e2e8f0;
+  font-size:12px;
+  font-weight:850;
+  line-height:1.2;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.background-sync-status-percent{
+  flex:0 0 auto;
+  color:#fef3c7;
+  font-size:12px;
+  font-weight:950;
+}
+
+@keyframes backgroundSyncSpin{
+  to{ transform:rotate(360deg); }
+}
+
 .login-init-progress-meta,
 .app-loading-progress-meta{
   width:100%;

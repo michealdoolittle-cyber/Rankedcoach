@@ -208,6 +208,12 @@ async function openDevice(browser, { staleLocal = false, quotaLimited = false, f
     return profiles.some(profile => profile.id === "cloud-profile")
       && document.getElementById("loginInitOverlay")?.getAttribute("aria-hidden") === "true";
   }, null, { timeout: 15000 });
+  // Returning accounts now release their cached dashboard before the full
+  // initialization tail schedules its normal cloud save. The cloud state is
+  // already rendered above; wait independently for the deliberately-debounced
+  // persistence assertion below rather than making the UI wait for it again.
+  await page.waitForFunction(() => Array.isArray(globalThis.__cloudWrites)
+    && globalThis.__cloudWrites.some(write => write.table === "vip_app_state"), null, { timeout: 10000 });
   const state = await page.evaluate(() => ({
     profiles: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]").map(profile => ({ id: profile.id, name: profile.name, themeKey: profile.themeKey, profileBorder: profile.profileBorder })),
     logs: JSON.parse(localStorage.getItem("valtracker_log_entries_v2:cross-device-user") || "[]").map(entry => ({ id: entry.id, profileId: entry.profileId, notes: entry.notes })),

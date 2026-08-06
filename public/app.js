@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260806-ghost-profile-logging-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260806-progressive-sync-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -13258,8 +13258,14 @@ async function logoutOrOpenAuthFromUI() {
   enterGuestModeAfterLogout();
 }
 
+let activeProfileSurfaceRefreshRevision = 0;
+
 function refreshActiveProfileDataSurfaces(options = {}) {
   const profile = getActiveProfile?.();
+  const refreshRevision = ++activeProfileSurfaceRefreshRevision;
+  const root = document.documentElement;
+  root?.classList.add("profile-surfaces-refreshing");
+  if (root) root.dataset.profileSurfaceRefreshRevision = String(refreshRevision);
   if (profile && Array.isArray(profile.matches)) {
     matches = profile.matches.slice();
   }
@@ -13283,11 +13289,21 @@ function refreshActiveProfileDataSurfaces(options = {}) {
   refreshLatestRRMatchPanel?.();
   updateNavRRToRank?.();
   updateNavRRToGoalRank?.();
+  // The mobile header mirrors profileRankIcon. It was only refreshed during
+  // layout changes, which allowed its rank crest to remain stale after a real
+  // sync even though the desktop header had already updated.
+  syncMobileHeaderActionsState?.();
 
   if (options.chartAnimationMode) {
     queueChartAnimationMode?.(options.chartAnimationMode);
   }
   renderChart?.(currentSize);
+
+  const raf = window.requestAnimationFrame || (callback => window.setTimeout(callback, 16));
+  raf(() => raf(() => {
+    if (refreshRevision !== activeProfileSurfaceRefreshRevision) return;
+    root?.classList.remove("profile-surfaces-refreshing");
+  }));
 }
 
 function waitForActiveProfileSurfacePaint() {
@@ -17072,20 +17088,84 @@ window.RankedCoachLoadingEvents = Object.freeze({
   clear: () => setAppLoadingEventBanner("")
 });
 
+let backgroundSyncStatusHideTimer = 0;
+
+function setBackgroundSyncStatus(message = "", percent = null) {
+  const status = document.getElementById("backgroundSyncStatus");
+  const copy = document.getElementById("backgroundSyncStatusCopy");
+  const percentEl = document.getElementById("backgroundSyncStatusPercent");
+  if (!status) return;
+  const nextMessage = String(message || "").trim();
+  const hasPercent = Number.isFinite(Number(percent));
+  window.clearTimeout(backgroundSyncStatusHideTimer);
+  backgroundSyncStatusHideTimer = 0;
+  if (!nextMessage) {
+    status.classList.remove("is-visible");
+    backgroundSyncStatusHideTimer = window.setTimeout(() => {
+      status.hidden = true;
+      status.setAttribute("aria-hidden", "true");
+      backgroundSyncStatusHideTimer = 0;
+    }, 220);
+    return;
+  }
+  if (copy) copy.textContent = nextMessage;
+  if (percentEl) percentEl.textContent = hasPercent ? `${Math.max(0, Math.min(100, Math.round(Number(percent))))}%` : "";
+  status.hidden = false;
+  status.setAttribute("aria-hidden", "false");
+  window.requestAnimationFrame(() => status.classList.add("is-visible"));
+}
+
+function hideBackgroundSyncStatus(delayMs = 0) {
+  window.clearTimeout(backgroundSyncStatusHideTimer);
+  backgroundSyncStatusHideTimer = window.setTimeout(() => {
+    backgroundSyncStatusHideTimer = 0;
+    setBackgroundSyncStatus("");
+  }, Math.max(0, safeNumber(delayMs)));
+}
+
+function releaseLoginOverlayForBackgroundSync(message = "Restoring saved account…") {
+  releaseInitialAppBootGuard();
+  const overlay = document.getElementById("loginInitOverlay");
+  if (overlay) {
+    overlay.classList.remove("is-opening", "active", "is-closing", "app-boot-overlay");
+    overlay.style.display = "none";
+    overlay.hidden = true;
+    overlay.setAttribute("aria-hidden", "true");
+  }
+  clearLoginInitializationTheme();
+  stopLoginInitializationQuoteRotation();
+  setBackgroundSyncStatus(message);
+}
+
 function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "", detail = "") {
   const overlay = document.getElementById("loginInitOverlay");
   const bar = document.getElementById("loginInitProgressBar");
   const percentEl = document.getElementById("loginInitProgressPercent");
   const titleEl = document.getElementById("loginInitTitle");
+  const statusEl = document.getElementById("loginInitSyncStatus");
+  const detailEl = document.getElementById("loginInitSyncDetail");
   const nextPercent = Math.max(0, Math.min(100, Math.round(percent)));
 
   if (bar) bar.style.width = `${nextPercent}%`;
   if (percentEl) percentEl.textContent = `${nextPercent}%`;
+  if (statusEl && String(copy || "").trim()) statusEl.textContent = String(copy).trim();
+  if (detailEl && String(detail || "").trim()) detailEl.textContent = String(detail).trim();
   const progressEl = overlay?.querySelector?.(".login-init-progress");
   progressEl?.setAttribute("aria-valuenow", String(nextPercent));
   progressEl?.classList.toggle("is-busy", nextPercent > 0 && nextPercent < 100);
-  renderLoginInitializationQuote();
+  // Returning accounts can emit a status update for every real history/raw
+  // request. Their full-screen overlay is already gone, so avoid repeatedly
+  // re-rendering its hidden rotating quote while the small status indicator
+  // reports the same work.
+  if (overlay && !overlay.hidden && overlay.style.display !== "none") {
+    renderLoginInitializationQuote();
+  }
   if (titleEl) titleEl.textContent = nextPercent >= 100 ? "You are ready" : "Warming up your account";
+
+  const backgroundStatus = document.getElementById("backgroundSyncStatus");
+  if (backgroundStatus && !backgroundStatus.hidden) {
+    setBackgroundSyncStatus(String(copy || "").trim() || "Syncing your saved account…", nextPercent);
+  }
 
   const stepOrder = ["Profile", "Security", "Coach", "Ready"];
   const activeIndex = stepOrder.indexOf(activeStep);
@@ -21520,23 +21600,15 @@ function applyPersistentAccountState(state = {}) {
       skipBackend: true
     });
 
-    const active = getActiveProfile();
-    matches = active?.matches ? active.matches.slice() : [];
-    recomputeFromMatches?.();
+    // Remote account state must use the same coordinated renderer as a Riot
+    // import. Keeping a separate hand-written list here let individual
+    // surfaces (notably the mobile rank crest) miss a later refresh.
     renderProfilesUI?.();
-    rebuildProfileListUI?.();
-    updateProfileHeaderUI?.();
-    updateDisplays?.();
-    applyPendingLoadoutRollToHome?.(active);
-    initStatsPage?.();
-    renderStatsAgents?.();
-    renderStatsMaps?.();
-    renderStatsWeapons?.();
-    renderInsights?.();
-    renderLogFeed?.();
-    refreshLatestRRMatchPanel?.();
-    renderChart?.(currentSize);
-    syncAccountSupportUI?.();
+    refreshActiveProfileDataSurfaces?.({
+      reason: "remote-account-state",
+      animatePlaceholders: false,
+      preserveActivePage: true
+    });
     notifyPlaylistWatchHistoryChanged();
   } finally {
     backendSyncState.applyingRemote = false;
@@ -22666,16 +22738,54 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+function hasUsableCachedSignedInState() {
+  const profile = getActiveProfile?.();
+  const localProfiles = Array.isArray(profiles) ? profiles : [];
+  const hasSavedProfile = localProfiles.some(candidate => {
+    if (!candidate || typeof candidate !== "object") return false;
+    const accountName = String(candidate?.accountName || "").trim();
+    return Boolean(
+      String(candidate?.riotId || "").trim()
+      || String(candidate?.lastSyncAt || "").trim()
+      || (accountName && accountName.toLowerCase() !== "guest")
+      || (Array.isArray(candidate?.matches) && candidate.matches.length)
+      || (Array.isArray(candidate?.warmupLog) && candidate.warmupLog.length)
+      || (Array.isArray(candidate?.watchedPlaylistVideos) && candidate.watchedPlaylistVideos.length)
+    );
+  });
+  return Boolean(
+    hasSavedProfile
+    || (profile && Array.isArray(profile?.matches) && profile.matches.length)
+    || (Array.isArray(logEntries) && logEntries.length)
+    || String(localStorage.getItem(STORAGE_KEY_LAST_BACKEND_SYNC) || "").trim()
+  );
+}
+
 async function initializeSignedInAccount(user, options = {}) {
   if (!user) return;
   if (loginInitializationInFlight) return;
   captureGuestRiotMigrationSnapshot?.(options.reason || "sign-in");
 
   loginInitializationInFlight = true;
-  showLoginInitializationOverlay(
-    "Opening your RankedCoach account.",
-    "Saved profiles with more matches and notes can take a little longer to load back in."
-  );
+  // Returning players already have a complete last-known snapshot in this
+  // browser. Let them use it immediately while Supabase and Henrik refresh in
+  // the background. A genuinely new account still gets the focused first-load
+  // overlay because there is no meaningful local state to show yet.
+  const hasCachedState = hasUsableCachedSignedInState();
+  if (hasCachedState) {
+    releaseLoginOverlayForBackgroundSync("Restoring saved account…");
+    setLoginInitializationProgress(
+      8,
+      "Loading the saved dashboard on this device…",
+      "Profile",
+      "Live Riot and cloud checks continue in the background."
+    );
+  } else {
+    showLoginInitializationOverlay(
+      "Opening your RankedCoach account.",
+      "This first signed-in load needs a saved account snapshot before your pages can open."
+    );
+  }
 
   let newlyImportedReflection = null;
   let newlyImportedMatchReport = null;
@@ -22722,10 +22832,10 @@ async function initializeSignedInAccount(user, options = {}) {
         // exact newly-imported match rather than a generic latest placeholder.
         deferMatchReport: true,
         onProgress: progress => setLoginInitializationProgress(
-          Math.min(86, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 16)),
-          progress.message,
+          Math.min(96, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 26)),
+          progress.message || "Checking retained competitive history…",
           "Riot history",
-          "RankedCoach is finishing the retained competitive history before opening your dashboard."
+          progress.detail || "Riot data is syncing in the background while your saved pages stay available."
         )
       });
       // A new completed match should land in its prepared reflection after
@@ -22763,7 +22873,14 @@ async function initializeSignedInAccount(user, options = {}) {
     queuePersistentAccountSave?.(options.reason || "login-initialization");
     markAccountStateLoadComplete();
   } finally {
-    hideLoginInitializationOverlay();
+    if (hasCachedState) {
+      setLoginInitializationProgress(100, "Saved account is up to date.", "Ready", "Your dashboard, rank, chart, and match panel refreshed together.");
+      prepareDailyEntranceMotion();
+      notifyDailyEntranceMotionReady();
+      hideBackgroundSyncStatus(780);
+    } else {
+      hideLoginInitializationOverlay();
+    }
     loginInitializationInFlight = false;
     if (newlyImportedMatchReport?.match) {
       window.setTimeout(() => {
@@ -53617,6 +53734,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   applyThemeReadabilityRuntimeStyles(theme, themeVisualMode);
   syncLayoutStyleAutoFitText(layoutStyle);
   syncMobileBottomAvatarVisuals(profile);
+  syncMobileHeaderActionsState?.();
 }
 
 const THEME_READABILITY_RUNTIME_STYLE_ID = "theme-readability-runtime-style";
@@ -59103,6 +59221,12 @@ async function importActiveProfileMatches(options = {}){
   }
 
   try {
+    options.onSyncProgress?.({
+      stage: "local-rehydrate",
+      percent: 2,
+      message: "Checking saved match data…",
+      detail: "Using the local cache first, then verifying fresh Riot data."
+    });
     const storedRawPrep = prepareProfileStoredRawRehydrate(profile, {
       onProgress: options.onRehydrateProgress
     });
@@ -59158,6 +59282,14 @@ async function importActiveProfileMatches(options = {}){
         record: getMatchSummaryRecord(match)
       }))
       .filter(item => item.matchId && item.record);
+    options.onSyncProgress?.({
+      stage: "henrik-pull",
+      percent: 4,
+      message: "Checking retained competitive history…",
+      detail: needsHistoryBackfill
+        ? `Refreshing retained-history batch from match ${historyStart + 1}.`
+        : "Checking your latest competitive matches."
+    });
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
@@ -59172,7 +59304,15 @@ async function importActiveProfileMatches(options = {}){
       // Versioned history migrations intentionally revisit known retained
       // matches once so their raw Henrik payload can be stored for future
       // offline re-derives/backfills.
-      hydrateRoundData: !needsHistoryBackfill
+      hydrateRoundData: !needsHistoryBackfill,
+      onProgress: options.onSyncProgress,
+      onRequest: options.onSyncRequest
+    });
+    options.onSyncProgress?.({
+      stage: "saving",
+      percent: 94,
+      message: "Saving to your account…",
+      detail: "Updating the local profile before every dashboard surface is refreshed."
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
     profile.lastSyncSource = "henrik";
@@ -59400,6 +59540,13 @@ async function importActiveProfileMatches(options = {}){
     }
     scheduleRiotAutoSync();
 
+    options.onSyncProgress?.({
+      stage: "surface-refresh",
+      percent: 98,
+      message: "Refreshing rank, chart, and match panel together…",
+      detail: "The final saved profile state is now being rendered across the app."
+    });
+
     if (!needsHistoryBackfill && newlyImportedMatches.length && options.deferSurfaceRefresh !== true) {
       refreshActiveProfileDataSurfaces({
         chartAnimationMode: options.mode === "refresh"
@@ -59457,7 +59604,9 @@ async function syncActiveProfileMatches(options = {}){
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync",
     deferSurfaceRefresh: options.deferSurfaceRefresh === true,
-    onRehydrateProgress: options.onRehydrateProgress
+    onRehydrateProgress: options.onRehydrateProgress,
+    onSyncProgress: options.onSyncProgress,
+    onSyncRequest: options.onSyncRequest
   });
   if (options.deferSurfaceRefresh !== true) {
     refreshActiveProfileDataSurfaces?.({
@@ -59666,7 +59815,9 @@ async function performRiotSync(options = {}) {
     allowDemoFallback = true,
     verifyWarmup = true,
     prefillReflection = true,
-    deferSurfaceRefresh = false
+    deferSurfaceRefresh = false,
+    onSyncProgress = null,
+    onSyncRequest = null
   } = options;
   const activeProfile = getActiveProfile();
   const hasRiotId = Boolean(String(activeProfile?.riotId || "").trim());
@@ -59741,6 +59892,21 @@ async function performRiotSync(options = {}) {
     setAppLoadingVeilProgress(16, "Checking retained competitive history...");
   }
 
+  const publishSyncProgress = (progress = {}) => {
+    const message = String(progress?.message || "Checking Riot data…").trim();
+    try {
+      onSyncProgress?.({ ...progress, message });
+    } catch (_error) {
+      // A caller's status UI must not interrupt an otherwise valid sync.
+    }
+    if (!showSyncLoading) return;
+    const sourcePercent = Number(progress?.percent);
+    const progressPercent = Number.isFinite(sourcePercent)
+      ? Math.max(18, Math.min(96, 18 + Math.round(sourcePercent * 0.78)))
+      : 44;
+    setAppLoadingVeilProgress(progressPercent, message);
+  };
+
   try {
     if (showSyncLoading) setAppLoadingVeilProgress(28, "Resolving Riot match data...");
     const result = await withRiotSyncTimeout(
@@ -59748,6 +59914,8 @@ async function performRiotSync(options = {}) {
         mode,
         allowDemoFallback: canUseDemoFallback,
         deferSurfaceRefresh,
+        onSyncProgress: publishSyncProgress,
+        onSyncRequest,
         onRehydrateProgress: progress => {
           options.onRehydrateProgress?.(progress);
           if (!showSyncLoading) return;
@@ -59936,6 +60104,21 @@ async function syncProfileRetainedHistory(options = {}) {
       verifyWarmup: false,
       prefillReflection: false,
       deferSurfaceRefresh: true,
+      onSyncProgress: progress => {
+        const batchProgress = Math.max(0, Math.min(100, safeNumber(progress?.percent)));
+        const batchBase = Math.min(88, 12 + Math.round((Math.min(totalChecked, estimatedHistoryWindow) / estimatedHistoryWindow) * 72));
+        const batchSpan = Math.max(4, Math.round(72 / Math.max(1, maxBatches)));
+        options.onProgress?.({
+          ...progress,
+          batch: batch + 1,
+          maxBatches,
+          retainedCount: Array.isArray(getActiveProfile()?.matches) ? getActiveProfile().matches.length : retainedCount,
+          checked: totalChecked,
+          estimatedTotal: estimatedHistoryWindow,
+          percent: Math.min(94, batchBase + Math.round((batchProgress / 100) * batchSpan)),
+          message: progress?.message || "Checking Riot data…"
+        });
+      },
       onRehydrateProgress: progress => {
         const rehydratePercent = 8 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 8);
         options.onProgress?.({
@@ -59957,6 +60140,16 @@ async function syncProfileRetainedHistory(options = {}) {
       };
       return { success: false, totalImported, totalChecked, lastResult, playerError: getPlayerFacingRiotSyncError(error) };
     }
+    options.onProgress?.({
+      batch: batch + 1,
+      maxBatches,
+      retainedCount: Array.isArray(getActiveProfile()?.matches) ? getActiveProfile().matches.length : retainedCount,
+      checked: totalChecked,
+      estimatedTotal: estimatedHistoryWindow,
+      percent: Math.min(94, 76 + Math.round(((batch + 1) / maxBatches) * 16)),
+      message: `Saving to your account — batch ${batch + 1} of ${maxBatches}`,
+      detail: "This completed batch is being committed before the next history check."
+    });
     lastResult = result;
     totalImported += safeNumber(result.count);
     totalChecked += safeNumber(result.checked);

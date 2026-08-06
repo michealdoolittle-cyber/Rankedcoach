@@ -75,6 +75,36 @@
     return [450];
   }
 
+  function getHistoryPageConcurrency(options = {}) {
+    const requested = Number(options.historyPageConcurrency);
+    // Summary pages are light, but Henrik can still rate-limit a burst. This
+    // bounded pool replaces the old one-page-at-a-time history walk without
+    // competing with the heavier raw-payload worker pool.
+    return Math.max(1, Math.min(4, Math.floor(Number.isFinite(requested) ? requested : 3)));
+  }
+
+  function emitSyncProgress(options = {}, progress = {}) {
+    if (typeof options.onProgress !== "function") return;
+    try {
+      options.onProgress({
+        ...progress,
+        message: String(progress?.message || "Checking Riot data…")
+      });
+    } catch (_error) {
+      // Progress reporting is strictly observational. A UI callback must
+      // never make a valid Henrik sync fail.
+    }
+  }
+
+  function emitSyncRequest(options = {}, request = {}) {
+    if (typeof options.onRequest !== "function") return;
+    try {
+      options.onRequest({ ...request });
+    } catch (_error) {
+      // Diagnostics are optional and must not alter the sync path.
+    }
+  }
+
   function getStoredRefreshMatchId(item = {}) {
     return String(
       item?.matchId
@@ -257,17 +287,33 @@
       matchId: ""
     };
     let nextIndex = 0;
+    let completed = 0;
     const workerCount = Math.min(source.length, getRawHydrationConcurrency(context.options));
 
     async function worker() {
       while (nextIndex < source.length) {
         const index = nextIndex;
         nextIndex += 1;
+        emitSyncProgress(context.options, {
+          stage: "raw-match",
+          completed,
+          total: source.length,
+          percent: source.length ? Math.round((completed / source.length) * 100) : 100,
+          message: `Fetching match details — ${Math.min(source.length, completed + 1)} of ${source.length}`
+        });
         const result = await hydratePendingHenrikMatch(source[index], {
           ...context,
           rawHydrationCircuit
         });
         hydrated[index] = result;
+        completed += 1;
+        emitSyncProgress(context.options, {
+          stage: "raw-match",
+          completed,
+          total: source.length,
+          percent: source.length ? Math.round((completed / source.length) * 100) : 100,
+          message: `Fetching match details — ${completed} of ${source.length}`
+        });
         if (!rawHydrationCircuit.open && shouldOpenRawHydrationCircuit(result?.failure)) {
           rawHydrationCircuit.open = true;
           rawHydrationCircuit.code = String(result.failure.code || "henrik_request_failed");
@@ -323,6 +369,13 @@
     const baseUrl = String(options.baseUrl || "").replace(/\/$/, "");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 50000);
+    const startedAt = Date.now();
+    emitSyncRequest(options, {
+      phase: "start",
+      path,
+      body: { ...(body || {}) },
+      startedAt
+    });
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         method: "POST",
@@ -339,8 +392,30 @@
           retryable: Boolean(payload?.retryable) || [408, 429].includes(status) || status >= 500
         });
       }
+      emitSyncRequest(options, {
+        phase: "end",
+        path,
+        body: { ...(body || {}) },
+        startedAt,
+        durationMs: Date.now() - startedAt,
+        httpStatus: Number(response.status) || 0,
+        providerStatus: Number(payload?.status) || Number(response.status) || 0,
+        ok: true
+      });
       return payload;
     } catch (error) {
+      emitSyncRequest(options, {
+        phase: "end",
+        path,
+        body: { ...(body || {}) },
+        startedAt,
+        durationMs: Date.now() - startedAt,
+        httpStatus: Number(error?.status) || 0,
+        providerStatus: Number(error?.status) || 0,
+        ok: false,
+        code: String(error?.code || "henrik_request_failed"),
+        error: String(error?.message || "Match sync failed.")
+      });
       if (error?.name === "AbortError") {
         throw createSyncRequestError("Match sync timed out.", {
           code: "henrik_timeout",
@@ -381,6 +456,15 @@
           throw error;
         }
         attempt += 1;
+        emitSyncProgress(options, {
+          stage: "retry",
+          path,
+          attempt,
+          maxAttempts: retryDelaysMs.length,
+          percent: 0,
+          message: `Waiting on Henrik — retry ${attempt} of ${retryDelaysMs.length}`,
+          detail: `${path} returned ${Number(error?.status) || "a temporary error"}; retrying now.`
+        });
         await waitForRetry(delayMs, options, { attempt, error, path, body });
       }
     }
@@ -582,12 +666,22 @@
 
     if (!puuid) {
       if (!riotId) throw new Error("Set Riot ID first.");
+      emitSyncProgress(options, {
+        stage: "account",
+        percent: 4,
+        message: "Resolving your Riot account…"
+      });
       const accountPayload = await requestJson("/api/henrik/account", { riotId }, options);
       account = accountPayload?.data || accountPayload;
       puuid = String(account?.puuid || "").trim();
       if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
     }
 
+    emitSyncProgress(options, {
+      stage: "mmr-history",
+      percent: 8,
+      message: "Checking rank history…"
+    });
     const mmrHistoryPromise = Promise.allSettled([
       requestJsonWithRetry("/api/henrik/mmr-history-live", { puuid, region }, options),
       requestJsonWithRetry("/api/henrik/mmr-history", {
@@ -603,28 +697,97 @@
     const refreshSearchFailures = [];
     let historyExhausted = false;
     let matchSyncError = null;
-    for (let offset = 0; offset < historyLimit; offset += pageSize) {
-      const start = historyStart + offset;
-      const count = Math.min(pageSize, historyLimit - offset);
-      fetchedStarts.add(start);
-      let matchesPayload;
+    const historyPagePlan = Array.from({ length: Math.ceil(historyLimit / pageSize) }, (_value, index) => {
+      const offset = index * pageSize;
+      return {
+        page: index + 1,
+        start: historyStart + offset,
+        count: Math.min(pageSize, historyLimit - offset)
+      };
+    });
+    const historyPageResults = new Array(historyPagePlan.length);
+    const fetchHistoryPage = async (descriptor) => {
+      fetchedStarts.add(descriptor.start);
+      emitSyncProgress(options, {
+        stage: "match-history",
+        page: descriptor.page,
+        totalPages: historyPagePlan.length,
+        percent: historyPagePlan.length ? Math.round(((descriptor.page - 1) / historyPagePlan.length) * 62) : 62,
+        message: `Checking match history — page ${descriptor.page} of ${historyPagePlan.length}`
+      });
       try {
-        matchesPayload = await requestJsonWithRetry("/api/henrik/matches", { puuid, region, count, start }, options);
+        const payload = await requestJsonWithRetry("/api/henrik/matches", {
+          puuid,
+          region,
+          count: descriptor.count,
+          start: descriptor.start
+        }, options);
+        const pageMatches = Array.isArray(payload?.data) ? payload.data : [];
+        emitSyncProgress(options, {
+          stage: "match-history",
+          page: descriptor.page,
+          totalPages: historyPagePlan.length,
+          percent: historyPagePlan.length ? Math.round((descriptor.page / historyPagePlan.length) * 62) : 62,
+          message: `Checking match history — page ${descriptor.page} of ${historyPagePlan.length}`
+        });
+        return { ...descriptor, pageMatches };
       } catch (error) {
+        return { ...descriptor, pageMatches: [], error };
+      }
+    };
+
+    // Fetch the first page alone so an empty or short recent history avoids a
+    // needless burst. Once it is full, later fixed-size pages are independent
+    // and can safely use a small bounded pool rather than serializing ten
+    // network round trips during a retained-history backfill.
+    if (historyPagePlan.length) {
+      historyPageResults[0] = await fetchHistoryPage(historyPagePlan[0]);
+      const first = historyPageResults[0];
+      if (!first?.error && first.pageMatches.length >= first.count) {
+        // Keep the final page as a confirmation request. The API commonly
+        // ends on that page; requesting it only after the preceding pool is
+        // full preserves the old short-page stop behavior instead of issuing
+        // an unnecessary final request after history has already ended.
+        const finalPageIndex = historyPagePlan.length - 1;
+        let nextHistoryPage = 1;
+        const workerCount = Math.min(
+          Math.max(0, finalPageIndex - nextHistoryPage),
+          getHistoryPageConcurrency(options)
+        );
+        const worker = async () => {
+          while (nextHistoryPage < finalPageIndex) {
+            const pageIndex = nextHistoryPage;
+            nextHistoryPage += 1;
+            historyPageResults[pageIndex] = await fetchHistoryPage(historyPagePlan[pageIndex]);
+          }
+        };
+        if (workerCount) {
+          await Promise.all(Array.from({ length: workerCount }, () => worker()));
+        }
+        const knownFullHistory = historyPageResults
+          .slice(0, finalPageIndex)
+          .every(result => result && !result.error && result.pageMatches.length >= result.count);
+        if (finalPageIndex > 0 && knownFullHistory) {
+          historyPageResults[finalPageIndex] = await fetchHistoryPage(historyPagePlan[finalPageIndex]);
+        }
+      }
+    }
+
+    for (const result of historyPageResults.filter(Boolean)) {
+      if (result.error) {
         matchSyncError = {
-          code: String(error?.code || "henrik_request_failed"),
-          status: Number(error?.status) || 0,
-          message: error?.message || "Match history is temporarily unavailable.",
-          retryable: isTransientSyncError(error),
-          attempts: Number(error?.attempts) || 1,
-          start,
-          count
+          code: String(result.error?.code || "henrik_request_failed"),
+          status: Number(result.error?.status) || 0,
+          message: result.error?.message || "Match history is temporarily unavailable.",
+          retryable: isTransientSyncError(result.error),
+          attempts: Number(result.error?.attempts) || 1,
+          start: result.start,
+          count: result.count
         };
         break;
       }
-      const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
-      parsedMatches.push(...pageMatches);
-      if (pageMatches.length < count) {
+      parsedMatches.push(...result.pageMatches);
+      if (result.pageMatches.length < result.count) {
         historyExhausted = true;
         break;
       }

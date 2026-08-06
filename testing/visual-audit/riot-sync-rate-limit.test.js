@@ -152,9 +152,33 @@ async function run() {
     });
 
     await page.goto(`http://rankedcoach.test:${port}`, { waitUntil: "domcontentloaded" });
+    // A returning account must get the cached page immediately while its real
+    // Henrik work continues visibly in the non-blocking status indicator.
+    await page.waitForFunction(() => {
+      const overlay = document.getElementById("loginInitOverlay");
+      const backgroundStatus = document.getElementById("backgroundSyncStatus");
+      const home = document.getElementById("page-home");
+      return Boolean(
+        !document.documentElement.classList.contains("app-booting")
+        && overlay?.hidden
+        && backgroundStatus?.hidden === false
+        && home
+        && getComputedStyle(home).display !== "none"
+      );
+    }, null, { timeout: 8000 });
+    const liveBackgroundStatus = await page.locator("#backgroundSyncStatusCopy").innerText();
+    assert.match(liveBackgroundStatus, /checking|resolving|waiting|fetching/i);
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     await page.locator("#profileSyncBtn").waitFor({ state: "visible" });
+    // Returning accounts now render their saved dashboard while the first
+    // sync continues in the background. Wait for that background attempt to
+    // settle before measuring this explicit manual-sync request.
+    await page.waitForFunction(() => {
+      const syncButton = document.getElementById("profileSyncBtn");
+      const backgroundStatus = document.getElementById("backgroundSyncStatus");
+      return Boolean(syncButton && !syncButton.disabled && backgroundStatus?.hidden !== false);
+    }, null, { timeout: 15000 });
     const accountRequestsBeforeManualSync = accountRequests;
     const competitiveRequestsBeforeManualSync = competitiveMatchRequests;
     await page.click("#profileSyncBtn");

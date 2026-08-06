@@ -305,6 +305,48 @@ function printStoredProfileBacklog(profile, options = {}) {
   console.log(`  metadata backfills pending: ${summary.metadataBackfillNeeded} (unavailable: ${summary.metadataUnavailable})`);
 }
 
+function createSyncDiagnostics() {
+  const startedAt = performance.now();
+  const completed = [];
+  return {
+    onRequest(event = {}) {
+      if (event?.phase !== "end") return;
+      completed.push({
+        path: cleanString(event.path),
+        durationMs: Number(event.durationMs) || 0,
+        httpStatus: Number(event.httpStatus) || 0,
+        providerStatus: Number(event.providerStatus) || 0,
+        ok: event.ok === true,
+        code: cleanString(event.code),
+        error: cleanString(event.error)
+      });
+    },
+    print(extra = {}) {
+      const elapsedMs = performance.now() - startedAt;
+      console.log("\nLive Henrik sync diagnostics:");
+      if (!completed.length) {
+        console.log("  no completed provider requests were recorded");
+      } else {
+        const groups = new Map();
+        completed.forEach(entry => {
+          const key = entry.path || "unknown";
+          const list = groups.get(key) || [];
+          list.push(entry);
+          groups.set(key, list);
+        });
+        [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([path, entries]) => {
+          const timings = entries.map(entry => entry.durationMs);
+          const failures = entries.filter(entry => !entry.ok);
+          console.log(`  ${path}: ${entries.length} request${entries.length === 1 ? "" : "s"}; min ${Math.min(...timings).toFixed(0)}ms, max ${Math.max(...timings).toFixed(0)}ms, total ${timings.reduce((sum, value) => sum + value, 0).toFixed(0)}ms${failures.length ? `; failures ${failures.map(entry => `${entry.providerStatus || entry.httpStatus || "?"} ${entry.code || entry.error || "error"}`).join(", ")}` : ""}`);
+        });
+      }
+      console.log(`  transport wall-clock: ${elapsedMs.toFixed(0)}ms`);
+      console.log(`  requested history pages: ${extra.requestedHistoryPages || 0}; completed raw records: ${extra.completedRawRecords || 0}`);
+      console.log("  Note: this CLI measures provider transport only. The signed-in browser owns the final account save and two-frame surface paint.");
+    }
+  };
+}
+
 function verifyStoredProfileSnapshot(reporter, profile, expectedMatches, options) {
   if (!profile) {
     console.log("SKIP stored-profile persistence verification (pass --stored-profile <exported-profile.json> to inspect an actual saved account).");
@@ -390,9 +432,32 @@ async function main() {
   loadBrowserScript("public/integrations/riot-sync.js");
 
   const reporter = createReporter();
-  const accountPayload = await postJson(options.baseUrl, "/api/henrik/account", { riotId: options.riotId });
-  const account = accountPayload?.data || accountPayload;
-  const puuid = cleanString(account?.puuid);
+  const syncDiagnostics = createSyncDiagnostics();
+  let actualPull;
+  try {
+    actualPull = await globalThis.RankedCoachRiotSync.pullMatches({
+      riotId: options.riotId,
+      region: options.region,
+      historyLimit: options.count,
+      historyStart: options.start,
+      includeKnownMatches: true,
+      // This is the production sync path: it combines V4 aggregate data with
+      // Henrik Raw round snapshots. Verifying it catches loss of the retained
+      // V4 payload that a V4-only normalization test cannot see.
+      hydrateRoundData: true,
+      baseUrl: options.baseUrl,
+      waitForRetry: () => {},
+      onRequest: event => syncDiagnostics.onRequest(event)
+    });
+  } catch (error) {
+    syncDiagnostics.print({ requestedHistoryPages: Math.ceil(options.count / 10), completedRawRecords: 0 });
+    throw error;
+  }
+  syncDiagnostics.print({
+    requestedHistoryPages: Math.ceil(options.count / 10),
+    completedRawRecords: Array.isArray(actualPull?.records) ? actualPull.records.length : 0
+  });
+  const puuid = cleanString(actualPull?.puuid);
   reporter.check("account PUUID resolved", Boolean(puuid), `${options.riotId} -> ${puuid || "missing"}`);
 
   const rawMatches = await fetchRawMatches({ ...options, puuid });
@@ -400,21 +465,6 @@ async function main() {
   const expectedRanked = expectedMatches.filter(match => match.queueRanked);
   reporter.check("live Henrik page returned matches", rawMatches.length > 0, `${rawMatches.length} retained competitive matches checked`);
   reporter.check("ranked queue filter", expectedRanked.length === expectedMatches.length, `${expectedRanked.length}/${expectedMatches.length} are competitive`);
-
-  const actualPull = await globalThis.RankedCoachRiotSync.pullMatches({
-    riotId: options.riotId,
-    puuid,
-    region: options.region,
-    historyLimit: options.count,
-    historyStart: options.start,
-    includeKnownMatches: true,
-    // This is the production sync path: it combines V4 aggregate data with
-    // Henrik Raw round snapshots. Verifying it catches loss of the retained
-    // V4 payload that a V4-only normalization test cannot see.
-    hydrateRoundData: true,
-    baseUrl: options.baseUrl,
-    waitForRetry: () => {}
-  });
   const actualRecords = Array.isArray(actualPull?.records) ? actualPull.records : [];
   const actualById = new Map(actualRecords.map(record => [cleanString(record?.id || record?.legacyMatchId), record]));
   reporter.check("app sync mapped same ranked matches", actualRecords.length === expectedRanked.length, `${actualRecords.length}/${expectedRanked.length} records`);
