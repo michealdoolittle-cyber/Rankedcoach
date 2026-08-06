@@ -79,20 +79,38 @@ async function run() {
     await page.waitForTimeout(3200);
     const geometry = await page.evaluate(() => {
       const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
-      const marker = document.querySelector(`#chartRow .chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
-      const hitX = Number(hit?.getAttribute("cx"));
-      const hitY = Number(hit?.getAttribute("cy"));
+      const svg = hit?.closest("svg");
+      const marker = svg?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
+      const dot = svg?.querySelector(`.rr-dot[data-match-index="${hit?.dataset.matchIndex}"], .final-end[data-match-index="${hit?.dataset.matchIndex}"]`);
+      const dotX = Number(dot?.getAttribute("cx"));
+      const dotY = Number(dot?.getAttribute("cy"));
       const markerCircle = marker?.querySelector("circle");
       return {
-        hitX, hitY,
+        dotX, dotY,
         markerX: Number(markerCircle?.getAttribute("cx")),
         markerY: Number(markerCircle?.getAttribute("cy")),
         rankChange: hit?.dataset.rankChange || ""
       };
     });
     assert.equal(geometry.rankChange, "true", JSON.stringify(geometry));
-    assert.ok(Math.abs(geometry.markerX - geometry.hitX) < .01, `mobile marker must remain centred below its rank dot: ${JSON.stringify(geometry)}`);
-    assert.ok(geometry.markerY > geometry.hitY, `mobile marker must sit below its rank dot: ${JSON.stringify(geometry)}`);
+    assert.ok(Math.abs(geometry.markerX - geometry.dotX) < .01, `mobile marker must remain centred below its rank dot: ${JSON.stringify(geometry)}`);
+    assert.ok(geometry.markerY > geometry.dotY, `mobile marker must sit below its rank dot: ${JSON.stringify(geometry)}`);
+
+    await page.locator("#chartRow .rr-hit").last().click({ force: true });
+    await page.waitForTimeout(120);
+    const selectedGeometry = await page.evaluate(() => {
+      const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
+      const marker = hit?.closest("svg")?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
+      const markerCircle = marker?.querySelector("circle");
+      return {
+        markerX: Number(markerCircle?.getAttribute("cx")),
+        markerY: Number(markerCircle?.getAttribute("cy"))
+      };
+    });
+    assert.deepEqual(selectedGeometry, {
+      markerX: geometry.markerX,
+      markerY: geometry.markerY
+    }, `selecting the newest dot must not reposition its rank marker: ${JSON.stringify({ geometry, selectedGeometry })}`);
     assert.deepEqual(consoleIssues, []);
   } finally {
     await browser.close();

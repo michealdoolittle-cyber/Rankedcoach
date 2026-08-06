@@ -426,7 +426,9 @@ async function assertFixture(page, fixture, rows) {
     fixture: fixture.id,
     surface: "Logging feed",
     fact: "default scope",
-    expected: "All History",
+    // The session journal opens on today by design; older entries remain
+    // reachable through the explicit All History picker.
+    expected: /^Today\s*\//,
     actual: loggingFeed.trigger
   });
   addMatrixResult(rows, {

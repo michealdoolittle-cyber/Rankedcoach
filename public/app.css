@@ -60410,6 +60410,151 @@ html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper.is-cust
   box-shadow:0 4px 12px rgba(2,6,23,.34);
 }
 
+/* 2026-08-06 logging form polish ---------------------------------------
+   The launcher establishes the form's intent; keep that context visible
+   after the form is opened and reserve a real row for the save action. */
+#page-logging .logging-form{
+  overflow:visible !important;
+}
+
+#page-logging .logging-row.notes-row{
+  min-height:132px !important;
+  overflow:visible !important;
+}
+
+#page-logging .logging-notes-shell{
+  min-height:132px !important;
+}
+
+#page-logging .logging-notes{
+  min-height:112px !important;
+  height:auto !important;
+}
+
+#page-logging .logging-actions{
+  position:static !important;
+  flex:0 0 auto !important;
+  min-height:48px !important;
+  margin:14px 0 16px !important;
+  padding:0 !important;
+  z-index:auto !important;
+}
+
+#page-logging .logging-map-pill{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-height:62px !important;
+  padding:7px 12px !important;
+}
+
+#page-logging .logging-map-preview{
+  position:static !important;
+  order:-1;
+  flex:0 0 72px;
+  width:72px !important;
+  height:46px !important;
+  margin:0 !important;
+  transform:none !important;
+  border-radius:7px !important;
+}
+
+#page-logging .logging-map-pill.has-map .pill-label{
+  display:none !important;
+}
+
+#page-logging .logging-map-pill #logMap{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+}
+
+#page-logging .logging-hero{
+  /* Layout-style wrappers can otherwise compress this content row below its
+     two-line copy. Keep the debrief context readable in every form state. */
+  min-height:84px !important;
+  box-sizing:border-box;
+}
+
+#page-logging[data-logging-launch-origin] .logging-hero{
+  position:relative;
+  overflow:hidden;
+  border-width:1px !important;
+}
+
+#page-logging[data-logging-launch-origin] .logging-hero::after{
+  position:absolute;
+  top:10px;
+  right:12px;
+  padding:5px 8px;
+  border:1px solid currentColor;
+  border-radius:999px;
+  font:800 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.12em;
+  pointer-events:none;
+}
+
+#page-logging[data-logging-launch-origin="warmup"] .logging-hero{
+  border-color:rgba(45,212,191,.68) !important;
+  background:
+    radial-gradient(circle at top right, rgba(45,212,191,.22), transparent 42%),
+    linear-gradient(135deg, rgba(9,57,62,.96), rgba(5,12,27,.98)) !important;
+}
+
+#page-logging[data-logging-launch-origin="warmup"] .logging-hero::after{
+  content:"WARM-UP FLOW";
+  color:#5eead4;
+}
+
+#page-logging[data-logging-launch-origin="postmatch"] .logging-hero{
+  border-color:rgba(251,191,36,.68) !important;
+  background:
+    radial-gradient(circle at top right, rgba(251,191,36,.18), transparent 42%),
+    linear-gradient(135deg, rgba(71,37,12,.9), rgba(5,12,27,.98)) !important;
+}
+
+#page-logging[data-logging-launch-origin="postmatch"] .logging-hero::after{
+  content:"POST-MATCH FLOW";
+  color:#fde68a;
+}
+
+@media (max-width:760px){
+  #page-logging .logging-row.notes-row,
+  #page-logging .logging-notes-shell{
+    min-height:148px !important;
+  }
+
+  #page-logging .logging-notes{
+    min-height:128px !important;
+  }
+
+  #page-logging .logging-actions{
+    margin:14px 0 20px !important;
+  }
+
+  #page-logging .logging-map-preview{
+    flex-basis:64px;
+    width:64px !important;
+    height:42px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-map-pill.has-map{
+    display:flex !important;
+    grid-template-columns:none !important;
+    align-items:center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-map-pill.has-map > .logging-map-preview{
+    position:static !important;
+    order:-1;
+    flex:0 0 64px !important;
+    width:64px !important;
+    height:42px !important;
+    transform:none !important;
+  }
+}
+
 @media (max-width:760px){
   #page-logging .focus-wrapper.is-custom-focus-editing{
     display:grid !important;

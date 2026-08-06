@@ -288,6 +288,9 @@ async function run() {
     const mobileMapPreview = await mobile.page.evaluate(() => {
       const pill = document.querySelector("#page-logging .logging-map-pill");
       const preview = document.getElementById("logMapPreview");
+      const label = pill?.querySelector(".pill-label");
+      const notes = document.getElementById("logNotes");
+      const actions = document.querySelector("#page-logging .logging-actions");
       const pillRect = pill?.getBoundingClientRect();
       const previewRect = preview?.getBoundingClientRect();
       const style = preview ? getComputedStyle(preview) : null;
@@ -295,15 +298,20 @@ async function run() {
         pill: pillRect?.toJSON() || null,
         preview: previewRect?.toJSON() || null,
         position: style?.position || "",
-        top: style?.top || "",
-        right: style?.right || "",
+        labelDisplay: label ? getComputedStyle(label).display : "",
+        notes: notes?.getBoundingClientRect().toJSON() || null,
+        actions: actions?.getBoundingClientRect().toJSON() || null,
+        launcherOrigin: getComputedStyle(document.querySelector("#page-logging .logging-hero"), "::after").content || "",
         hidden: preview?.hidden ?? true
       };
     });
     assert.equal(mobileMapPreview.hidden, false, JSON.stringify(mobileMapPreview));
-    assert.equal(mobileMapPreview.position, "absolute", JSON.stringify(mobileMapPreview));
-    assert.ok(mobileMapPreview.preview.right <= mobileMapPreview.pill.right - 4, JSON.stringify(mobileMapPreview));
+    assert.equal(mobileMapPreview.position, "static", JSON.stringify(mobileMapPreview));
+    assert.equal(mobileMapPreview.labelDisplay, "none", JSON.stringify(mobileMapPreview));
+    assert.ok(mobileMapPreview.preview.left >= mobileMapPreview.pill.left + 4, JSON.stringify(mobileMapPreview));
     assert.ok(Math.abs((mobileMapPreview.preview.top + mobileMapPreview.preview.height / 2) - (mobileMapPreview.pill.top + mobileMapPreview.pill.height / 2)) <= 4, JSON.stringify(mobileMapPreview));
+    assert.ok(mobileMapPreview.notes.bottom + 10 <= mobileMapPreview.actions.top, `Notes must reserve space above Save: ${JSON.stringify(mobileMapPreview)}`);
+    assert.match(mobileMapPreview.launcherOrigin, /post-match flow/i, JSON.stringify(mobileMapPreview));
     await mobile.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-mobile-postmatch-expanded.png") });
     await mobile.page.locator('#logRatingRow [data-rating="4"]').click();
     await mobile.page.locator('#logMoodRow [data-mood="Focused"]').click();

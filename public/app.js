@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260805-logging-launcher-sync-02";
+const RANKEDCOACH_APP_BUILD_ID = "20260806-ghost-profile-logging-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -1994,13 +1994,13 @@ function ensureMobileProfilePopover() {
     <div class="mobile-profile-rating-card">
       <div class="profile-rating-dropdown-head">
         <div>
-          <span class="profile-rating-kicker">Building Profile</span>
-          <strong>Profile Rating</strong>
+          <span class="profile-rating-kicker">Account Coverage</span>
+          <strong>Data Depth</strong>
         </div>
         <span class="profile-rating-dropdown-score" id="mobileProfileRatingValue">0%</span>
       </div>
       <div class="profile-rating-copy" id="mobileProfileRatingCopy">Add matches to unlock stronger reads.</div>
-      <div class="profile-rating-meter" aria-label="Profile rating progress"><span id="mobileProfileRatingFill"></span></div>
+      <div class="profile-rating-meter" aria-label="Data depth progress"><span id="mobileProfileRatingFill"></span></div>
       <div class="profile-rating-unlocks" id="mobileProfileRatingUnlocks"></div>
     </div>
   `;
@@ -2410,6 +2410,7 @@ function setDesktopLoggingView(view = "launcher", options = {}) {
     setLoggingLauncherHeader();
     renderLoggingLauncher();
   }
+  if (resolvedView === "form") updateLogMapPreview?.();
   if (options.scroll === true) {
     window.requestAnimationFrame(() => {
       (resolvedView === "launcher"
@@ -2470,6 +2471,7 @@ function setMobileLoggingFormStage(stage = "launcher", options = {}) {
     setLoggingLauncherHeader();
     renderLoggingLauncher();
   }
+  if (resolvedStage === "form") updateLogMapPreview?.();
   ensureMobileLoggingTabs();
   if (options.scroll === true) {
     window.requestAnimationFrame(() => {
@@ -4598,16 +4600,24 @@ function getMapIconUrl(mapName) {
 function updateLogMapPreview(mapName = document.getElementById("logMap")?.value || "") {
   const preview = document.getElementById("logMapPreview");
   const normalized = String(mapName || "").trim();
+  const mapPill = preview?.closest?.(".logging-map-pill");
+  const mapLabel = mapPill?.querySelector?.(".pill-label");
   if (!preview) return;
   if (!normalized) {
     preview.hidden = true;
     preview.removeAttribute("src");
     preview.alt = "";
+    mapPill?.classList?.remove("has-map");
+    mapLabel?.style?.removeProperty("display");
     return;
   }
   preview.src = getMapIconUrl(normalized);
   preview.alt = `${normalized} map`;
   preview.hidden = false;
+  mapPill?.classList?.add("has-map");
+  // The map label is only a placeholder. A few legacy mobile rules force
+  // pill labels visible, so make this state authoritative at the element.
+  mapLabel?.style?.setProperty("display", "none", "important");
 }
 
 function getStatsMapLayoutUrl(mapName) {
@@ -16740,7 +16750,7 @@ function getCoachReadinessModel() {
   copyParts.push(`${authoredLogCount}/5 reflection logs`);
   const copy = nextUnlock
     ? `${copyParts.join(". ")}. Next: ${nextUnlock.label} (${nextUnlock.progressLabel}).`
-    : `${copyParts.join(". ")}. Match-driven reads are unlocked; rating grows with current-season play and your own reflections.`;
+    : `${copyParts.join(". ")}. Match-driven reads are unlocked; data depth grows with current-season play and your own reflections.`;
   return {
     matchCount,
     authoredLogCount,
@@ -20123,7 +20133,10 @@ function positionTooltipToHit(hit, options = {}){
     hideChartTooltip();
     return;
   }
-  const svg = chartRow.querySelector("svg");
+  // Home keeps both chart variants in the DOM and only one is visible at a
+  // time. Pair the tooltip and rank marker with the SVG that owns the hit,
+  // otherwise a mobile tap can move the hidden desktop marker instead.
+  const svg = hit.closest?.("svg") || chartRow.querySelector("svg");
   if(!svg) return;
   const anchorEl = getChartDotFromHit(hit) || hit;
   const viewBox = svg.viewBox.baseVal;
@@ -20184,24 +20197,26 @@ function positionTooltipToHit(hit, options = {}){
     const keepMarkerAnchored = isMobileLayoutViewport();
     const selectedGroupOffsetPx = 0;
     const groupLeft = x - (groupWidthPx / 2) + selectedGroupOffsetPx;
+    const markerBaseScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
     const desiredMarkerScreenX = keepMarkerAnchored
       // The RR point already includes plot padding. Do not edge-clamp a mobile
       // marker: at the final point that turned a rank icon into an in-between
       // marker, which is less useful than letting its arrow sit near the edge.
-      ? x
+      ? markerBaseScreenX
       : Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
     const desiredLeft = keepMarkerAnchored
       ? Math.max(minTipLeft, Math.min(maxTipLeft, x))
       : Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
     const selectedMarkerCx = viewBox.x + (((desiredMarkerScreenX - svgRect.left) / svgRect.width) * viewBox.width);
-    let selectedMarkerCy = keepMarkerAnchored
-      ? Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32))
-      : markerCy;
+    // Selection must not move the rank marker. On mobile the earlier
+    // tooltip collision code re-positioned a marker from above a point to
+    // below it, which made the icon look attached to the neighbouring dot.
+    let selectedMarkerCy = markerCy;
     let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
     const tipHalfHeightChartUnits = ((tipHeight / 2) / svgRect.height) * viewBox.height;
     const selectedNeedsBelow = markerCy < anchorCy
       && (markerCy - tipHalfHeightChartUnits < PAD_TOP + 4 || markerScreenY - (tipHeight / 2) < viewportPad);
-    if (selectedNeedsBelow) {
+    if (selectedNeedsBelow && !keepMarkerAnchored) {
       selectedMarkerCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
       markerScreenY = svgRect.top + (((selectedMarkerCy - viewBox.y) / viewBox.height) * svgRect.height);
     }
@@ -20403,6 +20418,8 @@ const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1"
 const STORAGE_KEY_LAST_SEEN_APP_BUILD = "rankedcoach_last_seen_app_build_v1";
 const STORAGE_KEY_LAST_AUTH_USER = "rankedcoach_last_auth_user_v1";
 const STORAGE_KEY_PENDING_LOG_DELETES = "rankedcoach_pending_log_deletes_v1";
+const STORAGE_KEY_PROFILE_DELETION_TOMBSTONES = "rankedcoach_profile_deletion_tombstones_v1";
+const PROFILE_DELETION_TOMBSTONE_FLAG = "__rankedCoachProfileDeletionTombstone";
 const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
 const AUTH_INIT_TIMEOUT_MS = Math.max(800, Number(globalThis.RANKEDCOACH_AUTH_INIT_TIMEOUT_MS) || 3500);
 const AUTH_ACTION_TIMEOUT_MS = Math.max(1200, Number(globalThis.RANKEDCOACH_AUTH_ACTION_TIMEOUT_MS) || 6500);
@@ -20453,6 +20470,115 @@ function readPendingPersistentLogDeleteIds() {
 }
 
 const pendingPersistentLogDeleteIds = readPendingPersistentLogDeleteIds();
+
+function normalizeProfileDeletionTombstone(value = {}) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id || value.profileId || "").trim();
+  if (!id || value[PROFILE_DELETION_TOMBSTONE_FLAG] !== true) return null;
+  const deletedAt = String(value.deletedAt || value.updatedAt || value.createdAt || nowISO());
+  return {
+    id,
+    [PROFILE_DELETION_TOMBSTONE_FLAG]: true,
+    deletedAt: Number.isFinite(Date.parse(deletedAt)) ? new Date(deletedAt).toISOString() : nowISO()
+  };
+}
+
+function isProfileDeletionTombstone(value = {}) {
+  return Boolean(normalizeProfileDeletionTombstone(value));
+}
+
+function readProfileDeletionTombstones() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILE_DELETION_TOMBSTONES) || "[]");
+    return new Map((Array.isArray(stored) ? stored : [])
+      .map(normalizeProfileDeletionTombstone)
+      .filter(Boolean)
+      .map(record => [record.id, record]));
+  } catch (_error) {
+    return new Map();
+  }
+}
+
+const profileDeletionTombstones = readProfileDeletionTombstones();
+
+function persistProfileDeletionTombstones() {
+  try {
+    localStorage.setItem(STORAGE_KEY_PROFILE_DELETION_TOMBSTONES, JSON.stringify(
+      [...profileDeletionTombstones.values()]
+        .sort((left, right) => Date.parse(left.deletedAt) - Date.parse(right.deletedAt))
+        .slice(-100)
+    ));
+  } catch (_error) {
+    // The in-memory set still protects this tab until cloud state is reachable.
+  }
+}
+
+function rememberProfileDeletionTombstones(records = []) {
+  let changed = false;
+  (Array.isArray(records) ? records : []).forEach(value => {
+    const record = normalizeProfileDeletionTombstone(value);
+    if (!record) return;
+    const existing = profileDeletionTombstones.get(record.id);
+    if (!existing || Date.parse(record.deletedAt) >= Date.parse(existing.deletedAt)) {
+      profileDeletionTombstones.set(record.id, record);
+      changed = true;
+    }
+  });
+  if (changed) persistProfileDeletionTombstones();
+  return changed;
+}
+
+function markProfileDeleted(profileId = "") {
+  const id = String(profileId || "").trim();
+  if (!id) return null;
+  const record = { id, [PROFILE_DELETION_TOMBSTONE_FLAG]: true, deletedAt: nowISO() };
+  rememberProfileDeletionTombstones([record]);
+  return profileDeletionTombstones.get(id) || record;
+}
+
+function getProfileDeletionTombstoneRecords() {
+  return [...profileDeletionTombstones.values()]
+    .sort((left, right) => Date.parse(left.deletedAt) - Date.parse(right.deletedAt));
+}
+
+function splitLiveProfilesFromTombstones(source = []) {
+  const tombstones = [];
+  const candidates = [];
+  (Array.isArray(source) ? source : []).forEach(profile => {
+    if (isProfileDeletionTombstone(profile)) tombstones.push(profile);
+    else candidates.push(profile);
+  });
+  rememberProfileDeletionTombstones(tombstones);
+  const deletedIds = new Set(profileDeletionTombstones.keys());
+  return {
+    profiles: candidates.filter(profile => {
+      const id = String(profile?.id || "").trim();
+      return Boolean(id) && !deletedIds.has(id);
+    }),
+    tombstones: getProfileDeletionTombstoneRecords()
+  };
+}
+
+function removeLocallyDeletedProfiles({ persist = false } = {}) {
+  const deletedIds = new Set(profileDeletionTombstones.keys());
+  if (!deletedIds.size) return false;
+  const nextProfiles = (profiles || []).filter(profile => !deletedIds.has(String(profile?.id || "").trim()));
+  const nextLogs = (logEntries || []).filter(entry => !deletedIds.has(String(entry?.profileId || "").trim()));
+  const profilesChanged = nextProfiles.length !== (profiles || []).length;
+  const logsChanged = nextLogs.length !== (logEntries || []).length;
+  if (profilesChanged) {
+    profiles = nextProfiles;
+    if (!profiles.some(profile => profile.id === activeProfileId)) {
+      activeProfileId = profiles[0]?.id || null;
+    }
+  }
+  if (logsChanged) logEntries = nextLogs;
+  if (persist && (profilesChanged || logsChanged)) {
+    persistProfilesToLocalCache();
+    saveLogEntries({ skipBackend: true });
+  }
+  return profilesChanged || logsChanged;
+}
 
 function persistPendingPersistentLogDeleteIds() {
   try {
@@ -21123,12 +21249,19 @@ function compactProfilesForCloudAccountState(source = []) {
 }
 
 function serializePersistentAccountState(options = {}) {
+  removeLocallyDeletedProfiles({ persist: false });
   const normalizedProfiles = (profiles || []).map(normalizeProfileRecord);
+  const cloudProfiles = compactProfilesForCloudAccountState(normalizedProfiles);
   return {
     schemaVersion: 1,
     savedAt: nowISO(),
     activeProfileId,
-    profiles: options.cloudAccountState ? compactProfilesForCloudAccountState(normalizedProfiles) : normalizedProfiles,
+    // Keep deletion records alongside the compact cloud list. They are never
+    // rendered as profiles, but every device reads them before saving so a
+    // stale full-array write cannot resurrect a removed profile.
+    profiles: options.cloudAccountState
+      ? [...cloudProfiles, ...getProfileDeletionTombstoneRecords()]
+      : normalizedProfiles,
     logEntries: logEntries || [],
     insightFeedbackEntries: insightFeedbackEntries || [],
     themeBuilderState: THEME_BUILDER_LAUNCH_LOCKED ? {} : (typeof themeBuilderState !== "undefined" ? themeBuilderState : {}),
@@ -21257,8 +21390,11 @@ function mergePersistentRowsById(left = [], right = []) {
 
 function mergePersistentAccountStateWithNormalizedTables(appState = {}, normalizedState = null) {
   if (!normalizedState || typeof normalizedState !== "object") return appState;
-  const appProfiles = Array.isArray(appState.profiles) ? appState.profiles : [];
-  const normalizedProfiles = Array.isArray(normalizedState.profiles) ? normalizedState.profiles : [];
+  const appProfileState = splitLiveProfilesFromTombstones(appState.profiles);
+  const normalizedProfileState = splitLiveProfilesFromTombstones(normalizedState.profiles);
+  const appProfiles = appProfileState.profiles;
+  const normalizedProfiles = normalizedProfileState.profiles;
+  const deletedIds = new Set(profileDeletionTombstones.keys());
   const normalizedById = new Map(normalizedProfiles.map(profile => [String(profile?.id || ""), profile]));
   const seenProfileIds = new Set();
   const mergedProfiles = appProfiles.map(profile => {
@@ -21282,8 +21418,13 @@ function mergePersistentAccountStateWithNormalizedTables(appState = {}, normaliz
   return {
     ...appState,
     activeProfileId: appState.activeProfileId || normalizedState.activeProfileId,
-    profiles: mergedProfiles.length ? mergedProfiles : normalizedProfiles,
+    profiles: [
+      ...(mergedProfiles.length ? mergedProfiles : normalizedProfiles)
+        .filter(profile => !deletedIds.has(String(profile?.id || "").trim())),
+      ...getProfileDeletionTombstoneRecords()
+    ],
     logEntries: mergePersistentRowsById(appState.logEntries, normalizedState.logEntries)
+      .filter(entry => !deletedIds.has(String(entry?.profileId || "").trim()))
   };
 }
 
@@ -21293,9 +21434,19 @@ function applyPersistentAccountState(state = {}) {
   let shouldPersistMergedPlaylistWatchHistory = false;
   backendSyncState.applyingRemote = true;
   try {
-    if (Array.isArray(state.profiles) && state.profiles.length) {
-      const remoteProfiles = mergeLocalPlaylistWatchHistoryIntoRemoteProfiles(state.profiles);
-      const remoteHistoryByIdentity = new Map((state.profiles || []).map(profile => [
+    const incomingProfileState = splitLiveProfilesFromTombstones(state.profiles);
+    const incomingProfiles = incomingProfileState.profiles;
+    const deletedIds = new Set(profileDeletionTombstones.keys());
+    state = {
+      ...state,
+      profiles: incomingProfiles,
+      logEntries: Array.isArray(state.logEntries)
+        ? state.logEntries.filter(entry => !deletedIds.has(String(entry?.profileId || "").trim()))
+        : state.logEntries
+    };
+    if (incomingProfiles.length) {
+      const remoteProfiles = mergeLocalPlaylistWatchHistoryIntoRemoteProfiles(incomingProfiles);
+      const remoteHistoryByIdentity = new Map((incomingProfiles || []).map(profile => [
         getPlaylistWatchHistoryProfileIdentity(profile),
         normalizeWatchedPlaylistVideos(profile?.watchedPlaylistVideos)
       ]));
@@ -21846,6 +21997,90 @@ async function savePersistentAccountState(reason = "state") {
   }
 }
 
+async function refreshProfileDeletionTombstonesFromCloud(userId = "") {
+  if (!userId || !supabaseClient?.from) return true;
+  try {
+    const { data, error } = await supabaseClient
+      .from("vip_app_state")
+      .select("profiles_json")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    splitLiveProfilesFromTombstones(data?.profiles_json);
+    // This is the stale-session guard. If another device deleted a profile,
+    // remove it from this device before this device serializes its full state.
+    removeLocallyDeletedProfiles({ persist: true });
+    return true;
+  } catch (error) {
+    // A transient read failure must not discard a local change. The next save
+    // retry will read the authoritative deletion set before it writes.
+    console.warn("Supabase profile deletion guard read failed", getPersistentSupabaseErrorDetails(error, {
+      table: "vip_app_state",
+      operation: "select-profile-deletions"
+    }));
+    return false;
+  }
+}
+
+async function deletePersistentProfileData(profileId = "", reason = "profile-delete") {
+  const deletedProfileId = String(profileId || "").trim();
+  if (!deletedProfileId || !currentAuthUser?.id || !supabaseClient?.from) return false;
+
+  const userId = String(currentAuthUser.id || "").trim();
+  if (!userId) return false;
+  markProfileDeleted(deletedProfileId);
+
+  let appStateSaved = false;
+  try {
+    const { data, error } = await supabaseClient
+      .from("vip_app_state")
+      .select("profiles_json, active_profile_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+
+    const remoteProfiles = splitLiveProfilesFromTombstones(data?.profiles_json).profiles
+      .filter(profile => String(profile?.id || "").trim() !== deletedProfileId);
+    const nextActiveProfileId = String(data?.active_profile_id || "").trim() === deletedProfileId
+      ? (activeProfileId || null)
+      : (data?.active_profile_id || activeProfileId || null);
+    const { error: upsertError } = await supabaseClient
+      .from("vip_app_state")
+      .upsert({
+        user_id: userId,
+        active_profile_id: nextActiveProfileId,
+        profiles_json: [...remoteProfiles, ...getProfileDeletionTombstoneRecords()],
+        last_save_reason: reason,
+        updated_at: nowISO()
+      }, { onConflict: "user_id" });
+    if (upsertError) throw upsertError;
+    appStateSaved = true;
+  } catch (error) {
+    reportPersistentAccountSaveFailure("Supabase profile deletion tombstone save failed", error, {
+      table: "vip_app_state",
+      operation: "profile-delete-tombstone",
+      reason,
+      profileId: deletedProfileId
+    });
+  }
+
+  const deletionResults = await Promise.all([
+    supabaseClient.from("match_snapshots").delete().eq("user_id", userId).eq("profile_id", deletedProfileId),
+    supabaseClient.from("reflection_logs").delete().eq("user_id", userId).eq("profile_id", deletedProfileId)
+  ]);
+  const cleanupFailed = deletionResults.some(result => result?.error);
+  if (cleanupFailed) {
+    deletionResults.filter(result => result?.error).forEach(result => {
+      reportPersistentAccountSaveFailure("Supabase deleted-profile row cleanup failed", result.error, {
+        operation: "profile-delete-cleanup",
+        reason,
+        profileId: deletedProfileId
+      });
+    });
+  }
+  return appStateSaved && !cleanupFailed;
+}
+
 async function performPersistentAccountStateSave(reason = "state") {
   if (backendSyncState.applyingRemote || backendSyncState.hydratingUserId || !currentAuthUser?.id || !supabaseClient?.auth) return;
   if (isAuthReachabilityOfflineCooldownActive()) {
@@ -21883,6 +22118,8 @@ async function performPersistentAccountStateSave(reason = "state") {
     publishRankedCoachSyncDiagnostics?.("cloud-save-auth-unavailable");
     return false;
   }
+
+  await refreshProfileDeletionTombstonesFromCloud(user.id);
 
   logEntries = sanitizeStoredLogEntries(logEntries, {
     signedIn: true,
@@ -23672,9 +23909,10 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
   // Mobile has enough right plot padding for the marker itself. Keeping it at
   // the exact RR point is more important than shifting it inward, which made
   // a fresh-rank icon read as though it belonged to the previous match.
-  const markerX = isMobileLayoutViewport()
-    ? point.x
-    : Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x));
+  // A rank marker is a label for this exact match point. Constraining it to
+  // the plot edge can make the newest rank icon look attached to the prior
+  // dot, so retain the point's real X coordinate on every viewport.
+  const markerX = point.x;
   const markerY = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, point.y + (markerBelow ? 32 : -32)));
   const arrow = direction === "down" ? "↓" : "↑";
   const arrowX = markerX - 19;
@@ -51166,8 +51404,11 @@ function loadProfiles(){
 
     profiles.push(normalizeProfileRecord(defaultProfile));
     activeProfileId = defaultProfile.id;
-
-    saveProfiles();
+    // Do not queue a cloud write before Supabase has told us whether this
+    // browser belongs to an existing signed-in account. The in-memory guest
+    // profile keeps the tutorial usable, while a real remote account fully
+    // replaces it during handleSignedInUser().
+    persistProfilesToLocalCache();
   }
 
   logEntries = readLocalLogEntries({ profileId: activeProfileId });
@@ -51389,15 +51630,19 @@ async function requestDeleteProfile(id) {
   const confirmed = await openProfileDeleteConfirmModal(profile);
   if (!confirmed) return;
 
-  await runProfileCleanupTask(() => {
-    deleteProfile(id, { cleanup: true });
-  });
+  await runProfileCleanupTask(() => deleteProfile(id, { cleanup: true }));
 }
 
-function deleteProfile(id, options = {}){
+async function deleteProfile(id, options = {}){
 
   const deletedProfileId = String(id || "");
   const activeBeforeDelete = activeProfileId === id;
+  if (!deletedProfileId || !profiles.some(profile => profile.id === id)) return false;
+
+  // Record the deletion before any queued save can serialize this array.
+  // The same tombstone is persisted directly below and read by every device
+  // before its next unrelated save.
+  markProfileDeleted(deletedProfileId);
 
   profiles = profiles.filter(p => p.id !== id);
 
@@ -51416,6 +51661,13 @@ function deleteProfile(id, options = {}){
   } else {
     renderProfilesUI();
   }
+
+  const cloudDeleted = await deletePersistentProfileData(deletedProfileId);
+  if (!cloudDeleted && currentAuthUser?.id) {
+    backendSyncState.pendingSaveReason = "profile-delete";
+    schedulePersistentAccountSaveRetry("profile-delete");
+  }
+  return true;
 
 }
 

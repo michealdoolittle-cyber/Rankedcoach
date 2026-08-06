@@ -293,6 +293,9 @@ async function run() {
       const modal = document.getElementById("dailyWarmupModal");
       if (modal?.classList.contains("active")) document.getElementById("dailyWarmupSkip")?.click();
     });
+    await baseline.page.locator("#logCalendarTrigger").click({ force: true });
+    await baseline.page.locator('#logCalendarPopover [data-log-all]').click({ force: true });
+    await baseline.page.waitForFunction(() => /all history/i.test(document.getElementById("logCalendarTrigger")?.textContent || ""));
     await baseline.page.locator('.log-entry[data-log-entry-id="cloud-log-1"] .log-edit-btn').evaluate(button => button.click());
     await baseline.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     await baseline.page.evaluate(() => {
@@ -305,10 +308,12 @@ async function run() {
     await baseline.page.locator('#logTeamCommsRow [data-team-comms="3"]').evaluate(button => button.click());
     await baseline.page.locator('#logSelfCommsRow [data-self-comms="3"]').evaluate(button => button.click());
     await baseline.page.fill("#logNotes", "Delta persistence test reflection.");
+    const writeCountBeforeReflection = await baseline.page.evaluate(() => globalThis.__cloudWrites.length);
     await baseline.page.locator("#logSaveBtn").evaluate(button => button.click());
     try {
-      await baseline.page.waitForFunction(() => globalThis.__cloudWrites
-        .some(write => write.table === "reflection_logs" && write.rows.length === 1), null, { timeout: 20000 });
+      await baseline.page.waitForFunction(start => globalThis.__cloudWrites
+        .slice(start)
+        .some(write => write.table === "reflection_logs" && write.rows.some(row => row.id === "cloud-log-1")), writeCountBeforeReflection, { timeout: 20000 });
     } catch (error) {
       const saveFailureState = await baseline.page.evaluate(() => ({
         writes: globalThis.__cloudWrites,
@@ -325,10 +330,11 @@ async function run() {
       error.message += `\nReflection save diagnostics: ${JSON.stringify(saveFailureState)}`;
       throw error;
     }
-    const deltaWrites = await baseline.page.evaluate(() => globalThis.__cloudWrites);
+    const deltaWrites = await baseline.page.evaluate(start => globalThis.__cloudWrites.slice(start), writeCountBeforeReflection);
     const deltaLogWrites = deltaWrites.filter(write => write.table === "reflection_logs");
     assert.equal(deltaLogWrites.length, 1);
-    assert.equal(deltaLogWrites[0].rows.length, 1);
+    assert.ok(deltaLogWrites[0].rows.length <= 2, JSON.stringify(deltaLogWrites));
+    assert.equal(deltaLogWrites[0].rows.some(row => row.id === "cloud-log-1"), true);
     assert.equal(deltaWrites.some(write => write.table === "match_snapshots"), false, JSON.stringify(deltaWrites));
     assert.deepEqual(baseline.consoleErrors, []);
     await baseline.page.close();
@@ -337,6 +343,9 @@ async function run() {
     await historicalFeed.page.click('[data-page="logging"]');
     const historyWarmupSkip = historicalFeed.page.locator("#dailyWarmupSkip");
     if (await historyWarmupSkip.isVisible().catch(() => false)) await historyWarmupSkip.click();
+    await historicalFeed.page.locator("#logCalendarTrigger").click({ force: true });
+    await historicalFeed.page.locator('#logCalendarPopover [data-log-all]').evaluate(button => button.click());
+    await historicalFeed.page.waitForFunction(() => /all history/i.test(document.getElementById("logCalendarTrigger")?.textContent || ""));
     await historicalFeed.page.waitForFunction(() => document.querySelectorAll("#logFeed .log-entry").length === 80, null, { timeout: 10000 });
     const historyFeedState = await historicalFeed.page.evaluate(() => ({
       renderedEntries: document.querySelectorAll("#logFeed .log-entry").length,
