@@ -176,6 +176,8 @@ async function run() {
       localStorage.getItem("valtracker_log_entries_v2:guest") || "[]"
     ));
     await page.locator('[data-logging-desktop-launch="postmatch"]').click();
+    await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
+    await page.locator('[data-logging-embedded-action="start-postmatch"]').click();
     await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
     assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
     const logsAfterPendingRollSave = await page.evaluate(() => JSON.parse(

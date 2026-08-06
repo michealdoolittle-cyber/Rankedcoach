@@ -183,7 +183,6 @@ async function run() {
   fs.mkdirSync(screenshotDir, { recursive: true });
   try {
     const desktop = await openPage(browser, { width: 1440, height: 900 });
-    await desktop.page.evaluate(() => document.getElementById("dailyWarmupModal")?.remove());
     await desktop.page.locator('.nav-btn[data-page="logging"]').click({ force: true });
     await desktop.page.evaluate(() => document.querySelector('.nav-btn[data-page="logging"]')?.click());
     await desktop.page.waitForFunction(() => {
@@ -214,16 +213,18 @@ async function run() {
     }));
     assert.equal(postMatchState.disabled, "false", JSON.stringify(postMatchState));
     await desktop.page.locator('[data-logging-desktop-launch="postmatch"]').click();
-    await desktop.page.waitForTimeout(250);
+    await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
     const postMatchOpenState = await desktop.page.evaluate(() => ({
       view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
-      launchOrigin: document.getElementById("page-logging")?.dataset.loggingLaunchOrigin || "",
-      form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display,
-      formBorder: getComputedStyle(document.querySelector("#page-logging .logging-form")).borderTopWidth
+      embedded: document.getElementById("loggingPostMatchEmbedded")?.hidden === false,
+      form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display
     }));
-    assert.equal(postMatchOpenState.view, "form", `${JSON.stringify(postMatchOpenState)} ${JSON.stringify(desktop.consoleErrors)}`);
-    assert.equal(postMatchOpenState.launchOrigin, "postmatch", JSON.stringify(postMatchOpenState));
-    assert.notEqual(postMatchOpenState.formBorder, "0px", JSON.stringify(postMatchOpenState));
+    assert.equal(postMatchOpenState.view, "launcher", `${JSON.stringify(postMatchOpenState)} ${JSON.stringify(desktop.consoleErrors)}`);
+    assert.equal(postMatchOpenState.embedded, true, JSON.stringify(postMatchOpenState));
+    assert.equal(postMatchOpenState.form, "none", JSON.stringify(postMatchOpenState));
+    await desktop.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-desktop-postmatch-embedded.png") });
+    await desktop.page.locator('[data-logging-embedded-action="start-postmatch"]').click();
+    await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     assert.equal(await desktop.page.locator("#logMap").inputValue(), "Ascent");
     assert.match(await desktop.page.locator("#focusPreviewText").innerText(), /crosshair placement/i);
     await desktop.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-desktop-postmatch-expanded.png") });
@@ -240,9 +241,13 @@ async function run() {
     assert.equal(await desktop.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), null);
 
     await desktop.page.locator('[data-logging-desktop-launch="warmup"]').click({ force: true });
-    await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
-    assert.match(await desktop.page.locator("#loggingCardTitle").innerText(), /warm-up reflection/i);
-    assert.equal(await desktop.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), "warmup");
+    await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "warmup");
+    assert.equal(await desktop.page.locator("#loggingLauncherEmbedded .daily-warmup-card").isVisible(), true);
+    assert.equal(await desktop.page.locator("#page-logging .logging-form").isVisible(), false);
+    await desktop.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-desktop-warmup-embedded.png") });
+    await desktop.page.locator('[data-warmup-drill="burst-peeking"]').click();
+    await desktop.page.locator("#dailyWarmupSave").click();
+    await desktop.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "launcher");
 
     // Today's session is the normal default, while All History remains an
     // explicit selection and must surface an older completed reflection.
@@ -258,7 +263,6 @@ async function run() {
     assert.match(await desktop.page.locator("#logCalendarTrigger").innerText(), /today/i, "The player can explicitly return to today's session");
 
     const mobile = await openPage(browser, { width: 390, height: 844 });
-    await mobile.page.evaluate(() => document.getElementById("dailyWarmupModal")?.remove());
     await mobile.page.locator('[data-mobile-page="logging"]').click({ force: true });
     await mobile.page.evaluate(() => document.querySelector('[data-mobile-page="logging"]')?.click());
     await mobile.page.waitForFunction(() => {
@@ -280,11 +284,16 @@ async function run() {
     await mobile.page.screenshot({ path: path.join(screenshotDir, "logging-mobile-launcher.png"), fullPage: true });
 
     await mobile.page.locator('[data-logging-desktop-launch="postmatch"]').click();
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
+    assert.equal(await mobile.page.locator("#loggingPostMatchEmbedded").isVisible(), true);
+    assert.equal(await mobile.page.locator("#page-logging .logging-form").isVisible(), false);
+    await mobile.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-mobile-postmatch-embedded.png") });
+    await mobile.page.locator('[data-logging-embedded-action="start-postmatch"]').click();
     await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
     assert.equal(await mobile.page.locator("#loggingDesktopLauncher").isVisible(), false);
     assert.equal(await mobile.page.locator("#page-logging .logging-form").isVisible(), true);
     assert.equal(await mobile.page.locator("#logMap").inputValue(), "Ascent");
-    assert.equal(await mobile.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), "postmatch");
+    assert.equal(await mobile.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), null);
     const mobileMapPreview = await mobile.page.evaluate(() => {
       const pill = document.querySelector("#page-logging .logging-map-pill");
       const preview = document.getElementById("logMapPreview");
@@ -301,7 +310,6 @@ async function run() {
         labelDisplay: label ? getComputedStyle(label).display : "",
         notes: notes?.getBoundingClientRect().toJSON() || null,
         actions: actions?.getBoundingClientRect().toJSON() || null,
-        launcherOrigin: getComputedStyle(document.querySelector("#page-logging .logging-hero"), "::after").content || "",
         hidden: preview?.hidden ?? true
       };
     });
@@ -311,7 +319,6 @@ async function run() {
     assert.ok(mobileMapPreview.preview.left >= mobileMapPreview.pill.left + 4, JSON.stringify(mobileMapPreview));
     assert.ok(Math.abs((mobileMapPreview.preview.top + mobileMapPreview.preview.height / 2) - (mobileMapPreview.pill.top + mobileMapPreview.pill.height / 2)) <= 4, JSON.stringify(mobileMapPreview));
     assert.ok(mobileMapPreview.notes.bottom + 10 <= mobileMapPreview.actions.top, `Notes must reserve space above Save: ${JSON.stringify(mobileMapPreview)}`);
-    assert.match(mobileMapPreview.launcherOrigin, /post-match flow/i, JSON.stringify(mobileMapPreview));
     await mobile.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-mobile-postmatch-expanded.png") });
     await mobile.page.locator('#logRatingRow [data-rating="4"]').click();
     await mobile.page.locator('#logMoodRow [data-mood="Focused"]').click();
@@ -324,8 +331,27 @@ async function run() {
     assert.equal(await mobile.page.locator("#page-logging").getAttribute("data-logging-launch-origin"), null);
 
     await mobile.page.locator('[data-logging-desktop-launch="warmup"]').click();
-    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
-    assert.match(await mobile.page.locator("#loggingCardTitle").innerText(), /warm-up reflection/i);
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "warmup");
+    await mobile.page.waitForTimeout(100);
+    assert.equal(await mobile.page.locator("#loggingLauncherEmbedded .daily-warmup-card").isVisible(), true);
+    const mobileInlineWarmupGeometry = await mobile.page.evaluate(() => {
+      const header = document.querySelector(".app-header")?.getBoundingClientRect();
+      const host = document.getElementById("loggingLauncherEmbedded")?.getBoundingClientRect();
+      const card = document.querySelector("#loggingLauncherEmbedded .daily-warmup-card")?.getBoundingClientRect();
+      return {
+        header: header?.toJSON() || null,
+        host: host?.toJSON() || null,
+        card: card?.toJSON() || null
+      };
+    });
+    assert.ok(mobileInlineWarmupGeometry.host && mobileInlineWarmupGeometry.card, JSON.stringify(mobileInlineWarmupGeometry));
+    assert.ok(mobileInlineWarmupGeometry.card.top >= mobileInlineWarmupGeometry.host.top - 1, JSON.stringify(mobileInlineWarmupGeometry));
+    assert.ok(mobileInlineWarmupGeometry.card.bottom <= mobileInlineWarmupGeometry.host.bottom + 1, JSON.stringify(mobileInlineWarmupGeometry));
+    assert.ok(mobileInlineWarmupGeometry.card.top >= mobileInlineWarmupGeometry.header.bottom, JSON.stringify(mobileInlineWarmupGeometry));
+    await mobile.page.locator("#page-logging .logging-card").screenshot({ path: path.join(screenshotDir, "logging-mobile-warmup-embedded.png") });
+    await mobile.page.locator('[data-warmup-drill="burst-peeking"]').click();
+    await mobile.page.locator("#dailyWarmupSave").click();
+    await mobile.page.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "launcher");
 
     await mobile.page.locator('[data-mobile-page="stats"]').click({ force: true });
     await mobile.page.evaluate(() => {

@@ -153,15 +153,16 @@ async function seedProfile(page, id) {
 }
 
 async function submitManualReflection(page, { agent, focus, map, rating, mood, notes }) {
-  if ((page.viewportSize()?.width || 0) > 820) {
-    await page.locator('[data-logging-desktop-launch="postmatch"]').evaluate(button => button.click());
-    const loggingView = await page.evaluate(() => ({
-      view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
-      form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display,
-      mobile: document.body.classList.contains("is-mobile-layout")
-    }));
-    assert.equal(loggingView.view, "form", JSON.stringify(loggingView));
-  }
+  await page.locator('[data-logging-desktop-launch="postmatch"]').evaluate(button => button.click());
+  await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
+  await page.locator('[data-logging-embedded-action="start-postmatch"]').evaluate(button => button.click());
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("#page-logging .logging-form")).display !== "none");
+  const loggingView = await page.evaluate(() => ({
+    view: document.getElementById("page-logging")?.dataset.loggingDesktopView || "",
+    form: getComputedStyle(document.querySelector("#page-logging .logging-form")).display,
+    mobile: document.body.classList.contains("is-mobile-layout")
+  }));
+  assert.notEqual(loggingView.form, "none", JSON.stringify(loggingView));
   await page.evaluate(agentName => {
     const display = document.getElementById("logAgentDisplay");
     if (display) display.dataset.agent = agentName;
@@ -390,8 +391,8 @@ async function run() {
     }), warmupGameId);
     assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).count(), 1, JSON.stringify(warmupMarkerDebug));
     assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 0);
-    await page.locator('[data-logging-desktop-launch="warmup"]').evaluate(button => button.click());
-    await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
+    await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-edit-btn`).click();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector("#page-logging .logging-form")).display !== "none");
     await page.locator("#loggingTrainingMenuBtn").evaluate(button => button.click());
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     assert.equal(await page.locator("#dailyWarmupGrid").isVisible(), false);
@@ -513,10 +514,8 @@ async function run() {
     await mobile.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     await mobile.waitForTimeout(3000);
     await mobile.locator('[data-logging-desktop-launch="warmup"]').click();
-    await mobile.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
-    await mobile.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-mobile.png") });
-    await mobile.click("#loggingTrainingMenuBtn");
-    await mobile.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
+    await mobile.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "warmup");
+    await mobile.locator("#loggingLauncherEmbedded .daily-warmup-card").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-mobile.png") });
     assert.equal(await mobile.locator("[data-warmup-drill].is-randomized").count(), 0);
     await mobile.click('[data-warmup-drill="head-tracking"]');
     await mobile.click("#dailyWarmupSave");
@@ -529,8 +528,10 @@ async function run() {
       notes: "Mobile manual game after warm-up."
     });
     assert.ok(mobileTrainingGameId);
-    await mobile.locator('[data-logging-desktop-launch="warmup"]').click();
-    await mobile.waitForFunction(() => document.getElementById("page-logging")?.dataset.mobileLoggingFormStage === "form");
+    await mobile.locator('[data-mobile-logging-view="feed"]').click();
+    await mobile.waitForFunction(expectedId => Boolean(document.querySelector(`.log-entry[data-log-entry-id="${expectedId}"]`)), mobileTrainingGameId);
+    await mobile.locator(`.log-entry[data-log-entry-id="${mobileTrainingGameId}"] .log-edit-btn`).click();
+    await mobile.waitForFunction(() => getComputedStyle(document.querySelector("#page-logging .logging-form")).display !== "none");
     await mobile.click("#loggingTrainingMenuBtn");
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });

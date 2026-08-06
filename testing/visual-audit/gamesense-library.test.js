@@ -273,9 +273,39 @@ async function seed(page, profileId) {
   await page.addInitScript(id => {
     const now = new Date();
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const createdAt = now.toISOString();
+    const match = {
+      id: "library-pending-match",
+      matchId: "library-pending-match",
+      source: "henrik",
+      createdAt,
+      agent: "Sova",
+      role: "Initiator",
+      map: "Ascent",
+      result: "win",
+      metadata: { matchId: "library-pending-match", agent: "Sova", map: "Ascent", result: "win" }
+    };
+    const pendingReflection = {
+      id: `ranked-match-log:${id}:library-pending-match`,
+      matchId: "library-pending-match",
+      profileId: id,
+      source: "henrik-match-placeholder",
+      isMatchPlaceholder: true,
+      isPlayerAuthored: false,
+      createdAt,
+      agent: "Sova",
+      role: "Initiator",
+      map: "Ascent",
+      focus: "",
+      result: "win",
+      notes: ""
+    };
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", id);
-    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{ id, name: "Library Test", accountName: "Library Test", region: "NA", matches: [] }]));
+    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{ id, name: "Library Test", accountName: "Library Test", region: "NA", matches: [match] }]));
+    localStorage.setItem("valtracker_log_entries_v2:guest", JSON.stringify([pendingReflection]));
+    localStorage.setItem("valtracker_log_entries_v1", JSON.stringify([pendingReflection]));
+    localStorage.setItem("valtracker_logs_v1", JSON.stringify([pendingReflection]));
     // This suite exercises Library rendering, not the once-per-day entrance
     // choreography. Bypass that independent sequence so it cannot leave a
     // newly selected Library page intentionally staged at opacity zero.
@@ -1659,7 +1689,9 @@ async function run() {
 
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.locator("#page-logging.active").waitFor({ state: "visible" });
-    await desktop.locator('[data-logging-desktop-launch="warmup"]').evaluate(button => button.click());
+    await desktop.locator('[data-logging-desktop-launch="postmatch"]').evaluate(button => button.click());
+    await desktop.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
+    await desktop.locator('[data-logging-embedded-action="start-postmatch"]').click();
     await desktop.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
     await desktop.locator("#logFocusCustomTrigger").click();
     assert.equal(await desktop.locator("#logFocusCustomMenu").isVisible(), true);

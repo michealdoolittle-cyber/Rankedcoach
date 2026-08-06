@@ -293,9 +293,11 @@ async function activateCoveragePage(page, pageKey) {
 async function ensureLoggingFormSurface(page) {
   const viewport = page.viewportSize();
   if (!viewport || viewport.width <= 820) return;
-  const launcher = page.locator('[data-logging-desktop-launch="warmup"]');
+  const launcher = page.locator('[data-logging-desktop-launch="postmatch"]');
   if (!await launcher.isVisible().catch(() => false)) return;
   await launcher.evaluate(button => button.click());
+  await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingLauncherEmbed === "postmatch");
+  await page.locator('[data-logging-embedded-action="start-postmatch"]').click();
   await page.waitForFunction(() => document.getElementById("page-logging")?.dataset.loggingDesktopView === "form");
   await page.locator(".logging-hero").waitFor({ state: "visible", timeout: 5000 });
 }
@@ -1052,13 +1054,43 @@ async function run() {
     await page.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await page.addInitScript(() => {
       if (sessionStorage.getItem("layout-test-seeded") === "true") return;
+      const createdAt = new Date().toISOString();
+      const match = {
+        id: "layout-pending-match",
+        matchId: "layout-pending-match",
+        source: "henrik",
+        createdAt,
+        agent: "Sova",
+        role: "Initiator",
+        map: "Ascent",
+        result: "win",
+        metadata: { matchId: "layout-pending-match", agent: "Sova", map: "Ascent", result: "win" }
+      };
+      const pendingReflection = {
+        id: "ranked-match-log:layout-one:layout-pending-match",
+        matchId: "layout-pending-match",
+        profileId: "layout-one",
+        source: "henrik-match-placeholder",
+        isMatchPlaceholder: true,
+        isPlayerAuthored: false,
+        createdAt,
+        agent: "Sova",
+        role: "Initiator",
+        map: "Ascent",
+        focus: "",
+        result: "win",
+        notes: ""
+      };
       const profiles = [
-        { id: "layout-one", name: "Layout One", accountName: "Guest", riotId: "", region: "NA", matches: [], themeKey: "default", bannerStyle: "rc-redline", lastWarmupPromptDate: new Date().toISOString().slice(0, 10) },
+        { id: "layout-one", name: "Layout One", accountName: "Guest", riotId: "", region: "NA", matches: [match], themeKey: "default", bannerStyle: "rc-redline", lastWarmupPromptDate: new Date().toISOString().slice(0, 10) },
         { id: "layout-two", name: "Layout Two", accountName: "Guest", riotId: "", region: "NA", matches: [], themeKey: "default", lastWarmupPromptDate: new Date().toISOString().slice(0, 10) }
       ];
       localStorage.setItem("valtracker_entry_choice_v1", "guest");
       localStorage.setItem("valtracker_active_profile_id", "layout-one");
       localStorage.setItem("valtracker_profiles_v1", JSON.stringify(profiles));
+      localStorage.setItem("valtracker_log_entries_v2:guest", JSON.stringify([pendingReflection]));
+      localStorage.setItem("valtracker_log_entries_v1", JSON.stringify([pendingReflection]));
+      localStorage.setItem("valtracker_logs_v1", JSON.stringify([pendingReflection]));
       sessionStorage.setItem("layout-test-seeded", "true");
     });
     await page.addInitScript(() => {

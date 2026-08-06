@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260806-progressive-sync-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260806-theme-launcher-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -827,6 +827,9 @@ function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.g
 function openDailyTrainingMenu(options = {}) {
   const profile = getActiveProfile?.();
   if (!profile?.id) return false;
+  // The launcher reuses this exact card inline. Put it back before opening the
+  // global modal so there is always one source of truth for warm-up controls.
+  if (isDailyTrainingEmbeddedInLogging()) restoreDailyTrainingModalFromLoggingLauncher();
   const date = String(options.date || formatLocalDateKey());
   const record = getDailyWarmupRecord(profile, date);
   const mode = options.mode || (isDailyWarmupCompleted(record) ? "postgame" : "warmup");
@@ -878,6 +881,7 @@ function scheduleDailyWarmupCheck(delay = 700) {
 
 function skipDailyWarmupCheck() {
   const profile = getActiveProfile?.();
+  const wasEmbedded = isDailyTrainingEmbeddedInLogging();
   const date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey();
   if (profile) {
     writeDailyWarmupRecord(profile, {
@@ -892,12 +896,17 @@ function skipDailyWarmupCheck() {
     });
   }
   hideModalById?.("dailyWarmupModal");
+  if (wasEmbedded) returnToLoggingLauncherAfterEmbeddedExperience();
   showToast?.("Warm-up skipped for today. Queue when you feel ready.", { tone: "neutral" });
   queuePostWarmupEntranceReplay({ forceCurrentPage: false, delayMs: 90 });
 }
 
 function closeDailyTrainingMenu() {
   const modal = document.getElementById("dailyWarmupModal");
+  if (isDailyTrainingEmbeddedInLogging()) {
+    returnToLoggingLauncherAfterEmbeddedExperience();
+    return;
+  }
   if (modal?.dataset.dismissBehavior === "skip" && modal?.dataset.trainingMode === "warmup") {
     skipDailyWarmupCheck();
     return;
@@ -959,6 +968,7 @@ function saveDailyWarmupCheck() {
   const profile = getActiveProfile?.();
   if (!profile) return;
   const modal = document.getElementById("dailyWarmupModal");
+  const wasEmbedded = isDailyTrainingEmbeddedInLogging();
   const date = modal?.dataset.trainingDate || formatLocalDateKey();
   const existingRecord = getDailyWarmupRecord(profile, date);
   const shouldReplayPostWarmupEntrance = modal?.dataset.dismissBehavior === "skip"
@@ -986,6 +996,7 @@ function saveDailyWarmupCheck() {
         warmupFeedMarkerHidden: true
       });
       hideModalById?.("dailyWarmupModal");
+      if (wasEmbedded) returnToLoggingLauncherAfterEmbeddedExperience();
       renderLoggingTrainingMenuState(getActiveProfile());
       renderLogFeed?.({ force: true });
       showToast?.("Warm-up marker removed from this session.", { tone: "neutral" });
@@ -1009,6 +1020,7 @@ function saveDailyWarmupCheck() {
   });
   persistWarmupTrainingEntry(getActiveProfile(), date);
   hideModalById?.("dailyWarmupModal");
+  if (wasEmbedded) returnToLoggingLauncherAfterEmbeddedExperience();
   renderLoggingTrainingMenuState(getActiveProfile());
   renderLogFeed?.({ force: true });
   showToast?.(`Warm-up saved: ${record?.drillsSelected?.length || 0} drill${record?.drillsSelected?.length === 1 ? "" : "s"}${dmTdmSelfReported ? " plus DM/TDM" : ""}.`, { tone: "success" });
@@ -2395,14 +2407,137 @@ function setLoggingLauncherHeader() {
   if (cardSub) cardSub.textContent = "Choose a warm-up or synced match reflection.";
 }
 
+function getLoggingLauncherEmbeddedHost() {
+  return document.getElementById("loggingLauncherEmbedded");
+}
+
+function getLoggingPostMatchEmbeddedView() {
+  return document.getElementById("loggingPostMatchEmbedded");
+}
+
+function isDailyTrainingEmbeddedInLogging() {
+  const host = getLoggingLauncherEmbeddedHost();
+  return Boolean(host?.querySelector(".daily-warmup-card"));
+}
+
+function restoreDailyTrainingModalFromLoggingLauncher() {
+  const host = getLoggingLauncherEmbeddedHost();
+  const postMatch = getLoggingPostMatchEmbeddedView();
+  const modal = document.getElementById("dailyWarmupModal");
+  const card = host?.querySelector(".daily-warmup-card");
+  if (card && modal) modal.appendChild(card);
+  if (host) {
+    host.hidden = true;
+    host.replaceChildren();
+  }
+  if (postMatch) postMatch.hidden = true;
+  document.getElementById("loggingDesktopLauncher")?.classList.remove("is-embedded");
+  document.getElementById("page-logging")?.removeAttribute("data-logging-launcher-embed");
+}
+
+function returnToLoggingLauncherAfterEmbeddedExperience() {
+  const page = document.getElementById("page-logging");
+  restoreDailyTrainingModalFromLoggingLauncher();
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("launcher", { preserveEmbedded: true });
+  } else if (isMobileLayoutViewport()) {
+    setMobileLoggingFormStage("launcher", { preserveEmbedded: true });
+  }
+  page?.removeAttribute("data-logging-launch-origin");
+}
+
+function scrollLoggingLauncherIntoView() {
+  window.requestAnimationFrame(() => {
+    const page = document.getElementById("page-logging");
+    const target = page?.querySelector(".logging-card") || page;
+    target?.scrollIntoView?.({ behavior: "auto", block: "start" });
+  });
+}
+
+function openLoggingWarmupExperience() {
+  const profile = getActiveProfile?.();
+  const launcher = document.getElementById("loggingDesktopLauncher");
+  const host = getLoggingLauncherEmbeddedHost();
+  const modal = document.getElementById("dailyWarmupModal");
+  const card = modal?.querySelector(".daily-warmup-card");
+  if (!profile?.id || !launcher || !host || !modal || !card) return false;
+
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("launcher", { preserveEmbedded: true });
+  } else {
+    setMobileLoggingFormStage("launcher", { preserveEmbedded: true });
+  }
+  restoreDailyTrainingModalFromLoggingLauncher();
+  setDailyTrainingModalMode("warmup", { date: formatLocalDateKey(), dismissBehavior: "close" });
+  resetDailyWarmupModal(profile, formatLocalDateKey());
+  modal.style.display = "none";
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  host.appendChild(card);
+  host.hidden = false;
+  launcher.classList.add("is-embedded");
+  document.getElementById("page-logging")?.setAttribute("data-logging-launcher-embed", "warmup");
+  scrollLoggingLauncherIntoView();
+  host.querySelector("#dailyWarmupTitle")?.focus?.({ preventScroll: true });
+  return true;
+}
+
+function renderLoggingPostMatchEmbeddedView(pending = getNewestPendingMatchReflection()) {
+  const target = document.getElementById("loggingPostMatchEmbedMatch");
+  if (!target) return;
+  const match = pending ? getLogEntryMatchContext(pending)?.match : null;
+  const agent = String(pending?.agent || match?.agent || "").trim() || "Your agent";
+  const map = String(pending?.map || match?.map || match?.metadata?.map || "").trim() || "Synced map";
+  const result = String(pending?.result || match?.metadata?.result || match?.result || "").trim();
+  const playedAt = match?.metadata?.game_start_patched || match?.metadata?.started_at || match?.playedAt || pending?.createdAt || "";
+  const date = playedAt ? formatDateLabel(playedAt) : "Latest synced match";
+  const details = [agent, map, result ? result.toUpperCase() : "Ready for reflection"].filter(Boolean);
+  target.innerHTML = `
+    <span class="logging-postmatch-match-kicker">Ready to review</span>
+    <strong>${escapeHtml(details.join(" · "))}</strong>
+    <span>${escapeHtml(date)}</span>
+  `;
+}
+
+function openLoggingPostMatchExperience() {
+  const pending = getNewestPendingMatchReflection();
+  const launcher = document.getElementById("loggingDesktopLauncher");
+  const embedded = getLoggingPostMatchEmbeddedView();
+  if (!pending?.id || !launcher || !embedded) return false;
+  if (isDesktopLoggingViewport()) {
+    setDesktopLoggingView("launcher", { preserveEmbedded: true });
+  } else {
+    setMobileLoggingFormStage("launcher", { preserveEmbedded: true });
+  }
+  restoreDailyTrainingModalFromLoggingLauncher();
+  renderLoggingPostMatchEmbeddedView(pending);
+  embedded.hidden = false;
+  launcher.classList.add("is-embedded");
+  document.getElementById("page-logging")?.setAttribute("data-logging-launcher-embed", "postmatch");
+  scrollLoggingLauncherIntoView();
+  embedded.querySelector("[data-logging-embedded-action]")?.focus?.({ preventScroll: true });
+  return true;
+}
+
+function openLoggingPostMatchReflection() {
+  const pending = getNewestPendingMatchReflection();
+  if (!pending?.id) return false;
+  restoreDailyTrainingModalFromLoggingLauncher();
+  editLogEntry(pending.id, { scroll: true });
+  setLoggingLauncherFormView({ scroll: true });
+  document.getElementById("page-logging")?.setAttribute("data-logging-return-to-launcher", "true");
+  return true;
+}
+
 function setDesktopLoggingView(view = "launcher", options = {}) {
   const page = document.getElementById("page-logging");
   if (!page || !isDesktopLoggingViewport()) return;
   const resolvedView = view === "form" ? "form" : "launcher";
   page.dataset.loggingDesktopView = resolvedView;
-  if (resolvedView === "form" && options.launchOrigin) {
-    page.dataset.loggingLaunchOrigin = options.launchOrigin;
-  } else if (resolvedView === "launcher") {
+  if (resolvedView === "launcher") {
+    delete page.dataset.loggingLaunchOrigin;
+    if (!options.preserveEmbedded) restoreDailyTrainingModalFromLoggingLauncher();
+  } else {
     delete page.dataset.loggingLaunchOrigin;
   }
   if (resolvedView === "launcher") {
@@ -2461,9 +2596,10 @@ function setMobileLoggingFormStage(stage = "launcher", options = {}) {
   const resolvedStage = stage === "form" ? "form" : "launcher";
   page.dataset.mobileLoggingView = "form";
   page.dataset.mobileLoggingFormStage = resolvedStage;
-  if (resolvedStage === "form" && options.launchOrigin) {
-    page.dataset.loggingLaunchOrigin = options.launchOrigin;
-  } else if (resolvedStage === "launcher") {
+  if (resolvedStage === "launcher") {
+    delete page.dataset.loggingLaunchOrigin;
+    if (!options.preserveEmbedded) restoreDailyTrainingModalFromLoggingLauncher();
+  } else {
     delete page.dataset.loggingLaunchOrigin;
   }
   if (resolvedStage === "launcher") {
@@ -2524,21 +2660,11 @@ function resetLoggingFormForNewEntry(mode = "postmatch") {
 function openLoggingLauncherTarget(target = "") {
   if (!isDesktopLoggingViewport() && !isMobileLayoutViewport()) return;
   if (target === "postmatch") {
-    const pending = getNewestPendingMatchReflection();
-    if (!pending?.id) return;
-    editLogEntry(pending.id, { scroll: true });
-    setLoggingLauncherFormView({ scroll: true, launchOrigin: "postmatch" });
+    openLoggingPostMatchExperience();
     return;
   }
   if (target === "warmup") {
-    const warmup = getTodayWarmupReflection();
-    if (warmup?.id) {
-      editLogEntry(warmup.id, { scroll: true });
-      setLoggingLauncherFormView({ scroll: true, launchOrigin: "warmup" });
-      return;
-    }
-    resetLoggingFormForNewEntry("warmup");
-    setLoggingLauncherFormView({ scroll: true, launchOrigin: "warmup" });
+    openLoggingWarmupExperience();
   }
 }
 
@@ -2553,6 +2679,19 @@ function ensureLoggingLauncher() {
         event.preventDefault();
         openLoggingLauncherTarget(tile.dataset.loggingDesktopLaunch || "");
       }, { capture: true });
+    });
+    launcher.addEventListener("click", (event) => {
+      const dismiss = event.target.closest("[data-logging-embedded-dismiss]");
+      if (dismiss) {
+        event.preventDefault();
+        returnToLoggingLauncherAfterEmbeddedExperience();
+        return;
+      }
+      const action = event.target.closest("[data-logging-embedded-action]");
+      if (action?.dataset.loggingEmbeddedAction === "start-postmatch") {
+        event.preventDefault();
+        openLoggingPostMatchReflection();
+      }
     });
   }
   if (isDesktopLoggingViewport()) {
@@ -13554,6 +13693,7 @@ let premiumAvatarCelebrateTimer = 0;
 let broadcastOverlayTimer = 0;
 let broadcastPreviewTimer = 0;
 let broadcastPreviewForceMotionTimer = 0;
+let loginInitializationThemeSignature = "";
 
 function getPremiumFeedbackTheme(profile = getActiveProfile()) {
   const resolvedProfile = profile || getActiveProfile();
@@ -13570,6 +13710,8 @@ function clearLoginInitializationTheme() {
   overlay.classList.remove("is-premium-themed");
   overlay.style.removeProperty("--login-init-accent");
   overlay.style.removeProperty("--login-init-accent-2");
+  overlay.dataset.initializationThemeSignature = "default";
+  loginInitializationThemeSignature = "default";
 }
 
 function applyLoginInitializationTheme(profile = getActiveProfile()) {
@@ -13577,12 +13719,17 @@ function applyLoginInitializationTheme(profile = getActiveProfile()) {
   if (!overlay) return;
   const { theme, variant } = getPremiumFeedbackTheme(profile);
   if (!isMobileLayoutViewport() || variant === "default") {
+    if (loginInitializationThemeSignature === "default" && overlay.dataset.initializationThemeSignature === "default") return;
     clearLoginInitializationTheme();
     return;
   }
+  const signature = `${theme?.value || profile?.themeKey || "default"}:${variant}:${theme?.colors?.accent || ""}:${theme?.colors?.accent2 || ""}`;
+  if (loginInitializationThemeSignature === signature && overlay.dataset.initializationThemeSignature === signature) return;
   overlay.classList.add("is-premium-themed");
   overlay.style.setProperty("--login-init-accent", theme?.colors?.accent || "#ff4655");
   overlay.style.setProperty("--login-init-accent-2", theme?.colors?.accent2 || "#f97316");
+  overlay.dataset.initializationThemeSignature = signature;
+  loginInitializationThemeSignature = signature;
 }
 
 function showToast(message, options = {}) {
@@ -49213,6 +49360,11 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
   resetLoggingFormForNewEntry("postmatch");
   saveLogEntries();
   scrollLoggingFormToTopAfterSave();
+  const page = document.getElementById("page-logging");
+  if (page?.dataset.loggingReturnToLauncher === "true") {
+    page.removeAttribute("data-logging-return-to-launcher");
+    window.requestAnimationFrame(() => returnToLoggingLauncherAfterEmbeddedExperience());
+  }
 }
 // ========================
 // DELETE LOG ENTRY
@@ -51528,6 +51680,11 @@ function loadProfiles(){
     persistProfilesToLocalCache();
   }
 
+  // Visual preferences live entirely in the local profile cache. Apply them
+  // before match recomputation, page rendering, or auth/network work so a
+  // returning player never sees a default-theme frame between paint passes.
+  applyProfileVisuals?.(getActiveProfile());
+
   logEntries = readLocalLogEntries({ profileId: activeProfileId });
   repairStatsLoggingParityForProfiles(profiles, { skipBackend: true });
   if (storedRawProfileMigrationChanged) saveProfiles();
@@ -53568,6 +53725,38 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
   const borderTargets = [panel, avatarWrap, ring, ...mobileAvatarButtons].filter(Boolean);
+
+  // Keep a tiny palette-only record separate from the account cache. It is
+  // safe to read in the document head and lets the boot guard paint this
+  // profile's background before the module or any network request runs.
+  const savedProfile = getActiveProfile?.();
+  const isCommittedActiveVisual = Boolean(
+    profile?.id
+      && savedProfile?.id === profile.id
+      && String(savedProfile.themeKey || savedProfile.frameTheme || "default") === requestedThemeKey
+      && String(savedProfile.layoutShape || savedProfile.layoutStyle || "default") === layoutShape
+      && String(savedProfile.layoutTexture || "default") === layoutTexture
+  );
+  if (isCommittedActiveVisual) {
+    try {
+      const bootSnapshot = {
+        profileId: profile.id,
+        themeKey,
+        colors: {
+          base: baseSurface,
+          base2: secondarySurface,
+          accent: highlightAccent,
+          accent2: highlightAccent2
+        }
+      };
+      const serialized = JSON.stringify(bootSnapshot);
+      if (localStorage.getItem("rankedcoach_boot_visual_v1") !== serialized) {
+        localStorage.setItem("rankedcoach_boot_visual_v1", serialized);
+      }
+    } catch (_error) {
+      // Private or quota-limited storage should not block visual rendering.
+    }
+  }
 
   if (avatarImg) {
     avatarImg.src = avatarUrl;
