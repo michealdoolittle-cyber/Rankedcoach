@@ -111,7 +111,7 @@ async function run() {
     });
     assert.equal(newestSelection.floatingVisible, false, `mobile must not use a floating RR tooltip: ${JSON.stringify(newestSelection)}`);
     assert.equal(newestSelection.summaryVisible, true, `newest RR dot should show the fixed summary row: ${JSON.stringify(newestSelection)}`);
-    assert.match(newestSelection.text, /Diamond 1|RR/i, JSON.stringify(newestSelection));
+    assert.match(newestSelection.text, /^\+16 RR$/i, JSON.stringify(newestSelection));
 
     await page.locator("#chartRow .rr-hit").first().click({ force: true });
     await page.waitForTimeout(120);
@@ -128,7 +128,7 @@ async function run() {
     });
     assert.equal(earlierSelection.floatingVisible, false, `mobile must not restore a floating tooltip: ${JSON.stringify(earlierSelection)}`);
     assert.equal(earlierSelection.summaryVisible, true, `earlier RR dot should update the fixed summary row: ${JSON.stringify(earlierSelection)}`);
-    assert.match(earlierSelection.text, /Gold 3|RR/i, JSON.stringify(earlierSelection));
+    assert.match(earlierSelection.text, /^\+14 RR$/i, JSON.stringify(earlierSelection));
     const selectedGeometry = await page.evaluate(() => {
       const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
       const marker = hit?.closest("svg")?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
@@ -201,6 +201,26 @@ async function run() {
       flipsLeft: true,
       contained: true
     }, JSON.stringify(desktopTooltip));
+    const desktopTooltipText = await desktop.locator("#chartTooltip").innerText();
+    assert.equal(desktopTooltipText.trim(), "+16 RR", desktopTooltipText);
+
+    // Dismissing the tooltip outside the chart must restore the rank marker.
+    // This matches the real click-off interaction rather than calling the
+    // cleanup helper directly.
+    await desktop.mouse.click(8, 8);
+    await desktop.waitForTimeout(120);
+    const dismissedMarker = await desktop.evaluate(() => {
+      const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
+      const marker = hit?.closest("svg")?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
+      const style = marker ? getComputedStyle(marker) : null;
+      return {
+        exists: Boolean(marker),
+        visible: Boolean(marker && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+        integrated: marker?.classList.contains("is-tooltip-integrated") || false
+      };
+    });
+    assert.deepEqual(dismissedMarker, { exists: true, visible: true, integrated: false }, JSON.stringify(dismissedMarker));
+    assert.equal(await desktop.locator("#chartTooltip").evaluate(node => getComputedStyle(node).visibility), "hidden");
     await desktop.close();
     assert.deepEqual(consoleIssues, []);
   } finally {

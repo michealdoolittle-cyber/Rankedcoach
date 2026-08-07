@@ -204,6 +204,15 @@ async function run() {
 
     await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" }, { force: true });
     await page.waitForTimeout(600);
+    const selectedActKey = await page.locator("#statsActSelector").inputValue();
+    const selectedActMatches = matches.filter(match => (
+      `season:${String(match.season || "").trim().toLowerCase()}` === selectedActKey
+    ));
+    const expectedActAcs = Math.round(selectedActMatches
+      .reduce((total, match) => total + Number(match.matchRecord?.stats?.acs ?? match.acs ?? 0), 0) /
+      Math.max(1, selectedActMatches.length));
+    assert.ok(expectedActAcs > 0, "The retained Henrik data must provide a real ACS comparison value.");
+    assert.equal((await page.locator("#statACS").innerText()).trim(), String(expectedActAcs));
     const statsDebug = await page.evaluate(() => ({
       selectedAct: document.getElementById("statsActSelector")?.value,
       overview: ["statKD", "statWinrate", "statKAST", "statACS", "statHS", "statMatchesPlayed"].map(id => document.getElementById(id)?.textContent || ""),

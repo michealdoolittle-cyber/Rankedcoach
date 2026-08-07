@@ -7515,6 +7515,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     matchesLost: losses,
     kd: orderedMatches.length ? (totalDeaths ? totalKills / totalDeaths : totalKills) : 0,
     adr: orderedMatches.length ? totalAdr / Math.max(1, orderedMatches.length) : 0,
+    acs: averageAcs,
     hs: totalHsCount ? totalHs / totalHsCount : NaN,
     hsSampleCount: totalHsCount,
     assists: orderedMatches.length ? totalAssists / Math.max(1, orderedMatches.length) : 0,
@@ -20384,13 +20385,12 @@ function hideChartTooltip(){
     crosshair.style.opacity = 0;
     crosshair.setAttribute("opacity", "0");
   }
-  chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+  // A rank crest is folded into the tooltip while the callout is open.
+  // Restore every crest on dismissal. Limiting this cleanup to the temporary
+  // classes left a crest hidden if a render/input race removed that class
+  // before the dismissal cleanup ran.
+  chartRow?.querySelectorAll(".chart-rank-marker").forEach(marker => {
     resetChartRankMarkerPosition(marker);
-  });
-  chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-integrated").forEach(marker => {
-    resetChartRankMarkerPosition(marker);
-  });
-  chartRow?.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
     revealChartRankMarkerImmediately(marker);
   });
 }
@@ -20467,16 +20467,18 @@ function animateChartTooltipPop() {
 
 function getChartTooltipDetails(hit, marker = null) {
   const rankRr = String(hit?.dataset?.rankRr || "").trim();
-  const rankLabel = String(hit?.dataset?.rankLabel || "").trim();
-  const rrDelta = safeNumber(hit?.dataset?.rr);
+  const rawRrDelta = Number(hit?.dataset?.rr);
+  const rrDelta = Number.isFinite(rawRrDelta) ? rawRrDelta : 0;
+  const isRankChange = Boolean(rankRr || marker || String(hit?.dataset?.rankChange || "") === "true");
   const iconUrl = String(marker?.querySelector?.("image")?.getAttribute?.("href") || "").trim();
   return {
     rankRr,
-    rankLabel,
     rrDelta,
     iconUrl,
-    text: rankRr
-      ? `${rankLabel ? `${rankLabel} · ` : ""}${rankRr} RR · ${rrDelta >= 0 ? "+" : ""}${rrDelta} RR`
+    text: isRankChange
+      // The icon identifies the rank; keep the callout focused on the
+      // movement from this match rather than repeating rank and total RR.
+      ? `${rrDelta >= 0 ? "+" : ""}${rrDelta} RR`
       : `${safeNumber(hit?.dataset?.totalRr, hit?.dataset?.rr)} RR`
   };
 }
@@ -56803,6 +56805,19 @@ requestAnimationFrame(() => {
 tooltip = document.getElementById("chartTooltip");
 let chartPointerMoveRaf = 0;
 let pendingChartPointerHit = null;
+
+function bindChartTooltipDismissal() {
+  if (!chartRow || chartRow.dataset.chartTooltipDismissalBound === "true") return;
+  chartRow.dataset.chartTooltipDismissalBound = "true";
+  document.addEventListener("pointerdown", (event) => {
+    if (!selectedDot || isMobileLayoutViewport()) return;
+    const target = event.target;
+    if (chartRow?.contains(target) || tooltip?.contains(target)) return;
+    hideChartTooltip();
+  }, true);
+}
+
+bindChartTooltipDismissal();
 
 const flushChartPointerMove = () => {
   chartPointerMoveRaf = 0;

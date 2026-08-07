@@ -61991,6 +61991,14 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   margin-inline:auto;
 }
 
+/* The legend belongs inside the chart canvas. A late compact-layout rule
+   reduced the absolute canvas by 18px and manufactured the blank strip below
+   it even though the SVG's viewBox was already correct. */
+#page-home .rr-chart-card #chartRow{
+  inset:0 !important;
+  height:100% !important;
+}
+
 @media (max-width:820px){
   body.is-mobile-layout #page-home .rr-chart-layout{
     grid-template-rows:auto auto auto auto !important;
