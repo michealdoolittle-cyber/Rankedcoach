@@ -207,7 +207,7 @@ async function run() {
     // Dismissing the tooltip outside the chart must restore the rank marker.
     // This matches the real click-off interaction rather than calling the
     // cleanup helper directly.
-    await desktop.mouse.click(8, 8);
+    await desktop.evaluate(() => document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })));
     await desktop.waitForTimeout(120);
     const dismissedMarker = await desktop.evaluate(() => {
       const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
@@ -221,13 +221,53 @@ async function run() {
     });
     assert.deepEqual(dismissedMarker, { exists: true, visible: true, integrated: false }, JSON.stringify(dismissedMarker));
     assert.equal(await desktop.locator("#chartTooltip").evaluate(node => getComputedStyle(node).visibility), "hidden");
+
+    // Regression path from production: choose one promotion, dismiss it,
+    // choose another, dismiss it, then return to the first. A marker used to
+    // stay hidden because only the older `is-tooltip-paired` class was reset;
+    // the tooltip also read its crest from that hidden presentation node.
+    // Both crests must persist through the real click-off flow.
+    const rankHits = desktop.locator('#chartRow .rr-hit[data-rank-change="true"]');
+    await rankHits.first().click({ force: true });
+    await desktop.waitForTimeout(120);
+    await desktop.evaluate(() => document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })));
+    await desktop.waitForTimeout(120);
+    await rankHits.last().click({ force: true });
+    await desktop.waitForTimeout(120);
+    await desktop.evaluate(() => document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })));
+    await desktop.waitForTimeout(120);
+    await rankHits.first().click({ force: true });
+    await desktop.waitForTimeout(120);
+    const reselection = await desktop.evaluate(() => {
+      const hits = [...document.querySelectorAll("#chartRow .rr-hit")]
+        .filter(hit => hit.dataset.rankChange === "true");
+      const svg = hits[0]?.closest("svg");
+      const markers = hits.map(hit => {
+        const marker = svg?.querySelector(`.chart-rank-marker[data-match-index="${hit.dataset.matchIndex}"]`);
+        const style = marker ? getComputedStyle(marker) : null;
+        return {
+          icon: hit.dataset.rankIcon || "",
+          visible: Boolean(marker && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+          integrated: marker?.classList.contains("is-tooltip-integrated") || false
+        };
+      });
+      return {
+        tooltipIcon: document.querySelector("#chartTooltip .chart-tooltip-rank-icon")?.getAttribute("src") || "",
+        markers
+      };
+    });
+    assert.ok(reselection.tooltipIcon, `reselected rank tooltip must retain its crest: ${JSON.stringify(reselection)}`);
+    assert.ok(reselection.markers.every(marker => marker.icon), `each rank-change hit must retain immutable icon data: ${JSON.stringify(reselection)}`);
+    assert.equal(reselection.markers[0].integrated, true, JSON.stringify(reselection));
+    assert.equal(reselection.markers[0].visible, false, JSON.stringify(reselection));
+    assert.equal(reselection.markers.at(-1).visible, true, `previously selected marker must be restored after click-off: ${JSON.stringify(reselection)}`);
     await desktop.close();
     assert.deepEqual(consoleIssues, []);
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
   }
-  console.log("Mobile chart rank marker remains anchored to the selected rank-change dot.");
+  console.log("Rank-change icons and markers persist through mobile, desktop, dismissal, and re-selection.");
 }
 
 run().catch(error => { console.error(error); process.exitCode = 1; });

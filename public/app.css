@@ -61991,6 +61991,18 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   margin-inline:auto;
 }
 
+/* The border gallery lives in a full-width field, but one late layout rule
+   left its parent with right-only padding. Keep the cards on the same grid
+   width while giving the gallery equal space on both sides of the modal. */
+#editProfileModal .profile-edit-panel:has(#editProfileBorderGallery){
+  box-sizing:border-box;
+  padding-inline:4px !important;
+}
+
+#editProfileModal .profile-edit-panel:has(#editProfileBorderGallery) #editProfileBorderGallery.border-gallery{
+  margin-inline:auto !important;
+}
+
 /* The legend belongs inside the chart canvas. A late compact-layout rule
    reduced the absolute canvas by 18px and manufactured the blank strip below
    it even though the SVG's viewBox was already correct. */

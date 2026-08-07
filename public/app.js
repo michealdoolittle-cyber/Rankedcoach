@@ -20448,12 +20448,13 @@ function revealChartRankMarkerImmediately(marker) {
 
 function updateNearbyChartRankMarkerFade(svg, activeMarker, groupBounds, activeScreenY) {
   if (!svg || !activeMarker) return;
-  const sizeKey = String(currentSize || "").toLowerCase();
-  if (!["5", "10", "20", "50"].includes(sizeKey) || !selectedDot) return;
-
-  svg.querySelectorAll(".chart-rank-marker").forEach(marker => {
-    if (marker === activeMarker) return;
-    marker.classList.add("is-near-selected");
+  // The selected crest is already represented in the tooltip. Do not also
+  // hide every other promotion/demotion marker: that made an unrelated rank
+  // change look permanently lost after selecting any RR point. Tooltip
+  // placement handles its own collision bounds, so nearby crests can remain
+  // stable until the player explicitly dismisses or changes the selection.
+  svg.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
+    if (marker !== activeMarker) revealChartRankMarkerImmediately(marker);
   });
 }
 
@@ -20470,7 +20471,15 @@ function getChartTooltipDetails(hit, marker = null) {
   const rawRrDelta = Number(hit?.dataset?.rr);
   const rrDelta = Number.isFinite(rawRrDelta) ? rawRrDelta : 0;
   const isRankChange = Boolean(rankRr || marker || String(hit?.dataset?.rankChange || "") === "true");
-  const iconUrl = String(marker?.querySelector?.("image")?.getAttribute?.("href") || "").trim();
+  // The hit owns the immutable rank-icon URL for this data point. The marker
+  // is presentation state and can be temporarily hidden/repositioned while a
+  // tooltip is open; never make the tooltip depend on that transient SVG node.
+  const iconUrl = String(
+    hit?.dataset?.rankIcon
+    || marker?.dataset?.rankIcon
+    || marker?.querySelector?.("image")?.getAttribute?.("href")
+    || ""
+  ).trim();
   return {
     rankRr,
     rrDelta,
@@ -20572,7 +20581,7 @@ function positionTooltipToHit(hit, options = {}){
   const tipWidth = tip.offsetWidth || 96;
   const tipHeight = tip.offsetHeight || 32;
   const viewportPad = 10;
-  svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+  svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired, .chart-rank-marker.is-tooltip-integrated").forEach(marker => {
     resetChartRankMarkerPosition(marker);
   });
   svg.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
@@ -22924,6 +22933,7 @@ async function handleSignedInUser(user) {
 let accountStateFocusRefreshPromise = null;
 let accountStateAutoRefreshTimer = 0;
 let persistentAccountRevisionPollRetryTimer = 0;
+let persistentAccountRevisionPollPromise = null;
 
 function stopPersistentAccountAutoRefresh() {
   if (accountStateAutoRefreshTimer) window.clearInterval(accountStateAutoRefreshTimer);
@@ -22944,39 +22954,50 @@ function startPersistentAccountAutoRefresh() {
 async function pollPersistentAccountStateRevision() {
   const user = currentAuthUser;
   if (!user?.id || !supabaseClient?.from || backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
+  if (persistentAccountRevisionPollPromise) return persistentAccountRevisionPollPromise;
   if (backendSyncState.savePromise || backendSyncState.saveTimer || accountStateFocusRefreshPromise) {
-    // A device that has just saved must not miss another device's revision.
-    // Wait for the local write to settle, then retry this cheap one-row check.
-    window.clearTimeout(persistentAccountRevisionPollRetryTimer);
-    persistentAccountRevisionPollRetryTimer = window.setTimeout(() => {
-      persistentAccountRevisionPollRetryTimer = 0;
-      void pollPersistentAccountStateRevision();
-    }, 1000);
+    // This is a non-urgent cross-device safety check. During a retained
+    // history sync, saves arrive in successive batches, so the old one-second
+    // retry kept a permanent stream of duplicate `updated_at` reads alive for
+    // the entire sync. Keep at most one deferred check and let it wait for the
+    // regular low-cost poll cadence instead.
+    if (!persistentAccountRevisionPollRetryTimer) {
+      persistentAccountRevisionPollRetryTimer = window.setTimeout(() => {
+        persistentAccountRevisionPollRetryTimer = 0;
+        void pollPersistentAccountStateRevision();
+      }, ACCOUNT_STATE_REVISION_POLL_MS);
+    }
     return;
   }
-  try {
-    const { data, error } = await supabaseClient
-      .from("vip_app_state")
-      .select("updated_at")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (error) throw error;
-    const remoteRevision = String(data?.updated_at || "").trim();
-    if (!remoteRevision || !lastPersistentAccountRemoteRevision) {
-      lastPersistentAccountRemoteRevision = remoteRevision || lastPersistentAccountRemoteRevision;
-      return;
+  persistentAccountRevisionPollPromise = (async () => {
+    try {
+      const { data, error } = await supabaseClient
+        .from("vip_app_state")
+        .select("updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      const remoteRevision = String(data?.updated_at || "").trim();
+      if (!remoteRevision || !lastPersistentAccountRemoteRevision) {
+        lastPersistentAccountRemoteRevision = remoteRevision || lastPersistentAccountRemoteRevision;
+        return;
+      }
+      if (remoteRevision <= lastPersistentAccountRemoteRevision) return;
+      // A revision is explicit evidence that another device saved. It must not
+      // be held behind the normal 30-second focus-refresh cooldown.
+      await refreshPersistentAccountStateOnFocus("revision-poll", { force: true });
+    } catch (error) {
+      // Realtime remains the primary path. A failed lightweight fallback check
+      // must not interrupt the visible device or turn a brief offline interval
+      // into a noisy player-facing error.
+      backendSyncState.lastError = error;
+      console.warn("Supabase account revision check failed", error);
+    } finally {
+      persistentAccountRevisionPollPromise = null;
     }
-    if (remoteRevision <= lastPersistentAccountRemoteRevision) return;
-    // A revision is explicit evidence that another device saved. It must not
-    // be held behind the normal 30-second focus-refresh cooldown.
-    await refreshPersistentAccountStateOnFocus("revision-poll", { force: true });
-  } catch (error) {
-    // Realtime remains the primary path. A failed lightweight fallback check
-    // must not interrupt the visible device or turn a brief offline interval
-    // into a noisy player-facing error.
-    backendSyncState.lastError = error;
-    console.warn("Supabase account revision check failed", error);
-  }
+  })();
+
+  return persistentAccountRevisionPollPromise;
 }
 
 async function refreshPersistentAccountStateOnFocus(reason = "focus", options = {}) {
@@ -23045,18 +23066,15 @@ async function initializeSignedInAccount(user, options = {}) {
   captureGuestRiotMigrationSnapshot?.(options.reason || "sign-in");
 
   loginInitializationInFlight = true;
-  // Returning players already have a complete last-known snapshot in this
-  // browser. Let them use it immediately while Supabase and Henrik refresh in
-  // the background. A genuinely new account still gets the focused first-load
-  // overlay because there is no meaningful local state to show yet.
+  // Keep the boot guard in place until the profile record that owns the theme
+  // and layout has been loaded. Releasing it here for returning accounts made
+  // the local/default dashboard paint before Supabase applied the real visual
+  // settings, which is the theme flash users were seeing.
   const hasCachedState = hasUsableCachedSignedInState();
   if (hasCachedState) {
-    releaseLoginOverlayForBackgroundSync("Restoring saved account…");
-    setLoginInitializationProgress(
-      8,
-      "Loading the saved dashboard on this device…",
-      "Profile",
-      "Live Riot and cloud checks continue in the background."
+    showLoginInitializationOverlay(
+      "Restoring your saved account.",
+      "Loading your saved dashboard and visual settings together before opening RankedCoach."
     );
   } else {
     showLoginInitializationOverlay(
@@ -23067,6 +23085,7 @@ async function initializeSignedInAccount(user, options = {}) {
 
   let newlyImportedReflection = null;
   let newlyImportedMatchReport = null;
+  let cachedOverlayReleased = false;
   try {
     setLoginInitializationProgress(
       18,
@@ -23084,6 +23103,16 @@ async function initializeSignedInAccount(user, options = {}) {
       "This runs alongside your profile load so returning accounts get back in faster."
     );
     await Promise.all([profileLoadPromise, securityLoadPromise]);
+    // `handleSignedInUser()` has now applied the authoritative saved profile
+    // (including its theme and layout) to the document. Returning players can
+    // safely see their cached dashboard while the bounded Riot refresh below
+    // continues in the background. Releasing any earlier was the measured
+    // default-theme/layout flash; waiting for the full retained-history pass
+    // made a fast cached sign-in unnecessarily feel like a first load.
+    if (hasCachedState) {
+      releaseLoginOverlayForBackgroundSync("Saved dashboard is ready. Checking fresh Riot data…");
+      cachedOverlayReleased = true;
+    }
     const migratedGuestRiotProfile = applyPendingGuestRiotMigration?.(user);
     if (migratedGuestRiotProfile) {
       setLoginInitializationProgress(
@@ -23155,7 +23184,7 @@ async function initializeSignedInAccount(user, options = {}) {
       scheduleRetainedHistoryContinuation(active.id);
     }
   } finally {
-    if (hasCachedState) {
+    if (cachedOverlayReleased) {
       setLoginInitializationProgress(100, "Saved account is up to date.", "Ready", "Your dashboard, rank, chart, and match panel refreshed together.");
       prepareDailyEntranceMotion();
       notifyDailyEntranceMotionReady();
@@ -24279,6 +24308,7 @@ data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
 data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
 data-rank-change="${point?.rankChange?.iconUrl ? "true" : "false"}"
+data-rank-icon="${escapeHtml(point?.rankChange?.iconUrl || "")}"
 ${statsAttrs}/>
 
 <circle class="${dotClass}"
@@ -24295,6 +24325,7 @@ data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex 
 data-match-id="${escapeHtml(point?.matchId || snapshot?.id || point?.match?.id || point?.match?.matchId || "")}"
 data-match-key="${escapeHtml(point?.matchKey || "")}"
 data-rank-change="${point?.rankChange?.iconUrl ? "true" : "false"}"
+data-rank-icon="${escapeHtml(point?.rankChange?.iconUrl || "")}"
 data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
 data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round(Number(snapshot?.impactScore)) : ""}"
 fill="${fill}"
@@ -24320,7 +24351,7 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
     : "";
 
   return `
-<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-base-x="${markerX}" data-base-y="${markerY}" style="${introStyle}">
+<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-rank-icon="${escapeHtml(point.rankChange.iconUrl)}" data-base-x="${markerX}" data-base-y="${markerY}" style="${introStyle}">
   <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
   <image href="${escapeHtml(point.rankChange.iconUrl)}"
     x="${markerX - 10}" y="${markerY - 10}"
@@ -24398,7 +24429,7 @@ function buildXTicks(points, sliceLength, matchCount) {
       x2="${points[0].x}" y2="${PAD_BOTTOM + 4}"
       stroke="#64748b" stroke-width="1"/>
 
-<text x="${points[0].x}" y="${PAD_BOTTOM + 24}"
+<text x="${points[0].x}" y="${PAD_BOTTOM + 20}"
       font-size="18"
       fill="#94a3b8"
       text-anchor="middle">${startGame - 1}</text>
@@ -24429,7 +24460,7 @@ function buildXTicks(points, sliceLength, matchCount) {
       x2="${p.x}" y2="${PAD_BOTTOM + 4}"
       stroke="#64748b" stroke-width="1"/>
 
-<text x="${p.x}" y="${PAD_BOTTOM + 24}"
+<text x="${p.x}" y="${PAD_BOTTOM + 20}"
       font-size="18"
       fill="#94a3b8"
       text-anchor="middle">${game}</text>
@@ -24447,8 +24478,21 @@ function buildChartAxisTitle(label = "Current Season", options = {}) {
     : `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const isMobileFooterLayout = isMobileLayoutViewport();
-  const titleY = isMobileFooterLayout ? PAD_BOTTOM + 46 : Math.min(CHART_H - 28, PAD_BOTTOM + 58);
-  const legendY = isMobileFooterLayout ? PAD_BOTTOM + 68 : Math.min(CHART_H - 4, titleY + 24);
+  const isCompactDesktopCanvas = !isMobileFooterLayout && CHART_H < 230;
+  // Keep the title and legend visually grouped, then reserve a small, equal
+  // margin beneath the legend. Compact desktop canvases place this pair in a
+  // dedicated top band instead of squeezing it between match ticks and the
+  // SVG edge.
+  const titleY = isMobileFooterLayout
+    ? PAD_BOTTOM + 48
+    : isCompactDesktopCanvas
+      ? 18
+      : Math.min(CHART_H - 30, PAD_BOTTOM + 47);
+  const legendY = isMobileFooterLayout
+    ? titleY + 16
+    : isCompactDesktopCanvas
+      ? 37
+      : Math.min(CHART_H - 10, titleY + 20);
   const legendWidth = 146;
   const legendX = Math.max(PAD_LEFT, Math.min(x - (legendWidth / 2), CHART_W - PAD_RIGHT - legendWidth));
   const legendItems = [
@@ -44310,9 +44354,11 @@ const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set([
 const themeBuilderAutoFitState = {
   raf: 0,
   idle: 0,
+  scheduledCount: 0,
   resetBase: false,
   observer: null,
   mutationTimer: 0,
+  settleTimer: 0,
   fitted: new Set(),
   listenersAttached: false,
   fontsReadyHooked: false
@@ -44326,15 +44372,59 @@ function shouldRunThemeBuilderAutoFitText() {
   return !THEME_BUILDER_LAUNCH_LOCKED || isLayoutStyleAutoFitActive();
 }
 
+// Layout-style copy only needs observation while a surface is first assembling.
+// After that, all player-facing async states reserve their own text space, so a
+// toast, update notice, or decorative animation must never resize settled copy.
+const THEME_BUILDER_AUTO_FIT_SETTLE_MS = 1200;
+
+function settleThemeBuilderAutoFitObserver() {
+  window.clearTimeout(themeBuilderAutoFitState.settleTimer);
+  themeBuilderAutoFitState.settleTimer = window.setTimeout(() => {
+    themeBuilderAutoFitState.settleTimer = 0;
+    window.clearTimeout(themeBuilderAutoFitState.mutationTimer);
+    themeBuilderAutoFitState.mutationTimer = 0;
+    themeBuilderAutoFitState.observer?.disconnect();
+    themeBuilderAutoFitState.observer = null;
+  }, THEME_BUILDER_AUTO_FIT_SETTLE_MS);
+}
+
+function stopThemeBuilderAutoFitObserver() {
+  window.clearTimeout(themeBuilderAutoFitState.settleTimer);
+  window.clearTimeout(themeBuilderAutoFitState.mutationTimer);
+  themeBuilderAutoFitState.settleTimer = 0;
+  themeBuilderAutoFitState.mutationTimer = 0;
+  themeBuilderAutoFitState.observer?.disconnect();
+  themeBuilderAutoFitState.observer = null;
+}
+
 function installThemeBuilderAutoFitObservers() {
   if (!shouldRunThemeBuilderAutoFitText()) return;
-  if (themeBuilderAutoFitState.listenersAttached) return;
-  themeBuilderAutoFitState.listenersAttached = true;
-  window.addEventListener("resize", () => {
-    scheduleThemeBuilderAutoFitText({ resetBase: true });
-  });
-  if (window.MutationObserver && document.body) {
-    themeBuilderAutoFitState.observer = new MutationObserver(() => {
+  if (!themeBuilderAutoFitState.listenersAttached) {
+    themeBuilderAutoFitState.listenersAttached = true;
+    window.addEventListener("resize", () => {
+      scheduleThemeBuilderAutoFitText({ resetBase: true });
+    });
+  }
+  if (window.MutationObserver && document.body && !themeBuilderAutoFitState.observer) {
+    const selector = THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.join(",");
+    const mutationTouchesAutoFitText = (mutation) => {
+      const nodeMatches = (node) => {
+        const element = node?.nodeType === Node.ELEMENT_NODE
+          ? node
+          : node?.parentElement;
+        if (!element || !selector) return false;
+        if (element.matches?.(selector) || element.closest?.(selector)) return true;
+        return Boolean(element.querySelector?.(selector));
+      };
+      if (nodeMatches(mutation.target)) return true;
+      return Array.from(mutation.addedNodes || []).some(nodeMatches)
+        || Array.from(mutation.removedNodes || []).some(nodeMatches);
+    };
+    themeBuilderAutoFitState.observer = new MutationObserver((mutations) => {
+      // Toasts, background-sync status, update checks, and decorative motion
+      // must not shrink already-settled copy. Only text that is inside an
+      // explicitly opted-in layout-style target is allowed to queue a refit.
+      if (!mutations.some(mutationTouchesAutoFitText)) return;
       // A sync can replace many small surface fragments in sequence. Waiting
       // for that burst to settle avoids repeatedly shrinking/re-growing text
       // while the final geometry is still arriving.
@@ -44349,6 +44439,7 @@ function installThemeBuilderAutoFitObservers() {
       subtree: true,
       characterData: true
     });
+    settleThemeBuilderAutoFitObserver();
   }
   if (!themeBuilderAutoFitState.fontsReadyHooked && document.fonts?.ready) {
     themeBuilderAutoFitState.fontsReadyHooked = true;
@@ -44363,10 +44454,16 @@ function installThemeBuilderAutoFitObservers() {
 
 function scheduleThemeBuilderAutoFitText(options = {}) {
   if (!shouldRunThemeBuilderAutoFitText()) return;
+  // Every caller here is a deliberate layout event (navigation, viewport,
+  // font, or an explicit style/profile update). Re-open the short settle
+  // window for that event only; incidental DOM work cannot do this once the
+  // observer has disconnected.
+  if (!themeBuilderAutoFitState.observer) installThemeBuilderAutoFitObservers();
   if (options?.resetBase) {
     themeBuilderAutoFitState.resetBase = true;
   }
   if (themeBuilderAutoFitState.raf || themeBuilderAutoFitState.idle) return;
+  themeBuilderAutoFitState.scheduledCount += 1;
   // Let the page transition paint before measuring text. The fit pass writes
   // and reads layout several times for a genuinely clipped value, so running it
   // in the navigation frame made otherwise instant tab switches feel stalled.
@@ -44622,6 +44719,7 @@ function runThemeBuilderAutoFitText() {
 
 function syncLayoutStyleAutoFitText(layoutShape = "default") {
   if (normalizeProfileLayoutShape(layoutShape) === "default") {
+    stopThemeBuilderAutoFitObserver();
     if (themeBuilderAutoFitState.raf) {
       cancelAnimationFrame(themeBuilderAutoFitState.raf);
       themeBuilderAutoFitState.raf = 0;
@@ -56335,10 +56433,12 @@ if(chartHeight){
   PAD_RIGHT = isMobileLifetimeTimeline
     ? Math.max(8, CHART_W * 0.025)
     : CHART_W * 0.055;
-  PAD_TOP = CHART_H * 0.08;
-  // Reserve only the title + legend space that is actually used. The older
-  // desktop value left an empty lower third below the chart legend.
-  PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.72);
+  const isCompactDesktopChart = !isMobileLayoutViewport() && CHART_H < 230;
+  // A compact desktop canvas cannot fit match ticks plus an axis title and
+  // legend below the plot. Give those labels their own header band and shift
+  // the useful graph down as one unit; larger canvases keep the footer group.
+  PAD_TOP = CHART_H * (isMobileLayoutViewport() ? 0.08 : isCompactDesktopChart ? 0.30 : 0.10);
+  PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : isCompactDesktopChart ? 0.72 : 0.64);
 
 // ========================
 // NO MATCH PLACEHOLDER
@@ -62047,6 +62147,36 @@ renderStatsWeapons = renderStatsWeaponsModel;
 renderStatsSummaryMeta = renderStatsSummaryMetaModel;
 renderInsightCards = renderInsightCardsModel;
 renderStatsPerformance = renderStatsPerformanceClean;
+
+// Browser-only regression hooks. These are never created in a player build:
+// Playwright opts in before the application module loads, which lets the
+// visual suite verify timing-sensitive sync and text-fit behavior without
+// exposing an account/debug surface in RankedCoach itself.
+if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
+  globalThis.RankedCoachTestHooks = Object.freeze({
+    getAutoFitScheduleCount: () => themeBuilderAutoFitState.scheduledCount,
+    getAutoFitSelector: () => THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.join(","),
+    requestAutoFit: () => scheduleThemeBuilderAutoFitText({ resetBase: true }),
+    showToast: (...args) => showToast(...args),
+    checkForAppUpdate: options => checkRankedCoachAppUpdate(options),
+    configureRevisionPoll: ({ user = null, client = null, saving = false } = {}) => {
+      window.clearTimeout(persistentAccountRevisionPollRetryTimer);
+      persistentAccountRevisionPollRetryTimer = 0;
+      persistentAccountRevisionPollPromise = null;
+      currentAuthUser = user;
+      supabaseClient = client;
+      backendSyncState.saveTimer = saving ? 1 : null;
+      backendSyncState.savePromise = null;
+      accountStateFocusRefreshPromise = null;
+    },
+    pollRevision: () => pollPersistentAccountStateRevision(),
+    getRevisionPollDelay: () => ACCOUNT_STATE_REVISION_POLL_MS,
+    clearRevisionPollRetry: () => {
+      window.clearTimeout(persistentAccountRevisionPollRetryTimer);
+      persistentAccountRevisionPollRetryTimer = 0;
+    }
+  });
+}
 
 // ========================
 // LOGIN BUTTON TRIGGER

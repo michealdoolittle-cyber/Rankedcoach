@@ -2845,17 +2845,27 @@
       { id: "teamplay", label: "Teamplay strats" }
     ];
     const activeCategory = categories.some(item => item.id === state.tipView) ? state.tipView : "attack";
-    const baseTips = activeCategory === "attack"
+    const sourceKey = activeCategory === "attack"
+      ? "macro.attack"
+      : activeCategory === "defense"
+        ? "macro.defense"
+        : activeCategory === "sites"
+          ? "siteTips"
+          : "teamplayTips";
+    const sourceTips = activeCategory === "attack"
       ? map.macro?.attack || []
       : activeCategory === "defense"
         ? map.macro?.defense || []
         : activeCategory === "sites"
           ? map.siteTips || []
           : map.teamplayTips || [];
+    const baseTips = sourceTips.map((item, index) => ({ item, path: `${sourceKey}.${index}`, isRoleTip: false }));
     const roleTips = activeRole
-      ? (map.roleNotes?.[activeRole] || []).filter(item => typeof item === "string" || item.category === activeCategory)
+      ? (map.roleNotes?.[activeRole] || [])
+        .map((item, index) => ({ item, path: `roleNotes.${activeRole}.${index}`, isRoleTip: true }))
+        .filter(({ item }) => typeof item === "string" || item.category === activeCategory)
       : [];
-    const tips = [...baseTips, ...roleTips].filter(item => {
+    const tips = [...baseTips, ...roleTips].filter(({ item }) => {
       const tipRoles = Array.isArray(item?.roles) ? item.roles : [];
       return !activeRole || !tipRoles.length || tipRoles.includes(activeRole);
     });
@@ -2875,17 +2885,24 @@
     };
   }
 
-  function renderMapTipsPanel(model) {
+  function renderMapTipsPanel(map, model) {
     const { activeRole, activeCategory, categories, roleTips, tips, hasVerifiedReference, mapLabel } = model;
+    const editActive = isDossierTextEditorActive("maps", map?.id || "");
     return `
       <div class="gamesense-tips-panel" role="tabpanel">
         <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
         <div class="gamesense-tip-grid">
-          ${tips.length ? tips.map(item => {
+          ${tips.length ? tips.map(entry => {
+            const item = entry.item;
             const text = typeof item === "string" ? item : item.text;
             const label = typeof item === "string" ? "Round read" : item.label || "Round read";
-            const isRoleTip = Boolean(activeRole && roleTips.includes(item));
-            return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
+            const textPath = typeof item === "string" ? entry.path : `${entry.path}.text`;
+            const labelPath = typeof item === "string" ? "" : `${entry.path}.label`;
+            const currentText = getDossierTextValue("maps", map.id, textPath, text || "");
+            const currentLabel = labelPath ? getDossierTextValue("maps", map.id, labelPath, label) : label;
+            return `<article class="gamesense-tip${entry.isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(entry.isRoleTip ? activeRole : currentLabel)}</span>${editActive
+              ? `${labelPath ? renderDossierTextField({ type: "maps", id: map.id, path: labelPath, label: "Tip label", value: currentLabel, rows: 1 }) : ""}${renderDossierTextField({ type: "maps", id: map.id, path: textPath, label: "Tip copy", value: currentText, rows: 4 })}`
+              : `<p>${escapeHtml(currentText)}</p>`}</article>`;
           }).join("") : hasVerifiedReference
             ? `<article class="gamesense-tip gamesense-tip-reference"><span>High-rank map reference</span><p>Competitive role layouts and map-specific weapon reads are available below for ${escapeHtml(mapLabel)}. No extra generic tip is shown for this view.</p></article>`
             : `<article class="gamesense-tip gamesense-tip-review-hold"><span>Data still in review</span><p>No tactical recommendation is published for this view until its sources clear the Library corroboration gate.</p></article>`}
@@ -2909,7 +2926,7 @@
             ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}" aria-pressed="${role === activeRole}">${role}</button>`).join("")}
           </div>
         </details>
-        ${renderMapTipsPanel(model)}
+        ${renderMapTipsPanel(map, model)}
       </section>`;
   }
 
@@ -3000,7 +3017,18 @@
   function renderWeaponSuggestions(map) {
     const publishedSuggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
     const usesGeometryReference = !publishedSuggestions.length;
-    const suggestions = attachVerifiedWeaponConversions(map, usesGeometryReference ? getGeometryWeaponSuggestions(map) : publishedSuggestions);
+    const editActive = isDossierTextEditorActive("maps", map?.id || "");
+    const suggestions = attachVerifiedWeaponConversions(map, usesGeometryReference ? getGeometryWeaponSuggestions(map) : publishedSuggestions).map((item, index) => {
+      const path = `weaponSuggestions.${index}`;
+      return {
+        ...item,
+        fit: getDossierTextValue("maps", map.id, `${path}.fit`, item.fit || ""),
+        conversion: getDossierTextValue("maps", map.id, `${path}.conversion`, item.conversion || ""),
+        evidence: getDossierTextValue("maps", map.id, `${path}.evidence`, item.evidence || ""),
+        note: getDossierTextValue("maps", map.id, `${path}.note`, item.note || ""),
+        editorPath: path
+      };
+    });
     const conversionSource = map?.weaponConversionReference?.source;
     return `
       <section class="gamesense-weapon-suggestions${usesGeometryReference ? " gamesense-weapon-suggestions-reference" : ""}">
@@ -3015,9 +3043,12 @@
             </summary>
             <div class="gamesense-weapon-suggestion-detail">
               ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong><span class="gamesense-round-conversion-label">${escapeHtml(item.roundConversion.scope)} round conversion percent:</span> <span class="gamesense-round-conversion-value">${Number(item.roundConversion.value).toFixed(2)}%</span></strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
-              ${item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
-              <p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>
-              <p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>
+              ${editActive ? renderDossierTextField({ type: "maps", id: map.id, path: `${item.editorPath}.fit`, label: "Fit label", value: item.fit, rows: 2 }) : ""}
+              ${editActive
+                ? renderDossierTextField({ type: "maps", id: map.id, path: `${item.editorPath}.conversion`, label: "Conversion read", value: item.conversion, rows: 3 })
+                : item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
+              ${editActive ? renderDossierTextField({ type: "maps", id: map.id, path: `${item.editorPath}.evidence`, label: "Evidence", value: item.evidence, rows: 4 }) : `<p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>`}
+              ${editActive ? renderDossierTextField({ type: "maps", id: map.id, path: `${item.editorPath}.note`, label: "Coaching note", value: item.note, rows: 4 }) : `<p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>`}
             </div>
           </details>
         `).join("")}</div>
@@ -3070,6 +3101,9 @@
   }
 
   function renderCompAgentRead(map, agent = "", insight = "") {
+    const editActive = isDossierTextEditorActive("maps", map?.id || "");
+    const insightPath = `agentInsights.${agent}`;
+    const currentInsight = getDossierTextValue("maps", map?.id || "", insightPath, insight || "");
     const links = Array.isArray(map?.lineupLinks) ? map.lineupLinks : [];
     const lineupLinks = links.length
       ? `<nav class="gamesense-comp-read-lineups" aria-label="${escapeHtml(map.label)} lineup resources">${links.map(link => {
@@ -3077,7 +3111,9 @@
         return `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${brand.logo ? `<img src="${escapeHtml(brand.logo)}" alt="">` : ""}<span>${escapeHtml(brand.name)}</span></a>`;
       }).join("")}</nav>`
       : "";
-    return `<div class="gamesense-comp-agent-read is-revealing"><strong>${escapeHtml(agent)}</strong><p>${escapeHtml(insight)}</p>${lineupLinks}</div>`;
+    return `<div class="gamesense-comp-agent-read is-revealing"><strong>${escapeHtml(agent)}</strong>${editActive
+      ? renderDossierTextField({ type: "maps", id: map.id, path: insightPath, label: `${agent} map read`, value: currentInsight, rows: 5 })
+      : `<p>${escapeHtml(currentInsight)}</p>`}${lineupLinks}</div>`;
   }
 
   function renderComp(map) {
@@ -3087,19 +3123,25 @@
     const selectedAgent = state.compAgent;
     const selectedInsight = selectedAgent ? map.agentInsights?.[selectedAgent] : "";
     const sample = map.compSample || {};
+    const editActive = isDossierTextEditorActive("maps", map?.id || "");
     const rankLabel = sample.rankLabel || "Ascendant to Radiant";
     const patchLabel = sample.patchLabel || map.metaComp?.patch || getReference().season?.patch || "Current";
     if (!hasCurrentSample) {
+      const status = getDossierTextValue("maps", map.id, "compStatus", map.compStatus || "No verified current-season composition sample is available for this map.");
       return `
         <section class="gamesense-comp-card gamesense-comp-unavailable">
           <div><span>Current-Season Comps</span><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></div>
-          <p>${escapeHtml(map.compStatus || "No verified current-season composition sample is available for this map.")}</p>
+          ${editActive
+            ? renderDossierTextField({ type: "maps", id: map.id, path: "compStatus", label: "Composition status", value: status, rows: 4 })
+            : `<p>${escapeHtml(status)}</p>`}
         </section>`;
     }
     return `
       <section class="gamesense-comp-card">
         <div><span>Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
-        <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
+        ${editActive
+          ? renderDossierTextField({ type: "maps", id: map.id, path: "compSample.note", label: "Composition source note", value: getDossierTextValue("maps", map.id, "compSample.note", sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed."), rows: 4 })
+          : `<p class="gamesense-comp-source">${escapeHtml(getDossierTextValue("maps", map.id, "compSample.note", sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed."))}</p>`}
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
           const referenceLabels = ["Primary role layout", "Secondary role layout", "Alternate role layout"];
           const roleTotals = getCompRoleTotals(comp);
@@ -3150,6 +3192,7 @@
 
   function renderMapDetail(map) {
     if (map.isOverviewShell) {
+      const overviewNote = getDossierTextValue("maps", map.id, "overview.note", "This map is now listed in the Library index and overview collage. Full coaching callouts, comps, weapon suggestions, and lineup references are not authored yet, so RankedCoach is not filling that gap with guessed strategy.");
       return `
         <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
           <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
@@ -3157,7 +3200,9 @@
         </div>
         <section class="gamesense-note-block gamesense-map-shell-note">
           <h3>${escapeHtml(map.label)} dossier pending</h3>
-          <p>This map is now listed in the Library index and overview collage. Full coaching callouts, comps, weapon suggestions, and lineup references are not authored yet, so RankedCoach is not filling that gap with guessed strategy.</p>
+          ${isDossierTextEditorActive("maps", map.id)
+            ? renderDossierTextField({ type: "maps", id: map.id, path: "overview.note", label: "Overview note", value: overviewNote, rows: 5 })
+            : `<p>${escapeHtml(overviewNote)}</p>`}
         </section>`;
     }
     const mapDataPeriod = String(map.metaComp?.patch || map.patchVersion || "Current").trim() || "Current";
@@ -3179,7 +3224,12 @@
         ${renderWeaponSuggestions(map)}
         <section class="gamesense-lineups">
           <div><span>Find Lineups</span></div>
-          <div>${(map.lineupLinks || []).map(renderLineupLink).join("")}</div>
+          <div>${(map.lineupLinks || []).map((link, index) => {
+            const label = getDossierTextValue("maps", map.id, `lineupLinks.${index}.label`, link.label || getLineupBrand(link).name);
+            return isDossierTextEditorActive("maps", map.id)
+              ? `<div>${renderLineupLink({ ...link, label })}${renderDossierTextField({ type: "maps", id: map.id, path: `lineupLinks.${index}.label`, label: "Lineup link label", value: label, rows: 1 })}</div>`
+              : renderLineupLink({ ...link, label });
+          }).join("")}</div>
         </section>
       </div>
       ${renderMarkedMap(map)}
@@ -3236,18 +3286,47 @@
       </article>`;
   }
 
+  function renderAgentFundamentals(agent) {
+    const editActive = isDossierTextEditorActive("agents", agent?.id || "");
+    const fundamentals = Array.isArray(agent?.fundamentals) ? agent.fundamentals : [];
+    return `
+      <section class="gamesense-note-block gamesense-agent-fundamentals">
+        <h3>Agent Fundamentals</h3>
+        <ul>${fundamentals.map((item, index) => {
+          const value = getDossierTextValue("agents", agent.id, `fundamentals.${index}`, item || "");
+          return `<li>${editActive
+            ? renderDossierTextField({ type: "agents", id: agent.id, path: `fundamentals.${index}`, label: `Fundamental ${index + 1}`, value, rows: 3 })
+            : escapeHtml(value)}</li>`;
+        }).join("")}</ul>
+      </section>`;
+  }
+
   function renderAgentLoreHistory(agent) {
     const history = sortPatchHistoryNewestFirst(Array.isArray(agent.patchHistory) ? agent.patchHistory : []);
     const lore = Array.isArray(agent.lore) ? agent.lore : [];
+    const editActive = isDossierTextEditorActive("agents", agent?.id || "");
     return `
       <section class="gamesense-note-block gamesense-agent-facts gamesense-agent-lore-history">
         <h3>Lore and History</h3>
         <div class="gamesense-agent-fact-list">
-          ${lore.map(item => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><p>${escapeHtml(item.note || "")}</p></article>`).join("")}
+          ${lore.map((item, index) => {
+            const label = getDossierTextValue("agents", agent.id, `lore.${index}.label`, item.label || "");
+            const value = getDossierTextValue("agents", agent.id, `lore.${index}.value`, item.value || "");
+            const note = getDossierTextValue("agents", agent.id, `lore.${index}.note`, item.note || "");
+            return `<article>${editActive
+              ? `${renderDossierTextField({ type: "agents", id: agent.id, path: `lore.${index}.label`, label: "Lore label", value: label, rows: 1 })}${renderDossierTextField({ type: "agents", id: agent.id, path: `lore.${index}.value`, label: "Lore value", value, rows: 2 })}${renderDossierTextField({ type: "agents", id: agent.id, path: `lore.${index}.note`, label: "Lore note", value: note, rows: 4 })}`
+              : `<span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><p>${escapeHtml(note)}</p>`}</article>`;
+          }).join("")}
         </div>
         <details class="gamesense-patch-history">
           <summary>Gameplay history</summary>
-          <ol>${history.map(item => `<li><span>Patch ${escapeHtml(item.patch)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot patch notes</a>` : ""}</li>`).join("")}</ol>
+          <ol>${history.map((item, index) => {
+            const patch = getDossierTextValue("agents", agent.id, `patchHistory.${index}.patch`, item.patch || "");
+            const note = getDossierTextValue("agents", agent.id, `patchHistory.${index}.note`, item.note || "");
+            return `<li>${editActive
+              ? `${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${index}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${index}.note`, label: "History note", value: note, rows: 4 })}`
+              : `<span>Patch ${escapeHtml(patch)}</span><p>${escapeHtml(note)}</p>`}${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot patch notes</a>` : ""}</li>`;
+          }).join("")}</ol>
         </details>
       </section>`;
   }
@@ -3280,7 +3359,7 @@
           </div>
           <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager" decoding="async" fetchpriority="high">
         </div>
-        <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentLoreHistory(agent)}</div>
+        <div>${renderAgentFundamentals(agent)}${renderAgentLoreHistory(agent)}</div>
       </section>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
@@ -3423,7 +3502,13 @@
         </div>
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>
-          <ol>${patchHistory.length ? patchHistory.map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("") : `<li><span>No melee-specific patch note attached</span><p>No sourced melee-specific balance patch is attached to this dossier yet.</p></li>`}</ol>
+          <ol>${patchHistory.length ? patchHistory.map((item, index) => {
+            const patch = getDossierTextValue("weapons", weapon.id, `patchHistory.${index}.patch`, item.patch || "");
+            const note = getDossierTextValue("weapons", weapon.id, `patchHistory.${index}.note`, item.note || "");
+            return `<li>${editActive
+              ? `${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${index}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${index}.note`, label: "History note", value: note, rows: 4 })}`
+              : `<span>${escapeHtml(patch.startsWith("Patch") ? patch : `Patch ${patch}`)}</span><p>${escapeHtml(note)}</p>`}${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`;
+          }).join("") : `<li><span>No melee-specific patch note attached</span><p>No sourced melee-specific balance patch is attached to this dossier yet.</p></li>`}</ol>
         </details>
         ${renderDossierTextEditorExport("weapons", weapon.id)}
       </article>`;
@@ -4511,7 +4596,7 @@
     }
     const menu = hub.querySelector(".gamesense-role-lens-menu");
     if (menu) menu.open = false;
-    replaceTargetedElement(hub.querySelector(".gamesense-tips-panel"), renderMapTipsPanel(getMapTipsViewModel(map)));
+    replaceTargetedElement(hub.querySelector(".gamesense-tips-panel"), renderMapTipsPanel(map, getMapTipsViewModel(map)));
   }
 
   function setPlantHotspotHighlight(marker, highlighted, persistent = false) {

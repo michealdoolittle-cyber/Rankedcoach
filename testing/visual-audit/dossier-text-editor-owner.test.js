@@ -115,7 +115,28 @@ async function run() {
     await dismissTransientOverlays(page);
     await agentToggle.click();
     await page.locator('[data-gamesense-dossier-text-field^="agents:jett:"]').first().waitFor({ state: "visible" });
-    assert.ok(await page.locator('[data-gamesense-dossier-text-field^="agents:jett:"]').count() > 0, "Jett needs editable ability fields after its direct toggle.");
+    const agentFields = await page.locator('[data-gamesense-dossier-text-field^="agents:jett:"]').evaluateAll(fields => fields.map(field => field.dataset.gamesenseDossierTextField));
+    assert.ok(agentFields.some(field => field.includes(":abilities.")), "Jett needs editable ability fields after its direct toggle.");
+    assert.ok(agentFields.some(field => field.includes(":fundamentals.")), `Agent fundamentals must be editable: ${JSON.stringify(agentFields)}`);
+    assert.ok(agentFields.some(field => field.includes(":lore.")), `Agent lore must be editable: ${JSON.stringify(agentFields)}`);
+    assert.ok(agentFields.some(field => field.includes(":patchHistory.")), `Agent gameplay history must be editable: ${JSON.stringify(agentFields)}`);
+
+    // Bind is one of the fully-authored map dossiers. It gives this coverage
+    // check every map text surface (macro plans, comps, weapon reads, lineups,
+    // and labels) without inventing fields for an un-authored map.
+    await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "bind"));
+    const mapToggle = page.locator('[data-gamesense-dossier-text-toggle="maps:bind"]');
+    await mapToggle.waitFor({ state: "visible" });
+    await page.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    await dismissTransientOverlays(page);
+    await mapToggle.click();
+    await page.locator('[data-gamesense-dossier-text-field^="maps:bind:"]').first().waitFor({ state: "visible" });
+    const mapFields = await page.locator('[data-gamesense-dossier-text-field^="maps:bind:"]').evaluateAll(fields => fields.map(field => field.dataset.gamesenseDossierTextField));
+    assert.ok(mapFields.some(field => field.includes(":macro.attack.")), `Attack/defense map tips must be editable: ${JSON.stringify(mapFields)}`);
+    assert.ok(mapFields.some(field => field.includes(":compSample.note")), `Composition source text must be editable: ${JSON.stringify(mapFields)}`);
+    assert.ok(mapFields.some(field => field.includes(":weaponSuggestions.")), `Weapon suggestion detail must be editable: ${JSON.stringify(mapFields)}`);
+    assert.ok(mapFields.some(field => field.includes(":lineupLinks.")), `Lineup labels must be editable: ${JSON.stringify(mapFields)}`);
+    assert.ok(mapFields.some(field => field.includes(":callouts.")), `Map callout labels must remain editable: ${JSON.stringify(mapFields)}`);
 
     await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "rifles"));
     const weaponToggle = page.locator('[data-gamesense-dossier-text-toggle^="weapons:"]');
@@ -125,13 +146,17 @@ async function run() {
     const weaponToken = await weaponToggle.getAttribute("data-gamesense-dossier-text-toggle");
     await weaponToggle.click();
     await page.locator(`[data-gamesense-dossier-text-field^="${weaponToken}:"]`).first().waitFor({ state: "visible" });
-    assert.ok(await page.locator(`[data-gamesense-dossier-text-field^="${weaponToken}:"]`).count() > 0, "The selected weapon needs editable dossier fields after its direct toggle.");
+    const weaponFields = await page.locator(`[data-gamesense-dossier-text-field^="${weaponToken}:"]`).evaluateAll(fields => fields.map(field => field.dataset.gamesenseDossierTextField));
+    assert.ok(weaponFields.some(field => field.includes(":focus")), "The selected weapon needs editable dossier fields after its direct toggle.");
+    assert.ok(weaponFields.some(field => field.includes(":whenToUse.")), `Weapon usage notes must be editable: ${JSON.stringify(weaponFields)}`);
+    assert.ok(weaponFields.some(field => field.includes(":howToUse.")), `Weapon mechanics notes must be editable: ${JSON.stringify(weaponFields)}`);
+    assert.ok(weaponFields.some(field => field.includes(":patchHistory.")), `Weapon history must be editable: ${JSON.stringify(weaponFields)}`);
     assert.deepEqual(issues, []);
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
   }
-  console.log("Owner Agent and Weapon dossier text editor controls work when toggled on their own detail pages.");
+  console.log("Owner map, agent, and weapon dossier text editor coverage works across every authored text section.");
 }
 
 run().catch(error => { console.error(error); process.exitCode = 1; });
