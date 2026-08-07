@@ -13221,6 +13221,12 @@ function updateAuthUI(user = null) {
   updateProfileDropdownMenu?.();
   refreshRiotProfilePrompt?.();
   refreshThemeBuilderAccess();
+  // Gamesense renders its owner-only controls from the current auth bridge.
+  // Auth can resolve after its first render, so replace the existing Library
+  // view instead of leaving the editor controls absent until navigation.
+  window.dispatchEvent(new CustomEvent("rankedcoach:auth-state-changed", {
+    detail: { signedIn: Boolean(currentAuthUser) }
+  }));
   publishRankedCoachSyncDiagnostics?.("auth-ui");
 }
 
@@ -19815,6 +19821,7 @@ let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
 let retainedHistoryContinuationTimer = null;
+let retainedHistoryContinuationEpoch = 0;
 
 function normalizePendingLoadoutRoll(value = {}) {
   if (!value || typeof value !== "object") return null;
@@ -20344,6 +20351,9 @@ function getChartAxisWindowSize(size = currentSize, matchCount = 0) {
 function setChartTooltipSuppressed(suppressed = true) {
   chartTooltipSuppressed = Boolean(suppressed);
   if (chartTooltipSuppressed) {
+    // A fixed summary replaces the mobile tooltip. Clear it whenever the
+    // chart is rerendered or hidden so it cannot describe a stale match.
+    updateChartSelectionSummary(null);
     hideChartTooltip();
   }
 }
@@ -20375,6 +20385,9 @@ function hideChartTooltip(){
     crosshair.setAttribute("opacity", "0");
   }
   chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+    resetChartRankMarkerPosition(marker);
+  });
+  chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-integrated").forEach(marker => {
     resetChartRankMarkerPosition(marker);
   });
   chartRow?.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
@@ -20411,7 +20424,7 @@ function resetChartRankMarkerPosition(marker) {
   const baseY = Number(marker.dataset?.baseY || circle?.getAttribute("cy"));
   if (!Number.isFinite(baseX) || !Number.isFinite(baseY)) return;
 
-  marker.classList.remove("is-tooltip-paired");
+  marker.classList.remove("is-tooltip-paired", "is-tooltip-integrated");
   revealChartRankMarkerImmediately(marker);
   marker.removeAttribute("transform");
   circle?.setAttribute("cx", baseX);
@@ -20452,6 +20465,59 @@ function animateChartTooltipPop() {
   tip.classList.add("chart-tooltip-pop");
 }
 
+function getChartTooltipDetails(hit, marker = null) {
+  const rankRr = String(hit?.dataset?.rankRr || "").trim();
+  const rankLabel = String(hit?.dataset?.rankLabel || "").trim();
+  const rrDelta = safeNumber(hit?.dataset?.rr);
+  const iconUrl = String(marker?.querySelector?.("image")?.getAttribute?.("href") || "").trim();
+  return {
+    rankRr,
+    rankLabel,
+    rrDelta,
+    iconUrl,
+    text: rankRr
+      ? `${rankLabel ? `${rankLabel} · ` : ""}${rankRr} RR · ${rrDelta >= 0 ? "+" : ""}${rrDelta} RR`
+      : `${safeNumber(hit?.dataset?.totalRr, hit?.dataset?.rr)} RR`
+  };
+}
+
+function renderChartTooltipContent(tip, details) {
+  if (!tip) return;
+  tip.replaceChildren();
+  if (details?.iconUrl) {
+    const icon = document.createElement("img");
+    icon.className = "chart-tooltip-rank-icon";
+    icon.src = details.iconUrl;
+    icon.alt = "";
+    icon.width = 22;
+    icon.height = 22;
+    tip.appendChild(icon);
+  }
+  const label = document.createElement("span");
+  label.textContent = details?.text || "0 RR";
+  tip.appendChild(label);
+}
+
+function updateChartSelectionSummary(details = null) {
+  const summary = document.getElementById("chartSelectionSummary");
+  if (!summary) return;
+  summary.replaceChildren();
+  summary.classList.toggle("is-visible", Boolean(details));
+  if (!details) return;
+  if (details.iconUrl) {
+    const icon = document.createElement("img");
+    icon.className = "chart-selection-summary-icon";
+    icon.src = details.iconUrl;
+    icon.alt = "";
+    icon.width = 22;
+    icon.height = 22;
+    summary.appendChild(icon);
+  }
+  const label = document.createElement("span");
+  label.textContent = details.text;
+  summary.appendChild(label);
+}
+
 function positionTooltipToHit(hit, options = {}){
   const { pop = false } = options;
 
@@ -20474,15 +20540,26 @@ function positionTooltipToHit(hit, options = {}){
   const x = svgRect.left + (((anchorCx - viewBox.x) / viewBox.width) * svgRect.width);
   const y = svgRect.top + (((anchorCy - viewBox.y) / viewBox.height) * svgRect.height);
   const hasRankMarker = String(hit.dataset.rankChange || anchorEl.dataset.rankChange || "") === "true";
+  const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
+  const selectedRankMarker = hasRankMarker
+    ? Array.from(svg.querySelectorAll(".chart-rank-marker"))
+      .find(item => String(item.dataset.matchIndex || "") === markerMatchIndex)
+    : null;
+  const tooltipDetails = getChartTooltipDetails(hit, selectedRankMarker);
 
+  // A fixed row keeps mobile selection information clear of the selected dot
+  // and its persistent rank crest.
+  if (isMobileLayoutViewport()) {
+    updateChartSelectionSummary(tooltipDetails);
+    tip.style.opacity = 0;
+    tip.style.visibility = "hidden";
+    return;
+  }
+
+  updateChartSelectionSummary(null);
   tip.style.visibility = "visible";
   tip.style.opacity = 1;
-  const rankRr = String(hit.dataset.rankRr || "").trim();
-  const rankLabel = String(hit.dataset.rankLabel || "").trim();
-  const rrDelta = safeNumber(hit.dataset.rr);
-  tip.textContent = rankRr
-    ? `${rankLabel ? `${rankLabel} ` : ""}${rankRr} RR | ${rrDelta >= 0 ? "+" : ""}${rrDelta} RR`
-    : `${safeNumber(hit.dataset.totalRr, hit.dataset.rr)} RR`;
+  renderChartTooltipContent(tip, tooltipDetails);
 
   // ========================
   // SMART TOOLTIP POSITION
@@ -20500,67 +20577,18 @@ function positionTooltipToHit(hit, options = {}){
     revealChartRankMarkerImmediately(marker);
   });
   if (hasRankMarker) {
-    const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
-    const marker = Array.from(svg.querySelectorAll(".chart-rank-marker"))
-      .find(item => String(item.dataset.matchIndex || "") === markerMatchIndex);
+    const marker = selectedRankMarker;
     const markerCircle = marker?.querySelector("circle");
-    const markerCx = Number(markerCircle?.getAttribute("cx") || anchorCx);
     const markerCy = Number(markerCircle?.getAttribute("cy") || anchorCy);
     const markerRadius = Math.max(8, Number(markerCircle?.getAttribute("r") || 14));
     const markerRadiusPx = markerRadius * (svgRect.width / viewBox.width);
-    const markerArrowOffsetPx = 19 * (svgRect.width / viewBox.width);
-    const markerArrowWidthPx = 13;
-    const markerLeftWidthPx = markerRadiusPx + markerArrowOffsetPx + markerArrowWidthPx;
-    const markerRightWidthPx = markerRadiusPx;
-    const pairGapPx = 12;
-    const groupWidthPx = markerLeftWidthPx + markerRightWidthPx + pairGapPx + tipWidth;
-    const minTipLeft = viewportPad + tipWidth / 2;
-    const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
-    const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
-    const maxMarkerScreenX = Math.min(window.innerWidth - viewportPad - markerRadiusPx, svgRect.right - markerRadiusPx);
-    // Desktop keeps a marker/tooltip pair side by side. On mobile that
-    // collision treatment made the rank marker drift between the newest two
-    // RR dots. The marker must remain attached to its match; only the tooltip
-    // is allowed to move for the smaller viewport.
-    const keepMarkerAnchored = isMobileLayoutViewport();
-    const selectedGroupOffsetPx = 0;
-    const groupLeft = x - (groupWidthPx / 2) + selectedGroupOffsetPx;
-    const markerBaseScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
-    const desiredMarkerScreenX = keepMarkerAnchored
-      // The RR point already includes plot padding. Do not edge-clamp a mobile
-      // marker: at the final point that turned a rank icon into an in-between
-      // marker, which is less useful than letting its arrow sit near the edge.
-      ? markerBaseScreenX
-      : Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
-    const desiredLeft = keepMarkerAnchored
-      ? Math.max(minTipLeft, Math.min(maxTipLeft, x))
-      : Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
-    const selectedMarkerCx = viewBox.x + (((desiredMarkerScreenX - svgRect.left) / svgRect.width) * viewBox.width);
-    // Selection must not move the rank marker. On mobile the earlier
-    // tooltip collision code re-positioned a marker from above a point to
-    // below it, which made the icon look attached to the neighbouring dot.
-    let selectedMarkerCy = markerCy;
-    let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
-    const tipHalfHeightChartUnits = ((tipHeight / 2) / svgRect.height) * viewBox.height;
-    const selectedNeedsBelow = markerCy < anchorCy
-      && (markerCy - tipHalfHeightChartUnits < PAD_TOP + 4 || markerScreenY - (tipHeight / 2) < viewportPad);
-    if (selectedNeedsBelow && !keepMarkerAnchored) {
-      selectedMarkerCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
-      markerScreenY = svgRect.top + (((selectedMarkerCy - viewBox.y) / viewBox.height) * svgRect.height);
-    }
-    setChartRankMarkerPosition(marker, selectedMarkerCx, selectedMarkerCy);
-    const selectedGroupBounds = {
-      left: Math.min(desiredMarkerScreenX - markerLeftWidthPx, desiredLeft - (tipWidth / 2)),
-      right: Math.max(desiredMarkerScreenX + markerRightWidthPx, desiredLeft + (tipWidth / 2))
-    };
-    updateNearbyChartRankMarkerFade(svg, marker, selectedGroupBounds, markerScreenY);
-    const mobileTooltipY = markerScreenY - markerRadiusPx - tipHeight / 2 - 8;
-    tip.style.left = Math.max(minTipLeft, Math.min(maxTipLeft, desiredLeft)) + "px";
-    tip.style.top = Math.max(
-      viewportPad + tipHeight / 2,
-      Math.min(window.innerHeight - viewportPad - tipHeight / 2, keepMarkerAnchored ? mobileTooltipY : markerScreenY)
-    ) + "px";
-    tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
+    const markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
+    const flipLeft = x + markerRadiusPx + 14 + tipWidth > svgRect.right - viewportPad;
+    marker?.classList.add("is-tooltip-integrated");
+    updateNearbyChartRankMarkerFade(svg, marker, null, markerScreenY);
+    tip.style.left = `${flipLeft ? x - markerRadiusPx - 14 : x + markerRadiusPx + 14}px`;
+    tip.style.top = `${Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, y))}px`;
+    tip.style.setProperty("--chart-tooltip-base-transform", flipLeft ? "translate(-100%, -50%)" : "translate(0, -50%)");
     tip.style.transform = "var(--chart-tooltip-base-transform)";
     if (pop) animateChartTooltipPop();
     return;
@@ -56306,7 +56334,9 @@ if(chartHeight){
     ? Math.max(8, CHART_W * 0.025)
     : CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
-  PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.64);
+  // Reserve only the title + legend space that is actually used. The older
+  // desktop value left an empty lower third below the chart legend.
+  PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.72);
 
 // ========================
 // NO MATCH PLACEHOLDER
@@ -59265,6 +59295,10 @@ if (!window.__vt_riotImportBound) {
     e.stopPropagation();
 
     clearRiotAutoSyncTimer();
+    // A user-initiated refresh owns this window. Invalidate any queued
+    // archive continuation before it can wake up behind the manual request
+    // and repeat the same first history page.
+    cancelRetainedHistoryContinuation();
 
     const result = await performRiotSync({
       silent: false,
@@ -60409,6 +60443,7 @@ async function syncProfileRetainedHistory(options = {}) {
       verifyWarmup: false,
       prefillReflection: false,
       deferSurfaceRefresh: true,
+      fetchMmrHistory: options.fetchMmrHistory,
       onSyncProgress: progress => {
         const batchProgress = Math.max(0, Math.min(100, safeNumber(progress?.percent)));
         const batchBase = Math.min(88, 12 + Math.round((Math.min(totalChecked, estimatedHistoryWindow) / estimatedHistoryWindow) * 72));
@@ -60487,8 +60522,12 @@ async function syncProfileRetainedHistory(options = {}) {
 function scheduleRetainedHistoryContinuation(profileId, delayMs = HENRIK_HISTORY_BACKGROUND_DELAY_MS) {
   const targetProfileId = String(profileId || "").trim();
   if (!targetProfileId) return false;
+  const scheduleEpoch = ++retainedHistoryContinuationEpoch;
   window.clearTimeout(retainedHistoryContinuationTimer);
   retainedHistoryContinuationTimer = window.setTimeout(async () => {
+    // clearTimeout cannot retract a callback that is already queued. The
+    // epoch keeps such a stale continuation from racing a manual sync.
+    if (scheduleEpoch !== retainedHistoryContinuationEpoch) return;
     retainedHistoryContinuationTimer = null;
     const profile = getActiveProfile?.();
     if (!profile?.riotId || profile.id !== targetProfileId || profile.henrikHistoryBackfillCompleteAt) return;
@@ -60532,6 +60571,12 @@ function scheduleRetainedHistoryContinuation(profileId, delayMs = HENRIK_HISTORY
     );
   }, Math.max(250, Number(delayMs) || HENRIK_HISTORY_BACKGROUND_DELAY_MS));
   return true;
+}
+
+function cancelRetainedHistoryContinuation() {
+  retainedHistoryContinuationEpoch += 1;
+  window.clearTimeout(retainedHistoryContinuationTimer);
+  retainedHistoryContinuationTimer = null;
 }
 
 function scheduleDailyProfileSync() {

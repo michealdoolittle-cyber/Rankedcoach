@@ -61948,3 +61948,79 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     grid-template-columns:minmax(0,1fr) !important;
   }
 }
+
+/* 2026-08-07 chart tooltip + owner-tools follow-up ---------------------- */
+.chart-tooltip{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.chart-tooltip-rank-icon,
+.chart-selection-summary-icon{
+  display:block;
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  flex:0 0 22px;
+}
+
+.chart-rank-marker.is-tooltip-integrated{
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+
+.chart-selection-summary{
+  display:none;
+}
+
+/* The border gallery has been constrained by layout-style wrappers on some
+   desktop themes. Make the full-width field and its 4-column grid explicitly
+   stretch to the modal content width before distributing the cards. */
+#editProfileModal .profile-edit-field-full{
+  width:100%;
+  min-width:0;
+  justify-self:stretch;
+}
+
+#editProfileModal #editProfileBorderGallery.border-gallery{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  justify-self:stretch;
+  margin-inline:auto;
+}
+
+@media (max-width:820px){
+  body.is-mobile-layout #page-home .rr-chart-layout{
+    grid-template-rows:auto auto auto auto !important;
+    grid-template-areas:
+      "chart"
+      "summary"
+      "controls"
+      "stats" !important;
+  }
+
+  body.is-mobile-layout #page-home .chart-selection-summary{
+    grid-area:summary;
+  }
+
+  body.is-mobile-layout #page-home .chart-selection-summary.is-visible{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:36px;
+    margin:8px 4px 0;
+    padding:6px 10px;
+    border:1px solid color-mix(in srgb, var(--accent,#ff4655) 44%, rgba(148,163,184,.32));
+    border-radius:8px;
+    background:rgba(2,6,23,.82);
+    color:var(--text-main,#f8fafc);
+    font-size:12px;
+    font-weight:800;
+    line-height:1.2;
+    text-align:center;
+  }
+
+}

@@ -222,7 +222,11 @@ async function run() {
     await page.waitForTimeout(300);
     assert.equal(accountRequests, 1, "The saved PUUID should prevent a second account lookup.");
     assert.equal(competitiveMatchRequests, competitiveRequestsAfterFailure + 1);
-    assert.ok(dialogs.some(message => /already up to date/i.test(message)), JSON.stringify(dialogs));
+    // A normal no-new-match sync uses the player-facing completion toast,
+    // not a native alert. This keeps the normal and graceful-degrade paths
+    // in the app's own voice.
+    await page.locator(".app-toast.is-visible").filter({ hasText: "App has been Fully Synced." }).waitFor({ state: "visible", timeout: 4000 });
+    assert.deepEqual(dialogs, []);
 
     rawFailureMode = true;
     rawRequests = 0;

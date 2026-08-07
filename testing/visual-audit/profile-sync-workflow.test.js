@@ -97,10 +97,26 @@ function makeMatch(index) {
   };
 }
 
+function makeFreshMatch() {
+  const match = makeMatch(0);
+  const localNoon = new Date();
+  localNoon.setHours(12, 1, 0, 0);
+  const startedAt = localNoon.toISOString();
+  match.metadata.match_id = "profile-sync-fresh";
+  match.metadata.started_at = startedAt;
+  match.metadata.map = { name: "Split" };
+  match.players[0].agent = { id: "fade-id", name: "Fade" };
+  match.players[0].stats = { kills: 23, deaths: 11, assists: 8, score: 5800, damage: { dealt: 3600 }, headshots: 18, bodyshots: 24, legshots: 2 };
+  return match;
+}
+
 async function run() {
   const server = await startServer();
   const browser = await chromium.launch();
   let matchRequests = 0;
+  let mmrHistoryRequests = 0;
+  let liveMmrHistoryRequests = 0;
+  let freshMatchAvailable = false;
   const matchStarts = [];
   const consoleErrors = [];
   const failedResponses = [];
@@ -114,23 +130,31 @@ async function run() {
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await page.route("**/api/henrik/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, configured: true }) }));
     await page.route("**/api/henrik/account", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { puuid, name: "Workflow", tag: "TEST" } }) }));
-    await page.route("**/api/henrik/mmr-history-live", route => route.fulfill({
+    await page.route("**/api/henrik/mmr-history-live", route => {
+      liveMmrHistoryRequests += 1;
+      return route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ data: [{ account: { puuid }, history: [{ match_id: "profile-sync-0", tier: { id: 19, name: "Diamond 2" }, rr: 66, last_change: 25, elo: 1666, date: new Date().toISOString() }] }] })
-    }));
-    await page.route("**/api/henrik/mmr-history", route => route.fulfill({
+      });
+    });
+    await page.route("**/api/henrik/mmr-history", route => {
+      mmrHistoryRequests += 1;
+      return route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ data: [{ match_id: "profile-sync-0", tier: { id: 19, name: "Diamond 2" }, rr: 64, last_change: 23, elo: 1664, date: new Date().toISOString() }] })
-    }));
+      });
+    });
     await page.route("**/api/henrik/matches", async route => {
       const body = JSON.parse(route.request().postData() || "{}");
       if (!body.mode || body.mode === "competitive") matchRequests += 1;
       matchStarts.push({ start: body.start, mode: body.mode || "competitive" });
       await new Promise(resolve => setTimeout(resolve, 35));
       const data = body.start < 100
-        ? Array.from({ length: Math.min(10, body.count || 10) }, (_item, offset) => makeMatch(body.start + offset))
+        ? (freshMatchAvailable && body.start === 0
+          ? [makeFreshMatch(), ...Array.from({ length: Math.max(0, Math.min(10, body.count || 10) - 1) }, (_item, offset) => makeMatch(offset))]
+          : Array.from({ length: Math.min(10, body.count || 10) }, (_item, offset) => makeMatch(body.start + offset)))
         : [];
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data }) });
     });
@@ -222,6 +246,38 @@ async function run() {
     assert.match(homeData.chartStatus || "", /1 of 100 retained matches have verified RR snapshots/i);
     assert.equal(homeData.latestDot, true);
     assert.equal(await page.locator('.rr-hit[data-match-id="profile-sync-0"]').getAttribute("data-match-id"), "profile-sync-0");
+
+    // Steady-state coverage: after the archive is complete, expose one new
+    // match through the ordinary header sync. This verifies detection,
+    // import, MMR requests, dashboard refresh, the report modal, and the
+    // post-dismiss reflection handoff without re-entering cold-start mode.
+    freshMatchAvailable = true;
+    const priorMatchRequests = matchStarts.length;
+    const priorMmrHistoryRequests = mmrHistoryRequests;
+    const priorLiveMmrHistoryRequests = liveMmrHistoryRequests;
+    await page.click("#profileSyncBtn");
+    await page.waitForFunction(() => {
+      const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
+      return profiles.some(profile => profile?.matches?.some(match => (match.matchId || match.id || match.metadata?.matchId) === "profile-sync-fresh"));
+    }, null, { timeout: 20000 });
+    await page.locator("#matchSummaryModal.active").waitFor({ state: "visible", timeout: 10000 });
+    const steadyState = await page.evaluate(() => ({
+      profile: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]").find(item => item.name === "Workflow Test"),
+      reportMatch: document.querySelector("#matchSummaryModal [data-match-id]")?.getAttribute("data-match-id") || document.getElementById("matchSummaryModal")?.textContent || "",
+      totalGames: document.getElementById("totalGames")?.textContent?.trim(),
+      latestDot: Boolean(document.querySelector('.rr-hit[data-match-id="profile-sync-fresh"]')),
+      reportVisible: document.getElementById("matchSummaryModal")?.classList.contains("active")
+    }));
+    assert.equal(steadyState.profile?.matches?.length, 101, JSON.stringify(steadyState));
+    assert.equal(steadyState.totalGames, "101", JSON.stringify(steadyState));
+    assert.equal(steadyState.latestDot, true, JSON.stringify(steadyState));
+    assert.equal(steadyState.reportVisible, true, JSON.stringify(steadyState));
+    assert.ok(matchStarts.length > priorMatchRequests, JSON.stringify(matchStarts));
+    assert.ok(mmrHistoryRequests > priorMmrHistoryRequests, "steady-state sync must refresh MMR history");
+    assert.ok(liveMmrHistoryRequests > priorLiveMmrHistoryRequests, "steady-state sync must refresh live MMR history");
+    await page.click("#matchSummaryModal .match-summary-close", { force: true });
+    await page.waitForFunction(() => /Fade/i.test(document.getElementById("logAgentDisplay")?.textContent || ""), null, { timeout: 10000 });
+    assert.match(await page.locator("#logAgentDisplay").textContent(), /Fade/i);
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.nav-btn[data-page="logging"]');
@@ -230,7 +286,7 @@ async function run() {
     await page.waitForFunction(() => document.getElementById("logFocusCustomValue")?.textContent?.trim() === "Map Awareness");
     const focusFit = await page.locator("#logFocusCustomTrigger").evaluate(trigger => ({ clientWidth: trigger.clientWidth, scrollWidth: trigger.scrollWidth }));
     assert.ok(focusFit.scrollWidth <= focusFit.clientWidth + 1, JSON.stringify(focusFit));
-    await page.locator("#page-logging .logging-form").screenshot({ path: path.join(__dirname, "tmp", "profile-sync-prefill.png") });
+    await page.screenshot({ path: path.join(__dirname, "tmp", "profile-sync-prefill.png") });
     await page.click('.nav-btn[data-page="stats"]');
     await page.waitForTimeout(700);
     const peakCard = page.locator("#statsActSelector").locator("xpath=ancestor::div[contains(@class,'stats-proof-card')]");

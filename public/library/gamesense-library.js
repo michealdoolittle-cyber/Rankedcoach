@@ -2822,7 +2822,7 @@
         </div>
         ${textEditorActive && !isPlants ? `<section class="gamesense-dossier-callout-editor">
           <strong>Callout text corrections</strong>
-          <div>${(map.callouts || []).map(callout => {
+          ${(map.callouts || []).length ? `<div>${(map.callouts || []).map(callout => {
             const label = getDossierTextValue("maps", map.id, `callouts.${callout.id}.label`, callout.label || "");
             const sourceLabel = getDossierTextValue("maps", map.id, `callouts.${callout.id}.sourceLabel`, callout.sourceLabel || "");
             return `<article>
@@ -2830,7 +2830,7 @@
               ${renderDossierTextField({ type: "maps", id: map.id, path: `callouts.${callout.id}.label`, label: "Label", value: label, rows: 1 })}
               ${renderDossierTextField({ type: "maps", id: map.id, path: `callouts.${callout.id}.sourceLabel`, label: "Source label", value: sourceLabel, rows: 1 })}
             </article>`;
-          }).join("")}</div>
+          }).join("")}</div>` : `<p>This map uses baked-in labels, so there are no separate callout fields to edit on this view.</p>`}
         </section>${renderDossierTextEditorExport("maps", map.id)}` : ""}
       </section>`;
   }
@@ -5395,12 +5395,20 @@
     syncPlaylistWatchedPills();
   });
 
+  window.addEventListener("rankedcoach:auth-state-changed", () => {
+    // Library can render before Supabase finishes hydrating the signed-in
+    // owner. Refresh the current screen so permission-gated editor controls
+    // appear as soon as that identity is available.
+    window.requestAnimationFrame(() => render({ direction: "replace" }));
+  });
+
   decorateWarmupDrills();
   render();
   globalThis.RankedCoachGamesenseLibrary = Object.freeze({
     open: openLibrary,
     render,
     reset: resetLibrary,
+    refreshOwnerControls: () => render({ direction: "replace" }),
     setPageActive: setLibraryPageActive,
     getPublishedKnowledge: () => publishedKnowledge.slice()
   });

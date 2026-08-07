@@ -98,29 +98,37 @@ async function run() {
 
     await page.locator("#chartRow .rr-hit").last().click({ force: true });
     await page.waitForTimeout(120);
-    const newestTooltip = await page.evaluate(() => {
+    const newestSelection = await page.evaluate(() => {
       const tooltip = document.getElementById("chartTooltip");
+      const summary = document.getElementById("chartSelectionSummary");
       const style = tooltip ? getComputedStyle(tooltip) : null;
+      const summaryStyle = summary ? getComputedStyle(summary) : null;
       return {
-        visible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
-        text: tooltip?.textContent || ""
+        floatingVisible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+        summaryVisible: Boolean(summary && summaryStyle?.display !== "none"),
+        text: summary?.textContent || ""
       };
     });
-    assert.equal(newestTooltip.visible, true, `newest RR dot should show a tooltip: ${JSON.stringify(newestTooltip)}`);
-    assert.match(newestTooltip.text, /Diamond 1|RR/i, JSON.stringify(newestTooltip));
+    assert.equal(newestSelection.floatingVisible, false, `mobile must not use a floating RR tooltip: ${JSON.stringify(newestSelection)}`);
+    assert.equal(newestSelection.summaryVisible, true, `newest RR dot should show the fixed summary row: ${JSON.stringify(newestSelection)}`);
+    assert.match(newestSelection.text, /Diamond 1|RR/i, JSON.stringify(newestSelection));
 
     await page.locator("#chartRow .rr-hit").first().click({ force: true });
     await page.waitForTimeout(120);
-    const earlierTooltip = await page.evaluate(() => {
+    const earlierSelection = await page.evaluate(() => {
       const tooltip = document.getElementById("chartTooltip");
+      const summary = document.getElementById("chartSelectionSummary");
       const style = tooltip ? getComputedStyle(tooltip) : null;
+      const summaryStyle = summary ? getComputedStyle(summary) : null;
       return {
-        visible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
-        text: tooltip?.textContent || ""
+        floatingVisible: Boolean(tooltip && style?.visibility !== "hidden" && Number(style?.opacity || 0) > 0),
+        summaryVisible: Boolean(summary && summaryStyle?.display !== "none"),
+        text: summary?.textContent || ""
       };
     });
-    assert.equal(earlierTooltip.visible, true, `non-newest RR dot should show a tooltip: ${JSON.stringify(earlierTooltip)}`);
-    assert.match(earlierTooltip.text, /Gold 3|RR/i, JSON.stringify(earlierTooltip));
+    assert.equal(earlierSelection.floatingVisible, false, `mobile must not restore a floating tooltip: ${JSON.stringify(earlierSelection)}`);
+    assert.equal(earlierSelection.summaryVisible, true, `earlier RR dot should update the fixed summary row: ${JSON.stringify(earlierSelection)}`);
+    assert.match(earlierSelection.text, /Gold 3|RR/i, JSON.stringify(earlierSelection));
     const selectedGeometry = await page.evaluate(() => {
       const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
       const marker = hit?.closest("svg")?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
@@ -134,6 +142,66 @@ async function run() {
       markerX: geometry.markerX,
       markerY: geometry.markerY
     }, `selecting the newest dot must not reposition its rank marker: ${JSON.stringify({ geometry, selectedGeometry })}`);
+
+    // Desktop folds the selected promotion crest into the tooltip and flips
+    // the newest-dot tooltip to the left instead of allowing a second marker
+    // or the tooltip itself to collide with the chart edge.
+    const seed = await page.evaluate(() => ({
+      profiles: localStorage.getItem("valtracker_profiles_v1"),
+      activeProfileId: localStorage.getItem("valtracker_active_profile_id"),
+      entryChoice: localStorage.getItem("valtracker_entry_choice_v1")
+    }));
+    const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    desktop.on("console", message => { if (message.type() === "error") consoleIssues.push(message.text()); });
+    desktop.on("pageerror", error => consoleIssues.push(error.message));
+    await desktop.addInitScript(saved => {
+      localStorage.clear();
+      localStorage.setItem("valtracker_entry_choice_v1", saved.entryChoice || "guest");
+      localStorage.setItem("valtracker_active_profile_id", saved.activeProfileId || "");
+      localStorage.setItem("valtracker_profiles_v1", saved.profiles || "[]");
+      localStorage.setItem("valtracker_logs_v1", "[]");
+      localStorage.setItem("valtracker_log_entries_v1", "[]");
+      localStorage.setItem("valtracker_log_entries_v2:guest", "[]");
+    }, seed);
+    await desktop.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
+    await desktop.waitForFunction(() => document.querySelectorAll("#chartRow .rr-hit").length >= 3, null, { timeout: 20000 });
+    await desktop.evaluate(() => {
+      globalThis.RankedCoachDailyEntrance?.skipAll?.();
+      document.querySelectorAll(".lens-modal-overlay, .app-loading-veil, #dailyWarmupModal").forEach(element => {
+        element.classList.remove("active");
+        element.setAttribute("aria-hidden", "true");
+        element.style.setProperty("display", "none", "important");
+      });
+      document.body.classList.remove("modal-open", "is-modal-open", "has-active-modal", "daily-entrance-motion-active");
+    });
+    await desktop.waitForTimeout(3200);
+    await desktop.locator("#chartRow .rr-hit").last().click({ force: true });
+    await desktop.waitForTimeout(120);
+    const desktopTooltip = await desktop.evaluate(() => {
+      const hit = [...document.querySelectorAll("#chartRow .rr-hit")].at(-1);
+      const svg = hit?.closest("svg");
+      const tooltip = document.getElementById("chartTooltip");
+      const marker = svg?.querySelector(`.chart-rank-marker[data-match-index="${hit?.dataset.matchIndex}"]`);
+      const tooltipStyle = tooltip ? getComputedStyle(tooltip) : null;
+      const tooltipBounds = tooltip?.getBoundingClientRect();
+      const chartBounds = svg?.getBoundingClientRect();
+      const dotBounds = hit?.getBoundingClientRect();
+      return {
+        visible: Boolean(tooltip && tooltipStyle?.visibility !== "hidden" && Number(tooltipStyle?.opacity || 0) > 0),
+        hasMergedIcon: Boolean(tooltip?.querySelector(".chart-tooltip-rank-icon")),
+        markerHidden: marker ? getComputedStyle(marker).visibility === "hidden" : false,
+        flipsLeft: Boolean(tooltipBounds && dotBounds && tooltipBounds.right <= dotBounds.left),
+        contained: Boolean(tooltipBounds && chartBounds && tooltipBounds.left >= chartBounds.left - 1 && tooltipBounds.right <= chartBounds.right + 1)
+      };
+    });
+    assert.deepEqual(desktopTooltip, {
+      visible: true,
+      hasMergedIcon: true,
+      markerHidden: true,
+      flipsLeft: true,
+      contained: true
+    }, JSON.stringify(desktopTooltip));
+    await desktop.close();
     assert.deepEqual(consoleIssues, []);
   } finally {
     await browser.close();
