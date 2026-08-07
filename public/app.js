@@ -15031,12 +15031,31 @@ function matchRecordNeedsWeaponBackfill(record = {}) {
   const rounds = Array.isArray(record?.roundByRound) ? record.roundByRound : [];
   const trackedPuuid = String(record?.trackedPlayer?.puuid || "").trim();
   return rounds.some(round => {
+    const economyWeapon = String(round?.playerEconomy?.weapon || "").trim();
+    // Round-level loadout data drives weapon-category coaching. Kill weapons
+    // alone cannot repair a record that reports a readable Vandal kill but
+    // has no readable weapon for the rest of the round.
+    const economyWeaponMissing = !economyWeapon || economyWeapon === "[object Object]";
     const kills = Array.isArray(round?.kills) ? round.kills : [];
     const trackedKills = trackedPuuid
       ? kills.filter(kill => getMatchSummaryKillKillerId(kill) === trackedPuuid)
       : kills;
-    return trackedKills.length > 0 && trackedKills.some(kill => !matchSummaryKillHasWeaponIdentity(kill));
+    return economyWeaponMissing
+      || (trackedKills.length > 0 && trackedKills.some(kill => !matchSummaryKillHasWeaponIdentity(kill)));
   });
+}
+
+function matchRecordNeedsAcsBackfill(record = {}) {
+  if (!record || typeof record !== "object") return false;
+  const hasKnownNumber = value => value !== null
+    && value !== undefined
+    && String(value).trim() !== ""
+    && Number.isFinite(Number(value));
+  const hasCoreStats = ["kills", "deaths", "assists"].every(key =>
+    hasKnownNumber(record?.stats?.[key])
+  );
+  const acs = record?.stats?.acs;
+  return hasCoreStats && (acs === null || acs === undefined || Number.isNaN(Number(acs)));
 }
 
 function matchRecordNeedsHsBackfill(record = {}) {
@@ -15137,6 +15156,7 @@ function matchRecordNeedsStoredRawRehydrate(record = {}, options = {}) {
   return options.force === true
     || (!getMatchHsBackfillUnavailable(record) && matchRecordNeedsHsBackfill(record))
     || (!getMatchWeaponBackfillUnavailable(record) && matchRecordNeedsWeaponBackfill(record))
+    || (!getMatchAcsBackfillUnavailable(record) && matchRecordNeedsAcsBackfill(record))
     || matchRecordNeedsQueueBackfill(record)
     || !currentVersion;
 }
@@ -15208,6 +15228,13 @@ function getMatchHsBackfillUnavailable(record = {}) {
   );
 }
 
+function getMatchAcsBackfillUnavailable(record = {}) {
+  return Boolean(
+    record?.acsBackfillUnavailable === true
+    || record?.importMeta?.acsBackfillUnavailable === true
+  );
+}
+
 function getMatchMetadataBackfillUnavailable(match = {}) {
   const record = getMatchSummaryRecord(match);
   return Boolean(
@@ -15252,6 +15279,17 @@ function getHsBackfillMatchIds(matchList = []) {
     .filter(Boolean))];
 }
 
+function getAcsBackfillMatchIds(matchList = []) {
+  return [...new Set((Array.isArray(matchList) ? matchList : [])
+    .filter(match => {
+      const record = getMatchSummaryRecord(match);
+      return !getMatchAcsBackfillUnavailable(record)
+        && matchRecordNeedsAcsBackfill(record);
+    })
+    .map(getMatchSummaryStableId)
+    .filter(Boolean))];
+}
+
 function getMetadataBackfillMatchIds(matchList = []) {
   return [...new Set((Array.isArray(matchList) ? matchList : [])
     .filter(match => !getMatchSeasonKey(match) && !getMatchMetadataBackfillUnavailable(match))
@@ -15279,20 +15317,23 @@ function inspectProfileMatchBackfill(profile = {}, matchList = [], options = {})
       skipped: true,
       metadataMatchIds: [],
       weaponMatchIds: [],
-      hsMatchIds: []
+      hsMatchIds: [],
+      acsMatchIds: []
     };
   }
 
   const metadataMatchIds = getMetadataBackfillMatchIds(list);
   const weaponMatchIds = getWeaponBackfillMatchIds(list);
   const hsMatchIds = getHsBackfillMatchIds(list);
+  const acsMatchIds = getAcsBackfillMatchIds(list);
   return {
-    needsBackfill: metadataMatchIds.length > 0 || weaponMatchIds.length > 0 || hsMatchIds.length > 0,
+    needsBackfill: metadataMatchIds.length > 0 || weaponMatchIds.length > 0 || hsMatchIds.length > 0 || acsMatchIds.length > 0,
     checked: list.length,
     skipped: false,
     metadataMatchIds,
     weaponMatchIds,
-    hsMatchIds
+    hsMatchIds,
+    acsMatchIds
   };
 }
 
@@ -15346,6 +15387,7 @@ function buildProfileMatchRefreshPlan(profile = {}, sources = {}, options = {}) 
     ...(sources.metadataMatchIds || []),
     ...(sources.weaponMatchIds || []),
     ...(sources.hsMatchIds || []),
+    ...(sources.acsMatchIds || []),
     ...(sources.storedRawMatchIds || [])
   ]);
   const refreshMatchIds = takeRotatingMatchBackfillBatch(
@@ -15426,6 +15468,38 @@ function markHsBackfillUnavailable(matchList = [], matchIds = []) {
       metadata: {
         ...(match.metadata || {}),
         hsBackfillUnavailable: true
+      }
+    };
+  });
+}
+
+function markAcsBackfillUnavailable(matchList = [], matchIds = []) {
+  const targets = new Set((Array.isArray(matchIds) ? matchIds : [])
+    .map(value => String(value || "").trim())
+    .filter(Boolean));
+  if (!targets.size) return Array.isArray(matchList) ? matchList : [];
+  const checkedAt = nowISO();
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const matchId = getMatchSummaryStableId(match);
+    if (!targets.has(matchId)) return match;
+    const record = getMatchSummaryRecord(match);
+    if (!record || !matchRecordNeedsAcsBackfill(record)) return match;
+    const nextRecord = {
+      ...record,
+      acsBackfillUnavailable: true,
+      acsBackfillCheckedAt: checkedAt,
+      importMeta: {
+        ...(record.importMeta || {}),
+        acsBackfillUnavailable: true,
+        acsBackfillCheckedAt: checkedAt
+      }
+    };
+    return {
+      ...match,
+      matchRecord: nextRecord,
+      metadata: {
+        ...(match.metadata || {}),
+        acsBackfillUnavailable: true
       }
     };
   });
@@ -15713,6 +15787,7 @@ if (globalThis.__rankedCoachEnablePerfTestHooks) {
           metadataMatchIds: inspection.metadataMatchIds,
           weaponMatchIds: inspection.weaponMatchIds,
           hsMatchIds: inspection.hsMatchIds,
+          acsMatchIds: inspection.acsMatchIds,
           storedRawMatchIds: options.storedRawMatchIds || []
         }, options)
       };
@@ -17360,6 +17435,7 @@ function getDailyEntranceMotionContext() {
 let dailyEntranceMotionReadyTimer = 0;
 let dailyEntranceMotionTutorialPending = false;
 let postWarmupEntranceReplayTimer = 0;
+let dailyEntranceMotionReadySessionKey = "";
 
 function prepareDailyEntranceMotion() {
   const controller = window.RankedCoachDailyEntrance;
@@ -17422,6 +17498,12 @@ function notifyDailyEntranceMotionReady() {
   }
   window.clearTimeout(dailyEntranceMotionReadyTimer);
   dailyEntranceMotionReadyTimer = 0;
+  const sessionKey = [context.userId, context.profileId, formatLocalDateKey()].join(":");
+  // Several async startup paths can become ready in the same frame (auth,
+  // cached-state hydration, and the warm-up close). Only the path that first
+  // clears every blocking surface may start the daily entrance sequence.
+  if (dailyEntranceMotionReadySessionKey === sessionKey) return;
+  dailyEntranceMotionReadySessionKey = sessionKey;
   controller.setSessionReady(context);
   controller.activatePage(pageId, context);
 }
@@ -19712,12 +19794,18 @@ let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
+// Render one verified history page first; the rest of a large retained window
+// continues in small, rate-safe batches after the dashboard is usable.
+const HENRIK_HISTORY_FOREGROUND_BATCH_SIZE = 10;
+const HENRIK_HISTORY_BACKGROUND_DELAY_MS = 1600;
 const HENRIK_HISTORY_BACKFILL_VERSION = 4;
 const STORED_RAW_REHYDRATE_VERSION = 2;
 // Historical records are immutable. This version gives each account one
 // deliberate pass after a backfill formula changes, then avoids walking its
 // entire retained archive on every normal sync.
-const MATCH_BACKFILL_SCAN_VERSION = 1;
+// V2 adds round-economy weapon labels and explicit ACS absence to the same
+// bounded rotating refresh plan, so existing profiles are rescanned once.
+const MATCH_BACKFILL_SCAN_VERSION = 2;
 const MATCH_BACKFILL_REFRESH_LIMIT = 16;
 const RIOT_INCOMPLETE_RAW_RETRY_MS = 45000;
 const RIOT_INCOMPLETE_RAW_RETRY_LIMIT = 2;
@@ -19726,6 +19814,7 @@ const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
+let retainedHistoryContinuationTimer = null;
 
 function normalizePendingLoadoutRoll(value = {}) {
   if (!value || typeof value !== "object") return null;
@@ -22986,9 +23075,10 @@ async function initializeSignedInAccount(user, options = {}) {
       );
       const retainedSync = await syncProfileRetainedHistory({
         mode: "refresh",
-        // The retained-history coordinator finishes all batches first. Hold
-        // its one report until the account overlay is gone, then open the
-        // exact newly-imported match rather than a generic latest placeholder.
+        maxBatches: 1,
+        historyLimit: HENRIK_HISTORY_FOREGROUND_BATCH_SIZE,
+        // Hold a genuinely new-match report until the account overlay is
+        // gone. Older retained pages continue after the dashboard is usable.
         deferMatchReport: true,
         onProgress: progress => setLoginInitializationProgress(
           Math.min(96, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 26)),
@@ -23031,6 +23121,9 @@ async function initializeSignedInAccount(user, options = {}) {
     renderChart?.(currentSize);
     queuePersistentAccountSave?.(options.reason || "login-initialization");
     markAccountStateLoadComplete();
+    if (active?.riotId && !getActiveProfile()?.henrikHistoryBackfillCompleteAt) {
+      scheduleRetainedHistoryContinuation(active.id);
+    }
   } finally {
     if (hasCachedState) {
       setLoginInitializationProgress(100, "Saved account is up to date.", "Ready", "Your dashboard, rank, chart, and match panel refreshed together.");
@@ -44189,6 +44282,7 @@ const themeBuilderAutoFitState = {
   idle: 0,
   resetBase: false,
   observer: null,
+  mutationTimer: 0,
   fitted: new Set(),
   listenersAttached: false,
   fontsReadyHooked: false
@@ -44211,7 +44305,14 @@ function installThemeBuilderAutoFitObservers() {
   });
   if (window.MutationObserver && document.body) {
     themeBuilderAutoFitState.observer = new MutationObserver(() => {
-      scheduleThemeBuilderAutoFitText();
+      // A sync can replace many small surface fragments in sequence. Waiting
+      // for that burst to settle avoids repeatedly shrinking/re-growing text
+      // while the final geometry is still arriving.
+      window.clearTimeout(themeBuilderAutoFitState.mutationTimer);
+      themeBuilderAutoFitState.mutationTimer = window.setTimeout(() => {
+        themeBuilderAutoFitState.mutationTimer = 0;
+        scheduleThemeBuilderAutoFitText();
+      }, 160);
     });
     themeBuilderAutoFitState.observer.observe(document.body, {
       childList: true,
@@ -52312,6 +52413,8 @@ async function submitProfileAddForm(event) {
     });
     const syncResult = await syncProfileRetainedHistory({
       mode: "import",
+      maxBatches: 1,
+      historyLimit: HENRIK_HISTORY_FOREGROUND_BATCH_SIZE,
       onProgress: progress => setAppLoadingVeilProgress(progress.percent, progress.message)
     });
     prefillLatestImportedReflection({ profileId: newProfile.id });
@@ -52325,12 +52428,15 @@ async function submitProfileAddForm(event) {
     if (syncResult?.success && !syncResult?.partial) {
       const imported = syncResult.totalImported || 0;
       showToast(imported
-        ? `${imported} competitive ${imported === 1 ? "match" : "matches"} are ready. Your latest game is waiting in the reflection form.`
+        ? `${imported} competitive ${imported === 1 ? "match is" : "matches are"} ready. The rest of your retained history will continue in the background.`
         : "This Riot profile is connected and already up to date.", {
         title: "Profile synced",
         tone: "success",
         durationMs: 5200
       });
+      if (!getActiveProfile()?.henrikHistoryBackfillCompleteAt) {
+        scheduleRetainedHistoryContinuation(newProfile.id);
+      }
     } else {
       showToast(syncResult?.playerError?.message || "The profile was added. Riot history can be synced again shortly.", {
         title: "Profile added; sync paused",
@@ -55590,8 +55696,17 @@ function bindPageNavigationEvents() {
       const page = btn.dataset.page;
       if (!page) return;
 
-      if (getActivePageElement()?.id !== `page-${page}`) {
+      const isCurrentPage = getActivePageElement()?.id === `page-${page}`;
+      if (!isCurrentPage) {
         activatePage(page);
+      } else if (page === "logging") {
+        // Logging is deliberately two-level: a second tap on its already-active
+        // top-level tab returns to the launcher rather than looking inert.
+        if (isDesktopLoggingViewport()) {
+          setDesktopLoggingView("launcher", { scroll: true });
+        } else {
+          setMobileLoggingFormStage("launcher", { scroll: true });
+        }
       }
 
       if (page === "home" && pendingAgentFromLog) {
@@ -59399,6 +59514,7 @@ async function importActiveProfileMatches(options = {}){
     const metadataRefreshMatchIds = profileBackfillPrep.metadataMatchIds;
     const weaponBackfillMatchIds = profileBackfillPrep.weaponMatchIds;
     const hsBackfillMatchIds = profileBackfillPrep.hsMatchIds;
+    const acsBackfillMatchIds = profileBackfillPrep.acsMatchIds;
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
     const beginsNewHistoryVersion = needsHistoryVersionUpgrade
       && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
@@ -59409,7 +59525,12 @@ async function importActiveProfileMatches(options = {}){
     }
     const needsHistoryBackfill = needsHistoryVersionUpgrade || !profile.henrikHistoryBackfillCompleteAt;
     const historyStart = needsHistoryBackfill ? Math.max(0, safeNumber(profile.henrikHistoryCursor)) : 0;
-    const historyLimit = needsHistoryBackfill ? HENRIK_HISTORY_BACKFILL_SIZE : 10;
+    const requestedHistoryLimit = Math.floor(Number(options.historyLimit));
+    const historyLimit = needsHistoryBackfill
+      ? Number.isFinite(requestedHistoryLimit)
+        ? Math.max(10, Math.min(HENRIK_HISTORY_BACKFILL_SIZE, requestedHistoryLimit))
+        : HENRIK_HISTORY_BACKFILL_SIZE
+      : 10;
     // A versioned history pass revisits retained records in chronological
     // pages, so sending every missing-payload id to the targeted search would
     // turn one migration into a redundant 1,000-match search. Outside that
@@ -59424,6 +59545,7 @@ async function importActiveProfileMatches(options = {}){
       metadataMatchIds: metadataRefreshMatchIds,
       weaponMatchIds: weaponBackfillMatchIds,
       hsMatchIds: hsBackfillMatchIds,
+      acsMatchIds: acsBackfillMatchIds,
       storedRawMatchIds: storedRawRefreshMatchIds
     });
     const refreshMatchIds = refreshPlan.refreshMatchIds;
@@ -59453,6 +59575,7 @@ async function importActiveProfileMatches(options = {}){
       refreshMatchIds,
       refreshMatchRecords,
       refreshSearchLimit: 1000,
+      fetchMmrHistory: options.fetchMmrHistory !== false,
       includeKnownMatches: needsHistoryVersionUpgrade,
       // Versioned history migrations intentionally revisit known retained
       // matches once so their raw Henrik payload can be stored for future
@@ -59510,6 +59633,9 @@ async function importActiveProfileMatches(options = {}){
     const unrecoveredHsBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => hsBackfillMatchIds.includes(value));
+    const unrecoveredAcsBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
+      .map(value => String(value || "").trim())
+      .filter(value => acsBackfillMatchIds.includes(value));
     const unrecoveredMetadataBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => metadataRefreshMatchIds.includes(value));
@@ -59530,6 +59656,9 @@ async function importActiveProfileMatches(options = {}){
       }
       if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markHsBackfillUnavailable(enrichedExisting, unrecoveredHsBackfillIds);
+      }
+      if (unrecoveredAcsBackfillIds.length && pullResult?.refreshSearchComplete) {
+        enrichedExisting = markAcsBackfillUnavailable(enrichedExisting, unrecoveredAcsBackfillIds);
       }
       if (unrecoveredMetadataBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markMetadataBackfillUnavailable(enrichedExisting, unrecoveredMetadataBackfillIds);
@@ -59606,6 +59735,9 @@ async function importActiveProfileMatches(options = {}){
     if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markHsBackfillUnavailable(matchList, unrecoveredHsBackfillIds);
     }
+    if (unrecoveredAcsBackfillIds.length && pullResult?.refreshSearchComplete) {
+      matchList = markAcsBackfillUnavailable(matchList, unrecoveredAcsBackfillIds);
+    }
     if (unrecoveredMetadataBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markMetadataBackfillUnavailable(matchList, unrecoveredMetadataBackfillIds);
     }
@@ -59627,6 +59759,11 @@ async function importActiveProfileMatches(options = {}){
       directRawSucceededMatchIds.filter(id => hsBackfillMatchIds.includes(id)),
       matchRecordNeedsHsBackfill
     );
+    const directAcsUnavailable = getStillMissingMatchBackfillIds(
+      matchList,
+      directRawSucceededMatchIds.filter(id => acsBackfillMatchIds.includes(id)),
+      matchRecordNeedsAcsBackfill
+    );
     const directMetadataUnavailable = getStillMissingMatchBackfillIds(
       matchList,
       directRawSucceededMatchIds.filter(id => metadataRefreshMatchIds.includes(id)),
@@ -59639,6 +59776,7 @@ async function importActiveProfileMatches(options = {}){
     );
     if (directWeaponUnavailable.length) matchList = markWeaponBackfillUnavailable(matchList, directWeaponUnavailable);
     if (directHsUnavailable.length) matchList = markHsBackfillUnavailable(matchList, directHsUnavailable);
+    if (directAcsUnavailable.length) matchList = markAcsBackfillUnavailable(matchList, directAcsUnavailable);
     if (directMetadataUnavailable.length) matchList = markMetadataBackfillUnavailable(matchList, directMetadataUnavailable);
     if (directStoredRawUnavailable.length) matchList = markStoredRawPayloadBackfillUnavailable(matchList, directStoredRawUnavailable);
 
@@ -59756,6 +59894,8 @@ async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync",
+    historyLimit: options.historyLimit,
+    fetchMmrHistory: options.fetchMmrHistory,
     deferSurfaceRefresh: options.deferSurfaceRefresh === true,
     onRehydrateProgress: options.onRehydrateProgress,
     onSyncProgress: options.onSyncProgress,
@@ -60065,6 +60205,8 @@ async function performRiotSync(options = {}) {
     const result = await withRiotSyncTimeout(
       syncActiveProfileMatches({
         mode,
+        historyLimit: options.historyLimit,
+        fetchMmrHistory: options.fetchMmrHistory,
         allowDemoFallback: canUseDemoFallback,
         deferSurfaceRefresh,
         onSyncProgress: publishSyncProgress,
@@ -60156,9 +60298,13 @@ async function syncProfileRetainedHistory(options = {}) {
     return { success: false, totalImported: 0, playerError: getPlayerFacingRiotSyncError({ message: "Add a Riot ID before syncing." }) };
   }
   const maxBatches = Math.max(1, Math.min(HENRIK_HISTORY_MAX_BATCHES, safeNumber(options.maxBatches, HENRIK_HISTORY_MAX_BATCHES)));
+  const requestedHistoryLimit = Math.floor(Number(options.historyLimit));
+  const perBatchHistoryLimit = Number.isFinite(requestedHistoryLimit)
+    ? Math.max(10, Math.min(HENRIK_HISTORY_BACKFILL_SIZE, requestedHistoryLimit))
+    : HENRIK_HISTORY_BACKFILL_SIZE;
   const estimatedHistoryWindow = Math.max(
-    HENRIK_HISTORY_BACKFILL_SIZE,
-    Math.min(HENRIK_HISTORY_MAX_START, maxBatches * HENRIK_HISTORY_BACKFILL_SIZE)
+    perBatchHistoryLimit,
+    Math.min(HENRIK_HISTORY_MAX_START, maxBatches * perBatchHistoryLimit)
   );
   let totalImported = 0;
   let totalChecked = 0;
@@ -60179,7 +60325,9 @@ async function syncProfileRetainedHistory(options = {}) {
     if (syncedProfile) {
       syncedProfile.lastDailyProfileSyncDate = formatLocalDateKey(new Date());
       saveProfiles();
-      void refreshWarmupAutoVerification(syncedProfile, { announce: false });
+      if (options.verifyWarmup !== false) {
+        void refreshWarmupAutoVerification(syncedProfile, { announce: false });
+      }
     }
 
     // A real match found during an already-established retained-history
@@ -60205,14 +60353,16 @@ async function syncProfileRetainedHistory(options = {}) {
           ? "Preparing your latest game in the reflection form..."
           : "Finalizing season stats and coaching reads..."
     });
-    refreshActiveProfileDataSurfaces?.({
-      reason: "retained-history-complete",
-      chartAnimationMode: totalImported ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
-      animatePlaceholders: false,
-      preserveActivePage: true
-    });
-    await waitForActiveProfileSurfacePaint?.();
-    if (lastResult && !lastResult.syncError) showFullySyncedToast(lastResult);
+    if (finalOptions.refreshSurfaces !== false) {
+      refreshActiveProfileDataSurfaces?.({
+        reason: "retained-history-complete",
+        chartAnimationMode: totalImported ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+        animatePlaceholders: false,
+        preserveActivePage: true
+      });
+      await waitForActiveProfileSurfacePaint?.();
+      if (lastResult && !lastResult.syncError) showFullySyncedToast(lastResult);
+    }
 
     if (newestGenuineMatch && options.deferMatchReport !== true) {
       onMatchSaved(newestGenuineMatch, {
@@ -60254,6 +60404,7 @@ async function syncProfileRetainedHistory(options = {}) {
     const result = await performRiotSync({
       silent: true,
       mode: options.mode || (batch === 0 ? "refresh" : "import"),
+      historyLimit: perBatchHistoryLimit,
       allowDemoFallback: false,
       verifyWarmup: false,
       prefillReflection: false,
@@ -60322,14 +60473,65 @@ async function syncProfileRetainedHistory(options = {}) {
     if (result.syncError) {
       return finalizeRetainedHistory({
         partial: true,
-        playerError: getPlayerFacingRiotSyncError(result.syncError)
+        playerError: getPlayerFacingRiotSyncError(result.syncError),
+        refreshSurfaces: options.refreshSurfaces
       });
     }
     if (latestProfile?.henrikHistoryBackfillCompleteAt || safeNumber(result.checked) === 0) break;
     await new Promise(resolve => window.setTimeout(resolve, 220));
   }
 
-  return finalizeRetainedHistory();
+  return finalizeRetainedHistory({ refreshSurfaces: options.refreshSurfaces });
+}
+
+function scheduleRetainedHistoryContinuation(profileId, delayMs = HENRIK_HISTORY_BACKGROUND_DELAY_MS) {
+  const targetProfileId = String(profileId || "").trim();
+  if (!targetProfileId) return false;
+  window.clearTimeout(retainedHistoryContinuationTimer);
+  retainedHistoryContinuationTimer = window.setTimeout(async () => {
+    retainedHistoryContinuationTimer = null;
+    const profile = getActiveProfile?.();
+    if (!profile?.riotId || profile.id !== targetProfileId || profile.henrikHistoryBackfillCompleteAt) return;
+    // Explicit sync always wins over archive continuation.
+    if (riotSyncInFlight) {
+      scheduleRetainedHistoryContinuation(targetProfileId, 900);
+      return;
+    }
+    const result = await syncProfileRetainedHistory({
+      mode: "import",
+      maxBatches: 1,
+      historyLimit: HENRIK_HISTORY_FOREGROUND_BATCH_SIZE,
+      deferMatchReport: true,
+      refreshSurfaces: false,
+      verifyWarmup: false,
+      // The foreground page has already refreshed both MMR feeds. Archive
+      // pages only need their V4 match summaries, not two extra rank calls.
+      fetchMmrHistory: false
+    });
+    const updated = getActiveProfile?.();
+    if (updated?.id !== targetProfileId || updated?.henrikHistoryBackfillCompleteAt) {
+      refreshActiveProfileDataSurfaces?.({
+        reason: "retained-history-background-complete",
+        animatePlaceholders: false,
+        preserveActivePage: true
+      });
+      await waitForActiveProfileSurfacePaint?.();
+      if (result?.success && !result?.partial) {
+        showToast?.("Your retained competitive history is ready.", {
+          title: "History sync complete",
+          tone: "success"
+        });
+      }
+      return;
+    }
+    // Provider pressure pauses only the continuation. The current verified
+    // dashboard stays usable and the next page is retried later.
+    scheduleRetainedHistoryContinuation(
+      targetProfileId,
+      result?.success && !result?.partial ? HENRIK_HISTORY_BACKGROUND_DELAY_MS : 30000
+    );
+  }, Math.max(250, Number(delayMs) || HENRIK_HISTORY_BACKGROUND_DELAY_MS));
+  return true;
 }
 
 function scheduleDailyProfileSync() {
@@ -60341,7 +60543,11 @@ function scheduleDailyProfileSync() {
     dailyRiotSyncTimer = null;
     const profile = getActiveProfile();
     if (profile?.riotId && profile.lastDailyProfileSyncDate !== formatLocalDateKey(new Date())) {
-      await syncProfileRetainedHistory({ mode: "refresh", maxBatches: 1 });
+      await syncProfileRetainedHistory({
+        mode: "refresh",
+        maxBatches: 1,
+        historyLimit: HENRIK_HISTORY_FOREGROUND_BATCH_SIZE
+      });
     }
     scheduleDailyProfileSync();
   }, Math.max(1000, nextDay.getTime() - now.getTime()));
@@ -61605,7 +61811,7 @@ function renderStatsRoleProgress() {
     const deltaText = role.matchesPlayed ? `${roundedDelta >= 0 ? "+" : ""}${roundedDelta}%` : "--";
 
     const pill = document.createElement("div");
-    pill.className = `stats-role-pill ${role.matchesPlayed ? "" : "is-empty"}`;
+    pill.className = `stats-role-pill role-${role.roleKey} ${role.matchesPlayed ? "" : "is-empty"}`;
     pill.innerHTML = `
       <div class="stats-role-pill-main">
         <img class="stats-role-pill-icon" src="${escapeHtml(ROLE_ICON_MAP[role.roleKey] || "")}" alt="${escapeHtml(role.label)} role icon">

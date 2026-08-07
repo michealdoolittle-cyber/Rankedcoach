@@ -17,7 +17,11 @@ function parseArgs(argv = process.argv.slice(2)) {
     start: 0,
     baseUrl: process.env.HENRIK_BASE_URL || "https://www.rankedcoach.gg",
     storedProfilePath: "",
-    storedRawVersion: 2
+    storedRawVersion: 2,
+    appFirstLoad: false,
+    measureOnly: false,
+    rawHydrationConcurrency: undefined,
+    historyPageConcurrency: undefined
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -28,6 +32,10 @@ function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--base" || arg === "--base-url") options.baseUrl = argv[++index] || options.baseUrl;
     else if (arg === "--stored-profile" || arg === "--profile-file") options.storedProfilePath = argv[++index] || "";
     else if (arg === "--stored-raw-version") options.storedRawVersion = Number(argv[++index]) || options.storedRawVersion;
+    else if (arg === "--app-first-load") options.appFirstLoad = true;
+    else if (arg === "--measure-only") options.measureOnly = true;
+    else if (arg === "--raw-concurrency") options.rawHydrationConcurrency = Number(argv[++index]);
+    else if (arg === "--history-concurrency") options.historyPageConcurrency = Number(argv[++index]);
     else if (!arg.startsWith("--") && !options.riotId) options.riotId = arg;
   }
   options.riotId = options.riotId || process.env.RANKEDCOACH_VERIFY_RIOT_ID || "";
@@ -335,9 +343,11 @@ function createSyncDiagnostics() {
           groups.set(key, list);
         });
         [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([path, entries]) => {
-          const timings = entries.map(entry => entry.durationMs);
-          const failures = entries.filter(entry => !entry.ok);
+        const timings = entries.map(entry => entry.durationMs);
+        const failures = entries.filter(entry => !entry.ok);
+          const attempts = entries.map((entry, index) => `${index + 1}:${entry.durationMs.toFixed(0)}ms ${entry.ok ? "ok" : `${entry.providerStatus || entry.httpStatus || "?"} ${entry.code || "failed"}`}`).join(" | ");
           console.log(`  ${path}: ${entries.length} request${entries.length === 1 ? "" : "s"}; min ${Math.min(...timings).toFixed(0)}ms, max ${Math.max(...timings).toFixed(0)}ms, total ${timings.reduce((sum, value) => sum + value, 0).toFixed(0)}ms${failures.length ? `; failures ${failures.map(entry => `${entry.providerStatus || entry.httpStatus || "?"} ${entry.code || entry.error || "error"}`).join(", ")}` : ""}`);
+          console.log(`    attempts: ${attempts}`);
         });
       }
       console.log(`  transport wall-clock: ${elapsedMs.toFixed(0)}ms`);
@@ -424,7 +434,7 @@ async function fetchRawMatches({ baseUrl, puuid, region, count, start }) {
 async function main() {
   const options = parseArgs();
   if (!options.riotId || !options.riotId.includes("#")) {
-    throw new Error("Usage: node testing/henrik/verify-account.mjs Name#Tag [--region na] [--count 20] [--base https://www.rankedcoach.gg] [--stored-profile exported-profile.json]");
+    throw new Error("Usage: node testing/henrik/verify-account.mjs Name#Tag [--region na] [--count 20] [--base https://www.rankedcoach.gg] [--app-first-load] [--measure-only] [--stored-profile exported-profile.json]");
   }
 
   loadBrowserScript("public/schema/match-record.js");
@@ -444,9 +454,16 @@ async function main() {
       // This is the production sync path: it combines V4 aggregate data with
       // Henrik Raw round snapshots. Verifying it catches loss of the retained
       // V4 payload that a V4-only normalization test cannot see.
-      hydrateRoundData: true,
+      // --app-first-load reproduces the actual signed-in first-history pass:
+      // V4 summaries populate the dashboard first, then the existing bounded
+      // raw-detail rehydrate plan repairs richer fields without blocking it.
+      hydrateRoundData: !options.appFirstLoad,
+      ...(Number.isFinite(options.rawHydrationConcurrency) ? { rawHydrationConcurrency: options.rawHydrationConcurrency } : {}),
+      ...(Number.isFinite(options.historyPageConcurrency) ? { historyPageConcurrency: options.historyPageConcurrency } : {}),
+      // A production timing run must honour the client retry schedule.  The
+      // previous no-op hook turned a 429 into an immediate retry burst, which
+      // measured the diagnostic harness rather than the app a player uses.
       baseUrl: options.baseUrl,
-      waitForRetry: () => {},
       onRequest: event => syncDiagnostics.onRequest(event)
     });
   } catch (error) {
@@ -459,6 +476,12 @@ async function main() {
   });
   const puuid = cleanString(actualPull?.puuid);
   reporter.check("account PUUID resolved", Boolean(puuid), `${options.riotId} -> ${puuid || "missing"}`);
+
+  if (options.measureOnly) {
+    const failed = reporter.print();
+    if (failed) process.exitCode = 1;
+    return;
+  }
 
   const rawMatches = await fetchRawMatches({ ...options, puuid });
   const expectedMatches = rawMatches.map(match => computeExpectedCore(match, puuid));

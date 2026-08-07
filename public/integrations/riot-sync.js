@@ -55,10 +55,12 @@
 
   function getRawHydrationConcurrency(options = {}) {
     const requested = Number(options.rawHydrationConcurrency ?? options.rawMatchConcurrency);
-    // Raw match payloads are substantially heavier than summary history. Keep
-    // a modest, bounded pool so a backlog does not serialize into minutes of
-    // waiting, without overwhelming Henrik or the Worker.
-    return Math.max(1, Math.min(8, Math.floor(Number.isFinite(requested) ? requested : 6)));
+    // Raw match payloads are substantially heavier than summary history. The
+    // live first-history audit demonstrated that six simultaneous raw calls
+    // can trip Henrik's 429 bucket for an otherwise healthy public account.
+    // Two in flight is still concurrent, while leaving enough provider headroom
+    // for rank/history work and the user's next sync.
+    return Math.max(1, Math.min(4, Math.floor(Number.isFinite(requested) ? requested : 2)));
   }
 
   function getRawHydrationTimeoutMs(options = {}) {
@@ -70,17 +72,18 @@
 
   function getRawHydrationRetryDelays(options = {}) {
     if (Array.isArray(options.rawMatchRetryDelaysMs)) return options.rawMatchRetryDelaysMs;
-    // One short retry handles brief 429/5xx responses without multiplying the
-    // delay of a full historical batch.
-    return [450];
+    // Space retries enough to let Henrik's short provider bucket recover.
+    // A raw payload is optional, so the circuit still keeps a sustained outage
+    // from blocking the summary record or the visible dashboard.
+    return [800, 1600];
   }
 
   function getHistoryPageConcurrency(options = {}) {
     const requested = Number(options.historyPageConcurrency);
-    // Summary pages are light, but Henrik can still rate-limit a burst. This
-    // bounded pool replaces the old one-page-at-a-time history walk without
-    // competing with the heavier raw-payload worker pool.
-    return Math.max(1, Math.min(4, Math.floor(Number.isFinite(requested) ? requested : 3)));
+    // Summary pages are light, but they share the same upstream quota as raw
+    // payloads. A two-request pool removes the old serial bottleneck without
+    // turning a new-account history import into a rate-limit burst.
+    return Math.max(1, Math.min(4, Math.floor(Number.isFinite(requested) ? requested : 2)));
   }
 
   function emitSyncProgress(options = {}, progress = {}) {
@@ -682,15 +685,20 @@
       percent: 8,
       message: "Checking rank history…"
     });
-    const mmrHistoryPromise = Promise.allSettled([
-      requestJsonWithRetry("/api/henrik/mmr-history-live", { puuid, region }, options),
-      requestJsonWithRetry("/api/henrik/mmr-history", {
-        puuid,
-        region,
-        size: 100,
-        page: 1
-      }, options)
-    ]);
+    const mmrHistoryPromise = options.fetchMmrHistory === false
+      ? Promise.resolve([
+        { status: "fulfilled", value: { data: [] } },
+        { status: "fulfilled", value: { data: [] } }
+      ])
+      : Promise.allSettled([
+        requestJsonWithRetry("/api/henrik/mmr-history-live", { puuid, region }, options),
+        requestJsonWithRetry("/api/henrik/mmr-history", {
+          puuid,
+          region,
+          size: 100,
+          page: 1
+        }, options)
+      ]);
 
     const parsedMatches = [];
     const fetchedStarts = new Set();

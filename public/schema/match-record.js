@@ -262,9 +262,21 @@
   }
 
   function normalizeEconomy(economy = {}) {
+    const weapon = economy?.weapon;
+    const weaponDetails = weapon && typeof weapon === "object" ? weapon : {};
     return {
       loadoutValue: readNumber(economy.loadoutValue),
-      weapon: cleanString(economy.weapon),
+      // Henrik V4 supplies a weapon object while older Raw payloads may use a
+      // label or UUID. Preserve one canonical readable label for both paths;
+      // String(object) used to leave "[object Object]" here, which made every
+      // round fall into the app's "Other" weapon bucket.
+      weapon: resolveKillWeaponLabel(
+        weaponDetails.name,
+        weaponDetails.displayName,
+        weaponDetails.id,
+        weaponDetails.uuid,
+        typeof weapon === "string" ? weapon : ""
+      ),
       armor: cleanString(economy.armor),
       remaining: readNumber(economy.remaining),
       spent: readNumber(economy.spent)
@@ -818,7 +830,7 @@
       kills: player.stats?.kills,
       deaths: player.stats?.deaths,
       assists: player.stats?.assists,
-      acs: readNumber(player.stats?.score, 0) / roundsPlayed,
+      acs: readNumber(player.stats?.score) === null ? null : readNumber(player.stats?.score) / roundsPlayed,
       adr: totalDamage / roundsPlayed,
       hsPercent: totalShots ? ((readNumber(parsedStats.headshots, 0) || 0) / totalShots) * 100 : null,
       roundsWon,
@@ -998,7 +1010,7 @@
       kills: stats.kills,
       deaths: stats.deaths,
       assists: stats.assists,
-      acs: readNumber(stats.score, 0) / roundsPlayed,
+      acs: readNumber(stats.score) === null ? null : readNumber(stats.score) / roundsPlayed,
       adr: readNumber(stats.damage?.dealt, 0) / roundsPlayed,
       hsPercent: totalShots ? ((readNumber(stats.headshots, 0) || 0) / totalShots) * 100 : null,
       roundsWon: team.rounds?.won,

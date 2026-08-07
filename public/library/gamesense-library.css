@@ -5231,6 +5231,9 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
 .gamesense-map-canvas-row.is-heatmap{grid-template-columns:minmax(0,1fr) minmax(190px,250px);}
 .gamesense-tactical-stage.gamesense-heatmap-stage{background:radial-gradient(circle at 50% 42%,rgba(56,189,248,.1),rgba(2,6,23,.94) 72%);}
 .gamesense-tactical-stage.gamesense-heatmap-stage > img{padding:10px;object-fit:contain;filter:drop-shadow(0 18px 28px rgba(0,0,0,.5));}
+.gamesense-heatmap-loading{position:absolute;inset:50% auto auto 50%;z-index:2;display:flex;align-items:center;justify-content:center;min-width:188px;min-height:40px;padding:8px 12px;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,var(--gamesense-cool,#67e8f9) 60%,transparent);border-radius:999px;background:rgba(2,6,23,.9);box-shadow:0 12px 28px rgba(0,0,0,.35);color:var(--gamesense-cool,#67e8f9);font:900 11px/1.15 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.06em;text-align:center;text-transform:uppercase;}
+.gamesense-heatmap-stage.is-heatmap-ready .gamesense-heatmap-loading{display:none;}
+.gamesense-heatmap-stage.is-heatmap-error .gamesense-heatmap-loading{border-color:rgba(248,113,113,.7);color:#fecaca;}
 .gamesense-heatmap-meta{display:grid;align-content:start;gap:8px;min-height:150px;padding:15px;border:1px solid color-mix(in srgb,var(--gamesense-cool,#67e8f9) 34%,transparent);border-radius:12px;background:linear-gradient(145deg,rgba(56,189,248,.1),rgba(2,6,23,.84));}
 .gamesense-heatmap-meta strong{color:var(--gamesense-warm,#facc15);font:900 13px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;}
 .gamesense-heatmap-meta span{color:var(--gamesense-cool,#67e8f9);font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.08em;text-transform:uppercase;}

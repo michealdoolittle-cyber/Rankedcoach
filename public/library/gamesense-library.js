@@ -2578,6 +2578,25 @@
     return map && catalog && typeof catalog === "object" ? catalog[map.id] || null : null;
   }
 
+  // Heat maps are the one map layer hosted by the publisher rather than the
+  // app's asset CDN. Start that request when the dossier opens, instead of
+  // making the Heat Map tab feel unresponsive when it is selected later.
+  const heatmapPreloads = new Map();
+  function prefetchMapHeatmap(map) {
+    const heatmap = getMapHeatmap(map);
+    const source = String(heatmap?.image || "").trim();
+    if (!source || heatmapPreloads.has(source) || typeof Image !== "function") return heatmapPreloads.get(source) || null;
+    const preload = new Image();
+    const record = { status: "loading", image: preload };
+    heatmapPreloads.set(source, record);
+    preload.decoding = "async";
+    preload.referrerPolicy = "no-referrer";
+    preload.addEventListener("load", () => { record.status = "ready"; }, { once: true });
+    preload.addEventListener("error", () => { record.status = "error"; }, { once: true });
+    preload.src = source;
+    return record;
+  }
+
   function renderMapHeatmapMeta(map, heatmap) {
     if (!heatmap?.image) {
       return `<aside class="gamesense-heatmap-meta gamesense-heatmap-meta--unavailable"><strong>Plant Heat Map</strong><p>${escapeHtml(heatmap?.unavailableReason || `No verified plant heat-map image is available for ${map.label}.`)}</p></aside>`;
@@ -2695,7 +2714,7 @@
         : `<span class="gamesense-dossier-tree-label" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</span>`;
       if (!children.length) return `<li>${button}</li>`;
       return `<li class="has-children">
-        <details class="gamesense-dossier-tree" open>
+        <details class="gamesense-dossier-tree">
           <summary>${button}</summary>
           <ol>${children.map(child => renderNode(child, depth + 1)).join("")}</ol>
         </details>
@@ -2763,7 +2782,8 @@
         <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap || showPlantHeatmapFallback ? " is-heatmap" : ""}${editorActive ? " is-plant-editing" : ""}${editorActive && plantSpotEditor.pendingAdd ? " is-plant-add-pending" : ""}" data-gamesense-map-id="${escapeHtml(map.id)}">
           ${isHeatmap && !heatmap?.image ? "" : `<div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} ${isHeatmap || showPlantHeatmapFallback ? "plant heat map" : "tactical map"}">
             <div class="gamesense-tactical-stage${isHeatmap || showPlantHeatmapFallback ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage data-gamesense-map-id="${escapeHtml(map.id)}" style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
-              <img src="${escapeHtml(displayedMapImage)}" alt="${escapeHtml(displayedMapAlt)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap || showPlantHeatmapFallback ? "no-referrer" : ""}">
+              ${isHeatmap ? `<span class="gamesense-heatmap-loading" data-gamesense-heatmap-loading aria-live="polite">Loading verified plant heat map…</span>` : ""}
+              <img src="${escapeHtml(displayedMapImage)}" alt="${escapeHtml(displayedMapAlt)}" loading="eager" draggable="false"${isHeatmap ? " data-gamesense-heatmap-image" : ""} referrerpolicy="${isHeatmap || showPlantHeatmapFallback ? "no-referrer" : ""}">
               ${markers.map((callout, index) => {
                 if (!isPlants) {
                   const label = getDossierTextValue("maps", map.id, `callouts.${callout.id}.label`, callout.label || "");
@@ -4597,6 +4617,24 @@
         img.src = fallback;
       }, { once: true });
     });
+    root.querySelectorAll("img[data-gamesense-heatmap-image]").forEach(img => {
+      const stage = img.closest(".gamesense-heatmap-stage");
+      const setState = (nextState) => {
+        stage?.classList.remove("is-heatmap-loading", "is-heatmap-ready", "is-heatmap-error");
+        stage?.classList.add(`is-heatmap-${nextState}`);
+        const message = stage?.querySelector("[data-gamesense-heatmap-loading]");
+        if (message) message.textContent = nextState === "error"
+          ? "The verified plant heat map could not be loaded."
+          : "Loading verified plant heat map…";
+      };
+      setState("loading");
+      if (img.complete) {
+        setState(img.naturalWidth > 0 ? "ready" : "error");
+      } else {
+        img.addEventListener("load", () => setState("ready"), { once: true });
+        img.addEventListener("error", () => setState("error"), { once: true });
+      }
+    });
     root.querySelectorAll("img[data-crosshair-photo-fallback]").forEach(img => {
       img.addEventListener("error", () => {
         img.hidden = true;
@@ -4720,6 +4758,9 @@
   function openLibrary(topic = "overview", itemId = "") {
     state.topic = topicMeta[topic] ? topic : "overview";
     state.itemId = itemId;
+    if (state.topic === "maps" && state.itemId) {
+      prefetchMapHeatmap(getMaps().find(map => map.id === state.itemId));
+    }
     state.role = "";
     state.detailId = "";
     state.mapView = "locations";
@@ -4929,6 +4970,9 @@
       state.mapZoom = 1;
       state.compAgent = "";
       state.compRole = "Controller";
+      if (state.topic === "maps") {
+        prefetchMapHeatmap(getTopicItems("maps").find(entry => entry.id === state.itemId));
+      }
       render({ direction: "forward" });
       return;
     }

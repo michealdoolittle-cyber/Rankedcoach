@@ -188,13 +188,22 @@ async function run() {
         formMap: document.getElementById("logMap")?.value
       };
     });
-    assert.deepEqual(state.profile && { matchCount: state.profile.matchCount, cursor: state.profile.cursor, complete: state.profile.complete }, { matchCount: 100, cursor: 100, complete: true }, JSON.stringify(matchStarts));
+    // A first-time profile is usable after the initial verified slice instead
+    // of blocking the account overlay through an entire retained-history walk.
+    // The remaining pages finish through the same atomic continuation.
+    assert.deepEqual(state.profile && { matchCount: state.profile.matchCount, cursor: state.profile.cursor, complete: state.profile.complete }, { matchCount: 10, cursor: 10, complete: false }, JSON.stringify(matchStarts));
     assert.ok(state.profile.dailySync);
     assert.deepEqual(state.latestLog, { rr: 25, agent: "Sova", map: "Breeze" });
     assert.match(state.formAgent || "", /Sova/i);
     assert.equal(state.formMap, "Breeze");
-    assert.equal(matchRequests, 11);
+    assert.equal(matchRequests, 1);
     assert.deepEqual(consoleErrors, [], JSON.stringify(failedResponses));
+    await page.waitForFunction(() => {
+      const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
+      const profile = profiles.find(item => item.name === "Workflow Test");
+      return profile?.matches?.length === 100 && Boolean(profile?.henrikHistoryBackfillCompleteAt);
+    }, null, { timeout: 25000 });
+    assert.equal(matchRequests, 11, JSON.stringify(matchStarts));
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.nav-btn[data-page="home"]');
     await page.waitForFunction(() => document.getElementById("totalGames")?.textContent?.trim() === "100");

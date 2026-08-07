@@ -4850,11 +4850,6 @@
     color:#fff !important;
   }
 
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="form"] .logging-feed-card,
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="feed"] .logging-card{
-    display:none !important;
-  }
-
   body.is-mobile-layout #page-logging .logging-layout{
     display:block !important;
     width:100% !important;
@@ -6313,11 +6308,6 @@
   body.is-mobile-layout .mobile-stats-tabs button.active{
     background:linear-gradient(135deg, var(--accent, #ff4655), color-mix(in srgb, var(--accent, #ff4655) 82%, #fff 10%)) !important;
     color:#fff !important;
-  }
-
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="form"] .logging-feed-card,
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="feed"] .logging-card{
-    display:none !important;
   }
 
   body.is-mobile-layout #page-logging .logging-layout{
@@ -36219,6 +36209,32 @@ body[data-theme] :is(
 #page-stats .stats-role-pill-delta.is-even{
   color:#94a3b8 !important;
 }
+#page-stats .stats-role-pill.role-duelist{--role-progress:#ff4655;border-color:color-mix(in srgb,var(--role-progress) 62%,rgba(148,163,184,.28)) !important;background:linear-gradient(145deg,color-mix(in srgb,var(--role-progress) 12%,rgba(15,23,42,.88)),rgba(2,6,23,.88)) !important;}
+#page-stats .stats-role-pill.role-controller{--role-progress:#a855f7;border-color:color-mix(in srgb,var(--role-progress) 62%,rgba(148,163,184,.28)) !important;background:linear-gradient(145deg,color-mix(in srgb,var(--role-progress) 12%,rgba(15,23,42,.88)),rgba(2,6,23,.88)) !important;}
+#page-stats .stats-role-pill.role-initiator{--role-progress:#38bdf8;border-color:color-mix(in srgb,var(--role-progress) 62%,rgba(148,163,184,.28)) !important;background:linear-gradient(145deg,color-mix(in srgb,var(--role-progress) 12%,rgba(15,23,42,.88)),rgba(2,6,23,.88)) !important;}
+#page-stats .stats-role-pill.role-sentinel{--role-progress:#22c55e;border-color:color-mix(in srgb,var(--role-progress) 62%,rgba(148,163,184,.28)) !important;background:linear-gradient(145deg,color-mix(in srgb,var(--role-progress) 12%,rgba(15,23,42,.88)),rgba(2,6,23,.88)) !important;}
+#page-stats .stats-role-pill[class*="role-"] :is(.stats-role-pill-icon,.stats-role-pill-label){color:var(--role-progress) !important;filter:drop-shadow(0 0 5px color-mix(in srgb,var(--role-progress) 32%,transparent));}
+
+/* Launcher completion is state already computed in app.js; expose it as a
+   clear, non-interactive confirmation on both desktop and mobile layouts. */
+#page-logging .logging-launch-tile{position:relative;overflow:hidden;}
+#page-logging .logging-launch-tile.is-complete::after{
+  content:"✓";
+  position:absolute;
+  top:12px;
+  right:14px;
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border:2px solid #86efac;
+  border-radius:50%;
+  background:rgba(20,83,45,.88);
+  color:#dcfce7;
+  font:900 22px/1 var(--font-display,"Rajdhani",sans-serif);
+  box-shadow:0 0 16px rgba(34,197,94,.42);
+  pointer-events:none;
+}
 
 /* Profile menu item copy ----------------------------------------------------- */
 .profile-menu-item-copy{
@@ -40121,11 +40137,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     font-size:12px !important;
     font-weight:900 !important;
     text-transform:uppercase !important;
-  }
-
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="form"] .logging-feed-card,
-  body.is-mobile-layout #page-logging[data-mobile-logging-view="feed"] .logging-card{
-    display:none !important;
   }
 
   body.is-mobile-layout #page-logging .logging-layout{
@@ -61680,7 +61691,7 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     display:none !important;
   }
 
-  html body.is-mobile-layout #page-logging[data-mobile-logging-form-stage="launcher"] .logging-card{
+  html body.is-mobile-layout #page-logging[data-mobile-logging-form-stage="launcher"]:not([data-mobile-logging-view="feed"]) .logging-card{
     display:flex !important;
     flex-direction:column !important;
     height:min(62svh, 560px) !important;
@@ -61753,6 +61764,14 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     margin-top:auto !important;
     color:var(--accent,#22d3ee) !important;
     font:800 12px/1.3 var(--font-body,"Rajdhani",sans-serif) !important;
+  }
+
+  /* Form/Feed is the outer mobile navigation. Keep this single, late rule
+     independent of theme so launcher styles cannot re-expose the Form below
+     the Feed. */
+  html body.is-mobile-layout #page-logging[data-mobile-logging-view="form"] .logging-feed-card,
+  html body.is-mobile-layout #page-logging[data-mobile-logging-view="feed"] .logging-card{
+    display:none !important;
   }
 }
 
