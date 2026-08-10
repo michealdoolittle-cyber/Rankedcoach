@@ -44,16 +44,21 @@
 
 #page-logging .logging-launch-trainer-kovaaks,
 #page-logging .logging-launch-trainer-aimlabs{
-  clip-path:none !important;
-  width:50% !important;
+  width:100% !important;
 }
 
 #page-logging .logging-launch-trainer-kovaaks{
   inset:0 auto 0 0 !important;
+  clip-path:polygon(0 0,59% 0,45% 100%,0 100%) !important;
+  box-sizing:border-box;
+  padding-right:50% !important;
 }
 
 #page-logging .logging-launch-trainer-aimlabs{
   inset:0 0 0 auto !important;
+  clip-path:polygon(59% 0,100% 0,100% 100%,45% 100%) !important;
+  box-sizing:border-box;
+  padding-left:50% !important;
 }
 
 #page-logging .logging-launch-trainer-logo{
@@ -61,6 +66,7 @@
   height:clamp(100px,10vw,176px) !important;
   max-width:42% !important;
   object-fit:contain !important;
+  transform:translateY(12px);
 }
 
 #page-logging .logging-launch-trainer-region > span{
