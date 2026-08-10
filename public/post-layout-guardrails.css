@@ -73,6 +73,36 @@
   font-size:clamp(12px,1.15vw,18px) !important;
 }
 
+/* Keep the Stats page parent surfaces consistent with the other desktop cards.
+   This deliberately targets only desktop pointer devices, so a touch scroll can
+   never leave a lifted card behind. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(
+    .stats-summary-card,
+    .stats-performance-card,
+    .stats-breakdown-card,
+    .stats-maps-card,
+    .stats-agents-card,
+    .stats-weapons-card
+  ){
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+    will-change:transform;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(
+    .stats-summary-card,
+    .stats-performance-card,
+    .stats-breakdown-card,
+    .stats-maps-card,
+    .stats-agents-card,
+    .stats-weapons-card
+  ):hover{
+    transform:translate3d(0,-3px,0) scale(1.004) !important;
+    box-shadow:var(--card-shadow-hover) !important;
+    border-color:color-mix(in srgb,var(--accent) 42%,white 10%) !important;
+  }
+}
+
 /* The Bars control owns the entire bar layer, including its interactive marker. */
 #matchSummaryModal .match-summary-economy-toggles button[aria-pressed="true"]{
   border-color:#ff4655 !important;
