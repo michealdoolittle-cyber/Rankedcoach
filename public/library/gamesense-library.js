@@ -8,6 +8,7 @@
   let activeSkinVideoIndex = 0;
   let skinPreviewTouchActivation = null;
   let activeLibraryTransition = null;
+  let libraryRenderSequence = 0;
   let collectionArchiveRenderToken = 0;
   let featuredPlaylist = null;
   let featuredPlaylistRequest = null;
@@ -609,9 +610,15 @@
     );
   }
 
+  function getPersistedDossierTextValue(type = "", id = "", path = "") {
+    const value = globalThis.RankedCoachGamesenseDossierTextOverrides?.[type]?.[id]?.[path];
+    return typeof value === "string" && value.trim() ? value.trim() : null;
+  }
+
   function getDossierTextValue(type, id, path, fallback = "") {
     const draft = getDossierTextDraft(type, id);
-    return Object.prototype.hasOwnProperty.call(draft, path) ? draft[path] : fallback;
+    if (Object.prototype.hasOwnProperty.call(draft, path)) return draft[path];
+    return getPersistedDossierTextValue(type, id, path) ?? fallback;
   }
 
   function setDossierTextDraftValue(type, id, path, value) {
@@ -769,7 +776,7 @@
       right.major - left.major
       || right.minor - left.minor
       || left.index - right.index
-    )).map(entry => entry.item);
+    )).map(entry => ({ ...entry.item, __dossierSourceIndex: entry.index }));
   }
 
   function getAgentIcon(agent = "") {
@@ -3321,10 +3328,11 @@
         <details class="gamesense-patch-history">
           <summary>Gameplay history</summary>
           <ol>${history.map((item, index) => {
-            const patch = getDossierTextValue("agents", agent.id, `patchHistory.${index}.patch`, item.patch || "");
-            const note = getDossierTextValue("agents", agent.id, `patchHistory.${index}.note`, item.note || "");
+            const sourceIndex = Number.isInteger(item.__dossierSourceIndex) ? item.__dossierSourceIndex : index;
+            const patch = getDossierTextValue("agents", agent.id, `patchHistory.${sourceIndex}.patch`, item.patch || "");
+            const note = getDossierTextValue("agents", agent.id, `patchHistory.${sourceIndex}.note`, item.note || "");
             return `<li>${editActive
-              ? `${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${index}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${index}.note`, label: "History note", value: note, rows: 4 })}`
+              ? `${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${sourceIndex}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "agents", id: agent.id, path: `patchHistory.${sourceIndex}.note`, label: "History note", value: note, rows: 4 })}`
               : `<span>Patch ${escapeHtml(patch)}</span><p>${escapeHtml(note)}</p>`}${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot patch notes</a>` : ""}</li>`;
           }).join("")}</ol>
         </details>
@@ -3503,10 +3511,11 @@
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>
           <ol>${patchHistory.length ? patchHistory.map((item, index) => {
-            const patch = getDossierTextValue("weapons", weapon.id, `patchHistory.${index}.patch`, item.patch || "");
-            const note = getDossierTextValue("weapons", weapon.id, `patchHistory.${index}.note`, item.note || "");
+            const sourceIndex = Number.isInteger(item.__dossierSourceIndex) ? item.__dossierSourceIndex : index;
+            const patch = getDossierTextValue("weapons", weapon.id, `patchHistory.${sourceIndex}.patch`, item.patch || "");
+            const note = getDossierTextValue("weapons", weapon.id, `patchHistory.${sourceIndex}.note`, item.note || "");
             return `<li>${editActive
-              ? `${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${index}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${index}.note`, label: "History note", value: note, rows: 4 })}`
+              ? `${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${sourceIndex}.patch`, label: "Patch", value: patch, rows: 1 })}${renderDossierTextField({ type: "weapons", id: weapon.id, path: `patchHistory.${sourceIndex}.note`, label: "History note", value: note, rows: 4 })}`
               : `<span>${escapeHtml(patch.startsWith("Patch") ? patch : `Patch ${patch}`)}</span><p>${escapeHtml(note)}</p>`}${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`;
           }).join("") : `<li><span>No melee-specific patch note attached</span><p>No sourced melee-specific balance patch is attached to this dossier yet.</p></li>`}</ol>
         </details>
@@ -4678,6 +4687,9 @@
   }
 
   function commitRender(root) {
+    // A view-transition callback can run after a navigation replaced this
+    // Library root. Never render into a detached or superseded subtree.
+    if (!(root instanceof Element) || !root.isConnected || root !== document.getElementById("gamesenseLibraryView")) return false;
     root.innerHTML = state.topic === "overview" ? renderOverview() : state.itemId ? renderDetail(state.topic, state.itemId) : renderGallery(state.topic);
     root.querySelectorAll("img[data-agent-fallback]").forEach(img => {
       img.addEventListener("error", () => {
@@ -4736,6 +4748,7 @@
       hydrateRiotPatchNotes();
     }
     scheduleTopicCollageHydration();
+    return true;
   }
 
   function bindPlaylistFilterScroller() {
@@ -4800,13 +4813,18 @@
   function render(options = {}) {
     const root = document.getElementById("gamesenseLibraryView");
     if (!root) return;
+    const renderSequence = ++libraryRenderSequence;
+    const commitCurrentRender = () => {
+      if (renderSequence !== libraryRenderSequence) return false;
+      return commitRender(root);
+    };
     const direction = ["forward", "backward", "replace"].includes(options.direction) ? options.direction : "none";
     const shouldAnimate = ["forward", "backward"].includes(direction)
       && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
       && !document.documentElement.classList.contains("is-mobile-layout")
       && !window.matchMedia?.("(max-width: 820px)")?.matches;
     if (!shouldAnimate) {
-      commitRender(root);
+      commitCurrentRender();
       return null;
     }
 
@@ -4814,7 +4832,7 @@
     document.documentElement.dataset.gamesenseTransition = direction;
     root.style.viewTransitionName = "gamesense-library-content";
     if (typeof document.startViewTransition === "function") {
-      const transition = document.startViewTransition(() => commitRender(root));
+      const transition = document.startViewTransition(() => commitCurrentRender());
       transition.ready?.catch(() => {});
       transition.updateCallbackDone?.catch(() => {});
       transition.finished?.catch(() => {});
@@ -4826,7 +4844,7 @@
       return transition;
     }
 
-    commitRender(root);
+    if (!commitCurrentRender()) return null;
     const distance = direction === "backward" ? -24 : 24;
     const animation = root.animate([
       { opacity: .45, transform: `translate3d(${distance}px,0,0)` },

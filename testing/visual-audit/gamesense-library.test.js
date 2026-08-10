@@ -1716,24 +1716,7 @@ async function run() {
     await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.locator("#page-logging.active").waitFor({ state: "visible" });
-    await desktop.click("#loggingTrainingMenuBtn");
-    await desktop.locator("#dailyWarmupModal.active").waitFor({ state: "visible" });
-    assert.equal(await desktop.locator("[data-warmup-info]").count(), 11);
-    const drill = desktop.locator('[data-warmup-drill="head-tracking"]');
-    const drillShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="head-tracking"])');
-    await drillShell.locator("[data-warmup-info]").click();
-    assert.equal(await drillShell.locator(".daily-warmup-info-detail li").count(), 3);
-    assert.equal(await drill.getAttribute("aria-pressed"), "false");
-    const drone = desktop.locator('[data-warmup-drill="drone-target-switching"]');
-    const droneShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="drone-target-switching"])');
-    await droneShell.locator("[data-warmup-info]").click();
-    assert.match(await droneShell.locator(".daily-warmup-info-detail").innerText(), /infinite ammo off/i);
-    assert.match(await droneShell.locator(".daily-warmup-info-detail").innerText(), /without releasing/i);
-    const spray = desktop.locator('[data-warmup-drill="spray-control-dummy"]');
-    const sprayShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="spray-control-dummy"])');
-    await sprayShell.locator("[data-warmup-info]").click();
-    assert.match(await sprayShell.locator(".daily-warmup-info-detail").innerText(), /large range-finder target dummy/i);
-    assert.match(await sprayShell.locator(".daily-warmup-info-detail").innerText(), /accuracy by bullets hitting/i);
+    assert.equal(await desktop.locator("#loggingTrainingMenuBtn").count(), 0, "Logging reflections must not duplicate the dedicated warm-up flow.");
     await desktop.close();
 
     const mobile = await browser.newPage({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });

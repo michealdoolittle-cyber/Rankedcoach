@@ -1,0 +1,116 @@
+/*
+ * Late, narrowly scoped guardrails for components whose own information
+ * architecture must remain stable when a player changes profile layout.
+ */
+
+/* The session-debrief copy must never become a clipped free-layout surface. */
+#page-logging .logging-hero{
+  grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) !important;
+  align-items:stretch !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:visible !important;
+}
+
+#page-logging .logging-hero-copy{
+  display:flex !important;
+  flex-direction:column !important;
+  align-self:stretch !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100% !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+#page-logging .logging-hero-copy :is(.logging-hero-kicker,.logging-hero-title,.logging-hero-text){
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow-wrap:anywhere;
+}
+
+@media (max-width:820px){
+  html body.is-mobile-layout #page-logging .logging-hero{
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+
+/* The post-match launcher presents the two supported trainers as equal choices. */
+#page-logging .logging-launch-trainer-region{
+  justify-content:center !important;
+  gap:clamp(10px,1.2vw,18px) !important;
+  padding:0 !important;
+}
+
+#page-logging .logging-launch-trainer-kovaaks,
+#page-logging .logging-launch-trainer-aimlabs{
+  clip-path:none !important;
+  width:50% !important;
+}
+
+#page-logging .logging-launch-trainer-kovaaks{
+  inset:0 auto 0 0 !important;
+}
+
+#page-logging .logging-launch-trainer-aimlabs{
+  inset:0 0 0 auto !important;
+}
+
+#page-logging .logging-launch-trainer-logo{
+  width:clamp(100px,10vw,176px) !important;
+  height:clamp(100px,10vw,176px) !important;
+  max-width:42% !important;
+  object-fit:contain !important;
+}
+
+#page-logging .logging-launch-trainer-region > span{
+  font-size:clamp(12px,1.15vw,18px) !important;
+}
+
+/* The Bars control owns the entire bar layer, including its interactive marker. */
+#matchSummaryModal .match-summary-economy-toggles button[aria-pressed="true"]{
+  border-color:#ff4655 !important;
+  background:linear-gradient(135deg,#ff4655,#b91c3a) !important;
+  color:#fff !important;
+  box-shadow:0 0 14px rgba(255,70,85,.32) !important;
+}
+
+#matchSummaryModal .match-summary-economy-chart.is-economy-bars-hidden .match-summary-credit-bar > i,
+#matchSummaryModal .match-summary-economy-chart.is-economy-bars-hidden .match-summary-credit-diamond{
+  display:none !important;
+}
+
+/* Weapon gallery cards intentionally retain their dossier visual language. */
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card{
+  --accent:#ff4655 !important;
+  --accent-2:#58d4c8 !important;
+  isolation:isolate;
+  clip-path:none !important;
+  border:1px solid var(--gamesense-line,rgba(148,163,184,.26)) !important;
+  border-left-width:1px !important;
+  border-radius:18px !important;
+  background:linear-gradient(155deg,rgba(255,70,85,.1),rgba(15,23,42,.92) 52%,rgba(2,6,23,.96)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.26) !important;
+  padding:0 !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:1 !important;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.06) 48%,transparent 61%) !important;
+  opacity:1 !important;
+  mix-blend-mode:normal !important;
+  transform:translateX(-110%) !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card::after{
+  content:none !important;
+  display:none !important;
+}
+
+#page-library .gamesense-entry-card.gamesense-weapon-entry-card:hover::before{
+  transform:translateX(110%) !important;
+}

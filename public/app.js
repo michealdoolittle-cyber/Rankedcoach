@@ -1150,7 +1150,6 @@ function bindDailyWarmupEvents() {
     }
     if (event.target?.id === "dailyWarmupSave") saveDailyWarmupCheck();
     if (event.target?.closest?.("#dailyWarmupPostgameCommit")) toggleDailyPostgameTraining();
-    if (event.target?.closest?.("#loggingTrainingMenuBtn")) openDailyTrainingMenu();
     if (event.target?.id === "dailyWarmupSkip") {
       const modal = document.getElementById("dailyWarmupModal");
       if (modal?.dataset.dismissBehavior === "skip") skipDailyWarmupCheck();
@@ -5552,6 +5551,90 @@ function describeRolePracticeTarget(roleName = "", agentName = "") {
   return "keep the round plan simple enough to repeat under pressure";
 }
 
+// Keep coaching language tied to the context that actually produced the
+// stat.  A K/D or win-rate number means something different when it came
+// from a Duelist entry sample, a Controller post-plant sample, or a small
+// one-map window.  These helpers are deliberately data-only: they do not
+// invent a reason when the imported match data cannot support one.
+function resolveCoachingInterpretationContext(input = {}) {
+  const agent = String(input.agent || input.agentName || "").trim();
+  const role = formatReadableLabel(input.role || input.roleName || "");
+  const map = String(input.map || input.mapName || "").trim();
+  const weapon = formatReadableLabel(input.weapon || input.weaponName || "");
+  const sampleSize = Math.max(0, safeNumber(input.sampleSize ?? input.matches));
+  const subject = agent && role
+    ? `${agent} as ${role}`
+    : agent || role || map || weapon || "This sample";
+  return {
+    agent,
+    role,
+    map,
+    weapon,
+    sampleSize,
+    subject,
+    sampleLabel: sampleSize ? `${sampleSize} imported match${sampleSize === 1 ? "" : "es"}` : "no imported match sample"
+  };
+}
+
+function getCoachingEvidenceScore(input = {}) {
+  const matches = Math.max(0, safeNumber(input.matches ?? input.sampleSize));
+  const winrate = safeNumber(input.winrate, 0);
+  // The first few games should be visible but should never carry the same
+  // weight as a repeatable sample. Eight games is the established normal
+  // coaching threshold elsewhere in the app.
+  const confidence = Math.min(1, matches / 8);
+  const score = 50 + ((winrate - 50) * confidence);
+  return {
+    matches,
+    winrate,
+    confidence,
+    score: Math.round(score * 100) / 100,
+    label: matches >= 8 ? "established" : matches >= 4 ? "developing" : "early"
+  };
+}
+
+function getUsageWinRatePairing(input = {}) {
+  const usage = Number(input.usage);
+  const winRate = Number(input.winRate);
+  const unit = String(input.unit || "rounds").trim() || "rounds";
+  const subject = String(input.subject || "This category").trim() || "This category";
+  const hasUsage = Number.isFinite(usage);
+  const hasWinRate = Number.isFinite(winRate);
+  const roundedUsage = Math.round(usage);
+  const roundedWinRate = Math.round(winRate);
+  return {
+    usageLabel: hasUsage ? `Used in ${roundedUsage}% of tracked ${unit}` : "Usage not available",
+    winRateLabel: hasWinRate ? `Won ${roundedWinRate}% of those ${unit}` : "Win rate not available",
+    summary: hasUsage && hasWinRate
+      ? `${subject} was used in ${roundedUsage}% of tracked ${unit} and won ${roundedWinRate}% of those ${unit}.`
+      : hasUsage
+        ? `${subject} was used in ${roundedUsage}% of tracked ${unit}.`
+        : `${subject} has no verified usage sample yet.`
+  };
+}
+
+function describeFightValueInterpretation(input = {}) {
+  const context = resolveCoachingInterpretationContext(input);
+  const kd = safeNumber(input.kd);
+  const role = context.role.toLowerCase();
+  const strength = kd >= 1.2 ? "a clear strength" : kd >= 1.05 ? "creating real value" : kd >= 0.95 ? "close to even" : "falling behind";
+  const rolePlan = role === "duelist"
+    ? "take first contact with a trade plan and do not force the second duel"
+    : role === "initiator"
+      ? "use information first, then take the fight while a teammate can act on it"
+      : role === "controller"
+        ? "use utility to make the first fight easier, then preserve the exit"
+        : role === "sentinel"
+          ? "hold the setup advantage, then rotate before the fight becomes isolated"
+          : "take the fight with cover and teammate spacing";
+  return {
+    detail: `${context.subject} is at ${kd.toFixed(2)} K/D across ${context.sampleLabel}, which is ${strength}.`,
+    read: kd >= 1.05
+      ? `Keep the advantage by trying to ${rolePlan}.`
+      : `Improve the next fight by trying to ${rolePlan}.`
+  };
+}
+
 function describeProfilePracticeLever(context = {}, options = {}) {
   const prefer = Array.isArray(options.prefer) ? options.prefer : [];
   const avoid = new Set(Array.isArray(options.avoid) ? options.avoid : []);
@@ -5570,10 +5653,11 @@ function describeProfilePracticeLever(context = {}, options = {}) {
   const topWeaponShare = safeNumber(context.topWeaponFamilyShare, NaN);
 
   const candidates = [];
-  const addCandidate = (type, score, phrase, action) => {
+  const addCandidate = (type, score, phrase, action, evidence = null) => {
     if (!type || avoid.has(type) || !phrase || !action) return;
     const preferBoost = prefer.includes(type) ? 30 : 0;
-    candidates.push({ type, score: safeNumber(score) + preferBoost, phrase, action });
+    const evidenceScore = evidence ? getCoachingEvidenceScore(evidence).score : safeNumber(score);
+    candidates.push({ type, score: evidenceScore + preferBoost, phrase, action });
   };
 
   if (focusEntry?.[0]) {
@@ -5596,10 +5680,10 @@ function describeProfilePracticeLever(context = {}, options = {}) {
     addCandidate("weak_agent", 92 - safeNumber(weakestAgent.winrate), `${weakestAgent.agent} games`, `review where ${weakestAgent.agent} dies or loses value before swapping the whole agent pool`);
   }
   if (bestAgent?.agent && safeNumber(bestAgent.matchesPlayed) >= 3 && safeNumber(bestAgent.winrate) >= 55) {
-    addCandidate("best_agent", safeNumber(bestAgent.winrate), `${bestAgent.agent} plans`, `repeat the ${bestAgent.agent} plans that are already producing wins`);
+    addCandidate("best_agent", 0, `${bestAgent.agent} plans`, `repeat the ${bestAgent.agent} plans that are already producing wins`, { matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate });
   }
   if (bestMap?.map && safeNumber(bestMap.matchesPlayed) >= 2 && safeNumber(bestMap.winrate) >= 55) {
-    addCandidate("best_map", safeNumber(bestMap.winrate) - 4, `${bestMap.map} map plan`, `keep the same map plan and only change the round that keeps failing`);
+    addCandidate("best_map", 0, `${bestMap.map} map plan`, `keep the same map plan and only change the round that keeps failing`, { matches: bestMap.matchesPlayed, winrate: bestMap.winrate });
   }
   if (topWeaponLabel && Number.isFinite(topWeaponWinrate)) {
     const weaponScore = topWeaponWinrate >= 52 ? topWeaponWinrate - 2 : 88 - topWeaponWinrate;
@@ -5618,7 +5702,7 @@ function describeProfilePracticeLever(context = {}, options = {}) {
   }
   if (bestRole?.role && safeNumber(bestRole.matchesPlayed) >= 2 && safeNumber(bestRole.winrate) >= 55) {
     const roleLabel = formatReadableLabel(bestRole.role);
-    addCandidate("best_role", safeNumber(bestRole.winrate) - 8, `${roleLabel} role value`, `use ${roleLabel} when you want the cleanest ranked baseline`);
+    addCandidate("best_role", 0, `${roleLabel} role value`, `use ${roleLabel} when you want the cleanest ranked baseline`, { matches: bestRole.matchesPlayed, winrate: bestRole.winrate });
   }
 
   return candidates.sort((a, b) => b.score - a.score)[0] || {
@@ -5648,11 +5732,15 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
 
   if (id === "fight_conversion") {
     const kd = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.kd);
-    const subject = trend.kicker || signalAgent || "Your recent games";
-    if (kd >= 1.2) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your gunfights are a major strength`, "After the first kill, slow down and help your team keep the advantage");
-    if (kd >= 1.05) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your fights are creating real value`, "Keep taking fights where a teammate can trade you or protect the exit");
-    if (kd >= 0.95) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your fights are close to even`, "Swing with support more often so close duels become traded rounds");
-    return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so too many fights are going against you`, "Use cover, teammate spacing, and one high-percentage fight instead of forcing a second duel");
+    const interpretation = describeFightValueInterpretation({
+      agent: signalAgent || trend.kicker,
+      role: signalRole,
+      map: context.currentSignalMap || context.bestMap?.map,
+      weapon: weaponLabel,
+      sampleSize: context.fightMatches || matches,
+      kd
+    });
+    return formatTrendCoachAction(interpretation.detail, interpretation.read);
   }
 
   if (id === "match_conversion") {
@@ -6036,9 +6124,15 @@ function polishTrendRead(trend = {}, context = {}) {
   if (id === "weapon_pattern" || id === "weapon_reliance") {
     const weaponLabel = output.kicker || output.mediaText || "Weapon";
     const weaponShare = parseFloat(String(output.value || "0").replace(/[^\d.]/g, ""));
-    output.detail = weaponShare >= 45
-      ? `${weaponLabel} is shaping many of your rounds. Judge it by clean fights, survival after the kill, and round wins.`
-      : `${weaponLabel} is part of the picture, but it is not taking over the whole read.`;
+    const pairing = getUsageWinRatePairing({
+      subject: weaponLabel,
+      usage: weaponShare,
+      winRate: context.topWeaponFamilyWinrate,
+      unit: "rounds"
+    });
+    output.detail = `${pairing.summary} ${weaponShare >= 45
+      ? "Judge it by clean fights, survival after the kill, and round wins."
+      : "It is part of the picture, but it is not taking over the whole read."}`;
     output.read = "A weapon-heavy profile should be reviewed by fight quality, positioning, and round impact, not HS% alone.";
   }
 
@@ -6115,13 +6209,13 @@ function polishBreakdownRead(card = {}, context = {}) {
 
   if (label === "weapon category") {
     const weapon = formatReadableLabel(context.topWeaponPrimaryWeapon || context.topWeaponFamilyLabel || "your most-used weapon");
-    const share = Math.round(safeNumber(context.topWeaponFamilyShare));
-    const winrate = Math.round(safeNumber(context.topWeaponFamilyWinrate));
-    const hasWinrate = context.topWeaponFamilyWinrate !== null
-      && context.topWeaponFamilyWinrate !== undefined
-      && String(context.topWeaponFamilyWinrate).trim() !== ""
-      && Number.isFinite(Number(context.topWeaponFamilyWinrate));
-    output.detail = `${weapon} leads this window${share ? ` at ${share}% of tracked weapon rounds` : ""}${hasWinrate ? ` with ${winrate}% round conversion` : ""}. Use that result to judge the buy and fight plan.`;
+    const pairing = getUsageWinRatePairing({
+      subject: weapon,
+      usage: context.topWeaponFamilyShare,
+      winRate: context.topWeaponFamilyWinrate,
+      unit: "rounds"
+    });
+    output.detail = `${pairing.summary} Use that result to judge the buy and fight plan.`;
   }
 
   if (label === "mood pattern") {
@@ -7852,6 +7946,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const seasonLabel = importedAnalytics?.currentAct || "Current Window";
   const currentSignalAgent = activeAgentNameForUtility || bestAgent?.agent || "";
   const currentSignalRole = agentRoles?.[currentSignalAgent] || bestRole?.role || "";
+  const currentSignalMapForEvidence = bestMap?.map || "Current Record";
+  const fightMatchesForEvidence = safeNumber(
+    agents.find(entry => String(entry?.agent || "").toLowerCase() === String(currentSignalAgent || "").toLowerCase())?.matchesPlayed,
+    safeNumber(overview.matchesPlayed)
+  );
   const mechanicsAdjustment = getMechanicsContextAdjustment(currentSignalAgent, coachingContext);
   const evidenceLayer = buildCoachingEvidenceLayer({
     orderedMatches,
@@ -7860,6 +7959,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     importedAnalytics,
     currentSignalAgent,
     currentSignalRole,
+    currentSignalMap: currentSignalMapForEvidence,
+    fightMatches: fightMatchesForEvidence,
     coachingContext,
     mechanicsAdjustment,
     seasonLabel
@@ -8346,6 +8447,16 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const roleAssistsPerMatch = roleMatches ? safeDivide(roleAssists, roleMatches) : assistsPerMatch;
   const roleDeaths = safeNumber(roleTrendBucket?.deaths, totalDeaths);
   const roleDeathsPerMatch = roleMatches ? safeDivide(roleDeaths, roleMatches) : deathsPerMatch;
+  const fightInterpretation = describeFightValueInterpretation({
+    agent: fightSubject,
+    role: roleSubject,
+    map: matchSubject,
+    sampleSize: fightMatches,
+    kd: fightKd
+  });
+  const bestAgentEvidence = bestAgent ? getCoachingEvidenceScore({ matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate }) : null;
+  const bestMapEvidence = bestMap ? getCoachingEvidenceScore({ matches: bestMap.matchesPlayed, winrate: bestMap.winrate }) : null;
+  const bestRoleEvidence = bestRole ? getCoachingEvidenceScore({ matches: bestRole.matchesPlayed, winrate: bestRole.winrate }) : null;
 
   const trends = [
     {
@@ -8355,16 +8466,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Fight Value",
       kicker: fightSubject,
       value: fightMatches ? `${fightKd.toFixed(2)} K/D` : "No data",
-      detail: !fightMatches
-        ? "No data"
-        : fightKd >= 1
-          ? `${fightSubject} fights are above even in this selected season sample.`
-          : `${fightSubject} fights are below even in this selected season sample.`,
-      read: !fightMatches
-        ? "No data"
-        : fightKd >= 1
-          ? `${fightSubject} is winning enough direct fight value that the next question is whether those kills become round wins.`
-          : `${fightSubject} fight results are low enough that timing, spacing, and trade setup need attention.`,
+      detail: fightMatches ? fightInterpretation.detail : "No data",
+      read: fightMatches ? fightInterpretation.read : "No data",
       sourceLabel: `Based on ${fightMatches || 0} ${fightSubject} matches from ${seasonLabel}.`,
       formula: `${fightSubject} kills / deaths = ${Math.round(fightKills)} / ${Math.max(1, Math.round(fightDeaths))} = ${fightMatches ? fightKd.toFixed(2) : "--"}`,
       benchmark: "Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.",
@@ -8530,6 +8633,12 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const topWeaponFamilyShare = safeNumber(topWeaponFamilyEntry?.[1]);
   const topWeaponFamilySummary = topWeaponFamilyEntry ? coachingContext?.getFamilySummary?.(topWeaponFamilyEntry[0]) : null;
   const topWeaponFamilyWinrate = safeNumber(topWeaponFamilySummary?.winrate, NaN);
+  const topWeaponPairing = getUsageWinRatePairing({
+    subject: topWeaponFamilyLabel || "This weapon group",
+    usage: topWeaponFamilyShare,
+    winRate: topWeaponFamilyWinrate,
+    unit: "rounds"
+  });
   const topWeaponFamilyTone = Number.isFinite(topWeaponFamilyWinrate)
     ? topWeaponFamilyWinrate >= 52 ? "up" : topWeaponFamilyWinrate >= 45 ? "warn" : "down"
     : topWeaponFamilyShare >= 50 && safeNumber(overview.kd) >= 1 ? "up" : topWeaponFamilyShare >= 45 ? "warn" : "warn";
@@ -8612,8 +8721,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: `${Math.round(topWeaponFamilyShare)}% Rounds`,
       detail: Number.isFinite(topWeaponFamilyWinrate)
         ? topWeaponFamilyWinrate >= 52
-          ? `${topWeaponFamilyLabel || "This weapon group"} rounds are converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Keep buying it in rounds where your credits and role plan support it.`
-          : `${topWeaponFamilyLabel || "This weapon group"} rounds are only converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Review attack/defense side, economy state, and positioning before judging mechanics alone.`
+          ? `${topWeaponPairing.summary} Keep buying it in rounds where your credits and role plan support it.`
+          : `${topWeaponPairing.summary} Review attack/defense side, economy state, and positioning before judging mechanics alone.`
         : topWeaponFamilyTone === "up"
           ? `${topWeaponFamilyLabel || "This weapon group"} rounds fit your current results well. Keep taking clean fights and protect the advantage after a kill.`
           : `${topWeaponFamilyLabel || "This weapon group"} is shaping many of your rounds. Review whether those rounds are actually converting wins.`,
@@ -8626,7 +8735,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       mediaText: topWeaponFamilyLabel || "Weapon",
       proofItems: [
         statItem("Weapon Category", topWeaponFamilyLabel || "--", "Most-used weapon category in these matches."),
-        statItem("Round Share", `${Math.round(topWeaponFamilyShare)}%`, "Share of rounds reported with this weapon category."),
+        statItem("Usage", topWeaponPairing.usageLabel, "Share of reported rounds where this weapon category was used."),
+        statItem("Win Rate", topWeaponPairing.winRateLabel, "Win rate across the rounds where this weapon category was used."),
         statItem("Context", "Applied", "Mechanics and conversion reads can adjust when weapon reliance is meaningful."),
         statItem("Judgement Band", "45%+", "Above 45% means the weapon category should influence interpretation.")
       ]
@@ -8670,7 +8780,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       detail: "Uses Riot's damage-per-round data to estimate your round-by-round impact."
     },
     {
-      selectionScore: bestAgent?.matchesPlayed >= 3 ? 82 : 42,
+      selectionScore: bestAgentEvidence?.score ?? 42,
       label: "Agent Selection",
       value: bestAgent ? `${bestAgent.agent} ${Math.round(bestAgent.winrate)}% WR` : "No stable agent yet",
       detail: bestAgent ? "Your best repeated agent gives the clearest picture of what's working in ranked." : "Play the same agent a few more times so we can spot what's actually working."
@@ -8709,7 +8819,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         : "No data"
     },
     {
-      selectionScore: weakestMap?.matchesPlayed >= 2 ? 84 : bestMap?.matchesPlayed >= 2 ? 60 : 36,
+      selectionScore: weakestMap?.matchesPlayed >= 2 ? 84 : bestMapEvidence?.score ?? 36,
       label: "Map Pattern",
       value: weakestMap?.matchesPlayed >= 2
         ? `${weakestMap.map} ${Math.round(weakestMap.winrate)}% WR`
@@ -8723,7 +8833,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           : "No data"
     },
     {
-      selectionScore: bestRole && weakestRole && roleGap >= 18 ? 88 : bestRole ? 64 : 34,
+      selectionScore: bestRole && weakestRole && roleGap >= 18 ? 88 : bestRoleEvidence?.score ?? 34,
       label: "Role Fit",
       value: bestRole ? `${bestRole.role} ${Math.round(bestRole.winrate)}% WR` : "No Data",
       detail: bestRole && weakestRole && roleGap >= 18
@@ -8737,7 +8847,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Weapon Category",
       value: topWeaponFamilyEntry ? `${topWeaponFamilyLabel} ${Math.round(safeNumber(topWeaponFamilyEntry[1]))}%` : "No Data",
       detail: topWeaponFamilyEntry
-        ? "Weapon category usage helps the app judge mechanics and conversion with the right context."
+        ? `${topWeaponPairing.summary} This helps the app judge mechanics and conversion with the right context.`
         : "No weapon stats yet — play a few matches with different guns and we'll break it down."
     },
     {
@@ -8764,21 +8874,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       },
       {
         kicker: "Best Agent",
-        selectionScore: bestAgent?.matchesPlayed >= 3 ? 86 : 50,
+        selectionScore: bestAgentEvidence?.score ?? 50,
         title: bestAgent?.agent || "No Stable Agent",
         value: bestAgent ? `${Math.round(bestAgent.winrate)}% WR` : "Build sample",
         detail: bestAgent ? "Your best repeated agent in the current imported window." : "Play more repeated games on the same agents before calling one your best pick.",
-        tone: bestAgent?.matchesPlayed >= 3 ? "up" : "warn",
+        tone: bestAgentEvidence?.label === "established" && bestAgentEvidence.winrate >= 52 ? "up" : "warn",
         mediaType: "agent",
         mediaValue: bestAgent?.agent
       },
       {
         kicker: "Map Pattern",
-        selectionScore: bestMap?.matchesPlayed >= 2 ? 76 : 44,
+        selectionScore: bestMapEvidence?.score ?? 44,
         title: bestMap?.map || "No Map Strength",
         value: bestMap ? `${Math.round(bestMap.winrate)}% WR` : "Build sample",
         detail: bestMap ? "Strongest current map environment from imported results." : "A stable map strength is reported once more repeated map volume is imported.",
-        tone: bestMap?.matchesPlayed >= 2 ? (bestMap.winrate >= 52 ? "up" : "warn") : "warn",
+        tone: ["developing", "established"].includes(bestMapEvidence?.label) && bestMapEvidence?.winrate >= 52 ? "up" : "warn",
         mediaType: "map",
         mediaValue: bestMap?.map
       }
@@ -8818,11 +8928,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     role: [
       {
         kicker: "Best Role",
-        selectionScore: bestRole?.matchesPlayed >= 2 ? 82 : 42,
+        selectionScore: bestRoleEvidence?.score ?? 42,
         title: bestRole ? `${bestRole.role.charAt(0).toUpperCase()}${bestRole.role.slice(1)}` : "No Role Strength",
         value: bestRole ? `${Math.round(bestRole.winrate)}% WR` : "Build sample",
         detail: bestRole ? "Highest-performing repeated role in the current profile window." : "Role strengths need more repeated matches before they become trustworthy.",
-        tone: bestRole?.matchesPlayed >= 2 ? (bestRole.winrate >= 52 ? "up" : "warn") : "warn",
+        tone: ["developing", "established"].includes(bestRoleEvidence?.label) && bestRoleEvidence?.winrate >= 52 ? "up" : "warn",
         mediaType: "role",
         mediaValue: bestRole?.role
       },
@@ -8838,11 +8948,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       },
       {
         kicker: "Stable Agent",
-        selectionScore: bestAgent?.matchesPlayed >= 3 ? 76 : 46,
+        selectionScore: bestAgentEvidence?.score ?? 46,
         title: bestAgent?.agent || "Waiting for Best Agent",
         value: bestAgent ? `${Math.round(bestAgent.matchesPlayed)} matches` : "No repeat pick",
         detail: bestAgent ? "Most repeated agent that is currently anchoring role-fit reads." : "Agent stability forms once a pick repeats enough times to matter.",
-        tone: bestAgent?.matchesPlayed >= 3 ? "up" : "warn",
+        tone: bestAgentEvidence?.label === "established" ? "up" : "warn",
         mediaType: "agent",
         mediaValue: bestAgent?.agent
       }

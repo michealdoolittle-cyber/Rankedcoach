@@ -24,34 +24,107 @@
     return { ...item };
   }
 
-  function applyAgentPath(agent, path, value) {
-    const match = String(path || "").match(/^abilities\.([^.]+)\.(summary|purpose|setup)$/);
-    if (!match) return agent;
-    const [, abilityId, field] = match;
-    const text = cleanText(value);
-    if (!text || !Array.isArray(agent?.abilities)) return agent;
-    let changed = false;
-    const abilities = agent.abilities.map(ability => {
-      if (ability?.id !== abilityId || ability[field] === text) return ability;
-      changed = true;
-      return { ...ability, [field]: text };
+  function replaceListEntry(item, listKey, index, nextValue) {
+    const source = Array.isArray(item?.[listKey]) ? item[listKey] : [];
+    if (!Number.isInteger(index) || index < 0 || index >= source.length) return item;
+    const next = source.slice();
+    const resolved = typeof nextValue === "function" ? nextValue(next[index]) : nextValue;
+    if (resolved === next[index]) return item;
+    next[index] = resolved;
+    return { ...item, [listKey]: next };
+  }
+
+  function replaceObjectListField(item, listKey, index, field, text) {
+    return replaceListEntry(item, listKey, index, entry => {
+      if (!entry || typeof entry !== "object" || entry[field] === text) return entry;
+      return { ...entry, [field]: text };
     });
-    return changed ? { ...agent, abilities } : agent;
+  }
+
+  function applyAgentPath(agent, path, value) {
+    const text = cleanText(value);
+    if (!text || !agent) return agent;
+    const abilityMatch = String(path || "").match(/^abilities\.([^.]+)\.(summary|purpose|setup)$/);
+    if (abilityMatch && Array.isArray(agent.abilities)) {
+      const [, abilityId, field] = abilityMatch;
+      let changed = false;
+      const abilities = agent.abilities.map(ability => {
+        if (ability?.id !== abilityId || ability[field] === text) return ability;
+        changed = true;
+        return { ...ability, [field]: text };
+      });
+      return changed ? { ...agent, abilities } : agent;
+    }
+    const fundamentalsMatch = String(path || "").match(/^fundamentals\.(\d+)$/);
+    if (fundamentalsMatch) return replaceListEntry(agent, "fundamentals", Number(fundamentalsMatch[1]), text);
+    const loreMatch = String(path || "").match(/^lore\.(\d+)\.(label|value|note)$/);
+    if (loreMatch) return replaceObjectListField(agent, "lore", Number(loreMatch[1]), loreMatch[2], text);
+    const historyMatch = String(path || "").match(/^patchHistory\.(\d+)\.(patch|note)$/);
+    if (historyMatch) return replaceObjectListField(agent, "patchHistory", Number(historyMatch[1]), historyMatch[2], text);
+    return agent;
   }
 
   function applyMapPath(map, path, value) {
-    const match = String(path || "").match(/^callouts\.([^.]+)\.(label|sourceLabel)$/);
-    if (!match) return map;
-    const [, calloutId, field] = match;
     const text = cleanText(value);
-    if (!text || !Array.isArray(map?.callouts)) return map;
-    let changed = false;
-    const callouts = map.callouts.map(callout => {
-      if (callout?.id !== calloutId || callout[field] === text) return callout;
-      changed = true;
-      return { ...callout, [field]: text };
-    });
-    return changed ? { ...map, callouts } : map;
+    if (!text || !map) return map;
+    const calloutMatch = String(path || "").match(/^callouts\.([^.]+)\.(label|sourceLabel)$/);
+    if (calloutMatch && Array.isArray(map.callouts)) {
+      const [, calloutId, field] = calloutMatch;
+      let changed = false;
+      const callouts = map.callouts.map(callout => {
+        if (callout?.id !== calloutId || callout[field] === text) return callout;
+        changed = true;
+        return { ...callout, [field]: text };
+      });
+      return changed ? { ...map, callouts } : map;
+    }
+    if (path === "overview.note" && map.overview && typeof map.overview === "object") {
+      return map.overview.note === text ? map : { ...map, overview: { ...map.overview, note: text } };
+    }
+    if (path === "compStatus") return map.compStatus === text ? map : { ...map, compStatus: text };
+    if (path === "compSample.note" && map.compSample && typeof map.compSample === "object") {
+      return map.compSample.note === text ? map : { ...map, compSample: { ...map.compSample, note: text } };
+    }
+    const insightMatch = String(path || "").match(/^agentInsights\.([^.]+)$/);
+    if (insightMatch && map.agentInsights && typeof map.agentInsights === "object") {
+      const agent = insightMatch[1];
+      return map.agentInsights[agent] === text ? map : { ...map, agentInsights: { ...map.agentInsights, [agent]: text } };
+    }
+    const lineupMatch = String(path || "").match(/^lineupLinks\.(\d+)\.label$/);
+    if (lineupMatch) return replaceObjectListField(map, "lineupLinks", Number(lineupMatch[1]), "label", text);
+    const weaponMatch = String(path || "").match(/^weaponSuggestions\.(\d+)\.(fit|conversion|evidence|note)$/);
+    if (weaponMatch) return replaceObjectListField(map, "weaponSuggestions", Number(weaponMatch[1]), weaponMatch[2], text);
+    const tipMatch = String(path || "").match(/^(macro\.(attack|defense)|siteTips|teamplayTips)\.(\d+)(?:\.(label|text))?$/);
+    if (tipMatch) {
+      const [, sourceKey, macroView, indexText, field] = tipMatch;
+      const index = Number(indexText);
+      if (sourceKey.startsWith("macro.")) {
+        const source = Array.isArray(map.macro?.[macroView]) ? map.macro[macroView] : [];
+        if (!Number.isInteger(index) || index < 0 || index >= source.length) return map;
+        const nextMacro = { ...map.macro };
+        const next = source.slice();
+        const entry = next[index];
+        next[index] = typeof entry === "string" ? text : { ...entry, [field || "text"]: text };
+        nextMacro[macroView] = next;
+        return { ...map, macro: nextMacro };
+      }
+      const listKey = sourceKey;
+      const source = Array.isArray(map[listKey]) ? map[listKey] : [];
+      if (!Number.isInteger(index) || index < 0 || index >= source.length) return map;
+      return replaceListEntry(map, listKey, index, entry => typeof entry === "string" ? text : { ...entry, [field || "text"]: text });
+    }
+    const roleTipMatch = String(path || "").match(/^roleNotes\.([^.]+)\.(\d+)(?:\.(label|text))?$/);
+    if (roleTipMatch && map.roleNotes && typeof map.roleNotes === "object") {
+      const [, role, indexText, field] = roleTipMatch;
+      const source = Array.isArray(map.roleNotes[role]) ? map.roleNotes[role] : [];
+      const index = Number(indexText);
+      if (!Number.isInteger(index) || index < 0 || index >= source.length) return map;
+      const next = source.slice();
+      const entry = next[index];
+      next[index] = typeof entry === "string" ? text : { ...entry, [field || "text"]: text };
+      return { ...map, roleNotes: { ...map.roleNotes, [role]: next } };
+    }
+    return map;
   }
 
   function applyWeaponPath(weapon, path, value) {
@@ -59,14 +132,10 @@
     if (!text || !weapon) return weapon;
     if (path === "focus") return weapon.focus === text ? weapon : { ...weapon, focus: text };
     const match = String(path || "").match(/^(whenToUse|howToUse)\.(\d+)$/);
-    if (!match) return weapon;
-    const [, listKey, indexText] = match;
-    const index = Number(indexText);
-    const sourceList = Array.isArray(weapon[listKey]) ? weapon[listKey] : [];
-    if (!Number.isInteger(index) || index < 0 || index >= sourceList.length || sourceList[index] === text) return weapon;
-    const nextList = sourceList.slice();
-    nextList[index] = text;
-    return { ...weapon, [listKey]: nextList };
+    if (match) return replaceListEntry(weapon, match[1], Number(match[2]), text);
+    const historyMatch = String(path || "").match(/^patchHistory\.(\d+)\.(patch|note)$/);
+    if (historyMatch) return replaceObjectListField(weapon, "patchHistory", Number(historyMatch[1]), historyMatch[2], text);
+    return weapon;
   }
 
   function applyPaths(item, corrections, applyPath) {

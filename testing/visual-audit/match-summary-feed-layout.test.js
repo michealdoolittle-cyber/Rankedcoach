@@ -590,13 +590,26 @@ async function verifyViewport(browser, viewport, name) {
   assert.match(tooltipState.color, /168,\s*85,\s*247|a855f7/i, `${name}: selected economy diamond should become purple`);
   const economySurfaceBorder = await page.locator(".match-summary-economy-chart").first().evaluate(node => getComputedStyle(node).borderTopWidth);
   assert.equal(economySurfaceBorder, "0px", `${name}: economy chart should not draw a nested inner panel border`);
+  const activeEconomyToggle = await page.locator('[data-match-economy-toggle="bars"]').evaluate(button => ({
+    pressed: button.getAttribute("aria-pressed"),
+    background: getComputedStyle(button).backgroundColor,
+    border: getComputedStyle(button).borderTopColor
+  }));
+  assert.equal(activeEconomyToggle.pressed, "true", `${name}: Bars control should begin active`);
+  assert.match(activeEconomyToggle.border, /255,\s*70,\s*85|ff4655/i, `${name}: active economy controls use Riot red`);
   await page.evaluate(() => document.querySelector('[data-match-economy-toggle="bars"]')?.click());
   const hiddenBarsTooltip = await page.evaluate(() => ({
     barsHidden: document.querySelector(".match-summary-economy-chart")?.classList.contains("is-economy-bars-hidden"),
-    openTooltips: document.querySelectorAll(".match-summary-credit-bar.is-tooltip-open").length
+    openTooltips: document.querySelectorAll(".match-summary-credit-bar.is-tooltip-open").length,
+    visibleBarLayers: [...document.querySelectorAll(".match-summary-credit-bar > i")]
+      .filter(node => getComputedStyle(node).display !== "none").length,
+    visibleDiamonds: [...document.querySelectorAll(".match-summary-credit-diamond")]
+      .filter(node => getComputedStyle(node).display !== "none").length
   }));
   assert.equal(hiddenBarsTooltip.barsHidden, true, `${name}: Bars control should hide bar fills`);
   assert.equal(hiddenBarsTooltip.openTooltips, 0, `${name}: hiding bars must also close its credit tooltip`);
+  assert.equal(hiddenBarsTooltip.visibleBarLayers, 0, `${name}: Bars control must hide every bar fill`);
+  assert.equal(hiddenBarsTooltip.visibleDiamonds, 0, `${name}: Bars control must hide every diamond with its bar`);
   progress(`[match-summary-smoke] ${name}: economy checked`);
 
   await page.screenshot({ path: path.resolve(__dirname, `match-summary-feed-layout-${name}.png`), fullPage: true });

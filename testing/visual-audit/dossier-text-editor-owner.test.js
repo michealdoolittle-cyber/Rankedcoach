@@ -101,6 +101,11 @@ async function run() {
       }]));
       localStorage.setItem("valtracker_logs_v1", "[]");
       localStorage.setItem("valtracker_log_entries_v1", "[]");
+      globalThis.RankedCoachGamesenseDossierTextOverrides = {
+        agents: { jett: { "fundamentals.0": "Owner-applied Jett narrative." } },
+        maps: { bind: { "compSample.note": "Owner-applied Bind composition note." } },
+        weapons: { vandal: { focus: "Owner-applied Vandal focus." } }
+      };
     });
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => globalThis.RankedCoachAuthBridge?.getUser?.()?.email === "michealdoolittle@gmail.com", null, { timeout: 15000 });
@@ -120,6 +125,11 @@ async function run() {
     assert.ok(agentFields.some(field => field.includes(":fundamentals.")), `Agent fundamentals must be editable: ${JSON.stringify(agentFields)}`);
     assert.ok(agentFields.some(field => field.includes(":lore.")), `Agent lore must be editable: ${JSON.stringify(agentFields)}`);
     assert.ok(agentFields.some(field => field.includes(":patchHistory.")), `Agent gameplay history must be editable: ${JSON.stringify(agentFields)}`);
+    assert.equal(
+      await page.locator('[data-gamesense-dossier-text-field="agents:jett:fundamentals.0"]').inputValue(),
+      "Owner-applied Jett narrative.",
+      "Persisted agent narrative overrides must be applied before the editor renders."
+    );
 
     // Bind is one of the fully-authored map dossiers. It gives this coverage
     // check every map text surface (macro plans, comps, weapon reads, lineups,
@@ -137,9 +147,16 @@ async function run() {
     assert.ok(mapFields.some(field => field.includes(":weaponSuggestions.")), `Weapon suggestion detail must be editable: ${JSON.stringify(mapFields)}`);
     assert.ok(mapFields.some(field => field.includes(":lineupLinks.")), `Lineup labels must be editable: ${JSON.stringify(mapFields)}`);
     assert.ok(mapFields.some(field => field.includes(":callouts.")), `Map callout labels must remain editable: ${JSON.stringify(mapFields)}`);
+    assert.equal(
+      await page.locator('[data-gamesense-dossier-text-field="maps:bind:compSample.note"]').inputValue(),
+      "Owner-applied Bind composition note.",
+      "Persisted map narrative overrides must be applied before the editor renders."
+    );
 
     await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "rifles"));
-    const weaponToggle = page.locator('[data-gamesense-dossier-text-toggle^="weapons:"]');
+    await page.locator('[data-gamesense-weapon="vandal"]').click();
+    await page.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    const weaponToggle = page.locator('[data-gamesense-dossier-text-toggle="weapons:vandal"]');
     await weaponToggle.waitFor({ state: "visible" });
     await page.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     await dismissTransientOverlays(page);
@@ -151,6 +168,11 @@ async function run() {
     assert.ok(weaponFields.some(field => field.includes(":whenToUse.")), `Weapon usage notes must be editable: ${JSON.stringify(weaponFields)}`);
     assert.ok(weaponFields.some(field => field.includes(":howToUse.")), `Weapon mechanics notes must be editable: ${JSON.stringify(weaponFields)}`);
     assert.ok(weaponFields.some(field => field.includes(":patchHistory.")), `Weapon history must be editable: ${JSON.stringify(weaponFields)}`);
+    assert.equal(
+      await page.locator('[data-gamesense-dossier-text-field="weapons:vandal:focus"]').inputValue(),
+      "Owner-applied Vandal focus.",
+      "Persisted weapon narrative overrides must be applied before the editor renders."
+    );
     assert.deepEqual(issues, []);
   } finally {
     await browser.close();
