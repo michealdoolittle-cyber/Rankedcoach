@@ -101,6 +101,23 @@
     box-shadow:var(--card-shadow-hover) !important;
     border-color:color-mix(in srgb,var(--accent) 42%,white 10%) !important;
   }
+
+  /* Trend cards are actionable: hovering one must retain the same clear
+     selection affordance as the rest of the Stats controls. The later
+     performance reset removes every card transition, so restore this only
+     for the clickable trend reads rather than re-enabling broad effects. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card.stats-select-card{
+    transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+    cursor:pointer;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card.stats-select-card:is(:hover,:focus-visible){
+    transform:translate3d(0,-2px,0) !important;
+    border-color:rgba(255,70,85,.58) !important;
+    background:linear-gradient(135deg,rgba(255,70,85,.12),rgba(255,255,255,.045)) !important;
+    box-shadow:0 12px 24px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,70,85,.14) !important;
+    outline:none;
+  }
 }
 
 /* The Bars control owns the entire bar layer, including its interactive marker. */
