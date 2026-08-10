@@ -2460,6 +2460,162 @@ function getLoggingLauncherEmbeddedHost() {
   return document.getElementById("loggingLauncherEmbedded");
 }
 
+// Launcher visual assets live in the RankedCoach repository. Add or replace a
+// local logo path here when an approved asset is available; the renderer falls
+// back to the team/trainer label so a missing image never produces a broken
+// tile. Keep this configuration separate from the launcher markup so adding a
+// new approved team is one entry, not a UI rebuild.
+const LOGGING_LAUNCHER_BACKGROUND_CONFIG = Object.freeze({
+  rotationMs: 10000,
+  warmupTeams: Object.freeze([
+    { name: "100 Thieves", colors: ["#ed1c24", "#12080a"], logo: "/assets/library/teams/100T.png" },
+    { name: "Bilibili Gaming", colors: ["#ef6b9a", "#171019"], logo: "/assets/library/teams/BLG.png" },
+    { name: "Cloud9", colors: ["#38bdf8", "#08131f"], logo: "/assets/library/teams/C9.png" },
+    { name: "Dragon Ranger Gaming", colors: ["#e85a4f", "#180b0b"], logo: "/assets/library/teams/DRG.png" },
+    { name: "EDward Gaming", colors: ["#dc2626", "#17090a"], logo: "/assets/library/teams/edward-gaming.png" },
+    { name: "Envy", colors: ["#38bdf8", "#08121e"], logo: "/assets/library/teams/ENVY.png" },
+    { name: "FNATIC", colors: ["#f97316", "#180d08"], logo: "/assets/library/teams/FNATIC.png" },
+    { name: "FunPlus Phoenix", colors: ["#f97316", "#160c08"], logo: "/assets/library/teams/FPX.png" },
+    { name: "FURIA", colors: ["#e5e7eb", "#111827"], logo: "/assets/library/teams/Furia.png" },
+    { name: "G2 Esports", colors: ["#ef4444", "#18090c"], logo: "/assets/library/teams/G2-Esports.png" },
+    { name: "Gen.G", colors: ["#fbbf24", "#17120a"], logo: "/assets/library/teams/Gen.G.png" },
+    { name: "Global Esports", colors: ["#60a5fa", "#0c1020"], logo: "/assets/library/teams/Global-Esports.png" },
+    { name: "KRU Esports", colors: ["#ec4899", "#190b17"], logo: "/assets/library/teams/KRU.png" },
+    { name: "Leviatán", colors: ["#22d3ee", "#07161b"], logo: "/assets/library/teams/Levi.png" },
+    { name: "LOUD", colors: ["#84cc16", "#0d1608"], logo: "/assets/library/teams/LOUD.png" },
+    { name: "MIBR", colors: ["#22c55e", "#08170d"], logo: "/assets/library/teams/Mibr.png" },
+    { name: "NAVI", colors: ["#facc15", "#181307"], logo: "/assets/library/teams/NAVI.png" },
+    { name: "NRG", colors: ["#22c55e", "#081609"], logo: "/assets/library/teams/NRG.png" },
+    { name: "Paper Rex", colors: ["#ef4444", "#190b0b"], logo: "/assets/library/teams/paper-rex.png" },
+    { name: "Sentinels", colors: ["#ff4655", "#1b0b10"], logo: "/assets/library/teams/sentinels.png" },
+    { name: "T1", colors: ["#ef4444", "#18090c"], logo: "/assets/library/teams/t1.png" },
+    { name: "Talon Esports", colors: ["#e879f9", "#180b1b"], logo: "/assets/library/teams/Talon.png" },
+    { name: "Team Heretics", colors: ["#c7f000", "#101608"], logo: "/assets/library/teams/Team-Heritics.png" },
+    { name: "Team Liquid", colors: ["#3b82f6", "#081226"], logo: "/assets/library/teams/Team-Liquid.png" },
+    { name: "Team Secret", colors: ["#38bdf8", "#091521"], logo: "/assets/library/teams/Team-Secret.png" },
+    { name: "Team Vitality", colors: ["#ffe900", "#151506"], logo: "/assets/library/teams/Vitality.png" },
+    { name: "ZETA DIVISION", colors: ["#60a5fa", "#0b1021"], logo: "/assets/library/teams/ZETA.png" }
+  ]),
+  postMatch: Object.freeze({
+    kovaaks: Object.freeze({ name: "Kovaak's", colors: ["#f97316", "#2a0e05"], logo: "/assets/library/training/Kovaaks.jpg" }),
+    aimLabs: Object.freeze({ name: "Aim Lab", colors: ["#06b6d4", "#061d28"], logo: "/assets/library/training/Aimlabs.png" })
+  })
+});
+
+let loggingLauncherWarmupIndex = 0;
+let loggingLauncherRotationTimer = null;
+
+function createLoggingLauncherVisualLayer() {
+  const layer = document.createElement("span");
+  layer.className = "logging-launch-visual-layer";
+  layer.setAttribute("aria-hidden", "true");
+  layer.innerHTML = `
+    <img class="logging-launch-visual-logo" alt="" hidden>
+    <span class="logging-launch-visual-label"></span>`;
+  return layer;
+}
+
+function applyLoggingLauncherVisualLayer(layer, entry) {
+  if (!layer || !entry) return;
+  const colors = Array.isArray(entry.colors) ? entry.colors : [];
+  const start = String(colors[0] || "#18324a");
+  const end = String(colors[1] || "#080d17");
+  layer.style.setProperty("--logging-launch-color-a", start);
+  layer.style.setProperty("--logging-launch-color-b", end);
+  const label = layer.querySelector(".logging-launch-visual-label");
+  if (label) label.textContent = String(entry.name || "Training");
+  const logo = layer.querySelector(".logging-launch-visual-logo");
+  if (logo) {
+    const source = String(entry.logo || "").trim();
+    logo.hidden = !source;
+    logo.removeAttribute("src");
+    if (source) logo.src = source;
+  }
+}
+
+function ensureLoggingLauncherWarmupBackground(tile) {
+  if (!tile) return;
+  let visuals = tile.querySelector(":scope > .logging-launch-visuals");
+  if (!visuals) {
+    visuals = document.createElement("span");
+    visuals.className = "logging-launch-visuals logging-launch-warmup-visuals";
+    visuals.setAttribute("aria-hidden", "true");
+    visuals.append(createLoggingLauncherVisualLayer(), createLoggingLauncherVisualLayer());
+    tile.prepend(visuals);
+  }
+  const entries = LOGGING_LAUNCHER_BACKGROUND_CONFIG.warmupTeams;
+  if (!entries.length) return;
+  const normalizedIndex = ((loggingLauncherWarmupIndex % entries.length) + entries.length) % entries.length;
+  const activeLayer = visuals.querySelector(".logging-launch-visual-layer.is-active") || visuals.querySelector(".logging-launch-visual-layer");
+  if (activeLayer?.dataset.launcherEntry !== String(normalizedIndex)) {
+    applyLoggingLauncherVisualLayer(activeLayer, entries[normalizedIndex]);
+    activeLayer?.classList.add("is-active");
+    if (activeLayer) activeLayer.dataset.launcherEntry = String(normalizedIndex);
+  }
+}
+
+function rotateLoggingLauncherWarmupBackground() {
+  const tile = document.querySelector('#loggingDesktopLauncher [data-logging-desktop-launch="warmup"]');
+  const entries = LOGGING_LAUNCHER_BACKGROUND_CONFIG.warmupTeams;
+  if (!tile || !entries.length || prefersReducedMotion() || tile.offsetParent === null) return;
+  ensureLoggingLauncherWarmupBackground(tile);
+  const visuals = tile.querySelector(":scope > .logging-launch-warmup-visuals");
+  const current = visuals?.querySelector(".logging-launch-visual-layer.is-active");
+  const next = Array.from(visuals?.querySelectorAll(".logging-launch-visual-layer") || [])
+    .find(layer => layer !== current);
+  if (!current || !next) return;
+  loggingLauncherWarmupIndex = (loggingLauncherWarmupIndex + 1) % entries.length;
+  applyLoggingLauncherVisualLayer(next, entries[loggingLauncherWarmupIndex]);
+  next.dataset.launcherEntry = String(loggingLauncherWarmupIndex);
+  requestAnimationFrame(() => {
+    if (!next.isConnected) return;
+    next.classList.add("is-active");
+    current.classList.remove("is-active");
+  });
+}
+
+function scheduleLoggingLauncherWarmupRotation() {
+  if (prefersReducedMotion()) {
+    window.clearTimeout(loggingLauncherRotationTimer);
+    loggingLauncherRotationTimer = null;
+    return;
+  }
+  if (loggingLauncherRotationTimer !== null) return;
+  const delay = LOGGING_LAUNCHER_BACKGROUND_CONFIG.rotationMs;
+  const tick = () => {
+    rotateLoggingLauncherWarmupBackground();
+    loggingLauncherRotationTimer = window.setTimeout(tick, delay);
+  };
+  loggingLauncherRotationTimer = window.setTimeout(tick, delay);
+}
+
+function ensureLoggingLauncherPostMatchBackground(tile) {
+  if (!tile || tile.querySelector(":scope > .logging-launch-postmatch-visuals")) return;
+  const visual = document.createElement("span");
+  visual.className = "logging-launch-visuals logging-launch-postmatch-visuals";
+  visual.setAttribute("aria-hidden", "true");
+  [
+    ["kovaaks", LOGGING_LAUNCHER_BACKGROUND_CONFIG.postMatch.kovaaks],
+    ["aimlabs", LOGGING_LAUNCHER_BACKGROUND_CONFIG.postMatch.aimLabs]
+  ].forEach(([key, entry]) => {
+    const region = document.createElement("span");
+    region.className = `logging-launch-trainer-region logging-launch-trainer-${key}`;
+    region.style.setProperty("--logging-launch-color-a", entry.colors[0]);
+    region.style.setProperty("--logging-launch-color-b", entry.colors[1]);
+    region.innerHTML = `<img class="logging-launch-trainer-logo" alt=""${entry.logo ? ` src="${escapeHtml(entry.logo)}"` : " hidden"}><span>${escapeHtml(entry.name)}</span>`;
+    visual.append(region);
+  });
+  tile.prepend(visual);
+}
+
+function ensureLoggingLauncherBackgrounds() {
+  const launcher = document.getElementById("loggingDesktopLauncher");
+  if (!launcher) return;
+  ensureLoggingLauncherWarmupBackground(launcher.querySelector('[data-logging-desktop-launch="warmup"]'));
+  ensureLoggingLauncherPostMatchBackground(launcher.querySelector('[data-logging-desktop-launch="postmatch"]'));
+  scheduleLoggingLauncherWarmupRotation();
+}
+
 function isDailyTrainingEmbeddedInLogging() {
   const host = getLoggingLauncherEmbeddedHost();
   return Boolean(host?.querySelector(".daily-warmup-card"));
@@ -2565,6 +2721,8 @@ function renderLoggingLauncher() {
   const page = document.getElementById("page-logging");
   const launcher = document.getElementById("loggingDesktopLauncher");
   if (!page || !launcher) return;
+
+  ensureLoggingLauncherBackgrounds();
 
   const profile = getActiveProfile?.();
   const record = getDailyWarmupRecord?.(profile);
@@ -24349,9 +24507,13 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
   const introStyle = intro
     ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
     : "";
+  const introClass = intro ? " chart-intro-rank-marker" : "";
+  const introAttributes = intro
+    ? ` data-intro-reveal-delay="${Math.max(0, Math.round(safeNumber(introDelayMs)))}"`
+    : "";
 
   return `
-<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-rank-icon="${escapeHtml(point.rankChange.iconUrl)}" data-base-x="${markerX}" data-base-y="${markerY}" style="${introStyle}">
+<g class="chart-rank-marker chart-rank-${direction}${introClass}" data-match-index="${point.matchIndex}" data-rank-icon="${escapeHtml(point.rankChange.iconUrl)}" data-base-x="${markerX}" data-base-y="${markerY}"${introAttributes} style="${introStyle}">
   <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
   <image href="${escapeHtml(point.rankChange.iconUrl)}"
     x="${markerX - 10}" y="${markerY - 10}"
@@ -56797,6 +56959,21 @@ if(shouldAnimateIntro){
   requestAnimationFrame(() => {
     if (renderToken !== chartRenderToken) return;
     chartRow.classList.add("chart-intro-active");
+    chartRow.querySelectorAll(".chart-intro-rank-marker").forEach(marker => {
+      const delay = Math.max(0, safeNumber(marker.dataset.introRevealDelay));
+      window.setTimeout(() => {
+        if (renderToken !== chartRenderToken || !marker.isConnected) return;
+        marker.style.removeProperty("opacity");
+        marker.style.removeProperty("transform");
+        marker.classList.remove("chart-intro-rank-marker");
+        marker.dataset.introRevealed = "true";
+        marker.classList.add("is-intro-revealed");
+        window.setTimeout(() => {
+          if (renderToken !== chartRenderToken || !marker.isConnected) return;
+          marker.classList.remove("is-intro-revealed");
+        }, 280);
+      }, delay);
+    });
   });
 
   const finalDotRevealDelay = Math.max(

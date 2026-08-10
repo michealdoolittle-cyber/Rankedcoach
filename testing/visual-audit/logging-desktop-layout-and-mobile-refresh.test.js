@@ -203,6 +203,43 @@ async function run() {
     assert.equal(await desktop.page.locator("#loggingDesktopLauncher").isVisible(), true, JSON.stringify(desktopLauncherState));
     assert.equal(await desktop.page.locator("#page-logging .logging-form").isVisible(), false);
     assert.match(await desktop.page.locator("#logCalendarTrigger").innerText(), /today/i, "Logging should open on today's session by default");
+    const launcherBackgrounds = await desktop.page.evaluate(() => {
+      const warmup = document.querySelector('[data-logging-desktop-launch="warmup"]');
+      const postmatch = document.querySelector('[data-logging-desktop-launch="postmatch"]');
+      return {
+        warmupLayers: warmup?.querySelectorAll(":scope > .logging-launch-warmup-visuals .logging-launch-visual-layer").length || 0,
+        warmupActiveLabel: warmup?.querySelector(".logging-launch-visual-layer.is-active .logging-launch-visual-label")?.textContent?.trim() || "",
+        warmupEntry: warmup?.querySelector(".logging-launch-visual-layer.is-active")?.dataset.launcherEntry || "",
+        warmupLogo: warmup?.querySelector(".logging-launch-visual-layer.is-active .logging-launch-visual-logo")?.getAttribute("src") || "",
+        trainers: [...(postmatch?.querySelectorAll(".logging-launch-trainer-region") || [])]
+          .map(region => ({ label: region.textContent.trim(), logo: region.querySelector("img")?.getAttribute("src") || "" }))
+      };
+    });
+    assert.equal(launcherBackgrounds.warmupLayers, 2, JSON.stringify(launcherBackgrounds));
+    assert.ok(launcherBackgrounds.warmupActiveLabel, JSON.stringify(launcherBackgrounds));
+    assert.match(launcherBackgrounds.warmupLogo, /\/assets\/library\/teams\//, JSON.stringify(launcherBackgrounds));
+    assert.deepEqual(
+      launcherBackgrounds.trainers.map(entry => entry.label),
+      ["Kovaak's", "Aim Lab"],
+      JSON.stringify(launcherBackgrounds)
+    );
+    assert.ok(launcherBackgrounds.trainers.every(entry => /\/assets\/library\/training\//.test(entry.logo)), JSON.stringify(launcherBackgrounds));
+    await desktop.page.waitForTimeout(10200);
+    const launcherRotation = await desktop.page.evaluate(() => {
+      const warmup = document.querySelector('[data-logging-desktop-launch="warmup"]');
+      const active = warmup?.querySelector(".logging-launch-visual-layer.is-active");
+      return {
+        after: active?.dataset.launcherEntry || "",
+        transition: active ? getComputedStyle(active).transitionDuration : ""
+      };
+    });
+    assert.notEqual(launcherRotation.after, launcherBackgrounds.warmupEntry, JSON.stringify({ launcherBackgrounds, launcherRotation }));
+    assert.notEqual(launcherRotation.transition, "0s", JSON.stringify(launcherRotation));
+    assert.match(
+      fs.readFileSync(path.join(root, "app.js"), "utf8"),
+      /if \(prefersReducedMotion\(\)\) \{\s*window\.clearTimeout\(loggingLauncherRotationTimer\)/,
+      "Reduced motion must cancel the launcher rotation rather than merely shorten it."
+    );
     await desktop.page.screenshot({ path: path.join(screenshotDir, "logging-desktop-launcher.png"), fullPage: true });
 
     const postMatchState = await desktop.page.evaluate(() => ({
