@@ -615,7 +615,63 @@
     return typeof value === "string" && value.trim() ? value.trim() : null;
   }
 
+  const MAP_TIP_CATEGORY_CONFIG = Object.freeze({
+    attack: Object.freeze({ sourceKey: "macro.attack", label: "Attack side" }),
+    defense: Object.freeze({ sourceKey: "macro.defense", label: "Defense side" }),
+    sites: Object.freeze({ sourceKey: "siteTips", label: "Site-specific" }),
+    teamplay: Object.freeze({ sourceKey: "teamplayTips", label: "Teamplay strats" })
+  });
+  const MAX_MAP_TIPS_PER_CATEGORY = 4;
+
+  function parseMapTipDraftPath(path = "") {
+    const match = String(path || "").match(/^__tips\.(attack|defense|sites|teamplay)\.(\d+)\.(label|text)$/);
+    return match ? { category: match[1], index: Number(match[2]), field: match[3] } : null;
+  }
+
+  function getMapTipSource(map, category = "attack") {
+    const validCategory = MAP_TIP_CATEGORY_CONFIG[category] ? category : "attack";
+    if (validCategory === "attack" || validCategory === "defense") {
+      return Array.isArray(map?.macro?.[validCategory]) ? map.macro[validCategory] : [];
+    }
+    return Array.isArray(map?.[MAP_TIP_CATEGORY_CONFIG[validCategory].sourceKey])
+      ? map[MAP_TIP_CATEGORY_CONFIG[validCategory].sourceKey]
+      : [];
+  }
+
+  function cloneMapTipEntry(item, index = 0) {
+    const source = item && typeof item === "object" ? item : {};
+    const fallbackText = typeof item === "string" ? item : source.text;
+    return {
+      ...source,
+      label: String(source.label || "Round read").trim() || "Round read",
+      text: String(fallbackText || "").trim()
+    };
+  }
+
+  function getMapTipDraft(map, category = "attack") {
+    if (!map?.id || !MAP_TIP_CATEGORY_CONFIG[category]) return [];
+    const draft = getDossierTextDraft("maps", map.id);
+    const draftPath = `__tips.${category}`;
+    if (!Array.isArray(draft[draftPath])) {
+      draft[draftPath] = getMapTipSource(map, category).map(cloneMapTipEntry);
+      draft[`__tipsDirty.${category}`] = false;
+    }
+    return draft[draftPath];
+  }
+
+  function markMapTipDraftDirty(mapId, category) {
+    const draft = getDossierTextDraft("maps", mapId);
+    draft[`__tipsDirty.${category}`] = true;
+    dossierTextEditor.exportText = "";
+  }
+
   function getDossierTextValue(type, id, path, fallback = "") {
+    const mapTipPath = type === "maps" ? parseMapTipDraftPath(path) : null;
+    if (mapTipPath) {
+      const map = getMaps().find(item => item.id === id);
+      const entry = map ? getMapTipDraft(map, mapTipPath.category)[mapTipPath.index] : null;
+      if (entry && typeof entry === "object") return String(entry[mapTipPath.field] ?? fallback ?? "");
+    }
     const draft = getDossierTextDraft(type, id);
     if (Object.prototype.hasOwnProperty.call(draft, path)) return draft[path];
     return getPersistedDossierTextValue(type, id, path) ?? fallback;
@@ -623,6 +679,15 @@
 
   function setDossierTextDraftValue(type, id, path, value) {
     if (!canUseDossierTextEditor() || !type || !id || !path) return;
+    const mapTipPath = type === "maps" ? parseMapTipDraftPath(path) : null;
+    if (mapTipPath) {
+      const map = getMaps().find(item => item.id === id);
+      const entry = map ? getMapTipDraft(map, mapTipPath.category)[mapTipPath.index] : null;
+      if (!entry || typeof entry !== "object") return;
+      entry[mapTipPath.field] = String(value ?? "");
+      markMapTipDraftDirty(id, mapTipPath.category);
+      return;
+    }
     const draft = getDossierTextDraft(type, id);
     draft[path] = String(value ?? "");
     dossierTextEditor.exportText = "";
@@ -647,7 +712,19 @@
 
   function buildDossierTextExport(type = dossierTextEditor.activeType, id = dossierTextEditor.activeId) {
     const draft = getDossierTextDraft(type, id);
-    const cleanDraft = Object.fromEntries(Object.entries(draft).filter(([, value]) => String(value ?? "").trim()));
+    const cleanDraft = Object.entries(draft).reduce((output, [path, value]) => {
+      const tipMatch = path.match(/^__tips\.(attack|defense|sites|teamplay)$/);
+      if (tipMatch) {
+        const category = tipMatch[1];
+        if (draft[`__tipsDirty.${category}`] === true && Array.isArray(value)) {
+          output[`tips.${category}`] = value.map(cloneMapTipEntry);
+        }
+        return output;
+      }
+      if (path.startsWith("__tipsDirty.")) return output;
+      if (typeof value === "string" && value.trim()) output[path] = value;
+      return output;
+    }, {});
     return { [type]: { [id]: cleanDraft } };
   }
 
@@ -2852,21 +2929,20 @@
       { id: "teamplay", label: "Teamplay strats" }
     ];
     const activeCategory = categories.some(item => item.id === state.tipView) ? state.tipView : "attack";
-    const sourceKey = activeCategory === "attack"
-      ? "macro.attack"
-      : activeCategory === "defense"
-        ? "macro.defense"
-        : activeCategory === "sites"
-          ? "siteTips"
-          : "teamplayTips";
-    const sourceTips = activeCategory === "attack"
-      ? map.macro?.attack || []
-      : activeCategory === "defense"
-        ? map.macro?.defense || []
-        : activeCategory === "sites"
-          ? map.siteTips || []
-          : map.teamplayTips || [];
-    const baseTips = sourceTips.map((item, index) => ({ item, path: `${sourceKey}.${index}`, isRoleTip: false }));
+    const editActive = isDossierTextEditorActive("maps", map?.id || "");
+    const sourceKey = editActive
+      ? `__tips.${activeCategory}`
+      : MAP_TIP_CATEGORY_CONFIG[activeCategory].sourceKey;
+    const sourceTips = editActive
+      ? getMapTipDraft(map, activeCategory)
+      : getMapTipSource(map, activeCategory);
+    const baseTips = sourceTips.map((item, index) => ({
+      item,
+      path: `${sourceKey}.${index}`,
+      index,
+      isMapTip: true,
+      isRoleTip: false
+    }));
     const roleTips = activeRole
       ? (map.roleNotes?.[activeRole] || [])
         .map((item, index) => ({ item, path: `roleNotes.${activeRole}.${index}`, isRoleTip: true }))
@@ -2881,6 +2957,7 @@
       activeRole,
       categories,
       activeCategory,
+      baseTipCount: baseTips.length,
       roleTips,
       tips,
       // A map with a verified high-rank reference must never look like its
@@ -2893,11 +2970,12 @@
   }
 
   function renderMapTipsPanel(map, model) {
-    const { activeRole, activeCategory, categories, roleTips, tips, hasVerifiedReference, mapLabel } = model;
+    const { activeRole, activeCategory, categories, baseTipCount, roleTips, tips, hasVerifiedReference, mapLabel } = model;
     const editActive = isDossierTextEditorActive("maps", map?.id || "");
     return `
       <div class="gamesense-tips-panel" role="tabpanel">
         <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
+        ${editActive ? `<div class="gamesense-tip-editor-actions"><small>${baseTipCount} / ${MAX_MAP_TIPS_PER_CATEGORY} category tips</small><button type="button" data-gamesense-tip-add="${escapeHtml(map.id)}" data-gamesense-tip-category="${escapeHtml(activeCategory)}"${baseTipCount >= MAX_MAP_TIPS_PER_CATEGORY ? " disabled" : ""}>Add tip</button></div>` : ""}
         <div class="gamesense-tip-grid">
           ${tips.length ? tips.map(entry => {
             const item = entry.item;
@@ -2908,13 +2986,33 @@
             const currentText = getDossierTextValue("maps", map.id, textPath, text || "");
             const currentLabel = labelPath ? getDossierTextValue("maps", map.id, labelPath, label) : label;
             return `<article class="gamesense-tip${entry.isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(entry.isRoleTip ? activeRole : currentLabel)}</span>${editActive
-              ? `${labelPath ? renderDossierTextField({ type: "maps", id: map.id, path: labelPath, label: "Tip label", value: currentLabel, rows: 1 }) : ""}${renderDossierTextField({ type: "maps", id: map.id, path: textPath, label: "Tip copy", value: currentText, rows: 4 })}`
+              ? `${labelPath ? renderDossierTextField({ type: "maps", id: map.id, path: labelPath, label: "Tip label", value: currentLabel, rows: 1 }) : ""}${renderDossierTextField({ type: "maps", id: map.id, path: textPath, label: "Tip copy", value: currentText, rows: 4 })}${entry.isMapTip ? `<button type="button" class="gamesense-tip-delete" data-gamesense-tip-delete="${escapeHtml(map.id)}" data-gamesense-tip-category="${escapeHtml(activeCategory)}" data-gamesense-tip-index="${entry.index}">Remove tip</button>` : ""}`
               : `<p>${escapeHtml(currentText)}</p>`}</article>`;
           }).join("") : hasVerifiedReference
             ? `<article class="gamesense-tip gamesense-tip-reference"><span>High-rank map reference</span><p>Competitive role layouts and map-specific weapon reads are available below for ${escapeHtml(mapLabel)}. No extra generic tip is shown for this view.</p></article>`
             : `<article class="gamesense-tip gamesense-tip-review-hold"><span>Data still in review</span><p>No tactical recommendation is published for this view until its sources clear the Library corroboration gate.</p></article>`}
         </div>
       </div>`;
+  }
+
+  function addMapTip(mapId = "", category = "attack") {
+    const map = getMaps().find(item => item.id === mapId);
+    if (!map || !MAP_TIP_CATEGORY_CONFIG[category] || !isDossierTextEditorActive("maps", map.id)) return;
+    const tips = getMapTipDraft(map, category);
+    if (tips.length >= MAX_MAP_TIPS_PER_CATEGORY) return;
+    tips.push({ label: "New tip", text: "Describe the round plan for this situation." });
+    markMapTipDraftDirty(map.id, category);
+    render({ direction: "replace" });
+  }
+
+  function deleteMapTip(mapId = "", category = "attack", index = -1) {
+    const map = getMaps().find(item => item.id === mapId);
+    if (!map || !MAP_TIP_CATEGORY_CONFIG[category] || !isDossierTextEditorActive("maps", map.id)) return;
+    const tips = getMapTipDraft(map, category);
+    if (!Number.isInteger(index) || index < 0 || index >= tips.length) return;
+    tips.splice(index, 1);
+    markMapTipDraftDirty(map.id, category);
+    render({ direction: "replace" });
   }
 
   function renderMapTips(map) {
@@ -3483,16 +3581,32 @@
     const whenToUse = whenToUseSource.map((item, index) => getDossierTextValue("weapons", weapon.id, `whenToUse.${index}`, item));
     const howToUse = howToUseSource.map((item, index) => getDossierTextValue("weapons", weapon.id, `howToUse.${index}`, item));
     const patchHistory = sortPatchHistoryNewestFirst(weapon.patchHistory || []);
+    const libraryNotice = getDossierTextValue(
+      "weapons",
+      weapon.id,
+      "libraryNotice",
+      "Melee is included here for cosmetic skin browsing and basic damage reference only."
+    );
+    const roundConversionNotice = getDossierTextValue(
+      "weapons",
+      weapon.id,
+      "roundConversionNotice",
+      "A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately."
+    );
     const globalRateMarkup = weapon.libraryOnly ? `
       <div class="gamesense-global-rate is-library-only">
         <strong>Library preview only</strong>
         <strong>No competitive pick-rate tracking</strong>
         <strong>No round conversion tracking</strong>
       </div>
-      <p class="gamesense-round-conversion-note">Melee is included here for cosmetic skin browsing and basic damage reference only.</p>
+      ${editActive
+        ? renderDossierTextField({ type: "weapons", id: weapon.id, path: "libraryNotice", label: "Library notice", value: libraryNotice, rows: 3 })
+        : `<p class="gamesense-round-conversion-note">${escapeHtml(libraryNotice)}</p>`}
     ` : `
       <div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div>
-      <p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p>
+      ${editActive
+        ? renderDossierTextField({ type: "weapons", id: weapon.id, path: "roundConversionNotice", label: "Round-conversion note", value: roundConversionNotice, rows: 3 })
+        : `<p class="gamesense-round-conversion-note">${escapeHtml(roundConversionNotice)}</p>`}
     `;
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
@@ -5211,6 +5325,24 @@
         ? mapView.dataset.gamesenseMapView
         : "locations";
       render({ direction: "replace" });
+      return;
+    }
+    const mapTipAdd = event.target.closest?.("[data-gamesense-tip-add]");
+    if (mapTipAdd) {
+      event.preventDefault();
+      event.stopPropagation();
+      addMapTip(mapTipAdd.dataset.gamesenseTipAdd || "", mapTipAdd.dataset.gamesenseTipCategory || "attack");
+      return;
+    }
+    const mapTipDelete = event.target.closest?.("[data-gamesense-tip-delete]");
+    if (mapTipDelete) {
+      event.preventDefault();
+      event.stopPropagation();
+      deleteMapTip(
+        mapTipDelete.dataset.gamesenseTipDelete || "",
+        mapTipDelete.dataset.gamesenseTipCategory || "attack",
+        Number(mapTipDelete.dataset.gamesenseTipIndex)
+      );
       return;
     }
     const tipView = event.target.closest?.("[data-gamesense-tip-view]");

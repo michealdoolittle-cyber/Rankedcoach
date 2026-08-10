@@ -44680,17 +44680,23 @@ function installThemeBuilderAutoFitObservers() {
   if (window.MutationObserver && document.body && !themeBuilderAutoFitState.observer) {
     const selector = THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.join(",");
     const mutationTouchesAutoFitText = (mutation) => {
-      const nodeMatches = (node) => {
+      const nodeContainsAutoFitText = (node) => {
         const element = node?.nodeType === Node.ELEMENT_NODE
           ? node
           : node?.parentElement;
         if (!element || !selector) return false;
-        if (element.matches?.(selector) || element.closest?.(selector)) return true;
-        return Boolean(element.querySelector?.(selector));
+        return Boolean(element.matches?.(selector) || element.querySelector?.(selector));
       };
-      if (nodeMatches(mutation.target)) return true;
-      return Array.from(mutation.addedNodes || []).some(nodeMatches)
-        || Array.from(mutation.removedNodes || []).some(nodeMatches);
+      const target = mutation.target?.nodeType === Node.ELEMENT_NODE
+        ? mutation.target
+        : mutation.target?.parentElement;
+      // Do not scan descendants of the mutation target itself. `body` always
+      // contains an opted-in text node, which previously made unrelated work
+      // (toasts, sync badges, media hydration) look like copy had changed.
+      if (target?.matches?.(selector) || target?.closest?.(selector)) return true;
+      // A newly rendered dossier/card can contain a target and legitimately
+      // needs fitting. A removed node cannot make remaining copy overflow.
+      return Array.from(mutation.addedNodes || []).some(nodeContainsAutoFitText);
     };
     themeBuilderAutoFitState.observer = new MutationObserver((mutations) => {
       // Toasts, background-sync status, update checks, and decorative motion
@@ -62444,6 +62450,12 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     getAutoFitScheduleCount: () => themeBuilderAutoFitState.scheduledCount,
     getAutoFitSelector: () => THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.join(","),
     requestAutoFit: () => scheduleThemeBuilderAutoFitText({ resetBase: true }),
+    getCoachingInterpretation: input => ({
+      context: resolveCoachingInterpretationContext(input),
+      fight: describeFightValueInterpretation(input),
+      evidence: getCoachingEvidenceScore(input),
+      pairing: getUsageWinRatePairing(input)
+    }),
     showToast: (...args) => showToast(...args),
     checkForAppUpdate: options => checkRankedCoachAppUpdate(options),
     configureRevisionPoll: ({ user = null, client = null, saving = false } = {}) => {

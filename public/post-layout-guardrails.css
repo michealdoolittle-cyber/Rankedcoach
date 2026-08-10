@@ -134,7 +134,11 @@
 }
 
 /* Weapon gallery cards intentionally retain their dossier visual language. */
-body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card{
+/* Match the desktop layout rule's specificity so its shaped-card treatment
+   cannot win merely because it targets the page through `html:not(...)`. */
+html body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card,
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card{
   --accent:#ff4655 !important;
   --accent-2:#58d4c8 !important;
   isolation:isolate;
@@ -147,7 +151,9 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-lib
   padding:0 !important;
 }
 
-body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card::before{
+html body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::before,
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::before{
   content:"" !important;
   display:block !important;
   position:absolute !important;
@@ -159,11 +165,53 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-lib
   transform:translateX(-110%) !important;
 }
 
-body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-entry-card.gamesense-weapon-entry-card::after{
+html body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::after,
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library#page-library .gamesense-entry-card.gamesense-weapon-entry-card::after{
   content:none !important;
   display:none !important;
 }
 
 #page-library .gamesense-entry-card.gamesense-weapon-entry-card:hover::before{
   transform:translateX(110%) !important;
+}
+
+/* Owner-only map-tip controls intentionally stay within the dossier's base
+   visual language, even when a player has selected a global layout style. */
+#page-library .gamesense-tip-editor-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:10px 0;
+}
+
+#page-library .gamesense-tip-editor-actions small{
+  color:var(--text-muted,#a8b3c7);
+  font:800 11px/1.2 var(--font-body,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+#page-library :is(.gamesense-tip-editor-actions button,.gamesense-tip-delete){
+  min-height:32px;
+  padding:7px 10px;
+  border:1px solid rgba(88,212,200,.45);
+  border-radius:8px;
+  background:rgba(8,24,43,.9);
+  color:var(--gamesense-cool,#58d4c8);
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+#page-library .gamesense-tip-delete{
+  margin-top:8px;
+  border-color:rgba(255,70,85,.48);
+  color:#fecaca;
+}
+
+#page-library :is(.gamesense-tip-editor-actions button,.gamesense-tip-delete):disabled{
+  cursor:not-allowed;
+  opacity:.45;
 }

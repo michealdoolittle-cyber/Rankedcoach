@@ -65,8 +65,26 @@
   }
 
   function applyMapPath(map, path, value) {
+    if (!map) return map;
+    const tipCollectionMatch = String(path || "").match(/^tips\.(attack|defense|sites|teamplay)$/);
+    if (tipCollectionMatch && Array.isArray(value)) {
+      const category = tipCollectionMatch[1];
+      const tips = value.map(entry => {
+        const source = entry && typeof entry === "object" ? entry : {};
+        return {
+          ...source,
+          label: cleanText(source.label) || "Round read",
+          text: cleanText(typeof entry === "string" ? entry : source.text)
+        };
+      });
+      if (category === "attack" || category === "defense") {
+        return { ...map, macro: { ...(map.macro || {}), [category]: tips } };
+      }
+      const listKey = category === "sites" ? "siteTips" : "teamplayTips";
+      return { ...map, [listKey]: tips };
+    }
     const text = cleanText(value);
-    if (!text || !map) return map;
+    if (!text) return map;
     const calloutMatch = String(path || "").match(/^callouts\.([^.]+)\.(label|sourceLabel)$/);
     if (calloutMatch && Array.isArray(map.callouts)) {
       const [, calloutId, field] = calloutMatch;
@@ -131,6 +149,9 @@
     const text = cleanText(value);
     if (!text || !weapon) return weapon;
     if (path === "focus") return weapon.focus === text ? weapon : { ...weapon, focus: text };
+    if (path === "libraryNotice" || path === "roundConversionNotice") {
+      return weapon[path] === text ? weapon : { ...weapon, [path]: text };
+    }
     const match = String(path || "").match(/^(whenToUse|howToUse)\.(\d+)$/);
     if (match) return replaceListEntry(weapon, match[1], Number(match[2]), text);
     const historyMatch = String(path || "").match(/^patchHistory\.(\d+)\.(patch|note)$/);

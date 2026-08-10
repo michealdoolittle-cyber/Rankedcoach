@@ -104,7 +104,12 @@ async function run() {
       globalThis.RankedCoachGamesenseDossierTextOverrides = {
         agents: { jett: { "fundamentals.0": "Owner-applied Jett narrative." } },
         maps: { bind: { "compSample.note": "Owner-applied Bind composition note." } },
-        weapons: { vandal: { focus: "Owner-applied Vandal focus." } }
+        weapons: {
+          vandal: {
+            focus: "Owner-applied Vandal focus.",
+            roundConversionNotice: "Owner-applied Vandal conversion context."
+          }
+        }
       };
     });
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
@@ -131,6 +136,24 @@ async function run() {
       "Persisted agent narrative overrides must be applied before the editor renders."
     );
 
+    // Deliberately race an edit-change against two animated navigations. This
+    // reproduces the real blur/change-during-view-transition path that used
+    // to leave a stale commit callback targeting a superseded Library render.
+    const raceResult = await page.evaluate(async () => {
+      const field = document.querySelector('[data-gamesense-dossier-text-field="agents:jett:fundamentals.0"]');
+      field?.focus();
+      globalThis.RankedCoachGamesenseLibrary.open("maps", "bind");
+      field?.dispatchEvent(new Event("change", { bubbles: true }));
+      globalThis.RankedCoachGamesenseLibrary.open("maps", "ascent");
+      await new Promise(resolve => setTimeout(resolve, 420));
+      return {
+        transition: document.documentElement.dataset.gamesenseTransition || "",
+        mapTitle: document.querySelector(".gamesense-map-detail-head h2")?.textContent?.trim() || ""
+      };
+    });
+    assert.equal(raceResult.transition, "", `The final library transition must settle after rapid edit navigation: ${JSON.stringify(raceResult)}`);
+    assert.match(raceResult.mapTitle, /Ascent/i, `The final navigation must win the render race: ${JSON.stringify(raceResult)}`);
+
     // Bind is one of the fully-authored map dossiers. It gives this coverage
     // check every map text surface (macro plans, comps, weapon reads, lineups,
     // and labels) without inventing fields for an un-authored map.
@@ -142,7 +165,7 @@ async function run() {
     await mapToggle.click();
     await page.locator('[data-gamesense-dossier-text-field^="maps:bind:"]').first().waitFor({ state: "visible" });
     const mapFields = await page.locator('[data-gamesense-dossier-text-field^="maps:bind:"]').evaluateAll(fields => fields.map(field => field.dataset.gamesenseDossierTextField));
-    assert.ok(mapFields.some(field => field.includes(":macro.attack.")), `Attack/defense map tips must be editable: ${JSON.stringify(mapFields)}`);
+    assert.ok(mapFields.some(field => field.includes(":__tips.attack.")), `Attack/defense map tips must be editable as an exportable collection: ${JSON.stringify(mapFields)}`);
     assert.ok(mapFields.some(field => field.includes(":compSample.note")), `Composition source text must be editable: ${JSON.stringify(mapFields)}`);
     assert.ok(mapFields.some(field => field.includes(":weaponSuggestions.")), `Weapon suggestion detail must be editable: ${JSON.stringify(mapFields)}`);
     assert.ok(mapFields.some(field => field.includes(":lineupLinks.")), `Lineup labels must be editable: ${JSON.stringify(mapFields)}`);
@@ -152,6 +175,28 @@ async function run() {
       "Owner-applied Bind composition note.",
       "Persisted map narrative overrides must be applied before the editor renders."
     );
+
+    // A tip collection can now be curated as a collection, not only edited
+    // one string at a time. Use Ascent's empty authored attack tab to verify
+    // a new tile, its editable fields, export shape, and removal end to end.
+    await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "ascent"));
+    const ascentToggle = page.locator('[data-gamesense-dossier-text-toggle="maps:ascent"]');
+    await ascentToggle.waitFor({ state: "visible" });
+    await page.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    await ascentToggle.click();
+    const tipAdd = page.locator('[data-gamesense-tip-add="ascent"]');
+    await tipAdd.waitFor({ state: "visible" });
+    await tipAdd.click();
+    const newTipLabel = page.locator('[data-gamesense-dossier-text-field="maps:ascent:__tips.attack.0.label"]');
+    await newTipLabel.waitFor({ state: "visible" });
+    await newTipLabel.fill("Entry timing");
+    await newTipLabel.press("Tab");
+    await page.waitForFunction(() => document.querySelector('[data-gamesense-dossier-text-field="maps:ascent:__tips.attack.0.label"]')?.value === "Entry timing");
+    await page.locator('[data-gamesense-dossier-text-export="maps:ascent"]').click();
+    const tipExport = JSON.parse(await page.locator('[data-gamesense-dossier-text-export-output]').inputValue());
+    assert.equal(tipExport.maps.ascent["tips.attack"][0].label, "Entry timing", "Added tip collections must export through the established override format.");
+    await page.locator('[data-gamesense-tip-delete="ascent"]').click();
+    assert.equal(await page.locator('[data-gamesense-tip-delete="ascent"]').count(), 0, "Removing a tip must remove only that tip tile.");
 
     await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "rifles"));
     await page.locator('[data-gamesense-weapon="vandal"]').click();
@@ -168,10 +213,16 @@ async function run() {
     assert.ok(weaponFields.some(field => field.includes(":whenToUse.")), `Weapon usage notes must be editable: ${JSON.stringify(weaponFields)}`);
     assert.ok(weaponFields.some(field => field.includes(":howToUse.")), `Weapon mechanics notes must be editable: ${JSON.stringify(weaponFields)}`);
     assert.ok(weaponFields.some(field => field.includes(":patchHistory.")), `Weapon history must be editable: ${JSON.stringify(weaponFields)}`);
+    assert.ok(weaponFields.some(field => field.includes(":roundConversionNotice")), `Weapon conversion-context copy must be editable: ${JSON.stringify(weaponFields)}`);
     assert.equal(
       await page.locator('[data-gamesense-dossier-text-field="weapons:vandal:focus"]').inputValue(),
       "Owner-applied Vandal focus.",
       "Persisted weapon narrative overrides must be applied before the editor renders."
+    );
+    assert.equal(
+      await page.locator('[data-gamesense-dossier-text-field="weapons:vandal:roundConversionNotice"]').inputValue(),
+      "Owner-applied Vandal conversion context.",
+      "Weapon notice overrides must be applied before the editor renders."
     );
     assert.deepEqual(issues, []);
   } finally {

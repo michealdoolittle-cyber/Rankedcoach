@@ -148,6 +148,26 @@ async function run() {
     });
     assert.ok(explicitRefitCalls > autoFitSetup.baseline, `explicit layout work must still queue a fit: ${explicitRefitCalls}`);
 
+    // Re-open the observer window, then mutate body directly while it is
+    // actively observing. This is the exact root-path that used to treat the
+    // entire document as a text target just because body contains one.
+    const activeObserverMutation = await page.evaluate(async () => {
+      const hooks = globalThis.RankedCoachTestHooks;
+      hooks.requestAutoFit();
+      await new Promise(resolve => setTimeout(resolve, 250));
+      const baseline = hooks.getAutoFitScheduleCount();
+      const transient = document.createElement("div");
+      transient.className = "round4-active-observer-incidental-mutation";
+      document.body.appendChild(transient);
+      await new Promise(resolve => setTimeout(resolve, 280));
+      return { baseline, after: hooks.getAutoFitScheduleCount() };
+    });
+    assert.equal(
+      activeObserverMutation.after,
+      activeObserverMutation.baseline,
+      `a direct body mutation during the active observer window must not re-fit copy: ${JSON.stringify(activeObserverMutation)}`
+    );
+
     const pollResult = await page.evaluate(async () => {
       let reads = 0;
       const client = {

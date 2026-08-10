@@ -48,6 +48,12 @@ function startServer() {
 
 function seedProfile() {
   const profileId = "coaching-evidence-regression";
+  const roleFixtures = [
+    { agent: "Jett", role: "Duelist", map: "Ascent" },
+    { agent: "Sova", role: "Initiator", map: "Haven" },
+    { agent: "Omen", role: "Controller", map: "Bind" },
+    { agent: "Chamber", role: "Sentinel", map: "Split" }
+  ];
   const matches = Array.from({ length: 12 }, (_item, index) => {
     const playedAt = new Date(Date.now() - ((11 - index) * 86_400_000));
     playedAt.setHours(12, 0, 0, 0);
@@ -64,19 +70,19 @@ function seedProfile() {
     deaths: 13 + (index % 4),
     assists: 4 + (index % 3),
     acs: 190 + index,
-    agent: index % 2 ? "Sova" : "Jett",
-    role: index % 2 ? "Initiator" : "Duelist",
-    map: index % 2 ? "Haven" : "Ascent",
+    agent: roleFixtures[index % roleFixtures.length].agent,
+    role: roleFixtures[index % roleFixtures.length].role,
+    map: roleFixtures[index % roleFixtures.length].map,
     act: "Season 2026 Act 4",
     createdAt,
     metadata: {
       source: "henrik_sync",
       rank: "Diamond 2",
       rrTotal: 40 + index,
-      agent: index % 2 ? "Sova" : "Jett",
-      role: index % 2 ? "Initiator" : "Duelist",
-      map: index % 2 ? "Haven" : "Ascent",
-      mapName: index % 2 ? "Haven" : "Ascent",
+      agent: roleFixtures[index % roleFixtures.length].agent,
+      role: roleFixtures[index % roleFixtures.length].role,
+      map: roleFixtures[index % roleFixtures.length].map,
+      mapName: roleFixtures[index % roleFixtures.length].map,
       act: "Season 2026 Act 4",
       playedAt: createdAt
     }
@@ -135,10 +141,41 @@ async function verifyViewport(browser, viewport) {
   page.on("console", message => {
     if (message.type() === "error") issues.push(`[console] ${message.text()}`);
   });
+  await page.addInitScript(() => { globalThis.__RANKEDCOACH_TEST_HOOKS__ = true; });
   await page.addInitScript(seedProfile);
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.querySelector("#weeklyFocusSummary .weekly-focus-pill:not(.is-disabled)"), null, { timeout: 15000 });
   await dismissStartupUi(page);
+
+  const roleInterpretations = await page.evaluate(() => {
+    const hook = globalThis.RankedCoachTestHooks?.getCoachingInterpretation;
+    const roles = [
+      ["Duelist", "Jett"],
+      ["Initiator", "Sova"],
+      ["Controller", "Omen"],
+      ["Sentinel", "Chamber"]
+    ].map(([role, agent]) => ({
+      role,
+      agent,
+      result: hook?.({ role, agent, map: "Ascent", sampleSize: 6, kd: 1.1 })
+    }));
+    return {
+      roles,
+      equalEvidence: [
+        hook?.({ matches: 8, winrate: 60, candidateType: "agent" })?.evidence?.score,
+        hook?.({ matches: 8, winrate: 60, candidateType: "map" })?.evidence?.score,
+        hook?.({ matches: 8, winrate: 60, candidateType: "role" })?.evidence?.score
+      ],
+      pairing: hook?.({ usage: 58, winRate: 64, unit: "rounds", subject: "Vandal" })?.pairing
+    };
+  });
+  assert.match(roleInterpretations.roles[0]?.result?.fight?.read || "", /first contact/i);
+  assert.match(roleInterpretations.roles[1]?.result?.fight?.read || "", /information first/i);
+  assert.match(roleInterpretations.roles[2]?.result?.fight?.read || "", /utility to make the first fight easier/i);
+  assert.match(roleInterpretations.roles[3]?.result?.fight?.read || "", /setup advantage/i);
+  assert.deepEqual(roleInterpretations.equalEvidence, [60, 60, 60], JSON.stringify(roleInterpretations));
+  assert.equal(roleInterpretations.pairing?.usageLabel, "Used in 58% of tracked rounds");
+  assert.equal(roleInterpretations.pairing?.winRateLabel, "Won 64% of those rounds");
 
   await page.locator("#weeklyFocusSummary .weekly-focus-pill:not(.is-disabled)").first().click({ force: true });
   await page.locator("#weeklyFocusModal.active").waitFor({ state: "visible" });
