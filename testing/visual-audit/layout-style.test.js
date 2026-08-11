@@ -750,6 +750,10 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
   const geometry = await page.locator("#page-home").evaluate(home => {
     const rect = element => element?.getBoundingClientRect().toJSON() || null;
     const loadout = home.querySelector(".loadout-card");
+    const main = loadout?.querySelector(".home-loadout-main");
+    const roles = loadout?.querySelector(".role-filter-row");
+    const spin = loadout?.querySelector("#spinAgentBtn");
+    const info = loadout?.querySelector(".home-loadout-info");
     const frame = home.querySelector("#agentFrame");
     const frameCell = frame?.parentElement;
     const selectedArtClip = frame?.querySelector(".agent-reveal-art");
@@ -779,6 +783,29 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     ].map(selector => ({ selector, rect: rect(compass?.querySelector(selector)) })).filter(entry => entry.rect);
     return {
       loadout: rect(loadout),
+      main: rect(main),
+      mainGridAreas: main ? getComputedStyle(main).gridTemplateAreas : "",
+      mainGridColumns: main ? getComputedStyle(main).gridTemplateColumns : "",
+      mainJustifyContent: main ? getComputedStyle(main).justifyContent : "",
+      mainChildren: [...(main?.children || [])].map(child => {
+        const style = getComputedStyle(child);
+        return { id: child.id, className: child.className, gridArea: style.gridArea, gridColumn: style.gridColumn, gridRow: style.gridRow, rect: rect(child) };
+      }),
+      roles: rect(roles),
+      spin: rect(spin),
+      info: rect(info),
+      infoStyle: info ? { display: getComputedStyle(info).display, visibility: getComputedStyle(info).visibility, opacity: getComputedStyle(info).opacity } : null,
+      infoPills: [...(info?.querySelectorAll(".home-loadout-pill") || [])].map(pill => {
+        const style = getComputedStyle(pill);
+        const label = pill.querySelector(".pill-label");
+        const value = pill.querySelector(".pill-value");
+        return {
+          rect: rect(pill), display: style.display, visibility: style.visibility, opacity: style.opacity, gridArea: style.gridArea, gridColumn: style.gridColumn, gridRow: style.gridRow,
+          label: { rect: rect(label), fontSize: getComputedStyle(label).fontSize },
+          value: { rect: rect(value), fontSize: getComputedStyle(value).fontSize }
+        };
+      }),
+      roleButtons: [...(roles?.querySelectorAll("button") || [])].map(button => rect(button)),
       frame: rect(frame),
       frameCell: rect(frameCell),
       selectedArtClip: rect(selectedArtClip),
@@ -814,6 +841,23 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     && inner.right <= outer.right + 1
     && inner.top >= outer.top - 1
     && inner.bottom <= outer.bottom + 1;
+  assert.match(geometry.mainGridAreas, /roles roles/, `${style} loadout roles no longer span the full first row: ${JSON.stringify(geometry)}`);
+  assert.match(geometry.mainGridAreas, /reel spin/, `${style} loadout reel and spin control no longer share the second row: ${JSON.stringify(geometry)}`);
+  assert.match(geometry.mainGridAreas, /info info/, `${style} loadout detail pills no longer occupy their own third row: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.roleButtons.length, 5, `${style} loadout role controls are incomplete: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.roles.width >= geometry.main.width - 16, `${style} loadout role controls no longer use the loadout content width: ${JSON.stringify(geometry)}`);
+  geometry.roleButtons.forEach(button => {
+    assert.ok(contains(geometry.roles, button), `${style} role control escaped its one-row group: ${JSON.stringify(geometry)}`);
+    assert.ok(Math.abs(button.top - geometry.roleButtons[0].top) <= 2, `${style} role controls wrapped onto a second row: ${JSON.stringify(geometry)}`);
+  });
+  assert.ok(Math.abs(geometry.spin.top - geometry.frame.top) <= 2 && Math.abs(geometry.spin.bottom - geometry.frame.bottom) <= 2, `${style} spin control spans more than the reel row: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.spin.top >= geometry.roles.bottom - 1, `${style} spin control overlaps the role controls: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.info.top >= Math.max(geometry.frame.bottom, geometry.spin.bottom) - 1, `${style} loadout detail pills do not sit below the reel row: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.infoPills.length, 3, `${style} loadout detail pills are incomplete: ${JSON.stringify(geometry)}`);
+  geometry.infoPills.forEach(pill => {
+    assert.ok(contains(geometry.info, pill.rect) && pill.display !== "none" && pill.visibility === "visible" && Number(pill.opacity) > 0, `${style} loadout detail pill is not visible inside its row: ${JSON.stringify(geometry)}`);
+    assert.ok(Number.parseFloat(pill.label.fontSize) <= 15 && Number.parseFloat(pill.value.fontSize) <= 16, `${style} loadout detail text no longer fits its third-row pill: ${JSON.stringify(geometry)}`);
+  });
   assert.ok(contains(geometry.loadout, geometry.frame), `${style} agent frame escaped its shaped loadout card: ${JSON.stringify(geometry)}`);
   assert.ok(contains(geometry.frameCell, geometry.frame), `${style} agent frame exceeded its grid cell: ${JSON.stringify(geometry)}`);
   assert.ok(contains(geometry.frame, geometry.selectedArtClip), `${style} selected-art clip escaped its frame: ${JSON.stringify(geometry)}`);
@@ -860,6 +904,83 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
   });
   assert.equal(geometry.compassOverflow?.horizontal, false, `${style} compass has horizontal overflow: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.compassOverflow?.vertical, false, `${style} compass has vertical overflow: ${JSON.stringify(geometry)}`);
+}
+
+async function assertLoadoutRollSettles(page, style) {
+  // The audit keeps Customize open while it covers each layout. Hide that
+  // editor visually for this step so the user-facing control receives a real
+  // click, then restore it for the rest of the layout coverage.
+  const editor = page.locator("#editProfileModal");
+  await editor.evaluate(modal => {
+    modal.style.setProperty("visibility", "hidden", "important");
+    modal.style.setProperty("pointer-events", "none", "important");
+  });
+  // Allow the app-wide viewport scaler to settle before taking the baseline;
+  // the roll itself must not be mistaken for its initial font/image reflow.
+  await page.waitForTimeout(900);
+  const before = await page.locator(".loadout-card").evaluate(card => {
+    const rect = element => element?.getBoundingClientRect().toJSON() || null;
+    const root = getComputedStyle(document.documentElement);
+    return { card: rect(card), frame: rect(card.querySelector("#agentFrame")), spin: rect(card.querySelector("#spinAgentBtn")), cardTransform: getComputedStyle(card).transform, appScale: root.getPropertyValue("--app-1080-scale").trim(), appWidth: root.getPropertyValue("--app-base-width").trim(), appHeight: root.getPropertyValue("--app-base-height").trim() };
+  });
+  // The audit intentionally keeps the Customize shell open. Invoke the
+  // button's native click so its real listener and spinLoadout path run
+  // without the audit-only modal backdrop intercepting pointer coordinates.
+  await page.locator("#spinAgentBtn").evaluate(button => button.click());
+  await page.waitForFunction(() => document.querySelector("#agentReel")?.classList.contains("reel-spinning"), null, { timeout: 2500 });
+  await page.waitForFunction(() => !document.querySelector("#agentReel")?.classList.contains("reel-spinning"), null, { timeout: 12000 });
+  await page.waitForFunction(() => !document.querySelector(".premium-moment-overlay.is-active, .premium-moment-overlay.has-broadcast"), null, { timeout: 12000 });
+  // Leave the card so its standard hover-pop cannot be mistaken for layout drift.
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(80);
+  const after = await page.locator(".loadout-card").evaluate(card => {
+    const rect = element => element?.getBoundingClientRect().toJSON() || null;
+    const frame = card.querySelector("#agentFrame");
+    const root = getComputedStyle(document.documentElement);
+    return {
+      card: rect(card),
+      frame: rect(frame),
+      spin: rect(card.querySelector("#spinAgentBtn")),
+      selectedAgent: card.querySelector("#agentName")?.textContent?.trim() || "",
+      reelIsSpinning: frame?.querySelector("#agentReel")?.classList.contains("reel-spinning") || false,
+      cardTransform: getComputedStyle(card).transform,
+      appScale: root.getPropertyValue("--app-1080-scale").trim(),
+      appWidth: root.getPropertyValue("--app-base-width").trim(),
+      appHeight: root.getPropertyValue("--app-base-height").trim()
+    };
+  });
+  assert.equal(after.reelIsSpinning, false, `${style} reel did not settle after a real roll: ${JSON.stringify(after)}`);
+  assert.ok(after.selectedAgent && after.selectedAgent !== "-", `${style} roll did not select an agent: ${JSON.stringify(after)}`);
+  ["card", "frame", "spin"].forEach(key => {
+    assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);
+  });
+  assert.ok(Math.abs(after.spin.top - after.frame.top) <= 2 && Math.abs(after.spin.bottom - after.frame.bottom) <= 2, `${style} spin control did not settle beside the frame: ${JSON.stringify(after)}`);
+  await editor.evaluate(modal => {
+    modal.style.removeProperty("visibility");
+    modal.style.removeProperty("pointer-events");
+  });
+}
+
+async function screenshotLoadoutWithoutAuditEditor(page, screenshotPath) {
+  const editor = page.locator("#editProfileModal");
+  const bodyClasses = await editor.evaluate(modal => {
+    modal.style.setProperty("visibility", "hidden", "important");
+    modal.style.setProperty("pointer-events", "none", "important");
+    const body = document.body;
+    const state = {
+      hasActiveModal: body.classList.contains("has-active-modal"),
+      mobileModalOpen: body.classList.contains("mobile-modal-open")
+    };
+    body.classList.remove("has-active-modal", "mobile-modal-open");
+    return state;
+  });
+  await page.locator("#page-home .loadout-card").screenshot({ path: screenshotPath });
+  await editor.evaluate((modal, state) => {
+    modal.style.removeProperty("visibility");
+    modal.style.removeProperty("pointer-events");
+    if (state.hasActiveModal) document.body.classList.add("has-active-modal");
+    if (state.mobileModalOpen) document.body.classList.add("mobile-modal-open");
+  }, bodyClasses);
 }
 
 async function assertHomeChartFlow(page, label, { requireReachableDesktop = false } = {}) {
@@ -1247,15 +1368,31 @@ async function run() {
       })
     }));
     await assertHomeLoadoutAndCompassGeometry(page, "default desktop");
+    await assertLoadoutRollSettles(page, "default desktop");
+    await screenshotLoadoutWithoutAuditEditor(page, path.join(__dirname, "tmp", "session-prep-layout-default-desktop.png"));
     await assertHomeChartFlow(page, "default desktop", { requireReachableDesktop: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await waitForViewportScale(page, 390, 844);
     await page.waitForTimeout(80);
     await assertHomeLoadoutAndCompassGeometry(page, "default mobile");
+    await assertLoadoutRollSettles(page, "default mobile");
+    await screenshotLoadoutWithoutAuditEditor(page, path.join(__dirname, "tmp", "session-prep-layout-default-mobile.png"));
     await assertHomeChartFlow(page, "default mobile");
     await page.setViewportSize({ width: 1365, height: 768 });
     await waitForViewportScale(page, 1365, 768);
     await page.waitForTimeout(80);
+    await setCoverageTheme(page, "omen");
+    await assertHomeLoadoutAndCompassGeometry(page, "omen desktop");
+    await assertLoadoutRollSettles(page, "omen desktop");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await waitForViewportScale(page, 390, 844);
+    await page.waitForTimeout(80);
+    await assertHomeLoadoutAndCompassGeometry(page, "omen mobile");
+    await assertLoadoutRollSettles(page, "omen mobile");
+    await page.setViewportSize({ width: 1365, height: 768 });
+    await waitForViewportScale(page, 1365, 768);
+    await page.waitForTimeout(80);
+    await setCoverageTheme(page, "default");
     for (const style of layoutStyles) {
       await page.click(`[data-layout-shape-card="${style}"]`);
       await page.waitForTimeout(80);

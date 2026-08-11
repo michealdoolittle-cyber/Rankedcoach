@@ -23861,79 +23861,6 @@ function setLoadoutMapSelection(value = "") {
   renderLoadoutMapPicker();
 }
 
-const LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID = "loadoutMapLayoutRuntimeStyle";
-
-function ensureLoadoutMapLayoutRuntimeStyles() {
-  let style = document.getElementById(LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID);
-  if (!style) {
-    style = document.createElement("style");
-    style.id = LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID;
-  }
-  // Several legacy mobile proof styles load after app.css and carry duplicated
-  // #page-home selectors. Keep this narrowly-scoped final rule as a runtime
-  // sibling of the theme CSS rather than changing the card's outer dimensions.
-  style.textContent = `
-@media (max-width:820px){
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
-    display:grid !important;
-    grid-template-columns:minmax(0,1fr) clamp(42px,15vw,64px) !important;
-    grid-template-rows:40px minmax(126px,1fr) 54px !important;
-    grid-template-areas:"roles spin" "reel spin" "info info" !important;
-    gap:4px !important;
-    min-height:300px !important;
-    height:auto !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons.role-filter-row{
-    grid-area:roles !important;
-    width:100% !important;
-    height:100% !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
-    grid-area:reel !important;
-    width:100% !important;
-    height:100% !important;
-    min-height:0 !important;
-    max-height:none !important;
-    aspect-ratio:auto !important;
-    justify-self:stretch !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn{
-    grid-area:spin !important;
-    grid-row:1 / 3 !important;
-    width:100% !important;
-    height:100% !important;
-    max-height:none !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info.home-loadout-info{
-    grid-area:info !important;
-    display:grid !important;
-    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-    grid-template-rows:minmax(54px,auto) !important;
-    gap:3px !important;
-    width:100% !important;
-    min-width:0 !important;
-    height:100% !important;
-    min-height:0 !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info.home-loadout-info > .home-loadout-pill{
-    grid-area:auto !important;
-    width:100% !important;
-    min-width:0 !important;
-    min-height:0 !important;
-    height:100% !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info .pill-label{
-    font-size:8px !important;
-  }
-  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info :is(.pill-value,#agentName,#focusDisplay){
-    font-size:10px !important;
-  }
-}`;
-  // Re-appending keeps this after a theme runtime style that may be rebuilt
-  // when the player changes theme or layout.
-  document.head.appendChild(style);
-}
-
 // Small, read-only seam for the regression test that verifies the map roll
 // distribution without waiting through the visible reel animation 200 times.
 window.RankedCoachLoadoutRoll = Object.freeze({
@@ -44706,7 +44633,7 @@ function buildThemeBuilderRuntimeCss() {
           chunks.push(`${imageScaleSelector}{transform:scale(${parentState.imageScale}) !important; transform-origin:center !important;}`);
         }
         if (config.id === "loadout-card") {
-          chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame")}{aspect-ratio:1 / 1 !important; --agent-art-offset-scale:1 !important;}`);
+          chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame")}{aspect-ratio:auto !important; --agent-art-offset-scale:1 !important;}`);
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame :is(#agentReel,.agent-frame-art,.agent-reveal-art,.agent-frame-fx,.frame-border,.breach-frame,#agentPlaceholder,.shine,.reel-strip,.reel-icon,.agent-reveal-art img,.agent-frame-portrait,.frame-art-inner)")}{transform-origin:center center !important;}`);
         }
         if (config.id === "logging-card") {
@@ -44737,15 +44664,16 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".home-layout")}{grid-template-rows:minmax(calc(196px * ${homeBaselineScale}), auto) minmax(0, 1fr) calc(296px * ${homeBaselineScale}) !important; gap:calc(6px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row")}{grid-template-columns:minmax(calc(300px * ${homeBaselineScale}), 1.02fr) minmax(calc(336px * ${homeBaselineScale}), 1.08fr) minmax(calc(252px * ${homeBaselineScale}), .84fr) !important; gap:calc(6px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row > .loadout-card, .home-middle-row > .compass-panel, .home-middle-row > .rr-card")}{min-height:0 !important; height:100% !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) calc(68px * ${homeBaselineScale}) !important; grid-template-rows:minmax(calc(34px * ${homeBaselineScale}), .34fr) minmax(0, .66fr) minmax(calc(40px * ${homeBaselineScale}), .42fr) !important; grid-template-areas:\"roles spin\" \"reel spin\" \"info info\" !important; column-gap:calc(7px * ${homeBaselineScale}) !important; row-gap:calc(6px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; zoom:1 !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; width:100% !important; min-width:0 !important; height:100% !important; min-height:0 !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; grid-column:auto !important; grid-row:auto !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) clamp(calc(72px * ${homeBaselineScale}), calc(96px * ${homeBaselineScale}), calc(120px * ${homeBaselineScale})) !important; grid-template-rows:auto minmax(0, 1fr) auto !important; grid-template-areas:\"roles roles\" \"reel spin\" \"info info\" !important; column-gap:calc(7px * ${homeBaselineScale}) !important; row-gap:calc(6px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{grid-area:roles !important; display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; width:100% !important; min-width:0 !important; height:auto !important; min-height:calc(34px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; height:clamp(calc(44px * ${homeBaselineScale}), calc(48px * ${homeBaselineScale}), calc(56px * ${homeBaselineScale})) !important; min-height:calc(44px * ${homeBaselineScale}) !important; max-height:calc(56px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{grid-area:auto !important; padding:calc(5px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:center !important; justify-content:center !important; flex-direction:column !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(15px * ${homeBaselineScale}) !important; display:block !important; line-height:1.08 !important; flex:0 1 auto !important; width:100% !important; margin:0 !important; text-align:center !important; justify-content:center !important; padding-block:.04em .1em !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row button")}{grid-row:1 !important; grid-column:auto !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; grid-row:1 / 3 !important; width:100% !important; min-width:calc(68px * ${homeBaselineScale}) !important; height:100% !important; min-height:0 !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; width:100% !important; min-width:0 !important; height:100% !important; min-height:0 !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:100% !important; min-width:0 !important; max-width:none !important; height:100% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:stretch !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner, .loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
@@ -44823,7 +44751,6 @@ function buildThemeBuilderRuntimeCss() {
 function applyThemeBuilderRuntimeStyles() {
   if (THEME_BUILDER_LAUNCH_LOCKED) {
     document.getElementById(THEME_BUILDER_RUNTIME_STYLE_ID)?.remove();
-    ensureLoadoutMapLayoutRuntimeStyles?.();
     requestAnimationFrame(() => {
       updateAgentFrameMetrics();
       if (typeof renderChart === "function" && chartRow) {
@@ -44842,7 +44769,6 @@ function applyThemeBuilderRuntimeStyles() {
     document.head.appendChild(style);
   }
   style.textContent = buildThemeBuilderRuntimeCss();
-  ensureLoadoutMapLayoutRuntimeStyles?.();
   requestAnimationFrame(() => {
     updateAgentFrameMetrics();
     if (typeof renderChart === "function" && chartRow) {
