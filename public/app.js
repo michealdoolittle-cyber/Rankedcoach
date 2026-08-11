@@ -2516,6 +2516,7 @@ function createLoggingLauncherVisualLayer() {
   logo?.addEventListener("error", () => {
     // A missing optional logo must fall back to the team label without
     // repeatedly surfacing a broken-image request on every rotation.
+    logo.dataset.failedSource = logo.getAttribute("src") || "";
     logo.hidden = true;
     logo.removeAttribute("src");
   });
@@ -2536,9 +2537,14 @@ function applyLoggingLauncherVisualLayer(layer, entry) {
   const logo = layer.querySelector(".logging-launch-visual-logo");
   if (logo) {
     const source = String(entry.logo || "").trim();
-    logo.hidden = !source;
     logo.removeAttribute("src");
-    if (source) logo.src = source;
+    if (!source || source === logo.dataset.failedSource) {
+      logo.hidden = true;
+      return;
+    }
+    delete logo.dataset.failedSource;
+    logo.hidden = false;
+    logo.src = source;
   }
 }
 
