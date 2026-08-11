@@ -140,6 +140,10 @@
           : String(firstKill?.victim || "") === puuid
             ? "first-death"
             : "other",
+        gotFirstBlood: evaluation?.gotFirstBlood === true,
+        wasFirstDeath: evaluation?.wasFirstDeath === true,
+        survived: evaluation?.survived === true,
+        traded: evaluation?.traded === true,
         damageDealt: Number(round?.damageDealt) || 0,
         roundCeremony: round?.roundCeremony || null,
         kastCounted: evaluation?.counts === true

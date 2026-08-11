@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260806-theme-launcher-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260811-consolidated-data-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -5043,7 +5043,9 @@ function createPerformanceBucket(label) {
     acsTotal: 0,
     adrTotal: 0,
     hsTotal: 0,
-    hsCount: 0
+    hsCount: 0,
+    loadoutValueTotal: 0,
+    loadoutValueRounds: 0
   };
 }
 
@@ -5133,7 +5135,10 @@ function finalizePerformanceBucket(bucket = {}) {
     kd: deaths ? safeNumber(bucket.kills) / deaths : safeNumber(bucket.kills),
     acs: matchesPlayed ? safeNumber(bucket.acsTotal) / matchesPlayed : 0,
     adr: matchesPlayed ? safeNumber(bucket.adrTotal) / matchesPlayed : 0,
-    hs: safeNumber(bucket.hsCount) ? safeNumber(bucket.hsTotal) / safeNumber(bucket.hsCount) : NaN
+    hs: safeNumber(bucket.hsCount) ? safeNumber(bucket.hsTotal) / safeNumber(bucket.hsCount) : NaN,
+    averageLoadoutValue: safeNumber(bucket.loadoutValueRounds)
+      ? safeNumber(bucket.loadoutValueTotal) / safeNumber(bucket.loadoutValueRounds)
+      : NaN
   };
 }
 
@@ -7741,6 +7746,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       roleBuckets[roleKey].role = roleKey;
     }
 
+    const roundLoadoutValues = (match?.advanced?.rounds || [])
+      .map(round => Number(round?.loadoutValue ?? round?.playerEconomy?.loadoutValue))
+      .filter(Number.isFinite);
+
     [mapBuckets[mapKey], agentBuckets[agentKey], roleBuckets[roleKey]].forEach((bucket) => {
       bucket.matchesPlayed += 1;
       bucket.kills += core.kills;
@@ -7755,6 +7764,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       }
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
+
+      if (roundLoadoutValues.length) {
+        bucket.loadoutValueTotal += roundLoadoutValues.reduce((sum, value) => sum + value, 0);
+        bucket.loadoutValueRounds += roundLoadoutValues.length;
+      }
     });
 
     totalKills += core.kills;
@@ -9603,9 +9617,12 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     roundMetrics,
     roundSignals,
     rankComparison,
-    maps: maps.length ? maps : (importedAnalytics?.maps || []),
-    agents: agents.length ? agents : (importedAnalytics?.agents || []),
-    roles: roles.length ? roles : (importedAnalytics?.roles || []),
+    // Imported aggregates are all-time. They are only a legitimate fallback
+    // before a local match sample exists at all; never substitute them for an
+    // empty season-scoped result or an insight can cite the wrong season.
+    maps: (maps.length || orderedMatches.length) ? maps : (importedAnalytics?.maps || []),
+    agents: (agents.length || orderedMatches.length) ? agents : (importedAnalytics?.agents || []),
+    roles: (roles.length || orderedMatches.length) ? roles : (importedAnalytics?.roles || []),
     trends: uniqueTrends,
     breakdown: uniqueBreakdown,
     trendBreakdown: uniqueTrendBreakdown,
@@ -11122,31 +11139,33 @@ function getEntityRounds({ agentName = "", roleName = "", side = "", matchEntrie
   });
 }
 
-function getSideMetricsFromMaps(mapEntries = [], side = "attack") {
-  const roundsKey = side === "attack" ? "attackRoundsPlayed" : "defenseRoundsPlayed";
-  const roundsWonKey = side === "attack" ? "attackRoundsWon" : "defenseRoundsWon";
-  const firstBloodsKey = side === "attack" ? "attackFirstBloods" : "defenseFirstBloods";
-  const firstDeathsKey = side === "attack" ? "attackFirstDeaths" : "defenseFirstDeaths";
-  const tradedKey = side === "attack" ? "attackTraded" : "defenseTraded";
-  const survivedKey = side === "attack" ? "attackSurvived" : "defenseSurvived";
-  const adrKey = side === "attack" ? "attackDamagePerRound" : "defenseDamagePerRound";
-  const kastKey = side === "attack" ? "attackKAST" : "defenseKAST";
-  const killsKey = side === "attack" ? "attackKills" : "defenseKills";
-
-  const roundsPlayed = mapEntries.reduce((sum, item) => sum + safeNumber(item?.[roundsKey]), 0);
-  const roundsWon = mapEntries.reduce((sum, item) => sum + safeNumber(item?.[roundsWonKey]), 0);
+function getSideMetricsFromRounds(roundEntries = []) {
+  const rounds = Array.isArray(roundEntries) ? roundEntries : [];
+  const roundsPlayed = rounds.length;
+  const damage = rounds.map(round => Number(round?.damageDealt)).filter(Number.isFinite);
+  const hasKastData = rounds.some(round => typeof round?.kastCounted === "boolean");
+  const hasSurvivalData = rounds.some(round => typeof round?.survived === "boolean");
+  const hasTradeData = rounds.some(round => typeof round?.traded === "boolean");
+  const roundsWon = rounds.filter(round => round?.roundWon === true).length;
+  const firstBloods = rounds.filter(round => round?.gotFirstBlood === true || round?.firstEvent === "first-blood").length;
+  const firstDeaths = rounds.filter(round => round?.wasFirstDeath === true || round?.firstEvent === "first-death").length;
+  const survived = rounds.filter(round => round?.survived === true).length;
+  const traded = rounds.filter(round => round?.traded === true).length;
 
   return {
     roundsPlayed,
     roundsWon,
-    winPct: roundsPlayed ? (roundsWon / roundsPlayed) * 100 : 0,
-    firstBloods: mapEntries.reduce((sum, item) => sum + safeNumber(item?.[firstBloodsKey]), 0),
-    firstDeaths: mapEntries.reduce((sum, item) => sum + safeNumber(item?.[firstDeathsKey]), 0),
-    traded: mapEntries.reduce((sum, item) => sum + safeNumber(item?.[tradedKey]), 0),
-    survived: mapEntries.reduce((sum, item) => sum + safeNumber(item?.[survivedKey]), 0),
-    kills: mapEntries.reduce((sum, item) => sum + safeNumber(item?.[killsKey]), 0),
-    damagePerRound: weightedAverage(mapEntries, adrKey, roundsKey),
-    kast: weightedAverage(mapEntries, kastKey, roundsKey)
+    winPct: roundsPlayed ? (roundsWon / roundsPlayed) * 100 : NaN,
+    firstBloods,
+    firstDeaths,
+    survived,
+    traded,
+    kills: rounds.reduce((sum, round) => sum + safeNumber(round?.killCount), 0),
+    damagePerRound: damage.length ? damage.reduce((sum, value) => sum + value, 0) / damage.length : NaN,
+    kast: hasKastData ? safeDivide(rounds.filter(round => round?.kastCounted === true).length * 100, roundsPlayed) : NaN,
+    hasKastData,
+    hasSurvivalData,
+    hasTradeData
   };
 }
 
@@ -11313,6 +11332,11 @@ function formatEconomyPhaseRate(bucket = {}, field = "wins") {
   return value === null ? "No Data" : formatPercent(value);
 }
 
+function formatEconomyPhaseWinLossRate(bucket = {}) {
+  if (!safeNumber(bucket.total)) return "No Data";
+  return `${formatPercent(getEconomyPhaseRate(bucket, "wins"))}/${formatPercent(getEconomyPhaseRate(bucket, "losses"))}`;
+}
+
 function formatEconomyPhaseFormula(bucket = {}, field = "wins", baseFormula = "") {
   const count = safeNumber(bucket[field]);
   const total = safeNumber(bucket.total);
@@ -11321,6 +11345,13 @@ function formatEconomyPhaseFormula(bucket = {}, field = "wins", baseFormula = ""
   }
   const resultLabel = field === "losses" ? "losses" : "wins";
   return `${resultLabel} / ${String(bucket.label || "economy").toLowerCase()} rounds = ${count} / ${total}. ${baseFormula}`;
+}
+
+function formatEconomyPhaseWinLossFormula(bucket = {}, winFormula = "", lossFormula = "") {
+  const label = String(bucket.label || "economy").toLowerCase();
+  const total = safeNumber(bucket.total);
+  if (!total) return `No confirmed ${label} rounds yet. ${winFormula} ${lossFormula}`.trim();
+  return `wins / ${label} rounds = ${safeNumber(bucket.wins)} / ${total}; losses / ${label} rounds = ${safeNumber(bucket.losses)} / ${total}. ${winFormula} ${lossFormula}`.trim();
 }
 
 function getMapEconomyRoundSummary(mapName = "", matchList = matches) {
@@ -11418,14 +11449,9 @@ function getMapEconomyStatItems(mapName = "", matchList = getScopedStatsData().m
       formatEconomyPhaseFormula(summary.pistol, "wins", MAP_ECONOMY_ROUND_FORMULAS.pistolWin)
     ),
     statItem(
-      "Bonus Round Win %",
-      formatEconomyPhaseRate(summary.bonus, "wins"),
-      formatEconomyPhaseFormula(summary.bonus, "wins", MAP_ECONOMY_ROUND_FORMULAS.bonusWin)
-    ),
-    statItem(
-      "Bonus Round Loss %",
-      formatEconomyPhaseRate(summary.bonus, "losses"),
-      formatEconomyPhaseFormula(summary.bonus, "losses", MAP_ECONOMY_ROUND_FORMULAS.bonusLoss)
+      "Bonus Round Win/Loss %",
+      formatEconomyPhaseWinLossRate(summary.bonus),
+      formatEconomyPhaseWinLossFormula(summary.bonus, MAP_ECONOMY_ROUND_FORMULAS.bonusWin, MAP_ECONOMY_ROUND_FORMULAS.bonusLoss)
     ),
     statItem(
       "Save Round Win %",
@@ -11433,14 +11459,9 @@ function getMapEconomyStatItems(mapName = "", matchList = getScopedStatsData().m
       formatEconomyPhaseFormula(summary.save, "wins", MAP_ECONOMY_ROUND_FORMULAS.saveWin)
     ),
     statItem(
-      "Full Buy Round Win %",
-      formatEconomyPhaseRate(summary.fullBuy, "wins"),
-      formatEconomyPhaseFormula(summary.fullBuy, "wins", MAP_ECONOMY_ROUND_FORMULAS.fullBuyWin)
-    ),
-    statItem(
-      "Full Buy Round Loss %",
-      formatEconomyPhaseRate(summary.fullBuy, "losses"),
-      formatEconomyPhaseFormula(summary.fullBuy, "losses", MAP_ECONOMY_ROUND_FORMULAS.fullBuyLoss)
+      "Full Buy Round Win/Loss %",
+      formatEconomyPhaseWinLossRate(summary.fullBuy),
+      formatEconomyPhaseWinLossFormula(summary.fullBuy, MAP_ECONOMY_ROUND_FORMULAS.fullBuyWin, MAP_ECONOMY_ROUND_FORMULAS.fullBuyLoss)
     )
   ];
 }
@@ -11708,9 +11729,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
       label: "Usage",
       items: [
         statItem("Most Common Buy", topBuyTypes || "--", "Most common economy labels on rounds where this weapon was used."),
-        statItem("Most Common Maps", topMaps || "--", "Maps where this exact weapon is reported most often in the imported round sample."),
-        statItem("First Blood Lane", getMostCommonValue(rounds.map(round => round.firstKillLocation)), "Most common first-blood location on rounds tagged with this weapon."),
-        statItem("First Death Lane", getMostCommonValue(rounds.map(round => round.firstDeathLocation)), "Most common first-death location on rounds tagged with this weapon.")
+        statItem("Most Common Maps", topMaps || "--", "Maps where this exact weapon is reported most often in the imported round sample.")
       ]
     },
     {
@@ -11872,7 +11891,6 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
       items: [
         statItem("Attack Win Rate", formatPercent(safeDivide(attackRounds.filter(round => round?.roundWon).length * 100, attackRounds.length)), `attack rounds won / attack rounds with ${weapon?.label || "this weapon category"} = ${attackRounds.filter(round => round?.roundWon).length} / ${attackRounds.length || 1}`),
         statItem("Attack Share", formatPercent(safeDivide(attackRounds.length * 100, rounds.length)), "Attack rounds on this weapon category divided by all rounds reported on this weapon category."),
-        statItem("Most Common First Blood Lane", getMostCommonValue(attackRounds.map(round => round.firstKillLocation)), "Most common opening lane when this weapon category was used on attack."),
         statItem("Most Common Buy Type", getMostCommonValue(attackRounds.map(round => round.buyType)), "Most common attack economy state when this weapon category was used.")
       ]
     },
@@ -11882,7 +11900,6 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
       items: [
         statItem("Defense Win Rate", formatPercent(safeDivide(defenseRounds.filter(round => round?.roundWon).length * 100, defenseRounds.length)), `defense rounds won / defense rounds with ${weapon?.label || "this weapon category"} = ${defenseRounds.filter(round => round?.roundWon).length} / ${defenseRounds.length || 1}`),
         statItem("Defense Share", formatPercent(safeDivide(defenseRounds.length * 100, rounds.length)), "Defense rounds on this weapon category divided by all rounds reported on this weapon category."),
-        statItem("Most Common First Death Lane", getMostCommonValue(defenseRounds.map(round => round.firstDeathLocation)), "Most common first-death lane when this weapon category was used on defense."),
         statItem("Most Common Buy Type", getMostCommonValue(defenseRounds.map(round => round.buyType)), "Most common defense economy state when this weapon category was used.")
       ]
     },
@@ -11904,24 +11921,22 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
 function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "attack") {
   const roleKey = String(roleName || "").toLowerCase();
   const sideRounds = Math.max(1, safeNumber(sideMetrics.roundsPlayed) || rounds.length || 1);
-  const firstKillLane = getMostCommonValue(rounds.map(round => round.firstKillLocation));
-  const firstDeathLane = getMostCommonValue(rounds.map(round => round.firstDeathLocation));
   const firstDeathRate = safeDivide(sideMetrics.firstDeaths, sideRounds) * 100;
   const firstBloodRate = safeDivide(sideMetrics.firstBloods, sideRounds) * 100;
-  const survivalRate = safeDivide(sideMetrics.survived, sideRounds) * 100;
+  const survivalRate = sideMetrics.hasSurvivalData ? safeDivide(sideMetrics.survived, sideRounds) * 100 : NaN;
   const sideLabel = side === "attack" ? "ATK" : "DEF";
+  const survivalFormula = sideMetrics.hasSurvivalData
+    ? `survived rounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`
+    : "Survival is unavailable for the imported round sample.";
 
   if (roleKey === "controller") {
     return side === "attack"
       ? [
-          statItem("First Death Rate", formatPercent(firstDeathRate), `firstDeaths / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds}`),
-          statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
+          statItem("First Death Rate", formatPercent(firstDeathRate), `firstDeaths / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds}`)
         ]
       : [
-          statItem("Survival Rate", formatPercent(survivalRate), `survivedRounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`),
-          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`),
-          statItem("Most Frequent First Death Location", firstDeathLane, "Most common first-death location across imported rounds for this side."),
-          statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
+          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula),
+          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`)
         ];
   }
 
@@ -11929,37 +11944,32 @@ function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "a
     return side === "attack"
       ? [
           statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-          statItem("Survival Rate", formatPercent(survivalRate), `survivedRounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`)
+          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula)
         ]
       : [
-          statItem("Survival Rate", formatPercent(survivalRate), `survivedRounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`),
-          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`),
-          statItem("Most Frequent First Death Location", firstDeathLane, "Most common first-death location across imported rounds for this side.")
+          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula),
+          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`)
         ];
   }
 
   if (roleKey === "initiator") {
     return side === "attack"
       ? [
-          statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-          statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
+          statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`)
         ]
       : [
-          statItem("Survival Rate", formatPercent(survivalRate), `survivedRounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`),
-          statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
+          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula)
         ];
   }
 
   return side === "attack"
     ? [
         statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Attack First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
-        statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
+        statItem("Attack First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`)
       ]
     : [
         statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Defense First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
-        statItem("Most Frequent First Death Location", firstDeathLane, "Most common first-death location across imported rounds for this side.")
+        statItem("Defense First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`)
       ];
 }
 
@@ -11973,16 +11983,21 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
   const worstMap = agentMaps[agentMaps.length - 1];
   const attackRounds = getEntityRounds({ agentName, side: "attack", matchEntries: scoped.matches });
   const defenseRounds = getEntityRounds({ agentName, side: "defense", matchEntries: scoped.matches });
-  const attackMetrics = getSideMetricsFromMaps(agentMaps, "attack");
-  const defenseMetrics = getSideMetricsFromMaps(agentMaps, "defense");
+  const attackMetrics = getSideMetricsFromRounds(attackRounds);
+  const defenseMetrics = getSideMetricsFromRounds(defenseRounds);
   const weaponRates = getWeaponRoundRates([...attackRounds, ...defenseRounds]);
   const bestGun = weaponRates[0] || null;
   const worstGun = weaponRates[weaponRates.length - 1] || null;
   const totalSideRounds = safeNumber(attackMetrics.roundsPlayed) + safeNumber(defenseMetrics.roundsPlayed);
-  const overallKast = safeDivide(
-    (safeNumber(attackMetrics.kast) * safeNumber(attackMetrics.roundsPlayed)) + (safeNumber(defenseMetrics.kast) * safeNumber(defenseMetrics.roundsPlayed)),
-    totalSideRounds
-  ) * 100;
+  const hasOverallKast = totalSideRounds > 0
+    && Number.isFinite(Number(attackMetrics.kast))
+    && Number.isFinite(Number(defenseMetrics.kast));
+  const overallKast = hasOverallKast
+    ? safeDivide(
+      (Number(attackMetrics.kast) * safeNumber(attackMetrics.roundsPlayed)) + (Number(defenseMetrics.kast) * safeNumber(defenseMetrics.roundsPlayed)),
+      totalSideRounds
+    )
+    : NaN;
 
   return [
     {
@@ -12004,7 +12019,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
         statItem("K/D", agent ? Number(agent.kd || 0).toFixed(2) : "--", `kills / deaths = ${safeNumber(agent?.kills)} / ${Math.max(1, safeNumber(agent?.deaths))}`),
         statItem("Overall KAST", formatPercent(overallKast), `weighted side KAST = ((ATK KAST Ã— ATK rounds) + (DEF KAST Ã— DEF rounds)) / total rounds`),
         statItem("Average ADR", agent ? `${Math.round(agent.adr || 0)}` : "--", `damagePerRound from imported agent segment = ${safeNumber(agent?.adr).toFixed(1)}`),
-        statItem("Econ Rating", agent ? `${Math.round(agent.econ || 0)}` : "--", `econRating from imported agent segment = ${Math.round(safeNumber(agent?.econ))}`),
+        statItem("Average Loadout Value", Number.isFinite(Number(agent?.averageLoadoutValue)) ? `${Math.round(agent.averageLoadoutValue)} credits` : "--", Number.isFinite(Number(agent?.averageLoadoutValue)) ? `sum of tracked round loadout values / tracked rounds = ${Math.round(safeNumber(agent?.loadoutValueTotal))} / ${Math.round(safeNumber(agent?.loadoutValueRounds))}` : "No verified per-round loadout value is available for this agent sample."),
         statItem("Best Map Win Rate", bestMap ? `${bestMap.map} | ${formatPercent(safeDivide(safeNumber(bestMap.matchesWon), safeNumber(bestMap.matchesPlayed)) * 100)}` : "--", bestMap ? `matchesWon / matchesPlayed on ${bestMap.map} = ${safeNumber(bestMap.matchesWon)} / ${safeNumber(bestMap.matchesPlayed)}` : "No imported map segment."),
         statItem("Worst Map Win Rate", worstMap ? `${worstMap.map} | ${formatPercent(safeDivide(safeNumber(worstMap.matchesWon), safeNumber(worstMap.matchesPlayed)) * 100)}` : "--", worstMap ? `matchesWon / matchesPlayed on ${worstMap.map} = ${safeNumber(worstMap.matchesWon)} / ${safeNumber(worstMap.matchesPlayed)}` : "No imported map segment."),
         statItem("Best Gun Round Conversion", bestGun ? `${bestGun.weapon} | ${formatPercent(bestGun.conversionPct)}` : "--", bestGun ? `round wins with ${bestGun.weapon} / rounds using ${bestGun.weapon} = ${bestGun.wins} / ${bestGun.rounds}` : "No imported round weapon data."),
@@ -12018,9 +12033,9 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
       label: "Attack",
       items: [
         statItem("Attack Win Rate", formatPercent(attackMetrics.winPct), `attackRoundsWon / attackRoundsPlayed = ${safeNumber(attackMetrics.roundsWon)} / ${Math.max(1, safeNumber(attackMetrics.roundsPlayed))}`),
-        statItem("Attack KAST", formatPercent(attackMetrics.kast), `weighted attack KAST from imported map segments across ${Math.round(safeNumber(attackMetrics.roundsPlayed))} rounds`),
-        statItem("Attack ADR", attackMetrics.damagePerRound ? `${Math.round(attackMetrics.damagePerRound)}` : "--", `weighted attack ADR from imported map segments across ${Math.round(safeNumber(attackMetrics.roundsPlayed))} rounds`),
-        statItem("Attack Kills", attackMetrics.kills ? `${Math.round(attackMetrics.kills)}` : "--", `sum of imported attack kills across agent-map segments = ${Math.round(safeNumber(attackMetrics.kills))}`),
+        statItem("Attack KAST", formatPercent(attackMetrics.kast), `KAST-qualified attack rounds / attack rounds = ${Math.round((Number(attackMetrics.kast) || 0) * safeNumber(attackMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(attackMetrics.roundsPlayed))}`),
+        statItem("Attack ADR", Number.isFinite(Number(attackMetrics.damagePerRound)) ? `${Math.round(attackMetrics.damagePerRound)}` : "--", `damage dealt on attack rounds / attack rounds = ${Math.round(safeNumber(attackMetrics.damagePerRound) * safeNumber(attackMetrics.roundsPlayed))} / ${Math.round(safeNumber(attackMetrics.roundsPlayed))}`),
+        statItem("Attack Kills", attackMetrics.roundsPlayed ? `${Math.round(attackMetrics.kills)}` : "--", `sum of imported attack kills for ${agentName} = ${Math.round(safeNumber(attackMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, attackMetrics, attackRounds, "attack")
       ]
     },
@@ -12029,9 +12044,9 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
       label: "Defense",
       items: [
         statItem("Defense Win Rate", formatPercent(defenseMetrics.winPct), `defenseRoundsWon / defenseRoundsPlayed = ${safeNumber(defenseMetrics.roundsWon)} / ${Math.max(1, safeNumber(defenseMetrics.roundsPlayed))}`),
-        statItem("Defense KAST", formatPercent(defenseMetrics.kast), `weighted defense KAST from imported map segments across ${Math.round(safeNumber(defenseMetrics.roundsPlayed))} rounds`),
-        statItem("Defense ADR", defenseMetrics.damagePerRound ? `${Math.round(defenseMetrics.damagePerRound)}` : "--", `weighted defense ADR from imported map segments across ${Math.round(safeNumber(defenseMetrics.roundsPlayed))} rounds`),
-        statItem("Defense Kills", defenseMetrics.kills ? `${Math.round(defenseMetrics.kills)}` : "--", `sum of imported defense kills across agent-map segments = ${Math.round(safeNumber(defenseMetrics.kills))}`),
+        statItem("Defense KAST", formatPercent(defenseMetrics.kast), `KAST-qualified defense rounds / defense rounds = ${Math.round((Number(defenseMetrics.kast) || 0) * safeNumber(defenseMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(defenseMetrics.roundsPlayed))}`),
+        statItem("Defense ADR", Number.isFinite(Number(defenseMetrics.damagePerRound)) ? `${Math.round(defenseMetrics.damagePerRound)}` : "--", `damage dealt on defense rounds / defense rounds = ${Math.round(safeNumber(defenseMetrics.damagePerRound) * safeNumber(defenseMetrics.roundsPlayed))} / ${Math.round(safeNumber(defenseMetrics.roundsPlayed))}`),
+        statItem("Defense Kills", defenseMetrics.roundsPlayed ? `${Math.round(defenseMetrics.kills)}` : "--", `sum of imported defense kills for ${agentName} = ${Math.round(safeNumber(defenseMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, defenseMetrics, defenseRounds, "defense")
       ]
     }
@@ -12048,8 +12063,8 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
   const worstMap = sortedMaps[sortedMaps.length - 1];
   const attackRounds = getEntityRounds({ roleName, side: "attack", matchEntries: scoped.matches });
   const defenseRounds = getEntityRounds({ roleName, side: "defense", matchEntries: scoped.matches });
-  const roleAttackMetrics = getSideMetricsFromMaps(filteredMaps, "attack");
-  const roleDefenseMetrics = getSideMetricsFromMaps(filteredMaps, "defense");
+  const roleAttackMetrics = getSideMetricsFromRounds(attackRounds);
+  const roleDefenseMetrics = getSideMetricsFromRounds(defenseRounds);
 
   return [
     {
@@ -12081,9 +12096,9 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
       label: "Attack",
       items: [
         statItem("Attack Win Rate", formatPercent(roleAttackMetrics.winPct), `attackRoundsWon / attackRoundsPlayed = ${safeNumber(roleAttackMetrics.roundsWon)} / ${Math.max(1, safeNumber(roleAttackMetrics.roundsPlayed))}`),
-        statItem("Attack KAST", formatPercent(roleAttackMetrics.kast), `weighted attack KAST from imported map segments across ${Math.round(safeNumber(roleAttackMetrics.roundsPlayed))} rounds`),
-        statItem("Attack ADR", roleAttackMetrics.damagePerRound ? `${Math.round(roleAttackMetrics.damagePerRound)}` : "--", `weighted attack ADR from imported map segments across ${Math.round(safeNumber(roleAttackMetrics.roundsPlayed))} rounds`),
-        statItem("Attack Kills", roleAttackMetrics.kills ? `${Math.round(roleAttackMetrics.kills)}` : "--", `sum of imported attack kills across role-aligned map segments = ${Math.round(safeNumber(roleAttackMetrics.kills))}`),
+        statItem("Attack KAST", formatPercent(roleAttackMetrics.kast), `KAST-qualified attack rounds / attack rounds = ${Math.round((Number(roleAttackMetrics.kast) || 0) * safeNumber(roleAttackMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(roleAttackMetrics.roundsPlayed))}`),
+        statItem("Attack ADR", Number.isFinite(Number(roleAttackMetrics.damagePerRound)) ? `${Math.round(roleAttackMetrics.damagePerRound)}` : "--", `damage dealt on attack rounds / attack rounds = ${Math.round(safeNumber(roleAttackMetrics.damagePerRound) * safeNumber(roleAttackMetrics.roundsPlayed))} / ${Math.round(safeNumber(roleAttackMetrics.roundsPlayed))}`),
+        statItem("Attack Kills", roleAttackMetrics.roundsPlayed ? `${Math.round(roleAttackMetrics.kills)}` : "--", `sum of imported attack kills for the ${roleName} role = ${Math.round(safeNumber(roleAttackMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, roleAttackMetrics, attackRounds, "attack")
       ]
     },
@@ -12092,9 +12107,9 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
       label: "Defense",
       items: [
         statItem("Defense Win Rate", formatPercent(roleDefenseMetrics.winPct), `defenseRoundsWon / defenseRoundsPlayed = ${safeNumber(roleDefenseMetrics.roundsWon)} / ${Math.max(1, safeNumber(roleDefenseMetrics.roundsPlayed))}`),
-        statItem("Defense KAST", formatPercent(roleDefenseMetrics.kast), `weighted defense KAST from imported map segments across ${Math.round(safeNumber(roleDefenseMetrics.roundsPlayed))} rounds`),
-        statItem("Defense ADR", roleDefenseMetrics.damagePerRound ? `${Math.round(roleDefenseMetrics.damagePerRound)}` : "--", `weighted defense ADR from imported map segments across ${Math.round(safeNumber(roleDefenseMetrics.roundsPlayed))} rounds`),
-        statItem("Defense Kills", roleDefenseMetrics.kills ? `${Math.round(roleDefenseMetrics.kills)}` : "--", `sum of imported defense kills across role-aligned map segments = ${Math.round(safeNumber(roleDefenseMetrics.kills))}`),
+        statItem("Defense KAST", formatPercent(roleDefenseMetrics.kast), `KAST-qualified defense rounds / defense rounds = ${Math.round((Number(roleDefenseMetrics.kast) || 0) * safeNumber(roleDefenseMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(roleDefenseMetrics.roundsPlayed))}`),
+        statItem("Defense ADR", Number.isFinite(Number(roleDefenseMetrics.damagePerRound)) ? `${Math.round(roleDefenseMetrics.damagePerRound)}` : "--", `damage dealt on defense rounds / defense rounds = ${Math.round(safeNumber(roleDefenseMetrics.damagePerRound) * safeNumber(roleDefenseMetrics.roundsPlayed))} / ${Math.round(safeNumber(roleDefenseMetrics.roundsPlayed))}`),
+        statItem("Defense Kills", roleDefenseMetrics.roundsPlayed ? `${Math.round(roleDefenseMetrics.kills)}` : "--", `sum of imported defense kills for the ${roleName} role = ${Math.round(safeNumber(roleDefenseMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, roleDefenseMetrics, defenseRounds, "defense")
       ]
     }
@@ -62858,6 +62873,8 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
       evidence: getCoachingEvidenceScore(input),
       pairing: getUsageWinRatePairing(input)
     }),
+    getMapEconomyStatItems: (mapName, matchList) => getMapEconomyStatItems(mapName, matchList),
+    getSideMetrics: rounds => getSideMetricsFromRounds(rounds),
     showToast: (...args) => showToast(...args),
     checkForAppUpdate: options => checkRankedCoachAppUpdate(options),
     configureRevisionPoll: ({ user = null, client = null, saving = false } = {}) => {

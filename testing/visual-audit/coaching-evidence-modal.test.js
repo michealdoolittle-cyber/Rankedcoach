@@ -177,6 +177,52 @@ async function verifyViewport(browser, viewport) {
   assert.equal(roleInterpretations.pairing?.usageLabel, "Used in 58% of tracked rounds");
   assert.equal(roleInterpretations.pairing?.winRateLabel, "Won 64% of those rounds");
 
+  const dataViews = await page.evaluate(() => {
+    const hook = globalThis.RankedCoachTestHooks;
+    const economyItems = hook?.getMapEconomyStatItems?.("Ascent", [{
+      metadata: { mapName: "Ascent" },
+      advanced: {
+        rounds: [
+          { round: 1, roundWon: true },
+          { round: 2, roundWon: true },
+          { round: 3, roundWon: false, weapon: "Vandal" },
+          { round: 4, roundWon: true, loadoutValue: 4400 },
+          { round: 5, roundWon: false, loadoutValue: 4400 }
+        ]
+      }
+    }]);
+    return {
+      economyItems,
+      sideMetrics: hook?.getSideMetrics?.([
+        { roundWon: true, killCount: 2, damageDealt: 180, kastCounted: true, gotFirstBlood: true, survived: true, traded: false },
+        { roundWon: false, killCount: 1, damageDealt: 75, kastCounted: false, wasFirstDeath: true, survived: false, traded: true }
+      ])
+    };
+  });
+  assert.deepEqual(dataViews.economyItems.map(item => item.label), [
+    "Pistol Round Win %",
+    "Bonus Round Win/Loss %",
+    "Save Round Win %",
+    "Full Buy Round Win/Loss %"
+  ]);
+  assert.equal(dataViews.economyItems.find(item => item.label === "Bonus Round Win/Loss %")?.stat, "0%/100%");
+  assert.equal(dataViews.economyItems.find(item => item.label === "Full Buy Round Win/Loss %")?.stat, "50%/50%");
+  assert.deepEqual(dataViews.sideMetrics, {
+    roundsPlayed: 2,
+    roundsWon: 1,
+    winPct: 50,
+    firstBloods: 1,
+    firstDeaths: 1,
+    survived: 1,
+    traded: 1,
+    kills: 3,
+    damagePerRound: 127.5,
+    kast: 50,
+    hasKastData: true,
+    hasSurvivalData: true,
+    hasTradeData: true
+  });
+
   await page.locator("#weeklyFocusSummary .weekly-focus-pill:not(.is-disabled)").first().click({ force: true });
   await page.locator("#weeklyFocusModal.active").waitFor({ state: "visible" });
   assert.match(await page.locator("#weeklyFocusModalContent .timeline-insight-card-title").first().innerText(), /^games used$/i);
