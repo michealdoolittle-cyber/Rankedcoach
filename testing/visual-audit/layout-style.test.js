@@ -850,7 +850,9 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     assert.ok(contains(geometry.roles, button), `${style} role control escaped its one-row group: ${JSON.stringify(geometry)}`);
     assert.ok(Math.abs(button.top - geometry.roleButtons[0].top) <= 2, `${style} role controls wrapped onto a second row: ${JSON.stringify(geometry)}`);
   });
-  assert.ok(Math.abs(geometry.spin.top - geometry.frame.top) <= 2 && Math.abs(geometry.spin.bottom - geometry.frame.bottom) <= 2, `${style} spin control spans more than the reel row: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.spin.width - geometry.spin.height) <= 2, `${style} spin control is no longer roughly square: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.main, geometry.spin), `${style} spin control escaped the loadout grid: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs((geometry.spin.top + geometry.spin.bottom) - (geometry.frame.top + geometry.frame.bottom)) <= 4, `${style} spin control is not vertically centered beside the reel: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.spin.top >= geometry.roles.bottom - 1, `${style} spin control overlaps the role controls: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.info.top >= Math.max(geometry.frame.bottom, geometry.spin.bottom) - 1, `${style} loadout detail pills do not sit below the reel row: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.infoPills.length, 3, `${style} loadout detail pills are incomplete: ${JSON.stringify(geometry)}`);
@@ -859,7 +861,11 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     assert.ok(Number.parseFloat(pill.label.fontSize) <= 15 && Number.parseFloat(pill.value.fontSize) <= 16, `${style} loadout detail text no longer fits its third-row pill: ${JSON.stringify(geometry)}`);
   });
   assert.ok(contains(geometry.loadout, geometry.frame), `${style} agent frame escaped its shaped loadout card: ${JSON.stringify(geometry)}`);
-  assert.ok(contains(geometry.frameCell, geometry.frame), `${style} agent frame exceeded its grid cell: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.frame.left - geometry.roles.left) <= 2, `${style} agent frame no longer starts at the visible loadout content edge: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.spin.left - geometry.frame.right <= 16, `${style} agent frame leaves a large empty gap before the spin control: ${JSON.stringify(geometry)}`);
+  if (!geometry.mobile) {
+    assert.ok(geometry.frame.width > geometry.frame.height + 12, `${style} agent frame is still being forced square in a wide reel cell: ${JSON.stringify(geometry)}`);
+  }
   assert.ok(contains(geometry.frame, geometry.selectedArtClip), `${style} selected-art clip escaped its frame: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.clipOverflow, "hidden", `${style} selected-art clip no longer contains authored crop offsets: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.selectedArt?.width > 0 && geometry.selectedArt?.height > 0, `${style} selected Jett art did not render: ${JSON.stringify(geometry)}`);
@@ -954,7 +960,8 @@ async function assertLoadoutRollSettles(page, style) {
   ["card", "frame", "spin"].forEach(key => {
     assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);
   });
-  assert.ok(Math.abs(after.spin.top - after.frame.top) <= 2 && Math.abs(after.spin.bottom - after.frame.bottom) <= 2, `${style} spin control did not settle beside the frame: ${JSON.stringify(after)}`);
+  assert.ok(Math.abs(after.spin.width - after.spin.height) <= 2, `${style} spin control did not stay square after the roll: ${JSON.stringify(after)}`);
+  assert.ok(Math.abs((after.spin.top + after.spin.bottom) - (after.frame.top + after.frame.bottom)) <= 4, `${style} spin control did not stay centered beside the frame after the roll: ${JSON.stringify(after)}`);
   await editor.evaluate(modal => {
     modal.style.removeProperty("visibility");
     modal.style.removeProperty("pointer-events");

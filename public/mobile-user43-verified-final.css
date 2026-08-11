@@ -8631,8 +8631,11 @@
   html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #spinAgentBtn#spinAgentBtn {
     grid-area: spin !important;
     min-height: 0 !important;
-    height: 100% !important;
-    aspect-ratio: auto !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: 100% !important;
+    align-self: center !important;
+    justify-self: stretch !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #agentFrame#agentFrame {
@@ -8885,8 +8888,11 @@
   html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #spinAgentBtn#spinAgentBtn {
     grid-area: spin !important;
     min-height: 0 !important;
-    height: 100% !important;
-    aspect-ratio: auto !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: 100% !important;
+    align-self: center !important;
+    justify-self: stretch !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #agentFrame#agentFrame {

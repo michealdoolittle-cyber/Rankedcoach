@@ -2945,13 +2945,13 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame{
   min-width:0 !important;
   min-height:0 !important;
-  width:auto !important;
-  max-width:100% !important;
+  width:100% !important;
+  max-width:none !important;
   height:100% !important;
   max-height:100% !important;
-  aspect-ratio:1 / 1 !important;
+  aspect-ratio:auto !important;
   align-self:stretch !important;
-  justify-self:center !important;
+  justify-self:stretch !important;
   overflow:hidden !important;
   translate:none !important;
   scale:none !important;

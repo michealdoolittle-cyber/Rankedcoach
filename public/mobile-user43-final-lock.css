@@ -1007,10 +1007,12 @@
     grid-area: spin !important;
     width: 100% !important;
     min-width: 0 !important;
-    height: 100% !important;
+    height: auto !important;
     min-height: 0 !important;
-    max-height: none !important;
-    aspect-ratio: auto !important;
+    max-height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    align-self: center !important;
+    justify-self: stretch !important;
     margin: 0 !important;
   }
 
