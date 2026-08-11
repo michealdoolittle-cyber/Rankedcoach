@@ -76,7 +76,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260811-warmup-team-palette-02">
+  <link rel="stylesheet" href="app.css?v=20260811-map-roll-sync-ui-11">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -945,6 +945,21 @@ RIOT PROFILE MODAL
   </div>
 </div>
 
+<div id="loadoutMapModal" class="lens-modal-overlay modal-compact loadout-map-modal-overlay" aria-hidden="true" style="display:none;">
+  <div class="lens-modal loadout-map-modal" role="dialog" aria-modal="true" aria-labelledby="loadoutMapModalTitle">
+    <div class="lens-modal-header loadout-map-modal-header">
+      <div>
+        <div class="lens-modal-title" id="loadoutMapModalTitle">Choose map</div>
+        <div class="loadout-map-modal-copy">Map fit lightly weights the next roll. Every eligible agent stays in the pool.</div>
+      </div>
+      <button id="closeLoadoutMapModal" class="modal-exit-btn" type="button" aria-label="Close map picker">×</button>
+    </div>
+    <div class="lens-modal-body">
+      <div id="loadoutMapPickerGrid" class="loadout-map-picker-grid" aria-label="Current competitive map pool"></div>
+    </div>
+  </div>
+</div>
+
   <div class="app-scale-wrap">
     <div class="app-root">
 
@@ -1704,6 +1719,10 @@ stroke-linejoin="round"/>
 
               <!-- Loadout Info -->
               <div class="home-loadout-info">
+                <button id="loadoutMapPicker" class="home-loadout-pill home-loadout-map-pill" type="button" aria-haspopup="dialog" aria-expanded="false">
+                  <span class="pill-label">Map</span>
+                  <span id="loadoutMapDisplay" class="pill-value loadout-map-value">Any map</span>
+                </button>
                 <div class="home-loadout-pill">
                   <span class="pill-label">Agent</span>
                   <span id="agentName" class="pill-value agent-neutral">-</span>
@@ -2319,7 +2338,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-encyclopedia.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-promoted.js?v=20260731-plant-map-editor-01"></script>
   <script src="library/gamesense-map-layout-overrides.js?v=20260731-plant-map-editor-01"></script>
-  <script src="library/gamesense-dossier-text-overrides.js?v=20260810-dossier-editor-01"></script>
+  <script src="library/gamesense-dossier-text-overrides.js?v=20260811-ascent-tips-01"></script>
   <script src="library/gamesense-official-media.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-vstats-reference.js?v=20260731-plant-map-editor-01"></script>
   <script src="library/gamesense-heatmaps.js?v=20260728-map-performance-01"></script>
@@ -2328,7 +2347,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260810-dossier-editor-01"></script>
   <script src="integrations/riot-sync.js?v=20260806-theme-launcher-01"></script>
   <script src="daily-entrance-motion.js?v=20260731-verification-loading-02"></script>
-  <script type="module" src="app.js?v=20260811-warmup-team-palette-02"></script>
+  <script type="module" src="app.js?v=20260811-map-roll-sync-ui-11"></script>
   <script type="module" src="knowledge-review.js?v=20260803-auth-abort-fallback-01"></script>
 </body>
 </html>

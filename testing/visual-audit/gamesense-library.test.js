@@ -1099,7 +1099,7 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3, "Retained verified data should also populate Ascent.");
     assert.equal(await desktop.locator(".gamesense-comp-unavailable").count(), 0);
     assert.doesNotMatch(await desktop.locator(".gamesense-tips-hub").innerText(), /Data Still In Review/i, "A verified map cannot present an empty coaching tab as an unverified dossier.");
-    assert.match(await desktop.locator(".gamesense-tips-hub").innerText(), /High-rank map reference/i, "An otherwise empty verified coaching tab must explicitly point back to its verified map reference instead of inventing a tip.");
+    assert.match(await desktop.locator(".gamesense-tips-hub").innerText(), /Mid! Mid! Mid!/i, "The published Ascent attack plan must render from the approved dossier override.");
     assert.ok(await desktop.locator(".gamesense-weapon-suggestion").count() > 0, "Weapon suggestions should remain available for Ascent even when a fresh map-specific sample is sparse.");
 
     await desktop.click('.nav-btn[data-page="stats"]');

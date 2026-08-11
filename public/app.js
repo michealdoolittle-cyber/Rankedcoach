@@ -1258,14 +1258,16 @@ const GENERIC_MAP_ARTWORK_URL = `data:image/svg+xml;charset=UTF-8,${encodeURICom
   </svg>
 `)}`;
 
-const DEMO_ACT_MAP_POOLS = {
+// This is the live competitive rotation by season/act. It is also used by
+// the Home loadout map picker, so keep the name clear: this is not demo data.
+const SEASON_ACT_MAP_POOLS = Object.freeze({
   "Season 2025 Act 5": ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
   "Season 2025 Act 6": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
   "Season 2026 Act 1": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
   "Season 2026 Act 2": ["Bind", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
   "Season 2026 Act 3": ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"],
   "Season 2026 Act 4": ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"]
-};
+});
 
 const MAP_DETAIL_PRESETS = {
   Abyss: { bestGun: "Vandal", worstGun: "Bucky", style: "Long sightlines reward first-shot precision and patient retakes." },
@@ -13692,11 +13694,38 @@ async function logoutOrOpenAuthFromUI() {
 }
 
 let activeProfileSurfaceRefreshRevision = 0;
+let backgroundSurfaceRefreshRetryTimer = 0;
+
+function isBackgroundSyncInteractionActive() {
+  // A background refresh must never replace an actively animating chart, an
+  // open modal, or the DOM under a focused field. The saved data is already
+  // durable; waiting a few frames keeps the player-facing interaction intact.
+  return shouldDeferSyncToast()
+    || Boolean(chartAnimating || chartBusy || chartAnimFrame);
+}
 
 function refreshActiveProfileDataSurfaces(options = {}) {
+  if (options.background === true && isBackgroundSyncInteractionActive()) {
+    window.clearTimeout(backgroundSurfaceRefreshRetryTimer);
+    backgroundSurfaceRefreshRetryTimer = window.setTimeout(() => {
+      backgroundSurfaceRefreshRetryTimer = 0;
+      refreshActiveProfileDataSurfaces(options);
+    }, 180);
+    return;
+  }
   const profile = getActiveProfile?.();
   const refreshRevision = ++activeProfileSurfaceRefreshRevision;
   const root = document.documentElement;
+  const activePageId = getActivePageElement?.()?.id || "page-home";
+  const preserveActivePage = options.preserveActivePage === true;
+  const modalIsOpen = document.body?.classList.contains("has-active-modal");
+  // Remote/background syncs used to re-render every page in one synchronous
+  // pass. Aside from the unnecessary work, rendering an inactive Logging or
+  // Insights surface could replace DOM below an open modal. Refresh only the
+  // page the player is looking at; the remaining pages render from the saved
+  // profile when opened.
+  const refreshVisiblePageOnly = preserveActivePage || modalIsOpen;
+  const canReplacePageContent = !modalIsOpen;
   root?.classList.add("profile-surfaces-refreshing");
   if (root) root.dataset.profileSurfaceRefreshRevision = String(refreshRevision);
   if (profile && Array.isArray(profile.matches)) {
@@ -13711,26 +13740,33 @@ function refreshActiveProfileDataSurfaces(options = {}) {
   }
 
   recomputeFromMatches?.();
-  initStatsPage?.();
-  renderInsights?.();
-  renderLogFeed?.({ force: true });
-  updateDisplays?.();
+  if (!refreshVisiblePageOnly || activePageId === "page-stats") {
+    // initStatsPage is the single stats renderer. Calling the three detail
+    // renderers again immediately afterward doubled the work of a live sync.
+    initStatsPage?.();
+  }
+  if (canReplacePageContent && (!refreshVisiblePageOnly || activePageId === "page-insights")) {
+    renderInsights?.();
+  }
+  if (canReplacePageContent && (!refreshVisiblePageOnly || activePageId === "page-logging")) {
+    renderLogFeed?.({ force: true });
+  }
+  if (!refreshVisiblePageOnly || activePageId === "page-home") {
+    updateDisplays?.();
+    applyPendingLoadoutRollToHome?.(profile);
+    renderCoachReadinessUI?.();
+    refreshLatestRRMatchPanel?.();
+    if (options.chartAnimationMode) queueChartAnimationMode?.(options.chartAnimationMode);
+    renderChart?.(currentSize);
+  }
   updateProfileHeaderUI?.();
-  applyPendingLoadoutRollToHome?.(profile);
-  renderCoachReadinessUI?.();
   syncAccountSupportUI?.();
-  refreshLatestRRMatchPanel?.();
   updateNavRRToRank?.();
   updateNavRRToGoalRank?.();
   // The mobile header mirrors profileRankIcon. It was only refreshed during
   // layout changes, which allowed its rank crest to remain stale after a real
   // sync even though the desktop header had already updated.
   syncMobileHeaderActionsState?.();
-
-  if (options.chartAnimationMode) {
-    queueChartAnimationMode?.(options.chartAnimationMode);
-  }
-  renderChart?.(currentSize);
 
   const raf = window.requestAnimationFrame || (callback => window.setTimeout(callback, 16));
   raf(() => raf(() => {
@@ -14026,9 +14062,64 @@ function applyLoginInitializationTheme(profile = getActiveProfile()) {
   loginInitializationThemeSignature = signature;
 }
 
+let deferredSyncToast = null;
+let deferredSyncToastTimer = 0;
+
+function shouldDeferSyncToast() {
+  const active = document.activeElement;
+  if (active?.matches?.("input, textarea, select, [contenteditable='true']")) return true;
+  if (document.body?.classList.contains("has-active-modal")) return true;
+  if (chartAnimating || chartBusy || chartAnimFrame) return true;
+  const activeMotion = Array.from(document.querySelectorAll(
+    "#agentReel.reel-spinning, #page-logging.logging-page-entry-animate, .trend-content.open.trend-content-animate, .premium-moment-overlay.is-active, .premium-moment-overlay.has-broadcast"
+  ));
+  return activeMotion.some(element => {
+    const style = window.getComputedStyle?.(element);
+    return style?.display !== "none" && style?.visibility !== "hidden" && Number(style?.opacity || 1) > 0.01;
+  });
+}
+
+function queueNonInterruptingSyncToast(message, options = {}) {
+  // A background sync is useful information, but it must never compete with
+  // typing, an open modal, or a player-facing motion sequence. Keep only the
+  // newest sync notice; the underlying state is already saved and rendered.
+  deferredSyncToast = { message, options: { ...options, nonInterrupting: false } };
+  if (deferredSyncToastTimer) return;
+
+  let attempts = 0;
+  const flush = () => {
+    deferredSyncToastTimer = 0;
+    if (!deferredSyncToast) return;
+    if (shouldDeferSyncToast() && attempts < 18) {
+      attempts += 1;
+      deferredSyncToastTimer = window.setTimeout(flush, 500);
+      return;
+    }
+    // Do not force a late toast over a player who is still interacting. The
+    // notification is intentionally ephemeral; the synced data is persistent.
+    if (shouldDeferSyncToast()) {
+      deferredSyncToast = null;
+      return;
+    }
+    const next = deferredSyncToast;
+    deferredSyncToast = null;
+    const run = () => showToast(next.message, next.options);
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(run, { timeout: 900 });
+    } else {
+      window.setTimeout(run, 0);
+    }
+  };
+  deferredSyncToastTimer = window.setTimeout(flush, 0);
+}
+
 function showToast(message, options = {}) {
   const stack = document.getElementById("appToastStack");
   if (!stack || !message) return;
+  if (options.nonInterrupting) {
+    queueNonInterruptingSyncToast(message, options);
+    return;
+  }
   const toast = document.createElement("div");
   const title = String(options.title || "").trim();
   const iconUrl = String(options.iconUrl || "").trim();
@@ -14079,7 +14170,8 @@ function showFullySyncedToast(result = {}) {
   showToast("App has been Fully Synced.", {
     title: "Sync complete",
     variant: "sync-complete",
-    durationMs: 3400
+    durationMs: 3400,
+    nonInterrupting: true
   });
   return true;
 }
@@ -17466,6 +17558,8 @@ const LOADING_QUOTE_ROTATE_MS = 4600;
 let loginInitializationQuoteTimer = 0;
 let appLoadingQuoteTimer = 0;
 let appLoadingEventToastTimer = 0;
+let deferredAppLoadingEventToast = "";
+let deferredAppLoadingEventToastTimer = 0;
 
 const APP_LOADING_EVENT_BANNERS = Object.freeze({
   game: "New Game Data Detected",
@@ -17572,10 +17666,34 @@ function clearAppLoadingEventToast() {
   toast.textContent = "";
 }
 
-function showAppLoadingEventToast(message = "") {
+function queueAppLoadingEventToast(message = "") {
+  deferredAppLoadingEventToast = message;
+  if (deferredAppLoadingEventToastTimer) return;
+  let attempts = 0;
+  const flush = () => {
+    deferredAppLoadingEventToastTimer = 0;
+    const next = deferredAppLoadingEventToast;
+    if (!next) return;
+    if (shouldDeferSyncToast?.() && attempts < 18) {
+      attempts += 1;
+      deferredAppLoadingEventToastTimer = window.setTimeout(flush, 500);
+      return;
+    }
+    deferredAppLoadingEventToast = "";
+    if (shouldDeferSyncToast?.()) return;
+    showAppLoadingEventToast(next, { immediate: true });
+  };
+  deferredAppLoadingEventToastTimer = window.setTimeout(flush, 0);
+}
+
+function showAppLoadingEventToast(message = "", options = {}) {
   const normalized = normalizeAppLoadingEventMessage(message);
   if (!normalized) {
     clearAppLoadingEventToast();
+    return;
+  }
+  if (!options.immediate && shouldDeferSyncToast?.()) {
+    queueAppLoadingEventToast(normalized);
     return;
   }
   const toast = ensureAppLoadingEventToast();
@@ -17598,6 +17716,11 @@ function setAppLoadingEventBanner(message = "") {
     banner.textContent = normalized;
   }
   if (!normalized) {
+    deferredAppLoadingEventToast = "";
+    if (deferredAppLoadingEventToastTimer) {
+      window.clearTimeout(deferredAppLoadingEventToastTimer);
+      deferredAppLoadingEventToastTimer = 0;
+    }
     clearAppLoadingEventToast();
     return;
   }
@@ -18976,7 +19099,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -18,
       moodBase: "Tilted",
       noteTheme: "early ranked chaos, solo swings, panic sprays, and comms breaking down after close rounds",
-      mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 5"],
+      mapPool: SEASON_ACT_MAP_POOLS["Season 2025 Act 5"],
       maps: { Ascent: -2, Bind: 0, Breeze: -6, Corrode: -4, Haven: 3, Lotus: -5, Abyss: -8 },
       profiles: [
         { agent: "Reyna", weapon: "Vandal", focus: "Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
@@ -18996,7 +19119,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Annoyed",
       noteTheme: "sentinel comfort, stronger info, low damage, and setups that were too locked to one site",
-      mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 6"],
+      mapPool: SEASON_ACT_MAP_POOLS["Season 2025 Act 6"],
       maps: { Abyss: -7, Bind: 3, Breeze: -2, Corrode: 1, Haven: 4, Pearl: 2, Split: -5 },
       profiles: [
         { agent: "Cypher", weapon: "Guardian", focus: "Discipline", kill: -1, death: -2, assist: 4, hs: 5 },
@@ -19016,7 +19139,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -16,
       moodBase: "Focused",
       noteTheme: "controller climb, better smoke timing, safer rotates, and stronger post-plant calls",
-      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 1"],
+      mapPool: SEASON_ACT_MAP_POOLS["Season 2026 Act 1"],
       maps: { Abyss: -4, Bind: 5, Breeze: 1, Corrode: 2, Haven: 6, Pearl: 6, Split: -2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 1, death: -1, assist: 6, hs: 1 },
@@ -19036,7 +19159,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Frustrated",
       noteTheme: "aggressive fill games, shotgun success on low buys, rifle rounds slipping, and role swaps hurting consistency",
-      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 2"],
+      mapPool: SEASON_ACT_MAP_POOLS["Season 2026 Act 2"],
       maps: { Bind: 1, Breeze: -3, Fracture: -4, Haven: 7, Lotus: -6, Pearl: 3, Split: -8 },
       profiles: [
         { agent: "Omen", weapon: "Judge", focus: "Credit/Ult Economy", kill: 4, death: 1, assist: 4, hs: -8 },
@@ -19056,7 +19179,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -15,
       moodBase: "Composed",
       noteTheme: "more stable agent pool, cleaner trades, stronger controller calls, and fewer tilt carryover games",
-      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 3"],
+      mapPool: SEASON_ACT_MAP_POOLS["Season 2026 Act 3"],
       maps: { Ascent: 3, Breeze: 1, Fracture: -2, Haven: 8, Lotus: -4, Pearl: 7, Split: 2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 2, death: -1, assist: 6, hs: 2 },
@@ -19849,11 +19972,31 @@ function getLoadoutRoleMeta(role = "") {
   return LOADOUT_ROLE_META[normalizeLoadoutRole(role)] || { label: "Agent", color: "#94a3b8" };
 }
 
+function getLoadoutMapPool(profile = getActiveProfile?.()) {
+  // Ignore a player temporarily browsing a historical Stats act. The loadout
+  // should always offer the active season's competitive rotation.
+  const currentAct = String(
+    getStatsSelectedActLabel?.(profile, { ignoreActiveSelection: true })
+    || profile?.trackerAnalytics?.currentAct
+    || ""
+  ).trim();
+  const configuredPool = SEASON_ACT_MAP_POOLS[currentAct] || COMPETITIVE_MAP_POOL;
+  return [...new Set(configuredPool.filter(map => ALL_VALORANT_MAP_NAMES.includes(map)))];
+}
+
+function normalizeLoadoutMap(value = "", pool = getLoadoutMapPool()) {
+  const requested = String(value || "").trim().toLowerCase();
+  if (!requested) return "";
+  return (Array.isArray(pool) ? pool : []).find(map => map.toLowerCase() === requested) || "";
+}
+
 function getLoadoutPreferences(profile = getActiveProfile?.()) {
   const oneTrick = normalizeLoadoutAgent(profile?.loadoutOneTrick);
+  const mapPool = getLoadoutMapPool(profile);
   return {
     exclusions: oneTrick ? [] : normalizeLoadoutExclusions(profile?.loadoutExclusions),
-    oneTrick
+    oneTrick,
+    map: normalizeLoadoutMap(profile?.loadoutMap, mapPool)
   };
 }
 
@@ -22178,7 +22321,8 @@ function applyPersistentAccountState(state = {}) {
     refreshActiveProfileDataSurfaces?.({
       reason: "remote-account-state",
       animatePlaceholders: false,
-      preserveActivePage: true
+      preserveActivePage: true,
+      background: true
     });
     notifyPlaylistWatchHistoryChanged();
   } finally {
@@ -22380,6 +22524,13 @@ function schedulePersistentAccountRealtimeReload(payload = {}) {
   persistentAccountRealtimeReloadTimer = window.setTimeout(async () => {
     persistentAccountRealtimeReloadTimer = 0;
     if (!currentAuthUser?.id || backendSyncState.savePromise || backendSyncState.saveTimer) return;
+    if (isBackgroundSyncInteractionActive()) {
+      persistentAccountRealtimeReloadTimer = window.setTimeout(
+        () => schedulePersistentAccountRealtimeReload(payload),
+        350
+      );
+      return;
+    }
     const table = String(payload?.table || "").trim();
     const isMatchUpdate = table === "match_snapshots";
     setAppLoadingEventBanner(isMatchUpdate ? "game" : "cloud");
@@ -22388,14 +22539,16 @@ function schedulePersistentAccountRealtimeReload(payload = {}) {
       refreshActiveProfileDataSurfaces?.({
         reason: "realtime-sync",
         animate: false,
-        preserveActivePage: true
+        preserveActivePage: true,
+        background: true
       });
       markAccountStateLoadComplete();
       if (isMatchUpdate) {
         showToast("New match data was pulled into this device.", {
           title: "New Game Data Detected",
           variant: "success",
-          durationMs: 3600
+          durationMs: 3600,
+          nonInterrupting: true
         });
       }
     } catch (error) {
@@ -23671,6 +23824,184 @@ function getLoadoutAgentPool() {
     return !excluded.has(agent) && !excluded.has(agentRoles[agent]);
   });
 }
+
+function getLoadoutAgentReference(agent = "") {
+  const requested = String(agent || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return (globalThis.RankedCoachGamesenseReference?.agents || []).find(entry => {
+    const labels = [entry?.id, entry?.label, entry?.name];
+    return labels.some(label => String(label || "").toLowerCase().replace(/[^a-z0-9]/g, "") === requested);
+  }) || null;
+}
+
+function getMapWeightedLoadoutAgents(agents = getLoadoutAgentPool(), selectedMap = getLoadoutPreferences().map) {
+  const pool = Array.isArray(agents) ? agents.filter(Boolean) : [];
+  const map = normalizeLoadoutMap(selectedMap);
+  if (!map || !pool.length) return pool.map(agent => ({ agent, weight: 1, winRate: null }));
+
+  const winRates = pool.map(agent => {
+    const raw = Number(getLoadoutAgentReference(agent)?.mapWinRates?.[map]);
+    return Number.isFinite(raw) && raw > 0 ? raw : null;
+  });
+  const knownRates = winRates.filter(rate => rate !== null);
+  if (!knownRates.length) return pool.map(agent => ({ agent, weight: 1, winRate: null }));
+
+  const averageRate = knownRates.reduce((sum, rate) => sum + rate, 0) / knownRates.length;
+  const widestDeviation = Math.max(...knownRates.map(rate => Math.abs(rate - averageRate)), 1.5);
+  return pool.map((agent, index) => {
+    const winRate = winRates[index];
+    // Center each map at its eligible-agent average. Scaling each observed
+    // deviation across the available spread makes stronger fits show up more
+    // often, while the .35 floor preserves a real chance for every fit.
+    const weight = winRate === null
+      ? 1
+      : Math.max(0.35, Math.min(2.5, 1 + ((winRate - averageRate) / widestDeviation)));
+    return { agent, weight, winRate };
+  });
+}
+
+function pickLoadoutAgent(agents = getLoadoutAgentPool(), selectedMap = getLoadoutPreferences().map) {
+  const weighted = getMapWeightedLoadoutAgents(agents, selectedMap);
+  if (!weighted.length) return "";
+  const totalWeight = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  let cursor = Math.random() * totalWeight;
+  for (const entry of weighted) {
+    cursor -= entry.weight;
+    if (cursor <= 0) return entry.agent;
+  }
+  return weighted[weighted.length - 1].agent;
+}
+
+function renderLoadoutMapControl() {
+  const trigger = document.getElementById("loadoutMapPicker");
+  const value = document.getElementById("loadoutMapDisplay");
+  if (!trigger || !value) return;
+  const preferences = getLoadoutPreferences();
+  const selectedMap = preferences.map;
+  value.textContent = selectedMap || "Any map";
+  trigger.classList.toggle("is-map-selected", Boolean(selectedMap));
+  trigger.setAttribute("aria-label", selectedMap
+    ? `Selected map: ${selectedMap}. Change map weighting.`
+    : "Choose a map to weight the next loadout roll.");
+}
+
+function renderLoadoutMapPicker() {
+  const grid = document.getElementById("loadoutMapPickerGrid");
+  if (!grid) return;
+  const preferences = getLoadoutPreferences();
+  const selectedMap = preferences.map;
+  const maps = getLoadoutMapPool();
+  grid.innerHTML = [
+    `<button class="loadout-map-choice loadout-map-choice-clear${selectedMap ? "" : " active"}" type="button" data-loadout-map="" aria-pressed="${selectedMap ? "false" : "true"}"><span>Any map</span><small>Uniform roll</small></button>`,
+    ...maps.map(map => `
+      <button class="loadout-map-choice${map === selectedMap ? " active" : ""}" type="button" data-loadout-map="${escapeHtml(map)}" aria-pressed="${map === selectedMap ? "true" : "false"}">
+        <img src="${escapeHtml(getMapIconUrl(map))}" alt="" loading="eager" decoding="async">
+        <span>${escapeHtml(map)}</span>
+      </button>
+    `)
+  ].join("");
+}
+
+function openLoadoutMapPicker() {
+  renderLoadoutMapPicker();
+  const trigger = document.getElementById("loadoutMapPicker");
+  trigger?.setAttribute("aria-expanded", "true");
+  showModalById("loadoutMapModal");
+}
+
+function closeLoadoutMapPicker() {
+  hideModalById("loadoutMapModal");
+  document.getElementById("loadoutMapPicker")?.setAttribute("aria-expanded", "false");
+}
+
+function setLoadoutMapSelection(value = "") {
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return;
+  const map = normalizeLoadoutMap(value, getLoadoutMapPool(profile));
+  updateProfile(profile.id, { loadoutMap: map });
+  renderLoadoutMapControl();
+  renderLoadoutMapPicker();
+}
+
+const LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID = "loadoutMapLayoutRuntimeStyle";
+
+function ensureLoadoutMapLayoutRuntimeStyles() {
+  let style = document.getElementById(LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID);
+  if (!style) {
+    style = document.createElement("style");
+    style.id = LOADOUT_MAP_LAYOUT_RUNTIME_STYLE_ID;
+  }
+  // Several legacy mobile proof styles load after app.css and carry duplicated
+  // #page-home selectors. Keep this narrowly-scoped final rule as a runtime
+  // sibling of the theme CSS rather than changing the card's outer dimensions.
+  style.textContent = `
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) clamp(42px,15vw,64px) !important;
+    grid-template-rows:40px minmax(126px,1fr) 54px !important;
+    grid-template-areas:"roles spin" "reel spin" "info info" !important;
+    gap:4px !important;
+    min-height:300px !important;
+    height:auto !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons.role-filter-row{
+    grid-area:roles !important;
+    width:100% !important;
+    height:100% !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
+    grid-area:reel !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    justify-self:stretch !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn{
+    grid-area:spin !important;
+    grid-row:1 / 3 !important;
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info.home-loadout-info{
+    grid-area:info !important;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    grid-template-rows:minmax(54px,auto) !important;
+    gap:3px !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:100% !important;
+    min-height:0 !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info.home-loadout-info > .home-loadout-pill{
+    grid-area:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    height:100% !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info .pill-label{
+    font-size:8px !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-info :is(.pill-value,#agentName,#focusDisplay){
+    font-size:10px !important;
+  }
+}`;
+  // Re-appending keeps this after a theme runtime style that may be rebuilt
+  // when the player changes theme or layout.
+  document.head.appendChild(style);
+}
+
+// Small, read-only seam for the regression test that verifies the map roll
+// distribution without waiting through the visible reel animation 200 times.
+window.RankedCoachLoadoutRoll = Object.freeze({
+  getMapPool: getLoadoutMapPool,
+  getWeightedAgents: getMapWeightedLoadoutAgents,
+  pickAgent: pickLoadoutAgent
+});
 
 function getLoadoutFocusPool() {
   const locked = getLockedWeeklyFocus();
@@ -40714,6 +41045,7 @@ function initApp(){
   bindDailyWarmupEvents();
 
   loadProfiles();
+  renderLoadoutMapControl();
   updateProfileHeaderUI();
   rebuildProfileListUI();
   renderCoachReadinessUI?.();
@@ -44496,17 +44828,17 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".home-layout")}{grid-template-rows:minmax(calc(196px * ${homeBaselineScale}), auto) minmax(0, 1fr) calc(296px * ${homeBaselineScale}) !important; gap:calc(6px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row")}{grid-template-columns:minmax(calc(300px * ${homeBaselineScale}), 1.02fr) minmax(calc(336px * ${homeBaselineScale}), 1.08fr) minmax(calc(252px * ${homeBaselineScale}), .84fr) !important; gap:calc(6px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row > .loadout-card, .home-middle-row > .compass-panel, .home-middle-row > .rr-card")}{min-height:0 !important; height:100% !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(calc(146px * ${homeBaselineScale}), 1fr) calc(68px * ${homeBaselineScale}) minmax(calc(146px * ${homeBaselineScale}), 1.04fr) !important; grid-template-rows:calc(132px * ${homeBaselineScale}) auto !important; grid-template-areas:\"roles spin reel\" \"info info info\" !important; column-gap:calc(7px * ${homeBaselineScale}) !important; row-gap:calc(6px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; zoom:1 !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-template-rows:repeat(3, minmax(0, 1fr)) !important; width:100% !important; min-width:0 !important; height:calc(132px * ${homeBaselineScale}) !important; min-height:calc(132px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-column:1 / -1 !important; grid-row:2 !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{padding:calc(5px * ${homeBaselineScale}) calc(10px * ${homeBaselineScale}) !important; min-height:calc(40px * ${homeBaselineScale}) !important; align-items:center !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(11px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:calc(60px * ${homeBaselineScale}) !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(17px * ${homeBaselineScale}) !important; display:flex !important; align-items:center !important; line-height:1.18 !important; flex:1 1 auto !important; width:100% !important; margin-left:auto !important; text-align:right !important; justify-content:flex-end !important; padding-block:.04em .1em !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) calc(68px * ${homeBaselineScale}) !important; grid-template-rows:minmax(calc(34px * ${homeBaselineScale}), .34fr) minmax(0, .66fr) minmax(calc(40px * ${homeBaselineScale}), .42fr) !important; grid-template-areas:\"roles spin\" \"reel spin\" \"info info\" !important; column-gap:calc(7px * ${homeBaselineScale}) !important; row-gap:calc(6px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; width:100% !important; min-width:0 !important; height:100% !important; min-height:0 !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; grid-column:auto !important; grid-row:auto !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{grid-area:auto !important; padding:calc(5px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:center !important; justify-content:center !important; flex-direction:column !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(15px * ${homeBaselineScale}) !important; display:block !important; line-height:1.08 !important; flex:0 1 auto !important; width:100% !important; margin:0 !important; text-align:center !important; justify-content:center !important; padding-block:.04em .1em !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{width:100% !important; min-width:calc(68px * ${homeBaselineScale}) !important; height:calc(132px * ${homeBaselineScale}) !important; min-height:calc(132px * ${homeBaselineScale}) !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; grid-row:1 / 3 !important; width:100% !important; min-width:calc(68px * ${homeBaselineScale}) !important; height:100% !important; min-height:0 !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{width:auto !important; min-width:0 !important; max-width:100% !important; height:100% !important; min-height:calc(132px * ${homeBaselineScale}) !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:100% !important; min-width:0 !important; max-width:none !important; height:100% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:stretch !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner, .loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell")}{display:flex !important; flex-direction:column !important; grid-template-columns:none !important; gap:calc(5px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell, .compass-main .compass-summary-shell .compass-summary-copy, .compass-main .compass-summary-shell .compass-profile-kicker, .compass-main .compass-summary-shell .compass-profile-title, .compass-main .compass-summary-shell .compass-profile-meta, .compass-main .compass-summary-shell .compass-profile-meta span, .compass-main .compass-summary-shell .compass-summary-body, .compass-main .compass-summary-shell .compass-cards-grid, .compass-main .compass-summary-shell .compass-svg-wrap, .compass-main .compass-summary-shell .compass-score-card, .compass-main .compass-summary-shell .compass-card-top, .compass-main .compass-summary-shell .compass-card-score-row, .compass-main .compass-summary-shell #compassCardAim, .compass-main .compass-summary-shell #compassCardSense, .compass-main .compass-summary-shell #compassCardTeam, .compass-main .compass-summary-shell #compassCardDiscipline")}{position:relative !important; left:auto !important; top:auto !important; width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; zoom:1 !important;}`,
@@ -44582,6 +44914,7 @@ function buildThemeBuilderRuntimeCss() {
 function applyThemeBuilderRuntimeStyles() {
   if (THEME_BUILDER_LAUNCH_LOCKED) {
     document.getElementById(THEME_BUILDER_RUNTIME_STYLE_ID)?.remove();
+    ensureLoadoutMapLayoutRuntimeStyles?.();
     requestAnimationFrame(() => {
       updateAgentFrameMetrics();
       if (typeof renderChart === "function" && chartRow) {
@@ -44600,6 +44933,7 @@ function applyThemeBuilderRuntimeStyles() {
     document.head.appendChild(style);
   }
   style.textContent = buildThemeBuilderRuntimeCss();
+  ensureLoadoutMapLayoutRuntimeStyles?.();
   requestAnimationFrame(() => {
     updateAgentFrameMetrics();
     if (typeof renderChart === "function" && chartRow) {
@@ -47484,6 +47818,27 @@ function bindEvents(){
     if (e.target === agentModal) {
       hideModalById("agentModal");
     }
+  });
+
+  document.getElementById("loadoutMapPicker")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openLoadoutMapPicker();
+  });
+
+  document.getElementById("closeLoadoutMapModal")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeLoadoutMapPicker();
+  });
+
+  document.getElementById("loadoutMapModal")?.addEventListener("click", (e) => {
+    const choice = e.target.closest?.("[data-loadout-map]");
+    if (choice) {
+      setLoadoutMapSelection(choice.dataset.loadoutMap || "");
+      closeLoadoutMapPicker();
+      return;
+    }
+    if (e.target === e.currentTarget) closeLoadoutMapPicker();
   });
 
   document.getElementById("agentRoleDropdown")?.addEventListener("change", (e) => {
@@ -52085,6 +52440,7 @@ function normalizeProfileRecord(profile = {}) {
   const avatarAgent = String(profile.avatarAgent || "").trim() || getDefaultProfileAvatarAgent();
   const loadoutOneTrick = normalizeLoadoutAgent(profile.loadoutOneTrick);
   const loadoutExclusions = loadoutOneTrick ? [] : normalizeLoadoutExclusions(profile.loadoutExclusions);
+  const loadoutMap = normalizeLoadoutMap(profile.loadoutMap, getLoadoutMapPool(profile));
   return {
     ...profile,
     name: profile.name || "Main",
@@ -52119,6 +52475,7 @@ function normalizeProfileRecord(profile = {}) {
     warmupLog: normalizeWarmupLog(profile.warmupLog),
     loadoutExclusions,
     loadoutOneTrick,
+    loadoutMap,
     watchedPlaylistVideos: normalizeWatchedPlaylistVideos(profile.watchedPlaylistVideos),
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
@@ -52204,6 +52561,7 @@ function loadProfiles(){
       warmupLog: [],
       loadoutExclusions: [],
       loadoutOneTrick: "",
+      loadoutMap: "",
       watchedPlaylistVideos: [],
       accessibility: {
         contrastMode: "standard",
@@ -52530,6 +52888,9 @@ function updateProfile(id, data){
       ? []
       : normalizeLoadoutExclusions(data.loadoutExclusions != null ? data.loadoutExclusions : profile.loadoutExclusions);
   }
+  if (data.loadoutMap != null) {
+    profile.loadoutMap = normalizeLoadoutMap(data.loadoutMap, getLoadoutMapPool(profile));
+  }
   if (data.watchedPlaylistVideos != null) {
     profile.watchedPlaylistVideos = normalizeWatchedPlaylistVideos(data.watchedPlaylistVideos);
   }
@@ -52642,6 +53003,7 @@ function setActiveProfile(id){
   activeStatsActKey = "";
 
   const next = getActiveProfile();
+  renderLoadoutMapControl();
 
   // restore matches
   matches = next?.matches ? next.matches.slice() : [];
@@ -57644,16 +58006,18 @@ if(icon){
 
   const agents = getLoadoutAgentPool();
   const focusPool = getLoadoutFocusPool();
+  const selectedMap = getLoadoutPreferences().map;
 
   if (!agents.length) {
     showToast?.("No eligible agent remains after this session's role and exclusion filters.", { tone: "neutral" });
     return;
   }
 
-  let pick;
-  do {
-    pick = agents[Math.floor(Math.random() * agents.length)];
-  } while (agents.length > 1 && pick === agentName.textContent);
+  const previousAgent = String(agentName?.textContent || "").trim();
+  const eligibleForThisRoll = agents.length > 1
+    ? agents.filter(agent => agent !== previousAgent)
+    : agents;
+  const pick = pickLoadoutAgent(eligibleForThisRoll, selectedMap);
 
   let newFocus;
   do {
@@ -60976,7 +61340,8 @@ function scheduleRetainedHistoryContinuation(profileId, delayMs = HENRIK_HISTORY
       refreshActiveProfileDataSurfaces?.({
         reason: "retained-history-background-complete",
         animatePlaceholders: false,
-        preserveActivePage: true
+        preserveActivePage: true,
+        background: true
       });
       await waitForActiveProfileSurfacePaint?.();
       if (result?.success && !result?.partial) {
@@ -61022,6 +61387,31 @@ function scheduleDailyProfileSync() {
   }, Math.max(1000, nextDay.getTime() - now.getTime()));
 }
 
+async function runRiotAutoSyncWhenSafe() {
+  if (isBackgroundSyncInteractionActive()) {
+    riotAutoSyncTimer = window.setTimeout(() => {
+      void runRiotAutoSyncWhenSafe();
+    }, 350);
+    return;
+  }
+  const result = await performRiotSync({
+    silent: true,
+    mode: "refresh",
+    allowDemoFallback: false,
+    // An automatic refresh has no player-facing urgency. Keep its state work
+    // separate from the chart or a focused interaction, then paint the current
+    // page only when it is safe to do so.
+    deferSurfaceRefresh: true
+  });
+  refreshActiveProfileDataSurfaces?.({
+    reason: "riot-auto-sync",
+    animate: false,
+    preserveActivePage: true,
+    background: true,
+    chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null
+  });
+}
+
 function scheduleRiotAutoSync() {
   clearRiotAutoSyncTimer();
   scheduleDailyProfileSync();
@@ -61052,11 +61442,7 @@ function scheduleRiotAutoSync() {
   }
 
   riotAutoSyncTimer = setTimeout(() => {
-    performRiotSync({
-      silent: true,
-      mode: "refresh",
-      allowDemoFallback: false
-    });
+    void runRiotAutoSyncWhenSafe();
   }, nextSyncDelay);
 }
 
@@ -61768,7 +62154,7 @@ function renderStatsMapsModel() {
     maps.map(map => [String(map?.map || "").toLowerCase(), map])
   );
   const selectedAct = model?.currentAct || activeStatsActLabel || "";
-  const configuredPool = DEMO_ACT_MAP_POOLS[selectedAct] || [];
+  const configuredPool = SEASON_ACT_MAP_POOLS[selectedAct] || [];
   const activePool = [...new Set(configuredPool.length ? configuredPool : COMPETITIVE_MAP_POOL)];
   const poolSet = new Set(activePool.map(mapName => String(mapName).toLowerCase()));
   const activeMapNames = activePool.slice().sort((a, b) => {

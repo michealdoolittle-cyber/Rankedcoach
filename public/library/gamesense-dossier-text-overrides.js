@@ -6,7 +6,29 @@
   // Paste exported editor JSON into DOSSIER_TEXT_OVERRIDES, then commit this file.
   const DOSSIER_TEXT_OVERRIDES = {
     agents: {},
-    maps: {},
+    maps: {
+      ascent: {
+        "tips.attack": [
+          {
+            label: "Mid! Mid! Mid!",
+            text: "Mid-control on Ascent is vital to successful site executions as A, and B site have narrow choke holds to exit from main. This means site hits can stall from a single smoke or molly, completely delaying or denying a site execute. Make sure you pressure mid with presence or utility to split the defenders."
+          },
+          {
+            label: "Teams that Anchor",
+            text: "Teams that have a hard site anchor can be completely break by incorporating 2 strong late lurks. The first is the late B Main lurk, when your team takes site on A. The defender will know the plant started, verifying it is not a fake and begin the rotation where you get a free easy pick, and several choices of how you want to rotate or continue the flank pressure. The second is going to be from a very late Mid Pizza lurk. Most defenders expect you to maintain B Main, and tend to either fight together or smoke main to cut off the angle. When the defenders retake begins and you verified your B Main is not getting flanked you can commit to the longer Mid to Pizza rotation (knife out) and take a Market flank, or CT pick if you caught the defenders early enough. This kind of extra late lurk is the type that sticks with defenders for the entire game forcing accountability and awareness. It also makes any team that has a slower or tougher time retaking, literally impossible, especially if their comp has low utility to begin with"
+          },
+          {
+            label: "Teams that Rotate Fast",
+            text: "Fighting against teams that are heavy on reactivity instead of proactivity leaves a gap for you as an attacker. Defenders are always forced to take on a side of the map with 3 players leaning A or B. If they are reactive you can easily run 2 setups. The first is a general fake which always forces a map gap if defenders are taking the shortest route through their spawn . The second is a default. As an attacker you can have 2 people on both mains, and one mid plus a smoke to take map control. From here you gather the info on which site has the 3 players. There is no way for the defense to have even numbers on a 4 lane map. Either there is 2 on each site, with one tree or pizza plus a trip, if there are 2 mid then there is a site that contains 1 player A or B, or they are stacked on one side with stall utility on a Main which can be baited out by your default."
+          },
+          {
+            label: "Teams that Fight Back",
+            text: "Although not super common it is possible in ranked you will have teams that are extra aggressive on defense. The first insight is always to be aware of how much and the types of utility you are up against. Generally playing more patient is best as you come to expect these kinds of plays from your opponent, and is definitely better to catch early on based on the enemy composition. The other thing is for any lane pushed, opposite lanes tend to be reserved. If your team is getting pushed on B Main, A Main should be the weaker site. Being pushed with no Mid Control however is not an option. If the enemy is a Jett or Chamber you need to expect an operator on their snowballing economy and be prepared to either smoke these angles, force them out with recon or flash your team through these sight lines as an op swinging is at a massive disadvantage compared to an op holding."
+          }
+        ],
+        "tips.teamplay": []
+      }
+    },
     weapons: {}
   };
 
