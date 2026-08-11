@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260811-consolidated-insights-02";
+const RANKEDCOACH_APP_BUILD_ID = "20260811-consolidated-insights-03";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -11257,7 +11257,9 @@ function formatEconomyPhaseRate(bucket = {}, field = "wins") {
 
 function formatEconomyPhaseWinLossRate(bucket = {}) {
   if (!safeNumber(bucket.total)) return "No Data";
-  return `${formatPercent(getEconomyPhaseRate(bucket, "wins"))}/${formatPercent(getEconomyPhaseRate(bucket, "losses"))}`;
+  const winRate = Math.round(safeNumber(getEconomyPhaseRate(bucket, "wins")));
+  const lossRate = Math.round(safeNumber(getEconomyPhaseRate(bucket, "losses")));
+  return `${winRate}/${lossRate}%`;
 }
 
 function formatEconomyPhaseFormula(bucket = {}, field = "wins", baseFormula = "") {

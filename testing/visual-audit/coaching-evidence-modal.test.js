@@ -193,6 +193,7 @@ async function verifyViewport(browser, viewport) {
     }]);
     return {
       economyItems,
+      breezeWeights: globalThis.RankedCoachLoadoutRoll?.getWeightedAgents?.(["Omen", "Sova"], "Breeze"),
       weeklyCandidate: hook?.selectWeeklyFocusCandidate?.([
         { label: "High confidence, lower priority", confidence: "High", score: 24 },
         { label: "Higher evidence score", confidence: "Medium", score: 86 }
@@ -209,8 +210,13 @@ async function verifyViewport(browser, viewport) {
     "Save Round Win %",
     "Full Buy Round Win/Loss %"
   ]);
-  assert.equal(dataViews.economyItems.find(item => item.label === "Bonus Round Win/Loss %")?.stat, "0%/100%");
-  assert.equal(dataViews.economyItems.find(item => item.label === "Full Buy Round Win/Loss %")?.stat, "50%/50%");
+  assert.equal(dataViews.economyItems.find(item => item.label === "Bonus Round Win/Loss %")?.stat, "0/100%");
+  assert.equal(dataViews.economyItems.find(item => item.label === "Full Buy Round Win/Loss %")?.stat, "50/50%");
+  assert.ok(
+    dataViews.breezeWeights.find(entry => entry.agent === "Sova")?.weight
+      > dataViews.breezeWeights.find(entry => entry.agent === "Omen")?.weight,
+    JSON.stringify(dataViews.breezeWeights)
+  );
   assert.equal(dataViews.weeklyCandidate?.label, "Higher evidence score");
   assert.deepEqual(dataViews.sideMetrics, {
     roundsPlayed: 2,
@@ -248,6 +254,12 @@ async function verifyViewport(browser, viewport) {
 }
 
 async function run() {
+  const appSource = fs.readFileSync(path.resolve(root, "app.js"), "utf8");
+  assert.equal(appSource.includes("firstKillLocation"), false, "dead firstKillLocation lane field should not be rendered");
+  assert.equal(appSource.includes("firstDeathLocation"), false, "dead firstDeathLocation lane field should not be rendered");
+  assert.equal(appSource.includes("agent.econ"), false, "fake agent.econ rating should not be rendered");
+  assert.equal(appSource.includes("describeProfilePracticeLever"), false, "orphaned describeProfilePracticeLever helper should stay removed unless rewired");
+
   const server = await startServer();
   const browser = await chromium.launch({ headless: true });
   try {
