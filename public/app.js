@@ -23818,8 +23818,14 @@ function renderLoadoutMapControl() {
   const selectedMap = preferences.map;
   value.textContent = selectedMap || "Any map";
   trigger.classList.toggle("is-map-selected", Boolean(selectedMap));
+  if (selectedMap) {
+    const imageUrl = String(getMapIconUrl(selectedMap) || "").replace(/["\\\n\r]/g, "");
+    trigger.style.setProperty("--loadout-map-image", `url("${imageUrl}")`);
+  } else {
+    trigger.style.removeProperty("--loadout-map-image");
+  }
   trigger.setAttribute("aria-label", selectedMap
-    ? `Selected map: ${selectedMap}. Change map weighting.`
+    ? `Selected map: ${selectedMap}. Change map weighting, or choose ${selectedMap} again to clear it.`
     : "Choose a map to weight the next loadout roll.");
 }
 
@@ -23829,15 +23835,13 @@ function renderLoadoutMapPicker() {
   const preferences = getLoadoutPreferences();
   const selectedMap = preferences.map;
   const maps = getLoadoutMapPool();
-  grid.innerHTML = [
-    `<button class="loadout-map-choice loadout-map-choice-clear${selectedMap ? "" : " active"}" type="button" data-loadout-map="" aria-pressed="${selectedMap ? "false" : "true"}"><span>Any map</span><small>Uniform roll</small></button>`,
-    ...maps.map(map => `
+  grid.innerHTML = maps.map(map => `
       <button class="loadout-map-choice${map === selectedMap ? " active" : ""}" type="button" data-loadout-map="${escapeHtml(map)}" aria-pressed="${map === selectedMap ? "true" : "false"}">
         <img src="${escapeHtml(getMapIconUrl(map))}" alt="" loading="eager" decoding="async">
         <span>${escapeHtml(map)}</span>
+        ${map === selectedMap ? "<small>Click again to clear</small>" : ""}
       </button>
-    `)
-  ].join("");
+    `).join("");
 }
 
 function openLoadoutMapPicker() {
@@ -44676,7 +44680,8 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; width:100% !important; min-width:0 !important; height:100% !important; min-height:0 !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:100% !important; min-width:0 !important; max-width:none !important; height:100% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:stretch !important; align-self:stretch !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner, .loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner")}{object-fit:cover !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell")}{display:flex !important; flex-direction:column !important; grid-template-columns:none !important; gap:calc(5px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell, .compass-main .compass-summary-shell .compass-summary-copy, .compass-main .compass-summary-shell .compass-profile-kicker, .compass-main .compass-summary-shell .compass-profile-title, .compass-main .compass-summary-shell .compass-profile-meta, .compass-main .compass-summary-shell .compass-profile-meta span, .compass-main .compass-summary-shell .compass-summary-body, .compass-main .compass-summary-shell .compass-cards-grid, .compass-main .compass-summary-shell .compass-svg-wrap, .compass-main .compass-summary-shell .compass-score-card, .compass-main .compass-summary-shell .compass-card-top, .compass-main .compass-summary-shell .compass-card-score-row, .compass-main .compass-summary-shell #compassCardAim, .compass-main .compass-summary-shell #compassCardSense, .compass-main .compass-summary-shell #compassCardTeam, .compass-main .compass-summary-shell #compassCardDiscipline")}{position:relative !important; left:auto !important; top:auto !important; width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; zoom:1 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell")}{padding:calc(5px * ${homeBaselineScale}) calc(6px * ${homeBaselineScale}) !important; flex:0 0 auto !important;}`,
@@ -47669,7 +47674,9 @@ function bindEvents(){
   document.getElementById("loadoutMapModal")?.addEventListener("click", (e) => {
     const choice = e.target.closest?.("[data-loadout-map]");
     if (choice) {
-      setLoadoutMapSelection(choice.dataset.loadoutMap || "");
+      const nextMap = choice.dataset.loadoutMap || "";
+      const currentMap = getLoadoutPreferences().map || "";
+      setLoadoutMapSelection(nextMap && nextMap === currentMap ? "" : nextMap);
       closeLoadoutMapPicker();
       return;
     }

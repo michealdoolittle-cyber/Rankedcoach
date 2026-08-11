@@ -812,6 +812,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       selectedArt: rect(selectedArt),
       selectedArtStyle: selectedArt ? {
         transform: getComputedStyle(selectedArt).transform,
+        objectFit: getComputedStyle(selectedArt).objectFit,
         x: getComputedStyle(selectedArt).getPropertyValue("--agent-art-x").trim(),
         y: getComputedStyle(selectedArt).getPropertyValue("--agent-art-y").trim(),
         scale: getComputedStyle(selectedArt).getPropertyValue("--agent-art-scale").trim(),
@@ -868,6 +869,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
   }
   assert.ok(contains(geometry.frame, geometry.selectedArtClip), `${style} selected-art clip escaped its frame: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.clipOverflow, "hidden", `${style} selected-art clip no longer contains authored crop offsets: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.objectFit, "cover", `${style} selected agent art is still visually letterboxed instead of filling its frame: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.selectedArt?.width > 0 && geometry.selectedArt?.height > 0, `${style} selected Jett art did not render: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.x, "13px", `${style} selected Jett X crop offset was lost: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.y, "16px", `${style} selected Jett Y crop offset was lost: ${JSON.stringify(geometry)}`);
@@ -948,6 +950,7 @@ async function assertLoadoutRollSettles(page, style) {
       frame: rect(frame),
       spin: rect(card.querySelector("#spinAgentBtn")),
       selectedAgent: card.querySelector("#agentName")?.textContent?.trim() || "",
+      selectedObjectFit: getComputedStyle(card.querySelector("#agentFrame .agent-reveal-art img"))?.objectFit || "",
       reelIsSpinning: frame?.querySelector("#agentReel")?.classList.contains("reel-spinning") || false,
       cardTransform: getComputedStyle(card).transform,
       appScale: root.getPropertyValue("--app-1080-scale").trim(),
@@ -957,11 +960,60 @@ async function assertLoadoutRollSettles(page, style) {
   });
   assert.equal(after.reelIsSpinning, false, `${style} reel did not settle after a real roll: ${JSON.stringify(after)}`);
   assert.ok(after.selectedAgent && after.selectedAgent !== "-", `${style} roll did not select an agent: ${JSON.stringify(after)}`);
+  assert.equal(after.selectedObjectFit, "cover", `${style} selected rolled agent art did not fill the frame: ${JSON.stringify(after)}`);
   ["card", "frame", "spin"].forEach(key => {
     assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);
   });
   assert.ok(Math.abs(after.spin.width - after.spin.height) <= 2, `${style} spin control did not stay square after the roll: ${JSON.stringify(after)}`);
   assert.ok(Math.abs((after.spin.top + after.spin.bottom) - (after.frame.top + after.frame.bottom)) <= 4, `${style} spin control did not stay centered beside the frame after the roll: ${JSON.stringify(after)}`);
+  await editor.evaluate(modal => {
+    modal.style.removeProperty("visibility");
+    modal.style.removeProperty("pointer-events");
+  });
+}
+
+async function assertLoadoutMapPickerBehavior(page, style) {
+  const editor = page.locator("#editProfileModal");
+  await editor.evaluate(modal => {
+    modal.style.setProperty("visibility", "hidden", "important");
+    modal.style.setProperty("pointer-events", "none", "important");
+    document.body.classList.remove("has-active-modal", "mobile-modal-open");
+  });
+  await page.locator("#loadoutMapPicker").click({ force: true });
+  await page.locator("#loadoutMapModal").waitFor({ state: "visible", timeout: 5000 });
+  const pickerStart = await page.locator("#loadoutMapModal").evaluate(modal => ({
+    clearTiles: modal.querySelectorAll(".loadout-map-choice-clear").length,
+    anyTiles: [...modal.querySelectorAll(".loadout-map-choice")].filter(button => /any map/i.test(button.textContent || "")).length,
+    firstMap: modal.querySelector(".loadout-map-choice[data-loadout-map]")?.getAttribute("data-loadout-map") || ""
+  }));
+  assert.equal(pickerStart.clearTiles, 0, `${style} map picker still renders the full Any map tile`);
+  assert.equal(pickerStart.anyTiles, 0, `${style} map picker still contains an Any map grid choice`);
+  assert.ok(pickerStart.firstMap, `${style} map picker did not render selectable maps`);
+  await page.locator(`.loadout-map-choice[data-loadout-map="${pickerStart.firstMap}"]`).click();
+  await page.waitForFunction(() => document.getElementById("loadoutMapModal")?.style.display === "none", null, { timeout: 5000 });
+  const selected = await page.locator("#loadoutMapPicker").evaluate(trigger => ({
+    value: document.getElementById("loadoutMapDisplay")?.textContent?.trim() || "",
+    selected: trigger.classList.contains("is-map-selected"),
+    imageVar: trigger.style.getPropertyValue("--loadout-map-image"),
+    beforeBackground: getComputedStyle(trigger, "::before").backgroundImage
+  }));
+  assert.equal(selected.value, pickerStart.firstMap, `${style} map pill did not show the selected map: ${JSON.stringify(selected)}`);
+  assert.equal(selected.selected, true, `${style} map pill did not enter selected state: ${JSON.stringify(selected)}`);
+  assert.match(selected.imageVar, /^url\("/, `${style} map pill did not receive a map image variable: ${JSON.stringify(selected)}`);
+  assert.match(selected.beforeBackground, /url\(/, `${style} map pill pseudo-background did not render the selected map image: ${JSON.stringify(selected)}`);
+
+  await page.locator("#loadoutMapPicker").click({ force: true });
+  await page.locator("#loadoutMapModal").waitFor({ state: "visible", timeout: 5000 });
+  await page.locator(`.loadout-map-choice.active[data-loadout-map="${pickerStart.firstMap}"]`).click();
+  await page.waitForFunction(() => document.getElementById("loadoutMapModal")?.style.display === "none", null, { timeout: 5000 });
+  const cleared = await page.locator("#loadoutMapPicker").evaluate(trigger => ({
+    value: document.getElementById("loadoutMapDisplay")?.textContent?.trim() || "",
+    selected: trigger.classList.contains("is-map-selected"),
+    imageVar: trigger.style.getPropertyValue("--loadout-map-image")
+  }));
+  assert.equal(cleared.value, "Any map", `${style} clicking the active map did not clear back to uniform rolling: ${JSON.stringify(cleared)}`);
+  assert.equal(cleared.selected, false, `${style} map pill stayed selected after clearing: ${JSON.stringify(cleared)}`);
+  assert.equal(cleared.imageVar, "", `${style} map image variable stayed on the cleared pill: ${JSON.stringify(cleared)}`);
   await editor.evaluate(modal => {
     modal.style.removeProperty("visibility");
     modal.style.removeProperty("pointer-events");
@@ -1376,6 +1428,7 @@ async function run() {
     }));
     await assertHomeLoadoutAndCompassGeometry(page, "default desktop");
     await assertLoadoutRollSettles(page, "default desktop");
+    await assertLoadoutMapPickerBehavior(page, "default desktop");
     await screenshotLoadoutWithoutAuditEditor(page, path.join(__dirname, "tmp", "session-prep-layout-default-desktop.png"));
     await assertHomeChartFlow(page, "default desktop", { requireReachableDesktop: true });
     await page.setViewportSize({ width: 390, height: 844 });

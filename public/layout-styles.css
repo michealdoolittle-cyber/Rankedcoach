@@ -2959,7 +2959,7 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
 }
 
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame :is(.agent-reveal-art img,.agent-frame-art img){
-  object-fit:contain !important;
+  object-fit:cover !important;
   object-position:center center !important;
 }
 
@@ -3318,7 +3318,7 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
   height:100% !important;
   max-width:100% !important;
   max-height:100% !important;
-  object-fit:contain !important;
+  object-fit:cover !important;
   object-position:center center !important;
   transform:translate(-50%,-50%) scale(1) !important;
   transform-origin:center center !important;
