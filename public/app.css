@@ -10036,8 +10036,11 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   opacity:0;
   overflow:hidden;
   background:
-    radial-gradient(circle at 78% 22%, color-mix(in srgb, var(--logging-launch-color-a) 62%, transparent), transparent 42%),
-    linear-gradient(135deg, color-mix(in srgb, var(--logging-launch-color-a) 35%, #08111f), var(--logging-launch-color-b));
+    radial-gradient(circle at 78% 22%, color-mix(in srgb, var(--logging-launch-color-c, var(--logging-launch-color-b)) 62%, transparent), transparent 42%),
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--logging-launch-color-a) 35%, #08111f) 0%,
+      color-mix(in srgb, var(--logging-launch-color-b) 68%, #08111f) 62%,
+      color-mix(in srgb, var(--logging-launch-color-c, var(--logging-launch-color-b)) 72%, #08111f) 100%);
   transition:opacity 720ms ease;
 }
 
@@ -10062,7 +10065,7 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   right:18px;
   bottom:13px;
   max-width:55%;
-  color:color-mix(in srgb, var(--logging-launch-color-a) 70%, white);
+  color:color-mix(in srgb, var(--logging-launch-color-c, var(--logging-launch-color-a)) 70%, white);
   font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.13em;
   text-align:right;

@@ -218,6 +218,50 @@ async function run() {
     assert.equal(launcherBackgrounds.warmupLayers, 2, JSON.stringify(launcherBackgrounds));
     assert.ok(launcherBackgrounds.warmupActiveLabel, JSON.stringify(launcherBackgrounds));
     assert.match(launcherBackgrounds.warmupLogo, /\/assets\/library\/teams\//, JSON.stringify(launcherBackgrounds));
+    const warmupManifest = [
+      ["100 Thieves", ["#000000", "#ff101c", "#ffffff"], "100T.png"],
+      ["All Gamers", ["#ff0000"], "All-Gamers.png"],
+      ["Bilibili Gaming", ["#36d0f4", "#fa7198"], "BLG.png"],
+      ["Cloud9", ["#21aee3", "#ffffff"], "C9.png"],
+      ["Dragon Ranger Gaming", ["#76f25c", "#325cfb"], "DRG.png"],
+      ["EDward Gaming", ["#ffffff", "#000000"], "EDG.png"],
+      ["Envy", ["#000000", "#ffffff"], "ENVY.png"],
+      ["FNATIC", ["#ff5900", "#000000"], "FNATIC.png"],
+      ["FunPlus Phoenix", ["#ff0600", "#000000"], "FPX.png"],
+      ["FURIA", ["#000000", "#ffffff"], "Furia.png"],
+      ["G2 Esports", ["#ffffff", "#000000"], "G2-Esports.png"],
+      ["Gen.G", ["#a48721", "#ffffff", "#000000"], "Gen.G.png"],
+      ["Global Esports", ["#1a458f", "#ed1c24", "#ffffff"], "Global-ESports.png"],
+      ["KRU Esports", ["#fe198f", "#000000"], "KRU.png"],
+      ["Leviatán", ["#44b8f5", "#000000"], "Levi.png"],
+      ["LOUD", ["#12ff00", "#000000"], "LOUD.png"],
+      ["MIBR", ["#d0d3d3", "#000000"], "Mibr.png"],
+      ["NAVI", ["#ffee00", "#000000"], "NAVI.png"],
+      ["NRG", ["#f63d0a", "#000000"], "NRG.png"],
+      ["Paper Rex", ["#ffffff", "#000000"], "PRX.png"],
+      ["Sentinels", ["#dd1a28", "#000000"], "Sentinels.png"],
+      ["T1", ["#e21e2f", "#000000"], "T1.png"],
+      ["Talon Esports", ["#e30041", "#000000"], "Talon.png"],
+      ["Team Heretics", ["#ffffff", "#000000", "#daa511"], "Team-Heritics.png"],
+      ["Team Liquid", ["#ffffff", "#000000"], "Team-Liquid.png"],
+      ["Team Secret", ["#ffffff", "#000000"], "Team-Secret.png"],
+      ["Team Vitality", ["#ffff00", "#000000"], "Vitality.png"],
+      ["ZETA DIVISION", ["#cdfe00", "#000000"], "ZETA.png"]
+    ];
+    const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+    const teamAssetNames = new Set(fs.readdirSync(path.join(root, "assets", "library", "teams")));
+    for (const [name, colors, filename] of warmupManifest) {
+      assert.match(
+        appSource,
+        new RegExp(`name: "${name}", colors: \\[${colors.map(color => `"${color}"`).join(", ")}\\], logo: "/assets/library/teams/${filename}"`),
+        `Warm-up entry should retain the approved ${name} palette and asset path.`
+      );
+      assert.equal(
+        teamAssetNames.has(filename),
+        true,
+        `Warm-up logo filename must match the deployed asset's exact case: ${filename}`
+      );
+    }
     assert.deepEqual(
       launcherBackgrounds.trainers.map(entry => entry.label),
       ["Kovaak's", "Aim Lab"],

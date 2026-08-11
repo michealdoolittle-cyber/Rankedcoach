@@ -2467,33 +2467,34 @@ function getLoggingLauncherEmbeddedHost() {
 const LOGGING_LAUNCHER_BACKGROUND_CONFIG = Object.freeze({
   rotationMs: 10000,
   warmupTeams: Object.freeze([
-    { name: "100 Thieves", colors: ["#ed1c24", "#12080a"], logo: "/assets/library/teams/100T.png" },
-    { name: "Bilibili Gaming", colors: ["#ef6b9a", "#171019"], logo: "/assets/library/teams/BLG.png" },
-    { name: "Cloud9", colors: ["#38bdf8", "#08131f"], logo: "/assets/library/teams/C9.png" },
-    { name: "Dragon Ranger Gaming", colors: ["#e85a4f", "#180b0b"], logo: "/assets/library/teams/DRG.png" },
-    { name: "EDward Gaming", colors: ["#dc2626", "#17090a"], logo: "/assets/library/teams/edward-gaming.png" },
-    { name: "Envy", colors: ["#38bdf8", "#08121e"], logo: "/assets/library/teams/ENVY.png" },
-    { name: "FNATIC", colors: ["#f97316", "#180d08"], logo: "/assets/library/teams/FNATIC.png" },
-    { name: "FunPlus Phoenix", colors: ["#f97316", "#160c08"], logo: "/assets/library/teams/FPX.png" },
-    { name: "FURIA", colors: ["#e5e7eb", "#111827"], logo: "/assets/library/teams/Furia.png" },
-    { name: "G2 Esports", colors: ["#ef4444", "#18090c"], logo: "/assets/library/teams/G2-Esports.png" },
-    { name: "Gen.G", colors: ["#fbbf24", "#17120a"], logo: "/assets/library/teams/Gen.G.png" },
-    { name: "Global Esports", colors: ["#60a5fa", "#0c1020"], logo: "/assets/library/teams/Global-Esports.png" },
-    { name: "KRU Esports", colors: ["#ec4899", "#190b17"], logo: "/assets/library/teams/KRU.png" },
-    { name: "Leviatán", colors: ["#22d3ee", "#07161b"], logo: "/assets/library/teams/Levi.png" },
-    { name: "LOUD", colors: ["#84cc16", "#0d1608"], logo: "/assets/library/teams/LOUD.png" },
-    { name: "MIBR", colors: ["#22c55e", "#08170d"], logo: "/assets/library/teams/Mibr.png" },
-    { name: "NAVI", colors: ["#facc15", "#181307"], logo: "/assets/library/teams/NAVI.png" },
-    { name: "NRG", colors: ["#22c55e", "#081609"], logo: "/assets/library/teams/NRG.png" },
-    { name: "Paper Rex", colors: ["#ef4444", "#190b0b"], logo: "/assets/library/teams/paper-rex.png" },
-    { name: "Sentinels", colors: ["#ff4655", "#1b0b10"], logo: "/assets/library/teams/sentinels.png" },
-    { name: "T1", colors: ["#ef4444", "#18090c"], logo: "/assets/library/teams/t1.png" },
-    { name: "Talon Esports", colors: ["#e879f9", "#180b1b"], logo: "/assets/library/teams/Talon.png" },
-    { name: "Team Heretics", colors: ["#c7f000", "#101608"], logo: "/assets/library/teams/Team-Heritics.png" },
-    { name: "Team Liquid", colors: ["#3b82f6", "#081226"], logo: "/assets/library/teams/Team-Liquid.png" },
-    { name: "Team Secret", colors: ["#38bdf8", "#091521"], logo: "/assets/library/teams/Team-Secret.png" },
-    { name: "Team Vitality", colors: ["#ffe900", "#151506"], logo: "/assets/library/teams/Vitality.png" },
-    { name: "ZETA DIVISION", colors: ["#60a5fa", "#0b1021"], logo: "/assets/library/teams/ZETA.png" }
+    { name: "100 Thieves", colors: ["#000000", "#ff101c", "#ffffff"], logo: "/assets/library/teams/100T.png" },
+    { name: "All Gamers", colors: ["#ff0000"], logo: "/assets/library/teams/All-Gamers.png" },
+    { name: "Bilibili Gaming", colors: ["#36d0f4", "#fa7198"], logo: "/assets/library/teams/BLG.png" },
+    { name: "Cloud9", colors: ["#21aee3", "#ffffff"], logo: "/assets/library/teams/C9.png" },
+    { name: "Dragon Ranger Gaming", colors: ["#76f25c", "#325cfb"], logo: "/assets/library/teams/DRG.png" },
+    { name: "EDward Gaming", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/EDG.png" },
+    { name: "Envy", colors: ["#000000", "#ffffff"], logo: "/assets/library/teams/ENVY.png" },
+    { name: "FNATIC", colors: ["#ff5900", "#000000"], logo: "/assets/library/teams/FNATIC.png" },
+    { name: "FunPlus Phoenix", colors: ["#ff0600", "#000000"], logo: "/assets/library/teams/FPX.png" },
+    { name: "FURIA", colors: ["#000000", "#ffffff"], logo: "/assets/library/teams/Furia.png" },
+    { name: "G2 Esports", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/G2-Esports.png" },
+    { name: "Gen.G", colors: ["#a48721", "#ffffff", "#000000"], logo: "/assets/library/teams/Gen.G.png" },
+    { name: "Global Esports", colors: ["#1a458f", "#ed1c24", "#ffffff"], logo: "/assets/library/teams/Global-ESports.png" },
+    { name: "KRU Esports", colors: ["#fe198f", "#000000"], logo: "/assets/library/teams/KRU.png" },
+    { name: "Leviatán", colors: ["#44b8f5", "#000000"], logo: "/assets/library/teams/Levi.png" },
+    { name: "LOUD", colors: ["#12ff00", "#000000"], logo: "/assets/library/teams/LOUD.png" },
+    { name: "MIBR", colors: ["#d0d3d3", "#000000"], logo: "/assets/library/teams/Mibr.png" },
+    { name: "NAVI", colors: ["#ffee00", "#000000"], logo: "/assets/library/teams/NAVI.png" },
+    { name: "NRG", colors: ["#f63d0a", "#000000"], logo: "/assets/library/teams/NRG.png" },
+    { name: "Paper Rex", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/PRX.png" },
+    { name: "Sentinels", colors: ["#dd1a28", "#000000"], logo: "/assets/library/teams/Sentinels.png" },
+    { name: "T1", colors: ["#e21e2f", "#000000"], logo: "/assets/library/teams/T1.png" },
+    { name: "Talon Esports", colors: ["#e30041", "#000000"], logo: "/assets/library/teams/Talon.png" },
+    { name: "Team Heretics", colors: ["#ffffff", "#000000", "#daa511"], logo: "/assets/library/teams/Team-Heritics.png" },
+    { name: "Team Liquid", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/Team-Liquid.png" },
+    { name: "Team Secret", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/Team-Secret.png" },
+    { name: "Team Vitality", colors: ["#ffff00", "#000000"], logo: "/assets/library/teams/Vitality.png" },
+    { name: "ZETA DIVISION", colors: ["#cdfe00", "#000000"], logo: "/assets/library/teams/ZETA.png" }
   ]),
   postMatch: Object.freeze({
     kovaaks: Object.freeze({ name: "Kovaak's", colors: ["#f97316", "#2a0e05"], logo: "/assets/library/training/Kovaaks.jpg" }),
@@ -2511,6 +2512,13 @@ function createLoggingLauncherVisualLayer() {
   layer.innerHTML = `
     <img class="logging-launch-visual-logo" alt="" hidden>
     <span class="logging-launch-visual-label"></span>`;
+  const logo = layer.querySelector(".logging-launch-visual-logo");
+  logo?.addEventListener("error", () => {
+    // A missing optional logo must fall back to the team label without
+    // repeatedly surfacing a broken-image request on every rotation.
+    logo.hidden = true;
+    logo.removeAttribute("src");
+  });
   return layer;
 }
 
@@ -2518,9 +2526,11 @@ function applyLoggingLauncherVisualLayer(layer, entry) {
   if (!layer || !entry) return;
   const colors = Array.isArray(entry.colors) ? entry.colors : [];
   const start = String(colors[0] || "#18324a");
-  const end = String(colors[1] || "#080d17");
+  const end = String(colors[1] || start);
+  const accent = String(colors[2] || end);
   layer.style.setProperty("--logging-launch-color-a", start);
   layer.style.setProperty("--logging-launch-color-b", end);
+  layer.style.setProperty("--logging-launch-color-c", accent);
   const label = layer.querySelector(".logging-launch-visual-label");
   if (label) label.textContent = String(entry.name || "Training");
   const logo = layer.querySelector(".logging-launch-visual-logo");
