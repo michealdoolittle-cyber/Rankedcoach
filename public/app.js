@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260811-consolidated-data-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260811-consolidated-insights-02";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -5655,83 +5655,6 @@ function describeFightValueInterpretation(input = {}) {
     read: kd >= 1.05
       ? `Keep the advantage by trying to ${rolePlan}.`
       : `Improve the next fight by trying to ${rolePlan}.`
-  };
-}
-
-function describeProfilePracticeLever(context = {}, options = {}) {
-  const prefer = Array.isArray(options.prefer) ? options.prefer : [];
-  const avoid = new Set(Array.isArray(options.avoid) ? options.avoid : []);
-  const bestMap = context.bestMap || null;
-  const weakestMap = context.weakestMap || null;
-  const bestAgent = context.bestAgent || null;
-  const weakestAgent = context.weakestAgent || null;
-  const bestRole = context.bestRole || null;
-  const weakestRole = context.weakestRole || null;
-  const focusEntry = context.weeklyTopFocusEntry || context.topFocusEntry || null;
-  const moodEntry = context.weeklyTopMoodEntry || context.topMoodEntry || null;
-  const averageSelfComms = safeNumber(context.averageSelfComms, NaN);
-  const averageTeamComms = safeNumber(context.averageTeamComms, NaN);
-  const topWeaponLabel = formatReadableLabel(context.topWeaponFamilyLabel || "");
-  const topWeaponWinrate = safeNumber(context.topWeaponFamilyWinrate, NaN);
-  const topWeaponShare = safeNumber(context.topWeaponFamilyShare, NaN);
-
-  const candidates = [];
-  const addCandidate = (type, score, phrase, action, evidence = null) => {
-    if (!type || avoid.has(type) || !phrase || !action) return;
-    const preferBoost = prefer.includes(type) ? 30 : 0;
-    const evidenceScore = evidence ? getCoachingEvidenceScore(evidence).score : safeNumber(score);
-    candidates.push({ type, score: evidenceScore + preferBoost, phrase, action });
-  };
-
-  if (focusEntry?.[0]) {
-    addCandidate("focus", 82 + safeNumber(focusEntry[1]), `your ${focusEntry[0]} focus`, `make ${focusEntry[0]} the one thing you review after the next match`);
-  }
-  if (Number.isFinite(averageSelfComms) && averageSelfComms < 3) {
-    addCandidate("self_comms", 88 - averageSelfComms * 8, "self comms", "make one clear call before you swing or rotate");
-  }
-  if (Number.isFinite(averageTeamComms) && averageTeamComms < 3) {
-    addCandidate("team_comms", 84 - averageTeamComms * 8, "team comms", "call utility timing before teammates need to guess");
-  }
-  if (weakestMap?.map && safeNumber(weakestMap.matchesPlayed) >= 2) {
-    addCandidate("weak_map", 100 - safeNumber(weakestMap.winrate), `${weakestMap.map} round plans`, `bring one attack plan and one defense fallback into the next ${weakestMap.map} game`);
-  }
-  if (weakestRole?.role && safeNumber(weakestRole.matchesPlayed) >= 2) {
-    const roleLabel = formatReadableLabel(weakestRole.role);
-    addCandidate("weak_role", 96 - safeNumber(weakestRole.winrate), `${roleLabel} role value`, `give ${roleLabel} one simple job before adding more complexity`);
-  }
-  if (weakestAgent?.agent && safeNumber(weakestAgent.matchesPlayed) >= 2) {
-    addCandidate("weak_agent", 92 - safeNumber(weakestAgent.winrate), `${weakestAgent.agent} games`, `review where ${weakestAgent.agent} dies or loses value before swapping the whole agent pool`);
-  }
-  if (bestAgent?.agent && safeNumber(bestAgent.matchesPlayed) >= 3 && safeNumber(bestAgent.winrate) >= 55) {
-    addCandidate("best_agent", 0, `${bestAgent.agent} plans`, `repeat the ${bestAgent.agent} plans that are already producing wins`, { matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate });
-  }
-  if (bestMap?.map && safeNumber(bestMap.matchesPlayed) >= 2 && safeNumber(bestMap.winrate) >= 55) {
-    addCandidate("best_map", 0, `${bestMap.map} map plan`, `keep the same map plan and only change the round that keeps failing`, { matches: bestMap.matchesPlayed, winrate: bestMap.winrate });
-  }
-  if (topWeaponLabel && Number.isFinite(topWeaponWinrate)) {
-    const weaponScore = topWeaponWinrate >= 52 ? topWeaponWinrate - 2 : 88 - topWeaponWinrate;
-    const weaponPhrase = topWeaponWinrate >= 52
-      ? `${topWeaponLabel} round conversion`
-      : `${topWeaponLabel} round losses`;
-    const weaponAction = topWeaponWinrate >= 52
-      ? `keep using ${topWeaponLabel.toLowerCase()} when you can fight with teammate help or safely leave after the kill`
-      : `review whether ${topWeaponLabel.toLowerCase()} rounds are losing more on attack, defense, or forced buys`;
-    addCandidate("weapon", weaponScore, weaponPhrase, weaponAction);
-  } else if (topWeaponLabel && Number.isFinite(topWeaponShare) && topWeaponShare >= 45) {
-    addCandidate("weapon", topWeaponShare, `${topWeaponLabel} fights`, `judge mechanics through those ${topWeaponLabel.toLowerCase()} fights instead of raw aim alone`);
-  }
-  if (moodEntry?.[0] && ["annoyed", "tilted"].includes(String(moodEntry[0]).toLowerCase())) {
-    addCandidate("mood", 76 + safeNumber(moodEntry[1]), `${moodEntry[0]} logs`, "reset between games before that mood changes the next round plan");
-  }
-  if (bestRole?.role && safeNumber(bestRole.matchesPlayed) >= 2 && safeNumber(bestRole.winrate) >= 55) {
-    const roleLabel = formatReadableLabel(bestRole.role);
-    addCandidate("best_role", 0, `${roleLabel} role value`, `use ${roleLabel} when you want the cleanest ranked baseline`, { matches: bestRole.matchesPlayed, winrate: bestRole.winrate });
-  }
-
-  return candidates.sort((a, b) => b.score - a.score)[0] || {
-    type: "general",
-    phrase: "one cleaner repeatable plan",
-    action: "pick one focus for the next match and review only that first"
   };
 }
 
@@ -20020,8 +19943,9 @@ function selectWeeklyFocusCandidate(candidates = []) {
   if (!available.length) return null;
   const rank = { High: 3, Medium: 2, Low: 1 };
   return available.slice().sort((left, right) => {
+    const scoreGap = safeNumber(right?.score) - safeNumber(left?.score);
     const confidenceGap = (rank[right?.confidence] || 0) - (rank[left?.confidence] || 0);
-    return confidenceGap || Number(right?.priority || 0) - Number(left?.priority || 0);
+    return scoreGap || confidenceGap;
   })[0];
 }
 
@@ -26729,36 +26653,6 @@ function bindInsightFilters() {
 
 function renderTrendBreakdown() {
   return renderTrendBreakdownModel();
-  const analytics = getActiveAnalytics();
-  const trendBlocks = {
-    performance: [
-      `Current KD: ${document.getElementById("statKD")?.textContent || "--"}`,
-      `Current win rate: ${document.getElementById("statWinrate")?.textContent || "--"}`,
-      analytics?.overview?.adr ? `Current ADR this act: ${Math.round(analytics.overview.adr)}` : "ADR trend builds as more demo/live imports are added."
-    ],
-    behavior: [
-      `Weekly sessions counted: ${getWeeklySessions().length}`,
-      `Most repeated focus category this week: ${document.getElementById("weeklyFocusPrimary")?.textContent || "--"}`,
-      `Mood analysis uses logging data, which is where future behavior ML will anchor.`
-    ],
-    role: [
-      ...(analytics?.roles || []).slice(0, 3).map(role =>
-        `${role.role}: ${Number(role.kd || 0).toFixed(2)} KD across ${role.matchesPlayed} matches`
-      ),
-      !analytics?.roles?.length ? "Role impact is reported after imported analytics are available." : null
-    ].filter(Boolean),
-    consistency: [
-      `Recent imported matches: ${matches.length}`,
-      analytics?.overview?.attackKAST ? `Attack KAST: ${Math.round(analytics.overview.attackKAST)}%` : "Attack-side stability pending richer data.",
-      analytics?.overview?.defenseKAST ? `Defense KAST: ${Math.round(analytics.overview.defenseKAST)}%` : "Defense-side stability pending richer data."
-    ]
-  };
-
-  Object.entries(trendBlocks).forEach(([key, items]) => {
-    const content = document.querySelector(`[data-trend-content="${key}"]`);
-    if (!content) return;
-    content.innerHTML = items.map(item => `<div class="trend-line">${escapeHtml(item)}</div>`).join("");
-  });
 }
 
 function bindInsightCards(){
@@ -61467,25 +61361,6 @@ function scheduleRiotAutoSync() {
 
 function renderStatsPerformanceModel() {
   return renderStatsPerformanceClean();
-  const container = document.getElementById("statsPerformanceChart");
-  if (!container) return;
-
-  const model = getPlayerModel();
-  container.className = "stats-chart-wrap stats-trends-list";
-
-  if (!(model?.trends || []).length) {
-    container.innerHTML = getReadinessLockedMarkup(5, "Recent Match Trends");
-    return;
-  }
-
-  container.innerHTML = model.trends.map(trend => `
-    <div class="stats-trend-row stats-trend-${trend.tone}" title="${escapeHtml(trend.detail)}">
-      <div class="stats-trend-copy">
-        <div class="stats-main-text">${escapeHtml(trend.label)}</div>
-        <div class="stats-sub-text">${escapeHtml(trend.value)}</div>
-      </div>
-    </div>
-  `).join("");
 }
 
 function getCoachingCategoryVisualMarkup(category = "") {
@@ -62875,6 +62750,7 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     }),
     getMapEconomyStatItems: (mapName, matchList) => getMapEconomyStatItems(mapName, matchList),
     getSideMetrics: rounds => getSideMetricsFromRounds(rounds),
+    selectWeeklyFocusCandidate: candidates => selectWeeklyFocusCandidate(candidates),
     showToast: (...args) => showToast(...args),
     checkForAppUpdate: options => checkRankedCoachAppUpdate(options),
     configureRevisionPoll: ({ user = null, client = null, saving = false } = {}) => {

@@ -193,6 +193,10 @@ async function verifyViewport(browser, viewport) {
     }]);
     return {
       economyItems,
+      weeklyCandidate: hook?.selectWeeklyFocusCandidate?.([
+        { label: "High confidence, lower priority", confidence: "High", score: 24 },
+        { label: "Higher evidence score", confidence: "Medium", score: 86 }
+      ]),
       sideMetrics: hook?.getSideMetrics?.([
         { roundWon: true, killCount: 2, damageDealt: 180, kastCounted: true, gotFirstBlood: true, survived: true, traded: false },
         { roundWon: false, killCount: 1, damageDealt: 75, kastCounted: false, wasFirstDeath: true, survived: false, traded: true }
@@ -207,6 +211,7 @@ async function verifyViewport(browser, viewport) {
   ]);
   assert.equal(dataViews.economyItems.find(item => item.label === "Bonus Round Win/Loss %")?.stat, "0%/100%");
   assert.equal(dataViews.economyItems.find(item => item.label === "Full Buy Round Win/Loss %")?.stat, "50%/50%");
+  assert.equal(dataViews.weeklyCandidate?.label, "Higher evidence score");
   assert.deepEqual(dataViews.sideMetrics, {
     roundsPlayed: 2,
     roundsWon: 1,
