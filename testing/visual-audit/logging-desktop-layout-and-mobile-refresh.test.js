@@ -249,6 +249,12 @@ async function run() {
       ["ZETA DIVISION", ["#cdfe00", "#000000"], "ZETA.png"]
     ];
     const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+    const appStyles = fs.readFileSync(path.join(root, "app.css"), "utf8");
+    assert.match(
+      appStyles,
+      /radial-gradient\(circle at 78% 22%, color-mix\(in srgb, var\(--logging-launch-color-a\) 62%, transparent\), transparent 42%\),\s*linear-gradient\(135deg,\s*color-mix\(in srgb, var\(--logging-launch-color-c, var\(--logging-launch-color-b\)\) 72%, #08111f\) 0%,\s*color-mix\(in srgb, var\(--logging-launch-color-b\) 68%, #08111f\) 62%,\s*color-mix\(in srgb, var\(--logging-launch-color-a\) 35%, #08111f\) 100%\)/,
+      "Warm-up gradients should run secondary/accent on the left into the primary color on the right."
+    );
     const teamAssetNames = new Set(fs.readdirSync(path.join(root, "assets", "library", "teams")));
     for (const [name, colors, filename] of warmupManifest) {
       assert.match(
