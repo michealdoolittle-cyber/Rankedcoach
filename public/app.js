@@ -12588,7 +12588,10 @@ function openStatsDetailModal(kind, value) {
         <strong>Match ${index}</strong>
         <span>${escapeHtml(formatStatsSummaryDate(match))}</span>
         <span>${escapeHtml(core.map || "Map unavailable")}</span>
-        <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
+        <span class="stats-role-history-agent">
+          ${core.agent ? `<img src="${escapeHtml(getAgentIconUrl(core.agent))}" alt="" loading="lazy" decoding="async">` : ""}
+          <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
+        </span>
         <em>${escapeHtml(result || "unverified")}</em>
       </li>`;
     }).join("") : `<li class="stats-role-history-empty">No verified ${escapeHtml(roleLabel)} matches are in this selected season.</li>`;
@@ -23808,9 +23811,43 @@ function getLoadoutAgentReference(agent = "") {
   }) || null;
 }
 
-function getMapWeightedLoadoutAgents(agents = getLoadoutAgentPool(), selectedMap = getLoadoutPreferences().map) {
-  const pool = Array.isArray(agents) ? agents.filter(Boolean) : [];
+function normalizeLoadoutComparableName(value = "") {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function getLoadoutMapReference(selectedMap = getLoadoutPreferences().map) {
   const map = normalizeLoadoutMap(selectedMap);
+  if (!map) return null;
+  const requested = normalizeLoadoutComparableName(map);
+  return (Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : []).find(entry => {
+    const labels = [entry?.id, entry?.label, entry?.name];
+    return labels.some(label => normalizeLoadoutComparableName(label) === requested);
+  }) || null;
+}
+
+function getTopHighRankLoadoutAgentsForMap(selectedMap = getLoadoutPreferences().map, agents = allAgents) {
+  const mapReference = getLoadoutMapReference(selectedMap);
+  const pickRates = mapReference?.highRankPickRates || {};
+  const eligible = Array.isArray(agents) ? agents.filter(Boolean) : [];
+  if (!mapReference || !eligible.length || !Object.keys(pickRates).length) return [];
+  const eligibleByKey = new Map(eligible.map(agent => [normalizeLoadoutComparableName(agent), agent]));
+  return Object.entries(pickRates)
+    .map(([agent, rate]) => ({
+      agent,
+      rate: Number(rate),
+      key: normalizeLoadoutComparableName(agent)
+    }))
+    .filter(entry => Number.isFinite(entry.rate) && entry.rate > 0 && eligibleByKey.has(entry.key))
+    .sort((left, right) => right.rate - left.rate || left.agent.localeCompare(right.agent))
+    .slice(0, 4)
+    .map(entry => eligibleByKey.get(entry.key));
+}
+
+function getMapWeightedLoadoutAgents(agents = getLoadoutAgentPool(), selectedMap = getLoadoutPreferences().map) {
+  const rawPool = Array.isArray(agents) ? agents.filter(Boolean) : [];
+  const map = normalizeLoadoutMap(selectedMap);
+  const topMapAgents = map ? getTopHighRankLoadoutAgentsForMap(map, rawPool) : [];
+  const pool = topMapAgents.length ? topMapAgents : rawPool;
   if (!map || !pool.length) return pool.map(agent => ({ agent, weight: 1, winRate: null }));
 
   const winRates = pool.map(agent => {
@@ -23905,6 +23942,8 @@ function setLoadoutMapSelection(value = "") {
 // distribution without waiting through the visible reel animation 200 times.
 window.RankedCoachLoadoutRoll = Object.freeze({
   getMapPool: getLoadoutMapPool,
+  getMapReference: getLoadoutMapReference,
+  getTopMapAgents: getTopHighRankLoadoutAgentsForMap,
   getWeightedAgents: getMapWeightedLoadoutAgents,
   pickAgent: pickLoadoutAgent
 });
@@ -58529,6 +58568,17 @@ function formatStatsSummaryTrendValue(value, meta) {
   return `${Number(value).toFixed(meta.decimals)}${meta.suffix}`;
 }
 
+function buildStatsSummaryTrendTicks(maxValue = 1, meta = {}) {
+  const safeMax = Math.max(1, Number(maxValue) || 1);
+  const rawTicks = [safeMax, safeMax * 0.75, safeMax * 0.5, safeMax * 0.25, 0];
+  return rawTicks.map((value, index) => ({
+    value,
+    label: index === rawTicks.length - 1
+      ? `0${meta.suffix || ""}`
+      : formatStatsSummaryTrendValue(value, meta)
+  }));
+}
+
 function openStatsSummaryTrend(metric = "kd") {
   const modal = document.getElementById("lensModal");
   const title = document.getElementById("lensModalTitleSecondary");
@@ -58540,6 +58590,7 @@ function openStatsSummaryTrend(metric = "kd") {
   const entries = getStatsSummaryTrendEntries(metric, scoped.matches);
   const verified = entries.filter(entry => Number.isFinite(Number(entry.value)));
   const maxValue = Math.max(1, ...verified.map(entry => Number(entry.value)));
+  const ticks = buildStatsSummaryTrendTicks(maxValue, meta);
   title.textContent = `${meta.label} Trend`;
   tabsHost.innerHTML = "";
   tabsHost.style.display = "none";
@@ -58551,16 +58602,21 @@ function openStatsSummaryTrend(metric = "kd") {
         <span>Season high: ${escapeHtml(formatStatsSummaryTrendValue(maxValue, meta))}</span>
       </div>
       ${verified.length ? `<div class="stats-summary-trend-chart" role="img" aria-label="${escapeHtml(meta.label)} trend across ${verified.length} selected-season matches">
-        <div class="stats-summary-trend-y-axis"><span>${escapeHtml(formatStatsSummaryTrendValue(maxValue, meta))}</span><span>0${escapeHtml(meta.suffix)}</span></div>
-        <div class="stats-summary-trend-bars">
-          ${entries.map(entry => {
-            const ratio = Number.isFinite(Number(entry.value)) ? Math.max(2, Number(entry.value) / maxValue * 100) : 0;
-            return `<div class="stats-summary-trend-point ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}" title="Match ${entry.index} · ${escapeHtml(formatStatsSummaryDate(entry.match))} · ${escapeHtml(formatStatsSummaryTrendValue(entry.value, meta))}">
-              <span class="stats-summary-trend-bar" style="--trend-height:${ratio}%"></span>
-              <small>M${entry.index}</small>
-              <em>${escapeHtml(formatStatsSummaryDate(entry.match))}</em>
-            </div>`;
-          }).join("")}
+        <div class="stats-summary-trend-y-axis">${ticks.map(tick => `<span>${escapeHtml(tick.label)}</span>`).join("")}</div>
+        <div class="stats-summary-trend-plot">
+          <div class="stats-summary-trend-grid" aria-hidden="true">
+            ${ticks.map((_tick, index) => `<span class="stats-summary-trend-gridline" style="--trend-grid-row:${index + 1}"></span>`).join("")}
+          </div>
+          <div class="stats-summary-trend-bars">
+            ${entries.map(entry => {
+              const ratio = Number.isFinite(Number(entry.value)) ? Math.max(2, Number(entry.value) / maxValue * 100) : 0;
+              return `<div class="stats-summary-trend-point ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}" title="Match ${entry.index} · ${escapeHtml(formatStatsSummaryDate(entry.match))} · ${escapeHtml(formatStatsSummaryTrendValue(entry.value, meta))}">
+                <span class="stats-summary-trend-bar" style="--trend-height:${ratio}%"></span>
+                <small>M${entry.index}</small>
+                <em>${escapeHtml(formatStatsSummaryDate(entry.match))}</em>
+              </div>`;
+            }).join("")}
+          </div>
         </div>
       </div>` : `<p class="stats-summary-trend-empty">No verified ${escapeHtml(meta.label)} values exist in this selected season yet.</p>`}
     </li>
@@ -62525,6 +62581,140 @@ function renderStatsHistoryBoundaryNote(profile = getActiveProfile()) {
   note.textContent = `History limit: Riot's upstream match-history feed has an active retention limit of roughly 2 years. This account's available history begins ${oldestDate}; earlier matches are no longer retained.`;
 }
 
+function buildStatsLifetimeRankChartMarkup() {
+  const source = getChartSourceEntries("all");
+  const lifetime = buildLifetimeRankSeries(source.entries);
+  if (!lifetime.entries.length || lifetime.slice.length < 2) {
+    return `<li class="stats-lifetime-rank-empty">No retained rank snapshots are available for a lifetime chart yet.</li>`;
+  }
+
+  const width = 1280;
+  const height = 430;
+  const pad = { left: 86, right: 42, top: 48, bottom: 78 };
+  const bounds = getLifetimeRankBounds(lifetime.slice);
+  const plotBottom = height - pad.bottom;
+  const plotHeight = plotBottom - pad.top;
+  const y = (value) => plotBottom
+    - ((value - bounds.minTick) / Math.max(1, bounds.maxTick - bounds.minTick)) * plotHeight;
+  const plotWidth = width - pad.left - pad.right;
+  const step = lifetime.slice.length > 1 ? plotWidth / (lifetime.slice.length - 1) : 0;
+  const points = lifetime.slice.map((value, index) => {
+    const entry = index > 0 ? lifetime.entries[index - 1] : null;
+    const rank = getTierRank(value) || RANK_THRESHOLDS[0];
+    return {
+      value,
+      x: pad.left + (index * step),
+      y: y(value),
+      entry,
+      rankLabel: rank?.tierLabel || "",
+      icon: rank?.icon || getRankIconUrl(rank?.tierLabel)
+    };
+  });
+  const path = points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+  const areaPath = `M ${points[0].x.toFixed(2)} ${plotBottom} L ${points.map(point => `${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" L ")} L ${points[points.length - 1].x.toFixed(2)} ${plotBottom} Z`;
+  const tickIndexes = [];
+  const span = Math.max(1, bounds.endIndex - bounds.startIndex);
+  const tickStep = Math.max(1, Math.ceil(span / 5));
+  for (let index = bounds.startIndex; index <= bounds.endIndex; index += tickStep) tickIndexes.push(index);
+  if (tickIndexes[tickIndexes.length - 1] !== bounds.endIndex) tickIndexes.push(bounds.endIndex);
+  const yTicks = tickIndexes.map(index => {
+    const rank = RANK_THRESHOLDS[index] || RANK_THRESHOLDS[0];
+    const yy = y(rank.min);
+    return `
+      <g class="stats-lifetime-rank-y-tick">
+        <line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
+        <image href="${escapeHtml(rank.icon)}" x="${pad.left - 54}" y="${yy - 16}" width="32" height="32" preserveAspectRatio="xMidYMid meet"></image>
+        <text x="${pad.left - 12}" y="${yy + 4}" text-anchor="end">${escapeHtml(rank.tierLabel)}</text>
+      </g>`;
+  }).join("");
+  let previousRank = points[0]?.rankLabel || "";
+  const rankMarkers = points.slice(1).map((point) => {
+    if (!point.rankLabel || point.rankLabel === previousRank) return "";
+    const direction = getAbsoluteRRForRankLocalRR(point.rankLabel, 0) >= getAbsoluteRRForRankLocalRR(previousRank, 0) ? "up" : "down";
+    previousRank = point.rankLabel;
+    return `
+      <g class="stats-lifetime-rank-marker stats-lifetime-rank-${direction}" data-rank-label="${escapeHtml(point.rankLabel)}">
+        <circle cx="${point.x}" cy="${point.y}" r="18"></circle>
+        <image href="${escapeHtml(point.icon)}" x="${point.x - 13}" y="${point.y - 13}" width="26" height="26" preserveAspectRatio="xMidYMid meet"></image>
+        <text x="${point.x}" y="${point.y - 25}" text-anchor="middle">${direction === "up" ? "↑" : "↓"}</text>
+      </g>`;
+  }).join("");
+  const dots = points.slice(1).map((point, index) => `
+    <circle class="stats-lifetime-rank-dot" cx="${point.x}" cy="${point.y}" r="5" data-match-index="${index + 1}" data-rank-label="${escapeHtml(point.rankLabel)}"></circle>
+  `).join("");
+  const dateStart = getRetainedMatchDate(lifetime.entries[0]?.match || {});
+  const dateEnd = getRetainedMatchDate(lifetime.entries[lifetime.entries.length - 1]?.match || {});
+  const caption = [
+    dateStart ? formatRetainedHistoryDate(dateStart) : "",
+    dateEnd ? formatRetainedHistoryDate(dateEnd) : ""
+  ].filter(Boolean).join(" → ");
+
+  return `
+    <li class="stats-lifetime-rank-chart-shell">
+      <div class="stats-lifetime-rank-chart-head">
+        <strong>Retained Lifetime Rank</strong>
+        <span>${escapeHtml(caption || `${lifetime.entries.length} rank snapshots`)}</span>
+      </div>
+      <div class="stats-lifetime-rank-chart-wrap">
+        <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime retained rank chart" data-data-points="${lifetime.entries.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
+          <defs>
+            <linearGradient id="statsLifetimeRankArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent,#ff4655)" stop-opacity=".26"></stop>
+              <stop offset="100%" stop-color="var(--accent-2,#38bdf8)" stop-opacity=".04"></stop>
+            </linearGradient>
+          </defs>
+          ${yTicks}
+          <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${plotBottom}" x2="${width - pad.right}" y2="${plotBottom}"></line>
+          <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
+          <path class="stats-lifetime-rank-area" d="${areaPath}"></path>
+          <path class="stats-lifetime-rank-line" d="${path}"></path>
+          ${dots}
+          ${rankMarkers}
+        </svg>
+      </div>
+      <p class="stats-lifetime-rank-chart-note">Only retained rank-up or rank-down changes get rank markers; normal match points remain small dots.</p>
+    </li>`;
+}
+
+function openStatsPeakLifetimeRankChart() {
+  const title = document.getElementById("lensModalTitleSecondary");
+  const list = document.getElementById("lensStatsListSecondary");
+  const tabsHost = document.getElementById("lensDetailTabsSecondary");
+  if (!title || !list || !tabsHost) return;
+  title.textContent = "Lifetime Rank Chart";
+  tabsHost.innerHTML = "";
+  tabsHost.style.display = "none";
+  list.className = "lens-stats-list stats-lifetime-rank-list";
+  list.innerHTML = buildStatsLifetimeRankChartMarkup();
+  showModalById("lensModal");
+}
+
+function bindStatsPeakRankChartTrigger() {
+  const icon = document.getElementById("statsPeakRankIcon");
+  if (!icon || icon.dataset.lifetimeRankBound === "true") return;
+  icon.dataset.lifetimeRankBound = "true";
+  icon.tabIndex = 0;
+  icon.setAttribute("role", "button");
+  icon.setAttribute("title", "Open lifetime rank chart");
+  icon.setAttribute("aria-label", "Open lifetime rank chart");
+  const open = () => openStatsPeakLifetimeRankChart();
+  icon.addEventListener("pointerup", event => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    open();
+  });
+  icon.addEventListener("click", event => {
+    if (event.detail > 0) return;
+    open();
+  });
+  icon.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      open();
+    }
+  });
+}
+
 function renderStatsPeakProgress() {
   const profile = getActiveProfile();
   const peak = computePeakProfileProgress(profile);
@@ -62549,6 +62739,7 @@ function renderStatsPeakProgress() {
         ? `Highest point reached in ${scopeLabel} so far.`
         : `No RR movement found in ${scopeLabel} yet.`;
   }
+  bindStatsPeakRankChartTrigger();
 }
 
 function renderStatsRoleProgress() {

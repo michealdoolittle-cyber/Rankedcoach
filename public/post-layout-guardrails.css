@@ -36,23 +36,77 @@
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-  /* Keep the already-readable info row intact, then move ten percent of the
-     card from role filters to the spin/reel row. The controls still occupy
-     sixty percent of their own cells; the increased share removes the thin
-     capsule look without changing the loadout card's outer dimensions. */
-  grid-template-rows:minmax(0,20.42fr) minmax(0,50.04fr) minmax(0,29.54fr) !important;
+  /* Verification pass: the visible gaps between role controls, reel controls,
+     and info pills must be seven pixels, with the reel controls filling their
+     middle row instead of shrinking into centered capsules. */
+  grid-template-rows:minmax(0,22fr) minmax(0,48fr) minmax(0,30fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
     "info info" !important;
-  column-gap:14px !important;
-  row-gap:14px !important;
+  column-gap:7px !important;
+  row-gap:7px !important;
   justify-content:stretch !important;
   align-content:stretch !important;
   justify-items:stretch !important;
   align-items:stretch !important;
   min-height:0 !important;
   height:100% !important;
+  overflow:hidden !important;
+}
+
+#page-home .loadout-card{
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease !important;
+}
+
+#page-home .loadout-card:is(:hover,:focus-within){
+  transform:none !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 44%,rgba(148,163,184,.28)) !important;
+  box-shadow:0 0 22px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 22%,transparent) !important;
+}
+
+html body #page-home .home-layout .loadout-card.card:is(:hover,:focus-within){
+  transform:none !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 46%,rgba(148,163,184,.28)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 36%,transparent),
+    0 0 24px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent),
+    rgba(255,255,255,.03) 0 1px 0 0 inset,
+    rgba(2,6,23,.26) 0 18px 48px 0 !important;
+}
+
+html body #page-home .home-layout .loadout-card.card:has(#spinAgentBtn:hover,#agentFrame:hover,#roleButtons .role-filter-btn:hover,.home-loadout-pill:hover){
+  transform:none !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 46%,rgba(148,163,184,.28)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 36%,transparent),
+    0 0 24px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent),
+    rgba(255,255,255,.03) 0 1px 0 0 inset,
+    rgba(2,6,23,.26) 0 18px 48px 0 !important;
+}
+
+#page-home .loadout-card #roleButtons.role-filter-row,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons.role-filter-row{
+  grid-area:roles !important;
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  align-items:end !important;
+  justify-items:center !important;
+  gap:7px !important;
+  min-height:0 !important;
+  height:100% !important;
+}
+
+#page-home .loadout-card #roleButtons .role-filter-btn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn{
+  width:auto !important;
+  height:100% !important;
+  max-width:100% !important;
+  aspect-ratio:1 / 1 !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  justify-self:center !important;
+  align-self:center !important;
   overflow:hidden !important;
 }
 
@@ -64,15 +118,15 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
   align-items:center !important;
   justify-content:center !important;
   gap:clamp(2px,.35vw,5px) !important;
-  width:60% !important;
+  width:100% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:60% !important;
+  height:100% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
-  justify-self:center !important;
-  align-self:center !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
   margin:0 !important;
 }
 
@@ -81,18 +135,29 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
   grid-area:reel !important;
-  width:60% !important;
+  width:100% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:60% !important;
+  height:100% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
-  justify-self:center !important;
-  align-self:center !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
   overflow:hidden !important;
   box-shadow:none !important;
   filter:none !important;
+}
+
+#page-home .loadout-card #spinAgentBtn,
+#page-home .loadout-card #agentFrame,
+#page-home .loadout-card #agentFrame.agent-frame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
+  align-self:stretch !important;
+  margin-top:0 !important;
+  margin-bottom:0 !important;
 }
 
 #page-home .loadout-card #agentFrame .agent-reveal-art img,
@@ -233,11 +298,69 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.
   animation:rc-control-pop .26s cubic-bezier(.2,.84,.24,1) both !important;
 }
 
+.app-header,
+.app-header .nav-links,
+.app-header .nav-left,
+.app-header .nav-right{
+  overflow:visible !important;
+}
+
 .app-header .nav-links .nav-btn:is(:hover,:focus-visible){
   transform:translate3d(0,-2px,0) scale(1.025) !important;
   background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 31%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 17%,#172235)) !important;
   border-color:color-mix(in srgb,var(--accent,#ff4655) 66%,#fff 12%) !important;
   box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 26%,transparent) !important;
+}
+
+.app-header :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle){
+  position:relative !important;
+  overflow:visible !important;
+  transition:transform .18s cubic-bezier(.2,.84,.24,1),border-color .18s ease,background .18s ease,box-shadow .18s ease !important;
+  animation:rc-control-pop .26s cubic-bezier(.2,.84,.24,1) both !important;
+}
+
+.app-header :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle):is(:hover,:focus-visible){
+  transform:translate3d(0,-2px,0) scale(1.025) !important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 28%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 16%,#172235)) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(255,255,255,.16)) !important;
+  box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent) !important;
+}
+
+#profileSyncBtn.profile-sync-btn:is(:hover,:focus-visible),
+#bugReportOpen.bug-report-nav-btn:is(:hover,:focus-visible),
+#askCoachOpen.ask-coach-nav-btn:is(:hover,:focus-visible),
+#profileDropdownToggle.profile-dropdown-toggle:is(:hover,:focus-visible){
+  transform:translate3d(0,-2px,0) scale(1.025) !important;
+  background-color:color-mix(in srgb,var(--accent,#ff4655) 22%,#334155) !important;
+  background-image:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 28%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 16%,#172235)) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(255,255,255,.16)) !important;
+  box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent) !important;
+}
+
+#page-home .loadout-card .home-loadout-main,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
+  grid-template-rows:minmax(0,22fr) minmax(0,48fr) minmax(0,30fr) !important;
+  row-gap:7px !important;
+  column-gap:7px !important;
+}
+
+#page-home .loadout-card #roleButtons.role-filter-row,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons.role-filter-row{
+  align-items:end !important;
+  gap:7px !important;
+}
+
+#page-home .loadout-card #spinAgentBtn,
+#page-home .loadout-card #agentFrame,
+#page-home .loadout-card #agentFrame.agent-frame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
+  width:100% !important;
+  height:100% !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+  margin:0 !important;
 }
 
 #lensModal .lens-modal{
@@ -294,6 +417,20 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-g
 #page-stats .stats-summary-trend-trigger{
   cursor:pointer;
   transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+
+#page-stats :is(
+  .stats-summary-trend-trigger,
+  .stats-role-pill,
+  .stats-trend-card,
+  .stats-agent-card,
+  .stats-weapon-card,
+  .stats-desktop-weapon-tile,
+  .stats-desktop-weapon-family-card,
+  .stats-map-card,
+  #statsActSelector
+){
+  pointer-events:auto !important;
 }
 
 #page-stats .stats-summary-trend-trigger:is(:hover,:focus-visible){
@@ -508,4 +645,210 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 #page-library :is(.gamesense-tip-editor-actions button,.gamesense-tip-delete):disabled{
   cursor:not-allowed;
   opacity:.45;
+}
+
+/* Nav/loadout/stats verification pass — final overrides kept at EOF so older
+   round-specific guardrails cannot quietly win the cascade. */
+.stats-summary-trend-plot{
+  position:relative;
+  min-width:0;
+  min-height:156px;
+  overflow:hidden;
+}
+
+.stats-summary-trend-grid{
+  position:absolute;
+  inset:8px 0 28px;
+  z-index:0;
+  display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  pointer-events:none;
+}
+
+.stats-summary-trend-gridline{
+  display:block;
+  border-top:1px solid rgba(148,163,184,.18);
+}
+
+.stats-summary-trend-gridline:last-child{
+  border-bottom:1px solid rgba(226,232,240,.72);
+}
+
+.stats-summary-trend-bars{
+  position:relative !important;
+  z-index:1;
+  min-height:156px;
+  border-bottom:0 !important;
+}
+
+.stats-role-history-agent{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.stats-role-history-agent img{
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  border-radius:7px;
+  object-fit:cover;
+  background:rgba(15,23,42,.8);
+  box-shadow:0 0 10px rgba(0,0,0,.22);
+}
+
+.stats-role-history-agent span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+#page-stats :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data){
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease !important;
+}
+
+#page-stats :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data):is(:hover,:focus-visible){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 50%,rgba(148,163,184,.28)) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#ff4655) 12%,rgba(51,65,85,.74)),rgba(15,23,42,.92)) !important;
+  box-shadow:0 10px 20px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 16%,transparent) !important;
+  outline:none !important;
+}
+
+#page-home .compass-score-card{
+  position:relative !important;
+  z-index:2 !important;
+  pointer-events:auto !important;
+}
+
+.stats-lifetime-rank-list{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+}
+
+.stats-lifetime-rank-chart-shell{
+  list-style:none;
+  width:100%;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+}
+
+.stats-lifetime-rank-chart-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#e2e8f0;
+  font:900 12px/1 var(--font-display,"Rajdhani",sans-serif);
+}
+
+.stats-lifetime-rank-chart-head span{
+  color:var(--accent-2,#38bdf8);
+  font-size:10px;
+}
+
+.stats-lifetime-rank-chart-wrap{
+  width:100%;
+  overflow-x:auto;
+  border:1px solid color-mix(in srgb,var(--accent,#ff4655) 34%,rgba(148,163,184,.22));
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(2,6,23,.98));
+  padding:10px;
+}
+
+.stats-lifetime-rank-chart{
+  display:block;
+  width:100%;
+  min-width:920px;
+  height:auto;
+  overflow:visible;
+}
+
+.stats-lifetime-rank-y-tick line{stroke:rgba(148,163,184,.18);}
+.stats-lifetime-rank-y-tick text{fill:#94a3b8;font:800 11px/1 var(--font-display,"Rajdhani",sans-serif);}
+.stats-lifetime-rank-axis{stroke:#cbd5e1;stroke-width:2;}
+.stats-lifetime-rank-area{fill:url(#statsLifetimeRankArea);}
+.stats-lifetime-rank-line{fill:none;stroke:var(--accent,#ff4655);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 36%,transparent));}
+.stats-lifetime-rank-dot{fill:var(--accent-2,#38bdf8);stroke:#020617;stroke-width:2;}
+.stats-lifetime-rank-marker circle{fill:rgba(15,23,42,.94);stroke:var(--accent,#ff4655);stroke-width:2;}
+.stats-lifetime-rank-marker text{fill:var(--accent,#ff4655);font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);}
+.stats-lifetime-rank-chart-note,
+.stats-lifetime-rank-empty{color:#94a3b8;font:700 12px/1.35 var(--font-body,"Rajdhani",sans-serif);}
+
+#lensModal:has(.stats-lifetime-rank-list) .lens-modal{
+  width:min(96vw,1460px) !important;
+  max-width:calc(100vw - 28px) !important;
+}
+
+@media (max-width:820px){
+  .stats-role-history-row .stats-role-history-agent{
+    grid-column:1;
+  }
+
+  .stats-role-history-row em{
+    grid-row:1 / span 4 !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .app-header :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle){
+    animation:none !important;
+  }
+}
+
+#profileSyncBtn.profile-sync-btn:is(:hover,:focus-visible),
+#bugReportOpen.bug-report-nav-btn:is(:hover,:focus-visible),
+#askCoachOpen.ask-coach-nav-btn:is(:hover,:focus-visible),
+#profileDropdownToggle.profile-dropdown-toggle:is(:hover,:focus-visible){
+  transform:translate3d(0,-2px,0) scale(1.025) !important;
+  background-color:color-mix(in srgb,var(--accent,#ff4655) 22%,#334155) !important;
+  background-image:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 28%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 16%,#172235)) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(255,255,255,.16)) !important;
+  box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent) !important;
+}
+
+/* Nav/loadout/stats verification pass: loadout parent gets hover energy without moving. */
+html body #page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card,
+html body #page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card :is(.home-loadout-main,#roleButtons,.role-filter-btn,#spinAgentBtn,#agentFrame,.home-loadout-info,.home-loadout-pill){
+  pointer-events:auto !important;
+}
+
+html body #page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card:is(:hover,:focus-within),
+html body #page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card:has(:hover){
+  transform:none !important;
+  translate:none !important;
+  scale:none !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 54%,rgba(148,163,184,.34)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 42%,transparent),
+    0 0 28px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 30%,transparent),
+    0 16px 44px rgba(2,6,23,.30),
+    inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* Nav/loadout/stats verification pass: Stats interactive tiles keep a visible hover fill over layout skins. */
+html body #page-stats#page-stats.page.active :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data):is(:hover,:focus-visible){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(148,163,184,.3)) !important;
+  background:
+    radial-gradient(circle at 18% 0%,color-mix(in srgb,var(--accent,#ff4655) 22%,transparent),transparent 44%),
+    linear-gradient(135deg,color-mix(in srgb,var(--accent,#ff4655) 18%,rgba(51,65,85,.86)),rgba(15,23,42,.94)) !important;
+  box-shadow:0 10px 22px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 22%,transparent) !important;
+  outline:none !important;
+}
+
+/* Nav/loadout/stats verification pass: Stats tiles must remain hit-testable through themed parent layers. */
+html body #page-stats#page-stats.page.active :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data),
+html body #page-stats#page-stats.page.active :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data) *{
+  pointer-events:auto !important;
+}
+
+html body #page-stats#page-stats.page.active #statsPeakRankIcon{
+  pointer-events:auto !important;
+  cursor:pointer !important;
 }
