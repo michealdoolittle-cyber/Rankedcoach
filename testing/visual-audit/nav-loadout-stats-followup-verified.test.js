@@ -43,8 +43,12 @@ function supabaseStub() {
 }
 
 function makeMatch(index, overrides = {}) {
-  const absolute = 1330 + (index * 18) + (overrides.rrDelta || 0) + (overrides.seasonBoost || 0);
-  const tier = absolute >= 1500 ? "Diamond 1" : absolute >= 1400 ? "Platinum 3" : "Platinum 2";
+  const radiantActRR = Number(overrides.radiantActRR);
+  const isRadiant = Number.isFinite(radiantActRR);
+  const absolute = isRadiant
+    ? 2100 + Math.max(450, radiantActRR)
+    : 1330 + (index * 18) + (overrides.rrDelta || 0) + (overrides.seasonBoost || 0);
+  const tier = overrides.rank || (isRadiant ? "Radiant" : absolute >= 1500 ? "Diamond 1" : absolute >= 1400 ? "Platinum 3" : "Platinum 2");
   const playedAt = overrides.playedAt || `2026-08-${String(index + 1).padStart(2, "0")}T16:00:00.000Z`;
   const result = overrides.result || (index % 3 === 1 ? "loss" : "win");
   const rrDelta = result === "win" ? 18 : -15;
@@ -76,12 +80,12 @@ function makeMatch(index, overrides = {}) {
     hsPercent: overrides.hs ?? (18 + (index % 6)),
     queue: { id: "competitive", name: "Competitive", modeType: "Standard" },
     rank: tier,
-    rrTotal: absolute % 100,
+    rrTotal: isRadiant ? Math.max(450, radiantActRR) : absolute % 100,
     rr: rrDelta,
     verifiedRrDelta: rrDelta,
     rrVerified: true,
     metadata: { matchId: `nav-loadout-match-${index}`, source: "henrik_sync", playedAt, season: overrides.season || "season-2026-act-4", seasonId: overrides.seasonId || overrides.season || "season-2026-act-4", act: overrides.act || "Season 2026 Act 4", agent, mapName: map, result, rank: tier, queue: { id: "competitive", name: "Competitive", modeType: "Standard" } },
-    matchRecord: { playedAt, source: "henrik_sync", act: overrides.act || "Season 2026 Act 4", rank: { rank: tier, rr: absolute % 100, rrDelta, verified: true }, trackedPlayer: { competitiveTier: 17 } },
+    matchRecord: { playedAt, source: "henrik_sync", act: overrides.act || "Season 2026 Act 4", rank: { rank: tier, rr: isRadiant ? Math.max(450, radiantActRR) : absolute % 100, rrDelta, verified: true }, trackedPlayer: { competitiveTier: isRadiant ? 27 : 17 } },
     advanced: {
       rounds: Array.from({ length: 6 }, (_value, roundIndex) => ({
         round: roundIndex + 1,
@@ -108,7 +112,7 @@ function buildProfileFixture() {
     matches: [
       makeMatch(0, { agent: "Sova", role: "initiator", map: "Haven", result: "win", acs: 172, hs: 21, playedAt: "2026-06-01T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
       makeMatch(1, { agent: "Skye", role: "initiator", map: "Lotus", result: "loss", acs: 151, hs: 18, playedAt: "2026-06-02T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
-      makeMatch(2, { agent: "Sova", role: "initiator", map: "Sunset", result: "win", acs: 221, hs: 29, playedAt: "2026-07-01T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", seasonBoost: 50 }),
+      makeMatch(2, { agent: "Sova", role: "initiator", map: "Sunset", result: "win", acs: 221, hs: 29, playedAt: "2026-07-01T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", radiantActRR: 512 }),
       makeMatch(3, { agent: "Jett", role: "duelist", map: "Ascent", result: "loss", acs: 164, hs: 17, playedAt: "2026-07-02T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", seasonBoost: 20 }),
       makeMatch(4, { agent: "Sova", role: "initiator", map: "Breeze", result: "win", acs: 247, hs: 33 }),
       makeMatch(5, { agent: "Omen", role: "controller", map: "Haven", result: "loss", acs: 118, hs: 14 }),
@@ -127,6 +131,7 @@ async function bootPage(page) {
     localStorage.setItem("valtracker_daily_warmup_prompt_v1:nav-loadout-profile", new Date().toISOString().slice(0, 10));
     globalThis.RankedCoachTestHooks.loadProfileFixture(fixture);
     window.clearTimeout?.(window.dailyWarmupPromptTimer);
+    document.querySelectorAll(".page.daily-entrance-page-pending").forEach(page => page.classList.remove("daily-entrance-page-pending"));
     document.querySelectorAll(".modal-overlay,.modal-backdrop,.lens-modal-overlay,#guestChoiceModal,#dailyEntranceOverlay,#dailyWarmupModal,#weeklyFocusModal,#lensModal,#matchSummaryModal").forEach(element => {
       element.style.setProperty("display", "none", "important");
       element.style.setProperty("pointer-events", "none", "important");
@@ -251,11 +256,19 @@ async function closeLensModals(page) {
   if (await compactClose.count()) {
     await compactClose.first().click({ force: true });
   }
-  await page.waitForTimeout(250);
+  await page.waitForFunction(() => {
+    const full = document.getElementById("lensModalOverlay");
+    const compact = document.getElementById("lensModal");
+    return !full?.classList.contains("active") && !compact?.classList.contains("active");
+  }, null, { timeout: 5000 }).catch(async () => {
+    await forceClearModals(page);
+  });
+  await page.waitForTimeout(120);
 }
 
 async function forceClearModals(page) {
   await page.evaluate(() => {
+    document.querySelectorAll('.page.daily-entrance-page-pending').forEach(page => page.classList.remove('daily-entrance-page-pending'));
     document.querySelectorAll('#lensModalOverlay,#lensModal,#dailyWarmupModal,.lens-modal-overlay,.modal-overlay,.modal-backdrop').forEach(element => {
       element.classList.remove('active', 'show', 'is-active', 'is-opening', 'is-closing', 'visible');
       element.style.display = 'none';
@@ -271,6 +284,7 @@ async function forceClearModals(page) {
 async function forceHomeMotionSettled(page) {
   await page.evaluate(() => {
     document.body.classList.add("nav-loadout-stats-test-ready");
+    document.querySelectorAll('.page.daily-entrance-page-pending').forEach(page => page.classList.remove('daily-entrance-page-pending'));
     document.querySelectorAll("#page-home .home-middle-row, #page-home .home-middle-row > *, #page-home .compass-score-card").forEach(element => {
       element.style.setProperty("opacity", "1", "important");
       element.style.setProperty("visibility", "visible", "important");
@@ -278,21 +292,73 @@ async function forceHomeMotionSettled(page) {
   });
 }
 
-async function applyProfileTheme(page, themeKey) {
-  const result = await page.evaluate(key => {
-    const fixture = globalThis.__RC_NAV_LOADOUT_STATS_FIXTURE__;
-    fixture.themeKey = key;
-    fixture.frameTheme = key;
-    const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0] || fixture;
-    profile.themeKey = key;
-    profile.frameTheme = key;
-    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([profile]));
-    globalThis.RankedCoachTestHooks.loadProfileFixture(profile);
-    return globalThis.RankedCoachTestHooks.applyProfileThemeForTest(key);
-  }, themeKey);
+async function activateStatsPage(page) {
+  const activeStatsPage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("stats"));
+  assert.equal(activeStatsPage, "page-stats", `stats page should activate through real navigation hook, got ${activeStatsPage}`);
+  await forceClearModals(page);
+  await page.evaluate(() => {
+    const statsPage = document.getElementById("page-stats");
+    if (!statsPage) return;
+    statsPage.classList.remove("daily-entrance-page-pending");
+    statsPage.style.removeProperty("opacity");
+    statsPage.style.removeProperty("pointer-events");
+  });
+  await page.waitForSelector('#page-stats.active #statsPerformanceChart .stats-trend-card', { timeout: 10000 });
+  await page.waitForTimeout(160);
+}
+
+async function selectThemeThroughRealUi(page, themeKey) {
+  await page.evaluate(() => {
+    const dropdown = document.getElementById("profileDropdown");
+    dropdown?.classList.remove("open");
+    document.getElementById("profileDropdownToggle")?.click();
+    if (!dropdown?.classList.contains("open")) dropdown?.classList.add("open");
+  });
+  await page.waitForSelector('#profileDropdown.open #pdOpenSettings', { timeout: 5000 });
+  await page.locator('#pdOpenSettings').click();
+  await page.waitForSelector('#editProfileModal.active #editProfileThemeGallery [data-theme-card]', { timeout: 8000 });
+  await page.evaluate(() => {
+    const modal = document.getElementById("editProfileModal");
+    if (!modal) return;
+    modal.hidden = false;
+    modal.style.removeProperty("display");
+    modal.style.removeProperty("pointer-events");
+  });
+  const selector = `#editProfileThemeGallery [data-theme-card="${themeKey}"]`;
+  await page.waitForFunction(key => Boolean(document.querySelector(`#editProfileThemeGallery [data-theme-card="${CSS.escape(key)}"]`)), themeKey, { timeout: 5000 });
+  let clicked = false;
+  for (let attempt = 0; attempt < 3 && !clicked; attempt += 1) {
+    try {
+      await page.locator(selector).first().click({ timeout: 5000 });
+      clicked = true;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await page.waitForTimeout(150);
+    }
+  }
+  await page.waitForFunction(key => {
+    const selected = document.querySelector('#editProfileTheme')?.value;
+    const active = document.querySelector(`#editProfileThemeGallery [data-theme-card="${CSS.escape(key)}"]`)?.classList.contains('is-active');
+    return selected === key && active;
+  }, themeKey, { timeout: 5000 });
+  const evidence = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const button = document.querySelector('#roleButtons .role-filter-btn[data-role="any"]');
+    const buttonStyle = button ? getComputedStyle(button) : null;
+    return {
+      theme: document.getElementById("editProfileTheme")?.value || "",
+      bodyTheme: document.body.dataset.theme || "",
+      accent: rootStyle.getPropertyValue("--accent").trim(),
+      background: buttonStyle?.backgroundImage || buttonStyle?.backgroundColor || "",
+      buttonText: button?.textContent?.trim() || ""
+    };
+  });
+  await page.locator('#editProfileSave').click();
+  await page.waitForFunction(() => !document.getElementById("editProfileModal")?.classList.contains("active"), null, { timeout: 5000 });
   await page.waitForFunction(key => document.body.dataset.theme === key, themeKey, { timeout: 5000 });
-  assert.equal(result?.ok, true, `test hook should apply theme ${themeKey}: ${JSON.stringify(result)}`);
-  await page.waitForTimeout(120);
+  evidence.savedBodyTheme = await page.evaluate(() => document.body.dataset.theme || "");
+  await forceClearModals(page);
+  return evidence;
 }
 
 async function run() {
@@ -344,6 +410,20 @@ async function run() {
         changedTransform: result.after.transform !== result.before.transform
       });
     }
+    await page.evaluate(() => {
+      const dropdown = document.getElementById("profileDropdown");
+      dropdown?.classList.remove("open");
+      document.getElementById("profileDropdownToggle")?.click();
+      if (!dropdown?.classList.contains("open")) dropdown?.classList.add("open");
+    });
+    await page.waitForSelector('#profileDropdown.open #pdOpenSettings', { timeout: 5000 });
+    const pdOpenSettingsHover = await hoverSnapshot(page, '#pdOpenSettings');
+    const pdOpenSettingsChanged = pdOpenSettingsHover.after.background !== pdOpenSettingsHover.before.background
+      || pdOpenSettingsHover.after.boxShadow !== pdOpenSettingsHover.before.boxShadow
+      || pdOpenSettingsHover.after.transform !== pdOpenSettingsHover.before.transform;
+    assert.equal(pdOpenSettingsChanged, true, `#pdOpenSettings should gain hover treatment through the real profile menu: ${JSON.stringify(pdOpenSettingsHover)}`);
+    await page.evaluate(() => document.getElementById("profileDropdown")?.classList.remove("open"));
+
     const navClip = await page.evaluate(() => {
       const appRoot = document.querySelector(".app-root");
       const left = document.querySelector(".nav-left")?.getBoundingClientRect();
@@ -354,6 +434,11 @@ async function run() {
       const afterOverflow = appRoot ? getComputedStyle(appRoot).overflow : "";
       const afterButtons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => button.getBoundingClientRect());
       const afterInside = afterButtons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1);
+      const changedByAppRootToggle = beforeInside !== afterInside
+        || buttons.some((box, index) => {
+          const after = afterButtons[index];
+          return !after || Math.abs(box.left - after.left) > 0.5 || Math.abs(box.right - after.right) > 0.5 || Math.abs(box.top - after.top) > 0.5 || Math.abs(box.bottom - after.bottom) > 0.5;
+        });
       if (appRoot) appRoot.style.removeProperty("overflow");
       return {
         left,
@@ -361,6 +446,7 @@ async function run() {
         afterOverflow,
         inside: beforeInside,
         visibleOverrideInside: afterInside,
+        changedByAppRootToggle,
         buttonCount: buttons.length
       };
     });
@@ -400,10 +486,22 @@ async function run() {
       trigger?.click();
       await new Promise(resolve => setTimeout(resolve, 80));
       const none = document.querySelector(".loadout-map-choice-none");
+      const noneTextStyles = [...(none?.querySelectorAll("span,small") || [])].map(node => {
+        const style = getComputedStyle(node);
+        return {
+          tag: node.tagName,
+          text: node.textContent.trim(),
+          backgroundColor: style.backgroundColor,
+          backgroundImage: style.backgroundImage,
+          boxShadow: style.boxShadow,
+          textShadow: style.textShadow
+        };
+      });
       const before = {
         display: document.getElementById("loadoutMapDisplay")?.textContent?.trim(),
         selectedClass: trigger?.classList.contains("is-map-selected"),
-        noneText: none?.textContent?.replace(/\s+/g, " ").trim()
+        noneText: none?.textContent?.replace(/\s+/g, " ").trim(),
+        noneTextStyles
       };
       none?.click();
       await new Promise(resolve => setTimeout(resolve, 120));
@@ -418,6 +516,7 @@ async function run() {
     });
     assert.equal(mapPicker.before.display, "Breeze", `fixture should begin with Breeze selected: ${JSON.stringify(mapPicker)}`);
     assert.match(mapPicker.before.noneText || "", /None/i, `None choice should be visible: ${JSON.stringify(mapPicker)}`);
+    assert.ok(mapPicker.before.noneTextStyles.every(style => style.backgroundColor === "rgba(0, 0, 0, 0)" && style.backgroundImage === "none" && style.boxShadow === "none" && style.textShadow === "none"), `None option inner text should not carry its own black backing: ${JSON.stringify(mapPicker.before.noneTextStyles)}`);
     assert.equal(mapPicker.after.display, "Any map", `None choice should clear the map picker: ${JSON.stringify(mapPicker)}`);
     assert.equal(mapPicker.after.selectedClass, false, `Map trigger selected styling should clear: ${JSON.stringify(mapPicker)}`);
     await page.locator('#loadoutMapPicker').click({ force: true });
@@ -490,9 +589,8 @@ async function run() {
       `compass card hover should change background: ${JSON.stringify(compassHover)}`
     );
 
-    await page.locator('.nav-btn[data-page="stats"]').click({ force: true });
+    await activateStatsPage(page);
     await page.waitForSelector('#statsMapsList .stats-map-card', { timeout: 10000 });
-    await page.waitForTimeout(250);
     const roleHover = await collectHoverEvidence(page, '.stats-role-pill[role="button"].role-initiator');
     assert.notEqual(
       `${roleHover.after.backgroundColor}|${roleHover.after.backgroundImage}`,
@@ -525,16 +623,53 @@ async function run() {
       iconBeforeName: [...document.querySelectorAll('.stats-role-history-agent')].every(row => row.firstElementChild?.tagName === 'IMG' && row.lastElementChild?.textContent?.trim())
     }));
     assert.ok(roleHistory.rows >= 2, `role history should render multiple rows: ${JSON.stringify(roleHistory)}`);
-    assert.deepEqual(roleHistory.labels.slice(0, 2), ["Match 7", "Match 5"], `role history should use real match numbers newest-first: ${JSON.stringify(roleHistory)}`);
+    assert.deepEqual(roleHistory.labels.slice(0, 2), ["Match 3", "Match 1"], `role history should use season-scoped match numbers newest-first: ${JSON.stringify(roleHistory)}`);
     assert.equal(roleHistory.iconBeforeName, true, `role history needs agent icon before name text: ${JSON.stringify(roleHistory)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'role-history.png') });
     await closeLensModals(page);
 
     const trendCards = await page.locator('#statsPerformanceChart .stats-trend-card').count();
     assert.ok(trendCards > 0, 'recent match trend cards should exist');
+    const trendCardBoxes = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#statsPerformanceChart .stats-trend-card')];
+      const boxes = cards.map((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const target = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        return {
+          index,
+          text: card.textContent.replace(/\s+/g, " ").trim().slice(0, 80),
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+          inert: card.inert,
+          ariaHidden: card.getAttribute("aria-hidden"),
+          hitTag: target?.tagName || "",
+          hitId: target?.id || "",
+          hitClass: String(target?.className || ""),
+          hitSameCard: target === card || Boolean(target?.closest?.(".stats-trend-card") === card)
+        };
+      });
+      const overlaps = [];
+      for (let leftIndex = 0; leftIndex < boxes.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < boxes.length; rightIndex += 1) {
+          const left = boxes[leftIndex];
+          const right = boxes[rightIndex];
+          const overlapX = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left));
+          const overlapY = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
+          if (overlapX > 1 && overlapY > 1) overlaps.push({ pair: [left.index, right.index], overlapX, overlapY });
+        }
+      }
+      return { boxes, overlaps };
+    });
+    assert.equal(trendCardBoxes.overlaps.length, 0, `desktop trend cards should not overlap: ${JSON.stringify(trendCardBoxes)}`);
+    assert.ok(trendCardBoxes.boxes.every(box => box.hitSameCard && box.inert === false && box.ariaHidden !== "true"), `desktop trend cards must receive their own center hit target and not be inert: ${JSON.stringify(trendCardBoxes)}`);
     const trendCardModalTitles = [];
     for (let index = 0; index < trendCards; index += 1) {
-      await page.locator('#statsPerformanceChart .stats-trend-card').nth(index).click({ force: true });
+      await page.locator('#statsPerformanceChart .stats-trend-card').nth(index).scrollIntoViewIfNeeded();
+      await page.locator('#statsPerformanceChart .stats-trend-card').nth(index).click({ timeout: 6000 });
       await page.waitForSelector('#lensModal.active #lensStatsListSecondary', { timeout: 6000 });
       trendCardModalTitles.push(await page.locator('#lensModal.active #lensModalTitleSecondary').innerText());
       await closeLensModals(page);
@@ -585,16 +720,24 @@ async function run() {
         dataPoints: document.querySelectorAll('.stats-lifetime-rank-dot').length,
         rankMarkers: document.querySelectorAll('.stats-lifetime-rank-marker').length,
         markerTextCount: document.querySelectorAll('.stats-lifetime-rank-marker text').length,
+        peakMarkers: document.querySelectorAll('.stats-lifetime-rank-marker.is-peak').length,
+        radiantPeakMarkers: document.querySelectorAll('.stats-lifetime-rank-marker.is-peak.is-radiant-peak').length,
+        radiantPeakText: document.querySelector('.stats-lifetime-rank-marker.is-peak.is-radiant-peak .stats-lifetime-rank-rr')?.textContent?.trim() || "",
         yAxisTextCount: document.querySelectorAll('.stats-lifetime-rank-y-tick text').length,
         xTickLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].map(node => node.textContent.trim()),
+        rawSeasonKeyLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].filter(node => /season[-_]|act[-_]/i.test(node.textContent)).length,
         arrowClasses: document.querySelectorAll('.stats-lifetime-rank-up,.stats-lifetime-rank-down').length
       };
     });
     assert.ok(lifetime.width >= lifetime.viewport * 0.78, `lifetime chart should be full-width: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.rankMarkers, lifetime.dataPoints, `seasonal peak chart should mark only plotted season peaks: ${JSON.stringify(lifetime)}`);
-    assert.equal(lifetime.markerTextCount, 0, `lifetime chart should remove rank-up/down arrow text: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.markerTextCount, 1, `lifetime chart should only render Radiant peak RR text, not rank-up/down arrow text: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.peakMarkers, 1, `highest recorded peak should be uniquely highlighted: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.radiantPeakMarkers, 1, `Radiant highest peak should carry the Radiant peak marker class: ${JSON.stringify(lifetime)}`);
+    assert.match(lifetime.radiantPeakText, /^512 RR$/, `Radiant peak should show the actual peak RR: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.yAxisTextCount, 0, `lifetime y-axis should use rank icons only: ${JSON.stringify(lifetime)}`);
     assert.ok(lifetime.xTickLabels.length >= 3, `lifetime x-axis should show season labels: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.rawSeasonKeyLabels, 0, `lifetime x-axis should not expose raw internal season keys: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.arrowClasses, 0, `lifetime chart should not keep rank-up/down arrow classes: ${JSON.stringify(lifetime)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
@@ -603,19 +746,7 @@ async function run() {
     await page.waitForTimeout(200);
     const themeChecks = [];
     for (const themeKey of ["serpent-green", "navy-command"]) {
-      await applyProfileTheme(page, themeKey);
-      const check = await page.evaluate(() => {
-        const rootStyle = getComputedStyle(document.documentElement);
-        const button = document.querySelector('#roleButtons .role-filter-btn[data-role="any"]');
-        const buttonStyle = button ? getComputedStyle(button) : null;
-        return {
-          theme: document.body.dataset.theme,
-          accent: rootStyle.getPropertyValue("--accent").trim(),
-          background: buttonStyle?.backgroundImage || buttonStyle?.backgroundColor || "",
-          buttonText: button?.textContent?.trim() || ""
-        };
-      });
-      themeChecks.push(check);
+      themeChecks.push(await selectThemeThroughRealUi(page, themeKey));
     }
     assert.notEqual(themeChecks[0].accent, themeChecks[1].accent, `two non-default themes should expose different --accent values: ${JSON.stringify(themeChecks)}`);
     assert.notEqual(themeChecks[0].background, themeChecks[1].background, `ALL button background should respond to theme accent: ${JSON.stringify(themeChecks)}`);
@@ -649,6 +780,22 @@ async function run() {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(350);
+    const activeMobileHome = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+    assert.equal(activeMobileHome, "page-home", `mobile home page should activate through test hook, got ${activeMobileHome}`);
+    await forceHomeMotionSettled(page);
+    const mobileSpinLabel = await page.evaluate(() => {
+      const button = document.getElementById("spinAgentBtn");
+      const label = button?.querySelector(".spin-loadout-label") || button?.querySelector("span");
+      const buttonBox = button?.getBoundingClientRect();
+      const labelBox = label?.getBoundingClientRect();
+      return {
+        text: label?.textContent?.trim() || "",
+        button: buttonBox ? { left: buttonBox.left, right: buttonBox.right, width: buttonBox.width } : null,
+        label: labelBox ? { left: labelBox.left, right: labelBox.right, width: labelBox.width } : null,
+        overflows: Boolean(buttonBox && labelBox && (labelBox.left < buttonBox.left - 1 || labelBox.right > buttonBox.right + 1))
+      };
+    });
+    assert.equal(mobileSpinLabel.overflows, false, `mobile spin label should remain inside the button: ${JSON.stringify(mobileSpinLabel)}`);
     const activeMobilePage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("stats"));
     assert.equal(activeMobilePage, "page-stats", `mobile stats page should activate through test hook, got ${activeMobilePage}`);
     await page.waitForSelector('#statsPerformanceChart .stats-trend-card', { timeout: 10000 });
@@ -672,11 +819,24 @@ async function run() {
     assert.ok(mobileTrends.cards.some(card => card.width > 0 && card.height >= 64), `mobile trend carousel should expose at least one full active card: ${JSON.stringify(mobileTrends)}`);
     assert.ok(mobileTrends.cards.filter(card => card.width > 0 && card.height > 0).every(card => card.height >= 64 && !card.clippedByParent), `visible mobile trend cards should not be cut in half: ${JSON.stringify(mobileTrends)}`);
     await page.locator('#statsPerformanceChart').screenshot({ path: path.join(outDir, 'mobile-stats-performance-chart.png') });
+    const mobileTrendCardModalTitles = [];
+    for (let index = 0; index < mobileTrends.cards.length; index += 1) {
+      await page.locator('#statsPerformanceChart .stats-trend-card.is-mobile-trend-active').scrollIntoViewIfNeeded();
+      await page.locator('#statsPerformanceChart .stats-trend-card.is-mobile-trend-active').click({ timeout: 6000 });
+      await page.waitForSelector('#lensModal.active #lensStatsListSecondary', { timeout: 6000 });
+      mobileTrendCardModalTitles.push(await page.locator('#lensModal.active #lensModalTitleSecondary').innerText());
+      await closeLensModals(page);
+      if (index < mobileTrends.cards.length - 1) {
+        await page.locator('#mobileTrendNav [data-mobile-trend-step="1"]').click({ timeout: 5000 });
+        await page.waitForTimeout(120);
+      }
+    }
 
     await page.screenshot({ path: path.join(outDir, 'stats-page-final.png'), fullPage: true });
     assert.deepEqual(issues, [], `console errors during nav/loadout/stats pass: ${JSON.stringify(issues, null, 2)}`);
     console.log(JSON.stringify({
       navResults,
+      pdOpenSettingsHover,
       navClip,
       loadout,
       topMapAgents,
@@ -685,13 +845,16 @@ async function run() {
       compassHover,
       trendAxis,
       roleHistory,
+      trendCardBoxes,
       trendCardsClicked: trendCards,
       trendCardModalTitles,
       hoverResults,
       lifetime,
       themeChecks,
       agentRoleTint,
-      mobileTrends
+      mobileSpinLabel,
+      mobileTrends,
+      mobileTrendCardModalTitles
     }, null, 2));
   } finally {
     await browser.close();

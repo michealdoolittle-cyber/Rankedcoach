@@ -2991,6 +2991,19 @@ function ensureMobileTrendCarousel() {
   const card = page?.querySelector(".stats-performance-card");
   const chart = document.getElementById("statsPerformanceChart");
   if (!page || !card || !chart) return;
+  if (!isMobileLayoutViewport()) {
+    page.dataset.mobileTrendFilter = page.dataset.mobileTrendFilter || "all";
+    chart.querySelectorAll(".stats-trend-card").forEach((item) => {
+      item.classList.remove("mobile-trend-filtered", "is-mobile-trend-active");
+      item.inert = false;
+      item.removeAttribute("aria-hidden");
+    });
+    const existingTabs = document.getElementById("mobileTrendTabs");
+    const existingNav = document.getElementById("mobileTrendNav");
+    if (existingTabs) existingTabs.hidden = true;
+    if (existingNav) existingNav.hidden = true;
+    return;
+  }
 
   let tabs = document.getElementById("mobileTrendTabs");
   if (!tabs) {
@@ -12574,11 +12587,16 @@ function openStatsDetailModal(kind, value) {
   } else if (kind === "role-history") {
     const roleKey = getCompassRoleKey(value);
     const roleLabel = formatReadableLabel(roleKey);
-    const roleMatches = getSortedMatches(scopedStats.matches)
-      .filter(match => getCompassRoleKey(getMatchCore(match).role) === roleKey)
+    const scopedNumberedMatches = getSortedMatches(scopedStats.matches)
+      .map((match, index) => ({
+        match,
+        core: getMatchCore(match),
+        matchNumber: index + 1
+      }));
+    const roleMatches = scopedNumberedMatches
+      .filter(({ core }) => getCompassRoleKey(core.role) === roleKey)
       .slice()
-      .reverse()
-      .map((match) => ({ match, core: getMatchCore(match), matchNumber: getMatchSummaryMatchNumber(match) }));
+      .reverse();
     title.textContent = `${roleLabel} Match History`;
     tabsHost.innerHTML = "";
     tabsHost.style.display = "none";
@@ -62619,7 +62637,7 @@ function buildStatsLifetimeRankChartMarkup() {
   const peakBySeason = new Map();
   lifetime.entries.forEach((entry, sourceIndex) => {
     const match = entry?.match || {};
-    const seasonLabel = getMatchSeasonLabel(match) || match?.season || match?.metadata?.season || match?.act || `Season ${sourceIndex + 1}`;
+    const seasonLabel = getStatsLifetimeSeasonLabel(match, `Season ${sourceIndex + 1}`);
     const value = Number(entry?.lifetimeRankAbsolute);
     if (!Number.isFinite(value)) return;
     const existing = peakBySeason.get(seasonLabel);
@@ -62637,16 +62655,22 @@ function buildStatsLifetimeRankChartMarkup() {
   if (!peakPoints.length) {
     return `<li class="stats-lifetime-rank-empty">No retained seasonal peak rank snapshots are available yet.</li>`;
   }
+  const highestPeakValue = Math.max(...peakPoints.map(point => Number(point.value)).filter(Number.isFinite));
   const plotWidth = width - pad.left - pad.right;
   const step = peakPoints.length > 1 ? plotWidth / (peakPoints.length - 1) : 0;
   const points = peakPoints.map((peak, index) => {
     const rank = peak.rank || getTierRank(peak.value) || RANK_THRESHOLDS[0];
+    const isHighestPeak = Number.isFinite(highestPeakValue) && Number(peak.value) === highestPeakValue;
+    const isRadiantPeak = /^radiant$/i.test(String(rank?.tierLabel || ""));
     return {
       ...peak,
       x: pad.left + (peakPoints.length > 1 ? index * step : plotWidth / 2),
       y: y(peak.value),
       rankLabel: rank?.tierLabel || "",
-      icon: rank?.icon || getRankIconUrl(rank?.tierLabel)
+      icon: rank?.icon || getRankIconUrl(rank?.tierLabel),
+      isHighestPeak,
+      isRadiantPeak,
+      radiantPeakRR: isRadiantPeak ? getActRRForAbsoluteRR(peak.value, rank) : null
     };
   });
   const path = points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
@@ -62672,7 +62696,8 @@ function buildStatsLifetimeRankChartMarkup() {
       </g>`).join("");
   const rankMarkers = points.map((point) => {
     return `
-      <g class="stats-lifetime-rank-marker" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}">
+      <g class="stats-lifetime-rank-marker${point.isHighestPeak ? " is-peak" : ""}${point.isRadiantPeak ? " is-radiant-peak" : ""}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"${point.isRadiantPeak ? ` data-radiant-rr="${escapeHtml(point.radiantPeakRR)}"` : ""}>
+        ${point.isHighestPeak && point.isRadiantPeak ? `<text class="stats-lifetime-rank-rr" x="${point.x}" y="${Math.max(18, point.y - 30)}" text-anchor="middle">${escapeHtml(point.radiantPeakRR)} RR</text>` : ""}
         <circle cx="${point.x}" cy="${point.y}" r="18"></circle>
         <image href="${escapeHtml(point.icon)}" x="${point.x - 13}" y="${point.y - 13}" width="26" height="26" preserveAspectRatio="xMidYMid meet"></image>
       </g>`;
@@ -62715,10 +62740,58 @@ function buildStatsLifetimeRankChartMarkup() {
     </li>`;
 }
 
+function getStatsLifetimeSeasonLabel(match = {}, fallback = "") {
+  const values = [
+    getMatchSeasonLabel(match),
+    match?.metadata?.act,
+    match?.act,
+    match?.matchRecord?.act,
+    match?.matchRecord?.metadata?.act,
+    match?.metadata?.season?.label,
+    match?.metadata?.season?.name,
+    match?.matchRecord?.metadata?.season?.label,
+    match?.matchRecord?.metadata?.season?.name,
+    getRawHenrikSeasonMetadata(match)?.season?.displayName,
+    getRawHenrikSeasonMetadata(match)?.season?.name,
+    getRawHenrikSeasonMetadata(match)?.season?.short,
+    getMatchSeasonShort(match),
+    match?.season,
+    match?.metadata?.season,
+    match?.seasonId,
+    fallback
+  ];
+  for (const value of values) {
+    const normalized = normalizeValorantSeasonLabel(value);
+    const formatted = formatStatsLifetimeSeasonLabel(normalized);
+    if (formatted) return formatted;
+  }
+  return String(fallback || "").trim();
+}
+
+function formatStatsLifetimeSeasonLabel(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  let match = text.match(/(?:Season|Episode|V)?\s*(\d{4})\s*Act\s*(\d+)/i);
+  if (match) return `Season ${match[1]} Act ${match[2]}`;
+  match = text.match(/season[-_\s]*(\d{4})[-_\s]*act[-_\s]*(\d+)/i);
+  if (match) return `Season ${match[1]} Act ${match[2]}`;
+  match = text.match(/\bV?(\d{2,4})\s*A(?:ct)?\s*(\d+)\b/i);
+  if (match) {
+    const year = match[1].length === 2 ? `20${match[1]}` : match[1];
+    return `Season ${year} Act ${match[2]}`;
+  }
+  match = text.match(/\bE(\d+)A(\d+)\b/i);
+  if (match) return `Episode ${match[1]} Act ${match[2]}`;
+  if (isStructuralValorantSeasonToken(text)) return "";
+  return text;
+}
+
 function compactStatsLifetimeSeasonLabel(label = "") {
-  const text = String(label || "").trim();
-  const match = text.match(/(?:Season\s*)?(\d{4})\s*Act\s*(\d+)/i);
+  const text = formatStatsLifetimeSeasonLabel(label) || normalizeValorantSeasonLabel(label);
+  let match = String(text || "").trim().match(/(?:Season\s*)?(\d{4})\s*Act\s*(\d+)/i);
   if (match) return `S${match[1].slice(-2)} A${match[2]}`;
+  match = String(text || "").trim().match(/Episode\s*(\d+)\s*Act\s*(\d+)/i);
+  if (match) return `E${match[1]} A${match[2]}`;
   return text
     .replace(/\bSeason\b/gi, "S")
     .replace(/\bEpisode\b/gi, "E")

@@ -692,6 +692,10 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   border-bottom:1px solid rgba(226,232,240,.82) !important;
 }
 
+.stats-summary-trend-y-axis span:last-child{
+  transform:translateY(50%) !important;
+}
+
 .stats-role-history-agent{
   display:flex;
   align-items:center;
@@ -798,6 +802,20 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 .stats-lifetime-rank-line{fill:none;stroke:var(--accent,#ff4655);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 36%,transparent));}
 .stats-lifetime-rank-dot{fill:var(--accent-2,#38bdf8);stroke:#020617;stroke-width:2;}
 .stats-lifetime-rank-marker circle{fill:rgba(15,23,42,.94);stroke:var(--accent,#ff4655);stroke-width:2;}
+.stats-lifetime-rank-marker.is-peak circle{
+  stroke:#facc15;
+  stroke-width:3;
+  filter:drop-shadow(0 0 10px rgba(250,204,21,.5));
+}
+.stats-lifetime-rank-marker.is-peak image{
+  filter:drop-shadow(0 0 8px rgba(250,204,21,.48));
+}
+.stats-lifetime-rank-rr{
+  fill:#facc15;
+  font:900 13px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  text-shadow:0 0 8px rgba(250,204,21,.42);
+}
 .stats-lifetime-rank-chart-note,
 .stats-lifetime-rank-empty{color:#94a3b8;font:700 12px/1.35 var(--font-body,"Rajdhani",sans-serif);}
 
@@ -831,6 +849,15 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   background-image:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 28%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 16%,#172235)) !important;
   border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(255,255,255,.16)) !important;
   box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent) !important;
+}
+
+#profileDropdown #pdOpenSettings:is(:hover,:focus-visible){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(148,163,184,.28)) !important;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb,var(--accent,#ff4655) 24%,rgba(30,41,59,.96)),
+      color-mix(in srgb,var(--accent-2,#f97316) 12%,rgba(15,23,42,.96))) !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.22), inset 0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 22%,transparent) !important;
 }
 
 /* Nav/loadout/stats verification pass: loadout parent gets hover energy without moving. */
@@ -871,6 +898,30 @@ html body #page-stats#page-stats.page.active :is(.stats-agent-mini-card,.stats-a
 html body #page-stats#page-stats.page.active #statsPeakRankIcon{
   pointer-events:auto !important;
   cursor:pointer !important;
+}
+
+.loadout-map-choice.loadout-map-choice-none > :is(span,small){
+  background:transparent !important;
+  background-image:none !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+
+#page-home .loadout-card #spinAgentBtn .spin-loadout-label{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  line-height:1;
+}
+
+@media (max-width:520px){
+  #page-home .loadout-card #spinAgentBtn .spin-loadout-label{
+    font-size:clamp(8px,2.25vw,10px) !important;
+    letter-spacing:.08em !important;
+  }
 }
 
 #agentRoleSelect .agent-role-btn.role-duelist{--role-color:var(--duelist,#ff4655) !important;}
