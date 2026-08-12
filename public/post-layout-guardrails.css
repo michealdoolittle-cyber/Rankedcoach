@@ -29,20 +29,22 @@
   overflow-wrap:anywhere;
 }
 
-/* Session prep round 6 final guard. This stylesheet loads last, so keep the
+/* Session prep round 7 final guard. This stylesheet loads last, so keep the
    loadout roll geometry here as the single cascade backstop across desktop,
    mobile, and custom layout themes. */
 #page-home .loadout-card .home-loadout-main,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-  grid-template-rows:30.42% 40.04% 29.54% !important;
+  /* Fractional tracks preserve the measured round-six proportions while
+     reserving real space for the three visible row gaps. */
+  grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
     "info info" !important;
   column-gap:14px !important;
-  row-gap:0 !important;
+  row-gap:14px !important;
   justify-content:stretch !important;
   align-content:stretch !important;
   justify-items:stretch !important;
@@ -55,15 +57,20 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 #page-home .loadout-card #spinAgentBtn,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn{
   grid-area:spin !important;
-  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:clamp(2px,.35vw,5px) !important;
+  width:40% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:100% !important;
+  height:40% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
-  justify-self:stretch !important;
-  align-self:stretch !important;
+  justify-self:center !important;
+  align-self:center !important;
   margin:0 !important;
 }
 
@@ -72,15 +79,15 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
   grid-area:reel !important;
-  width:100% !important;
+  width:40% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:100% !important;
+  height:40% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
-  justify-self:stretch !important;
-  align-self:stretch !important;
+  justify-self:center !important;
+  align-self:center !important;
   overflow:hidden !important;
   box-shadow:none !important;
   filter:none !important;
@@ -92,10 +99,9 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame :is(.agent-reveal-art img,.agent-frame-portrait,.frame-art-inner){
   object-fit:contain !important;
   object-position:center center !important;
-  transform:translate(
-    calc(-50% + var(--agent-art-x-scaled, 0px)),
-    calc(-50% + var(--agent-art-y-scaled, 0px))
-  ) scale(var(--agent-art-scale, 1)) !important;
+  left:50% !important;
+  top:50% !important;
+  transform:translate(-50%, -50%) scale(var(--agent-art-scale, 1)) !important;
   transform-origin:center center !important;
 }
 
@@ -108,6 +114,42 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
   box-shadow:none !important;
   filter:none !important;
   text-shadow:none !important;
+}
+
+/* Agent ambient fog is painted by these pseudo-elements, not their parent. */
+#page-home .loadout-card #agentFrame .agent-frame-fx::before,
+#page-home .loadout-card #agentFrame .agent-frame-fx::after{
+  opacity:0 !important;
+}
+
+#page-home .loadout-card .home-loadout-info{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  align-self:stretch !important;
+}
+
+#page-home .loadout-card .home-loadout-info .home-loadout-pill{
+  height:100% !important;
+  min-height:0 !important;
+  align-self:stretch !important;
+}
+
+#page-home .loadout-card #spinAgentBtn .spin-loadout-label{
+  display:block !important;
+  max-width:100% !important;
+  color:inherit !important;
+  font:800 clamp(7px,.58vw,10px)/1 var(--font-display,"Rajdhani",sans-serif) !important;
+  letter-spacing:.06em !important;
+  text-align:center !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+#page-home .loadout-card #spinAgentBtn .spin-icon{
+  width:clamp(14px,1.1vw,22px) !important;
+  height:clamp(14px,1.1vw,22px) !important;
+  flex:0 0 auto !important;
 }
 
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame,
@@ -129,6 +171,150 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.
   html body.is-mobile-layout #page-logging .logging-hero{
     grid-template-columns:minmax(0,1fr) !important;
   }
+}
+
+/* Themed surfaces share accent feedback, while semantic result colors remain
+   unchanged. Kept in the final guard so a saved layout cannot revert them. */
+#page-insights .insight-card{
+  background:
+    radial-gradient(circle at top right,color-mix(in srgb,var(--accent,#ff4655) 12%,transparent),transparent 34%),
+    linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.98)) !important;
+}
+
+#page-insights .insight-card:is(:hover,:focus-within){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 48%,rgba(148,163,184,.25)) !important;
+  background:
+    radial-gradient(circle at top right,color-mix(in srgb,var(--accent,#ff4655) 20%,transparent),transparent 38%),
+    linear-gradient(180deg,rgba(20,28,45,.98),rgba(2,6,23,1)) !important;
+}
+
+#page-home #roleButtons .role-filter-btn[data-role="any"].active{
+  background:linear-gradient(135deg,var(--accent,#ff4655),var(--accent-2,#f97316)) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 72%,#fff 18%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 38%,transparent) !important;
+}
+
+#page-home #impactRolePill:not([data-role]),
+#lensModalOverlay .impact-opportunity-tab,
+#lensModalOverlay .lens-modal-collapse-toggle:is(:hover,:focus-visible){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 62%,rgba(148,163,184,.3)) !important;
+  background:color-mix(in srgb,var(--accent,#ff4655) 16%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 28%,transparent) !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card.stats-select-card:is(:hover,:focus-visible){
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(148,163,184,.28)) !important;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#ff4655) 15%,transparent),rgba(255,255,255,.045)) !important;
+    box-shadow:0 12px 24px rgba(0,0,0,.24),inset 0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 22%,transparent) !important;
+  }
+}
+
+#page-stats .stats-act-select{
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease !important;
+}
+
+#page-stats .stats-act-select:is(:hover,:focus-visible){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 68%,rgba(148,163,184,.28)) !important;
+  background:color-mix(in srgb,var(--accent,#ff4655) 10%,#0f172a) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 22%,transparent),0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 14%,transparent) !important;
+}
+
+#page-stats .stats-act-select:focus{
+  animation:rc-control-pop .2s cubic-bezier(.2,.84,.24,1) both;
+}
+
+.app-header .nav-links .nav-btn{
+  position:relative !important;
+  overflow:visible !important;
+  transition:transform .18s cubic-bezier(.2,.84,.24,1),border-color .18s ease,background .18s ease,box-shadow .18s ease !important;
+  animation:rc-control-pop .26s cubic-bezier(.2,.84,.24,1) both !important;
+}
+
+.app-header .nav-links .nav-btn:is(:hover,:focus-visible){
+  transform:translate3d(0,-2px,0) scale(1.025) !important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 31%,#334155),color-mix(in srgb,var(--accent-2,#38bdf8) 17%,#172235)) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 66%,#fff 12%) !important;
+  box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 26%,transparent) !important;
+}
+
+#lensModal .lens-modal{
+  backface-visibility:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:geometricPrecision;
+  will-change:transform,opacity;
+}
+
+#lensModal.active .lens-modal{
+  filter:none !important;
+}
+
+@keyframes rc-control-pop{
+  0%{transform:translate3d(0,4px,0) scale(.965);opacity:.7;}
+  100%{transform:translate3d(0,0,0) scale(1);opacity:1;}
+}
+
+/* Parent shells are deliberately quieter than their child controls. */
+#page-home > .home-layout > .card,
+#page-home .home-middle-row > :is(.card,.compass-panel),
+#page-logging .logging-layout > .card,
+#page-insights > .card,
+#page-library .gamesense-section,
+#page-library .gamesense-detail-grid > section{
+  border-radius:8px !important;
+}
+
+#page-home .compass-score-card,
+#page-insights .insight-read-card{
+  background:linear-gradient(145deg,rgba(100,116,139,.18),rgba(15,23,42,.9)) !important;
+}
+
+/* The season map grid is intentionally a fixed desktop 3×3 canvas: partial
+   rows retain normal icon sizes and leave their unused cells empty. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsMapsList.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:none !important;
+  grid-auto-rows:minmax(84px,1fr) !important;
+  align-content:start !important;
+}
+
+/* Summary and role detail drill-downs. */
+#page-stats .stats-summary-trend-trigger{
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+
+#page-stats .stats-summary-trend-trigger:is(:hover,:focus-visible){
+  transform:translate3d(0,-2px,0);
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(148,163,184,.26));
+  background:color-mix(in srgb,var(--accent,#ff4655) 10%,rgba(15,23,42,.9));
+  box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 16%,transparent);
+  outline:none;
+}
+
+.stats-summary-trend-list,
+.stats-role-history-list{display:block !important;}
+.stats-summary-trend-shell{list-style:none;padding:0 !important;background:transparent !important;border:0 !important;}
+.stats-summary-trend-head{display:flex;justify-content:space-between;gap:12px;color:#e2e8f0;font:800 12px/1.2 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;letter-spacing:.06em;}
+.stats-summary-trend-head span{color:var(--accent,#ff4655);font-size:10px;}
+.stats-summary-trend-chart{display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;min-height:184px;margin-top:12px;padding:12px;border:1px solid color-mix(in srgb,var(--accent,#ff4655) 32%,rgba(148,163,184,.2));border-radius:10px;background:linear-gradient(155deg,rgba(15,23,42,.96),rgba(2,6,23,.98));}
+.stats-summary-trend-y-axis{display:flex;flex-direction:column;justify-content:space-between;color:#94a3b8;font:800 10px/1 var(--font-display,"Rajdhani",sans-serif);}
+.stats-summary-trend-bars{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(44px,1fr);align-items:end;gap:7px;min-width:0;overflow-x:auto;padding:8px 0 28px;border-bottom:1px solid rgba(226,232,240,.72);}
+.stats-summary-trend-point{height:132px;display:grid;grid-template-rows:minmax(0,1fr) auto auto;align-items:end;justify-items:center;gap:3px;min-width:44px;}
+.stats-summary-trend-bar{align-self:end;width:min(28px,72%);height:var(--trend-height);min-height:2px;border-radius:5px 5px 0 0;background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#ff4655) 62%,#fff),var(--accent,#ff4655));box-shadow:0 0 12px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 34%,transparent);}
+.stats-summary-trend-point.is-unverified .stats-summary-trend-bar{display:none;}.stats-summary-trend-point small{color:#e2e8f0;font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);}.stats-summary-trend-point em{color:#94a3b8;font:700 8px/1 var(--font-body,"Rajdhani",sans-serif);font-style:normal;white-space:nowrap;}.stats-summary-trend-empty{margin:14px 0 0;color:#94a3b8;}
+#page-stats .stats-role-pill[role="button"]{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+#page-stats .stats-role-pill[role="button"]:is(:hover,:focus-visible){transform:translate3d(0,-2px,0);border-color:color-mix(in srgb,var(--accent,#ff4655) 52%,rgba(148,163,184,.28));box-shadow:0 8px 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 18%,transparent);outline:none;}
+.stats-role-history-list{display:grid !important;gap:7px;}.stats-role-history-row{display:grid;grid-template-columns:minmax(72px,.8fr) minmax(68px,.7fr) minmax(86px,1fr) minmax(84px,1fr) auto;align-items:center;gap:8px;padding:10px;border-radius:9px;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.86);color:#cbd5e1;font-size:11px;}.stats-role-history-row.is-win{border-color:rgba(34,197,94,.54);background:linear-gradient(135deg,rgba(34,197,94,.13),rgba(15,23,42,.9));}.stats-role-history-row.is-loss{border-color:rgba(255,70,85,.58);background:linear-gradient(135deg,rgba(255,70,85,.13),rgba(15,23,42,.9));}.stats-role-history-row em{text-transform:uppercase;font-style:normal;font-weight:800;}.stats-role-history-row.is-win em{color:#4ade80;}.stats-role-history-row.is-loss em{color:#fb7185;}.stats-role-history-empty{list-style:none;padding:12px;color:#94a3b8;}
+
+@media (max-width:820px){
+  .stats-summary-trend-chart{min-height:168px;padding:9px;}.stats-summary-trend-bars{grid-auto-columns:52px;}.stats-role-history-row{grid-template-columns:minmax(0,1fr) auto;gap:5px;}.stats-role-history-row :is(span,strong){min-width:0;}.stats-role-history-row span:nth-of-type(1)::before{content:" · ";}.stats-role-history-row span:nth-of-type(2){grid-column:1;}.stats-role-history-row span:nth-of-type(3){grid-column:1;}.stats-role-history-row em{grid-column:2;grid-row:1 / span 3;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .app-header .nav-links .nav-btn,
+  #page-stats .stats-act-select:focus{animation:none !important;}
 }
 
 /* The post-match launcher presents the two supported trainers as equal choices. */

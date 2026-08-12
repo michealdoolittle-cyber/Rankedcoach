@@ -11109,12 +11109,30 @@ function getWeaponRoundRates(rounds = []) {
     buckets.set(key, current);
   });
 
-  return [...buckets.values()]
+  const entries = [...buckets.values()]
     .map(entry => ({
       ...entry,
       conversionPct: safeDivide(entry.wins, entry.rounds) * 100
-    }))
-    .sort((a, b) => b.conversionPct - a.conversionPct || b.rounds - a.rounds);
+    }));
+  return rankWeaponEntriesByEvidence(entries, "conversionPct");
+}
+
+function rankWeaponEntriesByEvidence(entries = [], winRateKey = "winrate") {
+  const supported = entries.filter(entry => safeNumber(entry?.rounds) > 0);
+  if (!supported.length) return [];
+  // Use the same eight-sample confidence schedule as coaching evidence. The
+  // raw rate is still what we display; this score only prevents a one-round
+  // 100% result from outranking a repeatable weapon result.
+  return supported.map((entry) => {
+    const winrate = safeNumber(entry?.[winRateKey]);
+    const evidence = getCoachingEvidenceScore({ matches: safeNumber(entry?.rounds), winrate });
+    return { ...entry, evidenceScore: evidence.score, evidenceLabel: evidence.label };
+  }).sort((a, b) => (
+    safeNumber(b.evidenceScore) - safeNumber(a.evidenceScore)
+    || safeNumber(b.rounds) - safeNumber(a.rounds)
+    || safeNumber(b[winRateKey]) - safeNumber(a[winRateKey])
+    || String(a.weapon || a.label || "").localeCompare(String(b.weapon || b.label || ""))
+  ));
 }
 
 const MAP_ECONOMY_ROUND_FORMULAS = {
@@ -12553,13 +12571,29 @@ function openStatsDetailModal(kind, value) {
     renderSecondaryLensTabs(tabsHost, list, buildCalculatedRoleDetailTabs(value, analytics));
     showModalById("lensModal");
     return;
-    const role = (analytics?.roles || []).find(item => String(item.role || "").toLowerCase() === String(value || "").toLowerCase());
-    title.textContent = `${value} Role Review`;
-    items.push(["Win Rate", role ? `${Math.round(safeNumber(role.matchesWon) / Math.max(1, safeNumber(role.matchesPlayed)) * 100)}%` : "--"]);
-    items.push(["K/D", role ? Number(role.kd || 0).toFixed(2) : "--"]);
-    items.push(["ADR", role ? `${Math.round(role.adr || 0)}` : "--"]);
-    items.push(["Headshot %", role ? formatPercent(role.hs) : "--"]);
-    items.push(["Context", "Act-level role view modeled after the homepage impact pill."]);
+  } else if (kind === "role-history") {
+    const roleKey = getCompassRoleKey(value);
+    const roleLabel = formatReadableLabel(roleKey);
+    const roleMatches = getSortedMatches(scopedStats.matches)
+      .filter(match => getCompassRoleKey(getMatchCore(match).role) === roleKey)
+      .map((match, index) => ({ match, core: getMatchCore(match), index: index + 1 }));
+    title.textContent = `${roleLabel} Match History`;
+    tabsHost.innerHTML = "";
+    tabsHost.style.display = "none";
+    list.className = "lens-stats-list stats-role-history-list";
+    list.innerHTML = roleMatches.length ? roleMatches.map(({ match, core, index }) => {
+      const result = String(core.result || "").toLowerCase();
+      const resultClass = result === "win" ? "is-win" : result === "loss" ? "is-loss" : "is-draw";
+      return `<li class="stats-role-history-row ${resultClass}">
+        <strong>Match ${index}</strong>
+        <span>${escapeHtml(formatStatsSummaryDate(match))}</span>
+        <span>${escapeHtml(core.map || "Map unavailable")}</span>
+        <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
+        <em>${escapeHtml(result || "unverified")}</em>
+      </li>`;
+    }).join("") : `<li class="stats-role-history-empty">No verified ${escapeHtml(roleLabel)} matches are in this selected season.</li>`;
+    showModalById("lensModal");
+    return;
   }
 
   renderSecondaryLensStats(list, items);
@@ -44670,19 +44704,20 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".home-layout")}{grid-template-rows:minmax(calc(196px * ${homeBaselineScale}), auto) minmax(0, 1fr) calc(296px * ${homeBaselineScale}) !important; gap:calc(6px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row")}{grid-template-columns:minmax(calc(300px * ${homeBaselineScale}), 1.02fr) minmax(calc(336px * ${homeBaselineScale}), 1.08fr) minmax(calc(252px * ${homeBaselineScale}), .84fr) !important; gap:calc(6px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row > .loadout-card, .home-middle-row > .compass-panel, .home-middle-row > .rr-card")}{min-height:0 !important; height:100% !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important; grid-template-rows:30.42% 40.04% 29.54% !important; grid-template-areas:\"roles roles\" \"spin reel\" \"info info\" !important; column-gap:calc(14px * ${homeBaselineScale}) !important; row-gap:0 !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; align-items:stretch !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important; grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important; grid-template-areas:\"roles roles\" \"spin reel\" \"info info\" !important; column-gap:calc(14px * ${homeBaselineScale}) !important; row-gap:calc(14px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; align-items:stretch !important; zoom:1 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{grid-area:roles !important; display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; width:100% !important; min-width:0 !important; height:auto !important; min-height:calc(34px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; height:clamp(calc(44px * ${homeBaselineScale}), calc(48px * ${homeBaselineScale}), calc(56px * ${homeBaselineScale})) !important; min-height:calc(44px * ${homeBaselineScale}) !important; max-height:calc(56px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{grid-area:auto !important; padding:calc(5px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:center !important; justify-content:center !important; flex-direction:column !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; height:100% !important; min-height:0 !important; max-height:none !important; align-self:stretch !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{grid-area:auto !important; height:100% !important; padding:calc(5px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important; min-height:0 !important; align-self:stretch !important; align-items:center !important; justify-content:center !important; flex-direction:column !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(15px * ${homeBaselineScale}) !important; display:block !important; line-height:1.08 !important; flex:0 1 auto !important; width:100% !important; margin:0 !important; text-align:center !important; justify-content:center !important; padding-block:.04em .1em !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row button")}{grid-row:1 !important; grid-column:auto !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; width:100% !important; min-width:0 !important; max-width:none !important; height:100% !important; min-height:0 !important; aspect-ratio:auto !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:calc(3px * ${homeBaselineScale}) !important; width:40% !important; min-width:0 !important; max-width:none !important; height:40% !important; min-height:0 !important; aspect-ratio:auto !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:center !important; align-self:center !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:100% !important; min-width:0 !important; max-width:none !important; height:100% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:stretch !important; align-self:stretch !important; box-shadow:none !important; filter:none !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:40% !important; min-width:0 !important; max-width:none !important; height:40% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:center !important; align-self:center !important; box-shadow:none !important; filter:none !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame:is(.agent-selected, .reel-active, .agent-glow-flash, .agent-pulse), .loadout-card #agentFrame .agent-frame-fx, .loadout-card #agentFrame .frame-border, .loadout-card #agentFrame #agentPlaceholder, .loadout-card #agentFrame .shine, .loadout-card #agentFrame .placeholder-silhouette")}{box-shadow:none !important; filter:none !important; text-shadow:none !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-frame-fx::before, .loadout-card #agentFrame .agent-frame-fx::after")}{opacity:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner")}{object-fit:contain !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell")}{display:flex !important; flex-direction:column !important; grid-template-columns:none !important; gap:calc(5px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
@@ -44880,16 +44915,17 @@ function installThemeBuilderAutoFitObservers() {
         if (!element || !selector) return false;
         return Boolean(element.matches?.(selector) || element.querySelector?.(selector));
       };
+      // Only an explicitly marked layout surface can request a refit. Ordinary
+      // Library hydration (including patch notes) must never rescale unrelated
+      // copy just because it is nested under a broad page selector.
       const target = mutation.target?.nodeType === Node.ELEMENT_NODE
         ? mutation.target
         : mutation.target?.parentElement;
-      // Do not scan descendants of the mutation target itself. `body` always
-      // contains an opted-in text node, which previously made unrelated work
-      // (toasts, sync badges, media hydration) look like copy had changed.
-      if (target?.matches?.(selector) || target?.closest?.(selector)) return true;
-      // A newly rendered dossier/card can contain a target and legitimately
-      // needs fitting. A removed node cannot make remaining copy overflow.
-      return Array.from(mutation.addedNodes || []).some(nodeContainsAutoFitText);
+      if (target?.closest?.("[data-theme-builder-autofit-refresh='true']")) return true;
+      return Array.from(mutation.addedNodes || []).some(node => {
+        const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+        return Boolean(element?.matches?.("[data-theme-builder-autofit-refresh='true']"));
+      });
     };
     themeBuilderAutoFitState.observer = new MutationObserver((mutations) => {
       // Toasts, background-sync status, update checks, and decorative motion
@@ -56120,6 +56156,12 @@ function activatePage(pageId, options = {}){
     scheduleDesktopStatsPagePrewarm();
     scheduleDesktopLoggingPagePrewarm();
   }
+  if (pageId === "stats") {
+    // Statistics are derived from the selected season and may have been
+    // refreshed while this page was inactive. Re-render before exposing the
+    // page so its live controls and their click bindings belong to this view.
+    initStatsPage();
+  }
 
   document
     .querySelectorAll(".nav-btn")
@@ -58444,7 +58486,118 @@ function renderStatsOverviewTiles(model = getPlayerModel(), scopedMatches = getS
   });
 }
 
+const STATS_SUMMARY_TREND_META = Object.freeze({
+  kd: { label: "K/D", suffix: "", decimals: 2 },
+  winrate: { label: "Win Rate", suffix: "%", decimals: 0 },
+  kast: { label: "KAST", suffix: "%", decimals: 0 },
+  hs: { label: "Headshot %", suffix: "%", decimals: 0 },
+  acs: { label: "ACS", suffix: "", decimals: 0 },
+  matches: { label: "Matches Played", suffix: "", decimals: 0 }
+});
+
+function getSummaryMatchKast(match = {}) {
+  const metrics = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.([match]) || null;
+  const value = Number(metrics?.overall?.percentage);
+  return Number.isFinite(value) ? value : null;
+}
+
+function getStatsSummaryTrendEntries(metric = "kd", scopedMatches = []) {
+  return getSortedMatches(scopedMatches).map((match, index) => {
+    const core = getMatchCore(match);
+    let value = null;
+    if (metric === "kd") value = core.deaths ? safeDivide(core.kills, core.deaths) : (core.kills ? core.kills : null);
+    if (metric === "winrate") {
+      const result = String(core.result || "").toLowerCase();
+      value = result === "win" ? 100 : result === "loss" ? 0 : null;
+    }
+    if (metric === "kast") value = getSummaryMatchKast(match);
+    if (metric === "hs") value = Number.isFinite(Number(core.hs)) ? Number(core.hs) : null;
+    if (metric === "acs") value = Number.isFinite(Number(core.acs)) ? Number(core.acs) : null;
+    if (metric === "matches") value = index + 1;
+    return { match, core, index: index + 1, value };
+  });
+}
+
+function formatStatsSummaryDate(match = {}) {
+  const timestamp = getMatchSortTimestamp(match);
+  if (!timestamp) return "Date unavailable";
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(timestamp));
+}
+
+function formatStatsSummaryTrendValue(value, meta) {
+  if (!Number.isFinite(Number(value))) return "—";
+  return `${Number(value).toFixed(meta.decimals)}${meta.suffix}`;
+}
+
+function openStatsSummaryTrend(metric = "kd") {
+  const modal = document.getElementById("lensModal");
+  const title = document.getElementById("lensModalTitleSecondary");
+  const list = document.getElementById("lensStatsListSecondary");
+  const tabsHost = document.getElementById("lensDetailTabsSecondary");
+  const meta = STATS_SUMMARY_TREND_META[metric];
+  if (!modal || !title || !list || !tabsHost || !meta) return;
+  const scoped = getScopedStatsData();
+  const entries = getStatsSummaryTrendEntries(metric, scoped.matches);
+  const verified = entries.filter(entry => Number.isFinite(Number(entry.value)));
+  const maxValue = Math.max(1, ...verified.map(entry => Number(entry.value)));
+  title.textContent = `${meta.label} Trend`;
+  tabsHost.innerHTML = "";
+  tabsHost.style.display = "none";
+  list.className = "lens-stats-list stats-summary-trend-list";
+  list.innerHTML = `
+    <li class="stats-summary-trend-shell">
+      <div class="stats-summary-trend-head">
+        <strong>${escapeHtml(meta.label)}</strong>
+        <span>Season high: ${escapeHtml(formatStatsSummaryTrendValue(maxValue, meta))}</span>
+      </div>
+      ${verified.length ? `<div class="stats-summary-trend-chart" role="img" aria-label="${escapeHtml(meta.label)} trend across ${verified.length} selected-season matches">
+        <div class="stats-summary-trend-y-axis"><span>${escapeHtml(formatStatsSummaryTrendValue(maxValue, meta))}</span><span>0${escapeHtml(meta.suffix)}</span></div>
+        <div class="stats-summary-trend-bars">
+          ${entries.map(entry => {
+            const ratio = Number.isFinite(Number(entry.value)) ? Math.max(2, Number(entry.value) / maxValue * 100) : 0;
+            return `<div class="stats-summary-trend-point ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}" title="Match ${entry.index} · ${escapeHtml(formatStatsSummaryDate(entry.match))} · ${escapeHtml(formatStatsSummaryTrendValue(entry.value, meta))}">
+              <span class="stats-summary-trend-bar" style="--trend-height:${ratio}%"></span>
+              <small>M${entry.index}</small>
+              <em>${escapeHtml(formatStatsSummaryDate(entry.match))}</em>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>` : `<p class="stats-summary-trend-empty">No verified ${escapeHtml(meta.label)} values exist in this selected season yet.</p>`}
+    </li>
+  `;
+  showModalById("lensModal");
+}
+
+function bindStatsSummaryTrendTriggers() {
+  document.querySelectorAll(".stats-summary-trend-trigger").forEach(trigger => {
+    if (trigger.dataset.statsSummaryBound === "true") return;
+    trigger.dataset.statsSummaryBound = "true";
+    const open = () => openStatsSummaryTrend(trigger.dataset.statsSummaryMetric || "kd");
+    trigger.addEventListener("pointerup", event => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      event.preventDefault();
+      open();
+    });
+    trigger.addEventListener("click", event => {
+      // Pointer activation opens on pointerup so feedback is immediate. Keep
+      // keyboard/programmatic click activation working without opening twice.
+      if (event.detail > 0) return;
+      open();
+    });
+    // The layout-style editor can replace a summary tile's descendants while
+    // preserving the tile itself. Keeping the direct handler makes the
+    // player-facing drill-down resilient to that non-standard render path.
+    trigger.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  });
+}
+
 function initStatsPage(){
+  bindStatsSummaryTrendTriggers();
   return initStatsPageModel();
 }
 
@@ -61791,6 +61944,9 @@ function initStatsPageModel() {
   const model = getPlayerModel();
   const scopedMatches = getScopedStatsData(getActiveProfile()).matches || [];
   renderStatsOverviewTiles(model, scopedMatches);
+  // These elements are rendered above during every Stats refresh. Bind only
+  // after the render has completed so a stale node cannot retain the handler.
+  bindStatsSummaryTrendTriggers();
 }
 
 let renderStatsPerformance = renderStatsPerformanceModel;
@@ -61997,10 +62153,9 @@ function renderStatsMapsModel() {
     }
     return String(a).localeCompare(String(b));
   });
-  const excludedMapNames = ALL_VALORANT_MAP_NAMES
-    .filter(mapName => !poolSet.has(String(mapName).toLowerCase()))
-    .sort((a, b) => String(a).localeCompare(String(b)));
-  const renderMapNames = [...activeMapNames, ...excludedMapNames];
+  // Stats is a season view. A map outside the selected competitive pool does
+  // not belong in this grid; in-pool maps remain visible even without data.
+  const renderMapNames = activeMapNames;
 
   container.innerHTML = "";
   container.classList.add("stats-map-grid");
@@ -62008,8 +62163,8 @@ function renderStatsMapsModel() {
   renderMapNames.forEach((mapName) => {
     const map = mapByName.get(String(mapName || "").toLowerCase()) || null;
     const hasData = Boolean(map && safeNumber(map.matchesPlayed || map.matches) > 0);
-    const isActivePool = poolSet.has(String(mapName || "").toLowerCase());
-    const canOpen = hasData && isActivePool;
+    const isActivePool = true;
+    const canOpen = hasData;
     const winrateValue = safeNumber(map?.winrate);
     const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
     const matchCount = safeNumber(map?.matchesPlayed || map?.matches);
@@ -62019,19 +62174,17 @@ function renderStatsMapsModel() {
     card.disabled = !canOpen;
     card.dataset.activePool = isActivePool ? "true" : "false";
     card.dataset.hasData = hasData ? "true" : "false";
-    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded is-out-of-season" : " is-active-pool"}${isActivePool && !hasData ? " is-no-data" : ""}`;
+    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"} is-active-pool${!hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
-      ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span>` : ""}
       <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork" loading="lazy" decoding="async">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">
           ${hasData
             ? `<span class="stats-sub-text ${winrateTone}">${Math.round(winrateValue)}% WR</span><span class="stats-map-games">${escapeHtml(matchCopy)}</span>`
-            : (isActivePool ? `<span class="stats-map-no-data-tag">No Data</span>` : "")
+            : `<span class="stats-map-no-data-tag">No Data</span>`
           }
         </span>
-        ${!isActivePool ? `<span class="stats-map-out-name">${escapeHtml(mapName)}</span>` : ""}
       </div>
     `;
     if (canOpen) {
@@ -62079,17 +62232,17 @@ function renderStatsWeaponsModel() {
         <div class="stats-desktop-weapon-image-row"></div>
       `;
       const imageRow = row.querySelector(".stats-desktop-weapon-image-row");
+      const familyOrder = new Map(rankWeaponEntriesByEvidence(family.weapons.map((weaponName) => ({
+        weaponName,
+        ...(summaryMap.get(normalizeStatsWeaponKey(weaponName)) || {})
+      })), "winrate").map((entry, index) => [entry.weaponName, index]));
       family.weapons.slice().sort((weaponA, weaponB) => {
         const summaryA = summaryMap.get(normalizeStatsWeaponKey(weaponA));
         const summaryB = summaryMap.get(normalizeStatsWeaponKey(weaponB));
         const hasA = safeNumber(summaryA?.rounds) > 0;
         const hasB = safeNumber(summaryB?.rounds) > 0;
         if (hasA !== hasB) return hasA ? -1 : 1;
-        if (hasA && hasB) {
-          const winrateDelta = safeNumber(summaryB?.winrate) - safeNumber(summaryA?.winrate);
-          if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
-          return safeNumber(summaryB?.rounds) - safeNumber(summaryA?.rounds);
-        }
+        if (hasA && hasB) return safeNumber(familyOrder.get(weaponA), Number.MAX_SAFE_INTEGER) - safeNumber(familyOrder.get(weaponB), Number.MAX_SAFE_INTEGER);
         return getStatsWeaponOrderIndex(weaponA) - getStatsWeaponOrderIndex(weaponB);
       }).forEach((weaponName) => {
         const weaponKey = normalizeStatsWeaponKey(weaponName);
@@ -62141,17 +62294,17 @@ function renderStatsWeaponsModel() {
     const toneClass = hasFamilyData
       ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
       : "is-empty is-locked";
+    const familyOrder = new Map(rankWeaponEntriesByEvidence(family.weapons.map((weaponName) => ({
+      weaponName,
+      ...(summaryMap.get(normalizeStatsWeaponKey(weaponName)) || {})
+    })), "winrate").map((entry, index) => [entry.weaponName, index]));
     const orderedWeapons = family.weapons.slice().sort((weaponA, weaponB) => {
       const summaryA = summaryMap.get(normalizeStatsWeaponKey(weaponA));
       const summaryB = summaryMap.get(normalizeStatsWeaponKey(weaponB));
       const hasA = safeNumber(summaryA?.rounds) > 0;
       const hasB = safeNumber(summaryB?.rounds) > 0;
       if (hasA !== hasB) return hasA ? -1 : 1;
-      if (hasA && hasB) {
-        const winrateDelta = safeNumber(summaryB?.winrate) - safeNumber(summaryA?.winrate);
-        if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
-        return safeNumber(summaryB?.rounds) - safeNumber(summaryA?.rounds);
-      }
+      if (hasA && hasB) return safeNumber(familyOrder.get(weaponA), Number.MAX_SAFE_INTEGER) - safeNumber(familyOrder.get(weaponB), Number.MAX_SAFE_INTEGER);
       return String(weaponA).localeCompare(String(weaponB));
     });
 
@@ -62492,7 +62645,13 @@ function renderStatsRoleProgress() {
     const deltaText = role.matchesPlayed ? `${roundedDelta >= 0 ? "+" : ""}${roundedDelta}%` : "--";
 
     const pill = document.createElement("div");
+    const canOpenRoleHistory = role.matchesPlayed > 0;
     pill.className = `stats-role-pill role-${role.roleKey} ${role.matchesPlayed ? "" : "is-empty"}`;
+    if (canOpenRoleHistory) {
+      pill.setAttribute("role", "button");
+      pill.tabIndex = 0;
+      pill.setAttribute("aria-label", `Open ${role.label} match history`);
+    }
     pill.innerHTML = `
       <div class="stats-role-pill-main">
         <img class="stats-role-pill-icon" src="${escapeHtml(ROLE_ICON_MAP[role.roleKey] || "")}" alt="${escapeHtml(role.label)} role icon">
@@ -62519,6 +62678,24 @@ function renderStatsRoleProgress() {
       label?.style.setProperty("--tb-auto-fit-font-size", "clamp(9.5px, 2.75vw, 12px)", "important");
       label?.style.setProperty("font-size", "clamp(9.5px, 2.75vw, 12px)", "important");
       label?.style.setProperty("font-weight", "500", "important");
+    }
+    if (canOpenRoleHistory) {
+      const open = () => openStatsDetailModal("role-history", role.roleKey);
+      pill.addEventListener("pointerup", event => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        event.preventDefault();
+        open();
+      });
+      pill.addEventListener("click", event => {
+        if (event.detail > 0) return;
+        open();
+      });
+      pill.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          open();
+        }
+      });
     }
     container.appendChild(pill);
   });
@@ -62678,12 +62855,31 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     getAutoFitScheduleCount: () => themeBuilderAutoFitState.scheduledCount,
     getAutoFitSelector: () => THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.join(","),
     requestAutoFit: () => scheduleThemeBuilderAutoFitText({ resetBase: true }),
+    loadProfileFixture: (fixture = {}) => {
+      const profile = normalizeProfileRecord(fixture);
+      profiles = [profile];
+      activeProfileId = profile.id;
+      matches = profile.matches.slice();
+      logEntries = [];
+      persistProfilesToLocalCache();
+      recomputeFromMatches();
+      updateDisplays();
+      initStatsPage();
+      renderStatsAgents();
+      renderStatsMaps();
+      renderStatsWeapons();
+      return { id: activeProfileId, matches: matches.length };
+    },
+    openStatsSummaryTrend: metric => openStatsSummaryTrend(metric),
+    getStatsSummaryTrendEntries: metric => getStatsSummaryTrendEntries(metric, getScopedStatsData().matches),
+    openStatsRoleHistory: role => openStatsDetailModal("role-history", role),
     getCoachingInterpretation: input => ({
       context: resolveCoachingInterpretationContext(input),
       fight: describeFightValueInterpretation(input),
       evidence: getCoachingEvidenceScore(input),
       pairing: getUsageWinRatePairing(input)
     }),
+    rankWeaponEntriesByEvidence: (entries, winRateKey) => rankWeaponEntriesByEvidence(entries, winRateKey),
     getMapEconomyStatItems: (mapName, matchList) => getMapEconomyStatItems(mapName, matchList),
     getSideMetrics: rounds => getSideMetricsFromRounds(rounds),
     selectWeeklyFocusCandidate: candidates => selectWeeklyFocusCandidate(candidates),

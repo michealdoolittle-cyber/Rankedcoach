@@ -3251,13 +3251,13 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
    has to be normalized. */
 html body #page-home .loadout-card .home-loadout-main{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-  grid-template-rows:30.42% 40.04% 29.54% !important;
+  grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
     "info info" !important;
   column-gap:14px !important;
-  row-gap:0 !important;
+  row-gap:14px !important;
   justify-content:stretch !important;
   align-content:stretch !important;
   justify-items:stretch !important;
@@ -3266,14 +3266,18 @@ html body #page-home .loadout-card .home-loadout-main{
 
 html body #page-home .loadout-card #spinAgentBtn{
   grid-area:spin !important;
-  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:40% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:100% !important;
+  height:40% !important;
   min-height:0 !important;
   aspect-ratio:auto !important;
-  justify-self:stretch !important;
-  align-self:stretch !important;
+  justify-self:center !important;
+  align-self:center !important;
 }
 
 html body #page-home .loadout-card #agentFrame,
@@ -3281,14 +3285,14 @@ html body #page-home .loadout-card #agentFrame.agent-frame{
   grid-area:reel !important;
   display:grid !important;
   place-items:center !important;
-  width:100% !important;
+  width:40% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:100% !important;
+  height:40% !important;
   min-height:0 !important;
   aspect-ratio:auto !important;
-  justify-self:stretch !important;
-  align-self:stretch !important;
+  justify-self:center !important;
+  align-self:center !important;
   overflow:hidden !important;
   isolation:isolate !important;
   box-shadow:none !important;
@@ -3358,10 +3362,7 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
   max-height:100% !important;
   object-fit:contain !important;
   object-position:center center !important;
-  transform:translate(
-    calc(-50% + var(--agent-art-x-scaled, 0px)),
-    calc(-50% + var(--agent-art-y-scaled, 0px))
-  ) scale(var(--agent-art-scale, 1)) !important;
+  transform:translate(-50%,-50%) scale(var(--agent-art-scale,1)) !important;
   transform-origin:center center !important;
 }
 
@@ -3374,6 +3375,19 @@ html body #page-home .loadout-card #agentFrame .placeholder-silhouette{
   box-shadow:none !important;
   filter:none !important;
   text-shadow:none !important;
+}
+
+html body #page-home .loadout-card #agentFrame .agent-frame-fx::before,
+html body #page-home .loadout-card #agentFrame .agent-frame-fx::after{
+  opacity:0 !important;
+}
+
+html body #page-home .loadout-card .home-loadout-info,
+html body #page-home .loadout-card .home-loadout-info .home-loadout-pill{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  align-self:stretch !important;
 }
 
 /* 2026-08-02 mobile layout-style opt-outs.
