@@ -2959,7 +2959,7 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
 }
 
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame :is(.agent-reveal-art img,.agent-frame-art img){
-  object-fit:cover !important;
+  object-fit:contain !important;
   object-position:center center !important;
 }
 
@@ -3249,12 +3249,50 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
 /* Final cascade guard for the loadout roll frame. layout-styles.css loads after
    the mobile lock files, so this is where layout-related preview/roll alignment
    has to be normalized. */
+html body #page-home .loadout-card .home-loadout-main{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  grid-template-rows:30.42% 40.04% 29.54% !important;
+  grid-template-areas:
+    "roles roles"
+    "spin reel"
+    "info info" !important;
+  column-gap:14px !important;
+  row-gap:0 !important;
+  justify-content:stretch !important;
+  align-content:stretch !important;
+  justify-items:stretch !important;
+  align-items:stretch !important;
+}
+
+html body #page-home .loadout-card #spinAgentBtn{
+  grid-area:spin !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:100% !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+}
+
 html body #page-home .loadout-card #agentFrame,
 html body #page-home .loadout-card #agentFrame.agent-frame{
+  grid-area:reel !important;
   display:grid !important;
   place-items:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:100% !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
   overflow:hidden !important;
   isolation:isolate !important;
+  box-shadow:none !important;
+  filter:none !important;
 }
 
 html body #page-home .loadout-card #agentFrame #agentReel{
@@ -3318,10 +3356,24 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
   height:100% !important;
   max-width:100% !important;
   max-height:100% !important;
-  object-fit:cover !important;
+  object-fit:contain !important;
   object-position:center center !important;
-  transform:translate(-50%,-50%) scale(1) !important;
+  transform:translate(
+    calc(-50% + var(--agent-art-x-scaled, 0px)),
+    calc(-50% + var(--agent-art-y-scaled, 0px))
+  ) scale(var(--agent-art-scale, 1)) !important;
   transform-origin:center center !important;
+}
+
+html body #page-home .loadout-card #agentFrame:is(.agent-selected,.reel-active,.agent-glow-flash,.agent-pulse),
+html body #page-home .loadout-card #agentFrame .agent-frame-fx,
+html body #page-home .loadout-card #agentFrame .frame-border,
+html body #page-home .loadout-card #agentFrame #agentPlaceholder,
+html body #page-home .loadout-card #agentFrame .shine,
+html body #page-home .loadout-card #agentFrame .placeholder-silhouette{
+  box-shadow:none !important;
+  filter:none !important;
+  text-shadow:none !important;
 }
 
 /* 2026-08-02 mobile layout-style opt-outs.

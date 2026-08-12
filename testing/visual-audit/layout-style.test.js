@@ -786,6 +786,9 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       main: rect(main),
       mainGridAreas: main ? getComputedStyle(main).gridTemplateAreas : "",
       mainGridColumns: main ? getComputedStyle(main).gridTemplateColumns : "",
+      mainGridRows: main ? getComputedStyle(main).gridTemplateRows : "",
+      mainColumnGap: main ? getComputedStyle(main).columnGap : "",
+      mainRowGap: main ? getComputedStyle(main).rowGap : "",
       mainJustifyContent: main ? getComputedStyle(main).justifyContent : "",
       mainChildren: [...(main?.children || [])].map(child => {
         const style = getComputedStyle(child);
@@ -793,6 +796,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       }),
       roles: rect(roles),
       spin: rect(spin),
+      spinStyle: spin ? { aspectRatio: getComputedStyle(spin).aspectRatio, alignSelf: getComputedStyle(spin).alignSelf, justifySelf: getComputedStyle(spin).justifySelf } : null,
       info: rect(info),
       infoStyle: info ? { display: getComputedStyle(info).display, visibility: getComputedStyle(info).visibility, opacity: getComputedStyle(info).opacity } : null,
       infoPills: [...(info?.querySelectorAll(".home-loadout-pill") || [])].map(pill => {
@@ -807,6 +811,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       }),
       roleButtons: [...(roles?.querySelectorAll("button") || [])].map(button => rect(button)),
       frame: rect(frame),
+      frameStyle: frame ? { boxShadow: getComputedStyle(frame).boxShadow, filter: getComputedStyle(frame).filter, alignSelf: getComputedStyle(frame).alignSelf, justifySelf: getComputedStyle(frame).justifySelf } : null,
       frameCell: rect(frameCell),
       selectedArtClip: rect(selectedArtClip),
       selectedArt: rect(selectedArt),
@@ -843,7 +848,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     && inner.top >= outer.top - 1
     && inner.bottom <= outer.bottom + 1;
   assert.match(geometry.mainGridAreas, /roles roles/, `${style} loadout roles no longer span the full first row: ${JSON.stringify(geometry)}`);
-  assert.match(geometry.mainGridAreas, /reel spin/, `${style} loadout reel and spin control no longer share the second row: ${JSON.stringify(geometry)}`);
+  assert.match(geometry.mainGridAreas, /spin reel/, `${style} loadout spin and reel no longer share the flipped second row: ${JSON.stringify(geometry)}`);
   assert.match(geometry.mainGridAreas, /info info/, `${style} loadout detail pills no longer occupy their own third row: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.roleButtons.length, 5, `${style} loadout role controls are incomplete: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.roles.width >= geometry.main.width - 16, `${style} loadout role controls no longer use the loadout content width: ${JSON.stringify(geometry)}`);
@@ -851,9 +856,18 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     assert.ok(contains(geometry.roles, button), `${style} role control escaped its one-row group: ${JSON.stringify(geometry)}`);
     assert.ok(Math.abs(button.top - geometry.roleButtons[0].top) <= 2, `${style} role controls wrapped onto a second row: ${JSON.stringify(geometry)}`);
   });
-  assert.ok(Math.abs(geometry.spin.width - geometry.spin.height) <= 2, `${style} spin control is no longer roughly square: ${JSON.stringify(geometry)}`);
   assert.ok(contains(geometry.main, geometry.spin), `${style} spin control escaped the loadout grid: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.spinStyle?.aspectRatio, "auto", `${style} spin control is still forcing a square aspect ratio: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.spin.height - geometry.frame.height) <= 2, `${style} spin control and reel are not equal-height stretch items: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.spin.width - geometry.frame.width) <= Math.max(4, geometry.main.width * .04), `${style} spin control and reel are not a 50/50 split: ${JSON.stringify(geometry)}`);
   assert.ok(Math.abs((geometry.spin.top + geometry.spin.bottom) - (geometry.frame.top + geometry.frame.bottom)) <= 4, `${style} spin control is not vertically centered beside the reel: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.spin.left < geometry.frame.left, `${style} spin control should sit to the left of the agent frame: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.spin.left - geometry.roles.left) <= 2, `${style} spin control no longer starts at the visible loadout content edge: ${JSON.stringify(geometry)}`);
+  assert.ok(Math.abs(geometry.frame.right - geometry.roles.right) <= 2, `${style} agent frame no longer reaches the right content edge: ${JSON.stringify(geometry)}`);
+  {
+    const spinFrameGap = geometry.frame.left - geometry.spin.right;
+    assert.ok(spinFrameGap >= 10 && spinFrameGap <= 18, `${style} spin/reel gap is not the expected visible 14px split: ${JSON.stringify(geometry)}`);
+  }
   assert.ok(geometry.spin.top >= geometry.roles.bottom - 1, `${style} spin control overlaps the role controls: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.info.top >= Math.max(geometry.frame.bottom, geometry.spin.bottom) - 1, `${style} loadout detail pills do not sit below the reel row: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.infoPills.length, 3, `${style} loadout detail pills are incomplete: ${JSON.stringify(geometry)}`);
@@ -862,14 +876,11 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     assert.ok(Number.parseFloat(pill.label.fontSize) <= 15 && Number.parseFloat(pill.value.fontSize) <= 16, `${style} loadout detail text no longer fits its third-row pill: ${JSON.stringify(geometry)}`);
   });
   assert.ok(contains(geometry.loadout, geometry.frame), `${style} agent frame escaped its shaped loadout card: ${JSON.stringify(geometry)}`);
-  assert.ok(Math.abs(geometry.frame.left - geometry.roles.left) <= 2, `${style} agent frame no longer starts at the visible loadout content edge: ${JSON.stringify(geometry)}`);
-  assert.ok(geometry.spin.left - geometry.frame.right <= 16, `${style} agent frame leaves a large empty gap before the spin control: ${JSON.stringify(geometry)}`);
-  if (!geometry.mobile) {
-    assert.ok(geometry.frame.width > geometry.frame.height + 12, `${style} agent frame is still being forced square in a wide reel cell: ${JSON.stringify(geometry)}`);
-  }
+  assert.equal(geometry.frameStyle?.boxShadow, "none", `${style} agent frame border glow is still active: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.frameStyle?.filter, "none", `${style} agent frame border filter/glow is still active: ${JSON.stringify(geometry)}`);
   assert.ok(contains(geometry.frame, geometry.selectedArtClip), `${style} selected-art clip escaped its frame: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.clipOverflow, "hidden", `${style} selected-art clip no longer contains authored crop offsets: ${JSON.stringify(geometry)}`);
-  assert.equal(geometry.selectedArtStyle?.objectFit, "cover", `${style} selected agent art is still visually letterboxed instead of filling its frame: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.objectFit, "contain", `${style} selected agent art is still cropped instead of contained in its frame: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.selectedArt?.width > 0 && geometry.selectedArt?.height > 0, `${style} selected Jett art did not render: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.x, "13px", `${style} selected Jett X crop offset was lost: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.selectedArtStyle?.y, "16px", `${style} selected Jett Y crop offset was lost: ${JSON.stringify(geometry)}`);
@@ -960,11 +971,12 @@ async function assertLoadoutRollSettles(page, style) {
   });
   assert.equal(after.reelIsSpinning, false, `${style} reel did not settle after a real roll: ${JSON.stringify(after)}`);
   assert.ok(after.selectedAgent && after.selectedAgent !== "-", `${style} roll did not select an agent: ${JSON.stringify(after)}`);
-  assert.equal(after.selectedObjectFit, "cover", `${style} selected rolled agent art did not fill the frame: ${JSON.stringify(after)}`);
+  assert.equal(after.selectedObjectFit, "contain", `${style} selected rolled agent art was cropped instead of contained: ${JSON.stringify(after)}`);
   ["card", "frame", "spin"].forEach(key => {
     assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);
   });
-  assert.ok(Math.abs(after.spin.width - after.spin.height) <= 2, `${style} spin control did not stay square after the roll: ${JSON.stringify(after)}`);
+  assert.ok(Math.abs(after.spin.height - after.frame.height) <= 2, `${style} spin control did not stay equal-height with the frame after the roll: ${JSON.stringify(after)}`);
+  assert.ok(Math.abs(after.spin.width - after.frame.width) <= Math.max(4, after.card.width * .04), `${style} spin control and frame did not stay 50/50 after the roll: ${JSON.stringify(after)}`);
   assert.ok(Math.abs((after.spin.top + after.spin.bottom) - (after.frame.top + after.frame.bottom)) <= 4, `${style} spin control did not stay centered beside the frame after the roll: ${JSON.stringify(after)}`);
   await editor.evaluate(modal => {
     modal.style.removeProperty("visibility");

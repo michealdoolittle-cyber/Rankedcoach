@@ -56985,7 +56985,7 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::after
   height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
-  object-fit: cover !important;
+  object-fit: contain !important;
   object-position: center center !important;
   /* Start at the geometric centre, then retain the agent-specific crop
      adjustment supplied by the frame renderer. */
@@ -56994,6 +56994,80 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::after
     calc(-50% + var(--agent-art-y-scaled, 0px))
   ) scale(var(--agent-art-scale, 1)) !important;
   transform-origin: center center !important;
+}
+
+/* 2026-08-12 — Session prep round 6. Keep the outer loadout card stable while
+   restoring the intended inner read: role controls, then spin left / agent
+   frame right, then the detail pills. */
+#page-home .loadout-card .home-loadout-main {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  grid-template-rows: 30.42% 40.04% 29.54% !important;
+  grid-template-areas:
+    "roles roles"
+    "spin reel"
+    "info info" !important;
+  column-gap: 14px !important;
+  row-gap: 0 !important;
+  justify-content: stretch !important;
+  align-content: stretch !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+}
+
+#page-home .loadout-card .role-filter-row {
+  grid-area: roles !important;
+}
+
+#page-home .loadout-card .home-loadout-info {
+  grid-area: info !important;
+}
+
+#page-home .loadout-card #spinAgentBtn {
+  grid-area: spin !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+}
+
+#page-home .loadout-card #agentFrame,
+#page-home .loadout-card #agentFrame.agent-frame {
+  grid-area: reel !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+#page-home .loadout-card #agentFrame:is(.agent-selected, .reel-active, .agent-glow-flash, .agent-pulse),
+#page-home .loadout-card #agentFrame .agent-frame-fx,
+#page-home .loadout-card #agentFrame .frame-border,
+#page-home .loadout-card #agentFrame #agentPlaceholder,
+#page-home .loadout-card #agentFrame .shine,
+#page-home .loadout-card #agentFrame .placeholder-silhouette {
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+#page-home .loadout-card #agentFrame .agent-reveal-art img,
+#page-home .loadout-card #agentFrame .agent-frame-portrait,
+#page-home .loadout-card #agentFrame .frame-art-inner {
+  object-fit: contain !important;
+}
+
+#page-home .loadout-card #agentFrame .reel-icon {
+  object-fit: contain !important;
 }
 
 /* The desktop role-impact read shares the RR card's remaining row height.
