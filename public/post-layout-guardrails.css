@@ -29,16 +29,18 @@
   overflow-wrap:anywhere;
 }
 
-/* Session prep round 7 final guard. This stylesheet loads last, so keep the
+/* Session prep round 8 final guard. This stylesheet loads last, so keep the
    loadout roll geometry here as the single cascade backstop across desktop,
    mobile, and custom layout themes. */
 #page-home .loadout-card .home-loadout-main,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-  /* Fractional tracks preserve the measured round-six proportions while
-     reserving real space for the three visible row gaps. */
-  grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important;
+  /* Keep the already-readable info row intact, then move ten percent of the
+     card from role filters to the spin/reel row. The controls still occupy
+     sixty percent of their own cells; the increased share removes the thin
+     capsule look without changing the loadout card's outer dimensions. */
+  grid-template-rows:minmax(0,20.42fr) minmax(0,50.04fr) minmax(0,29.54fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
@@ -62,10 +64,10 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
   align-items:center !important;
   justify-content:center !important;
   gap:clamp(2px,.35vw,5px) !important;
-  width:40% !important;
+  width:60% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:40% !important;
+  height:60% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
@@ -79,10 +81,10 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
   grid-area:reel !important;
-  width:40% !important;
+  width:60% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:40% !important;
+  height:60% !important;
   min-height:0 !important;
   max-height:none !important;
   aspect-ratio:auto !important;
@@ -247,11 +249,20 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.
 
 #lensModal.active .lens-modal{
   filter:none !important;
+  /* The legacy modal sheet pins transform:none !important. Individual
+     transform properties are independent, so this remains a real entrance
+     motion rather than merely registering an animation that cannot render. */
+  animation:rc-lens-modal-pop .28s cubic-bezier(.2,.84,.24,1) both !important;
 }
 
 @keyframes rc-control-pop{
   0%{transform:translate3d(0,4px,0) scale(.965);opacity:.7;}
   100%{transform:translate3d(0,0,0) scale(1);opacity:1;}
+}
+
+@keyframes rc-lens-modal-pop{
+  0%{translate:0 8px;scale:.955;opacity:.72;}
+  100%{translate:0 0;scale:1;opacity:1;}
 }
 
 /* Parent shells are deliberately quieter than their child controls. */
@@ -314,7 +325,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-g
 
 @media (prefers-reduced-motion:reduce){
   .app-header .nav-links .nav-btn,
-  #page-stats .stats-act-select:focus{animation:none !important;}
+  #page-stats .stats-act-select:focus,
+  #lensModal.active .lens-modal{animation:none !important;}
 }
 
 /* The post-match launcher presents the two supported trainers as equal choices. */

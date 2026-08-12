@@ -3251,7 +3251,7 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
    has to be normalized. */
 html body #page-home .loadout-card .home-loadout-main{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
-  grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important;
+  grid-template-rows:minmax(0,20.42fr) minmax(0,50.04fr) minmax(0,29.54fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
@@ -3270,10 +3270,10 @@ html body #page-home .loadout-card #spinAgentBtn{
   flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
-  width:40% !important;
+  width:60% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:40% !important;
+  height:60% !important;
   min-height:0 !important;
   aspect-ratio:auto !important;
   justify-self:center !important;
@@ -3285,10 +3285,10 @@ html body #page-home .loadout-card #agentFrame.agent-frame{
   grid-area:reel !important;
   display:grid !important;
   place-items:center !important;
-  width:40% !important;
+  width:60% !important;
   min-width:0 !important;
   max-width:none !important;
-  height:40% !important;
+  height:60% !important;
   min-height:0 !important;
   aspect-ratio:auto !important;
   justify-self:center !important;

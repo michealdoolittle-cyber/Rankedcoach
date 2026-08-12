@@ -62872,6 +62872,9 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     },
     openStatsSummaryTrend: metric => openStatsSummaryTrend(metric),
     getStatsSummaryTrendEntries: metric => getStatsSummaryTrendEntries(metric, getScopedStatsData().matches),
+    openStatsDetail: (kind, value) => openStatsDetailModal(kind, value),
+    showModal: id => showModalById(id),
+    hideModal: id => hideModalById(id),
     openStatsRoleHistory: role => openStatsDetailModal("role-history", role),
     getCoachingInterpretation: input => ({
       context: resolveCoachingInterpretationContext(input),
