@@ -12576,16 +12576,18 @@ function openStatsDetailModal(kind, value) {
     const roleLabel = formatReadableLabel(roleKey);
     const roleMatches = getSortedMatches(scopedStats.matches)
       .filter(match => getCompassRoleKey(getMatchCore(match).role) === roleKey)
-      .map((match, index) => ({ match, core: getMatchCore(match), index: index + 1 }));
+      .slice()
+      .reverse()
+      .map((match) => ({ match, core: getMatchCore(match), matchNumber: getMatchSummaryMatchNumber(match) }));
     title.textContent = `${roleLabel} Match History`;
     tabsHost.innerHTML = "";
     tabsHost.style.display = "none";
     list.className = "lens-stats-list stats-role-history-list";
-    list.innerHTML = roleMatches.length ? roleMatches.map(({ match, core, index }) => {
+    list.innerHTML = roleMatches.length ? roleMatches.map(({ match, core, matchNumber }) => {
       const result = String(core.result || "").toLowerCase();
       const resultClass = result === "win" ? "is-win" : result === "loss" ? "is-loss" : "is-draw";
       return `<li class="stats-role-history-row ${resultClass}">
-        <strong>Match ${index}</strong>
+        <strong>Match ${Number.isFinite(Number(matchNumber)) ? Number(matchNumber) : "—"}</strong>
         <span>${escapeHtml(formatStatsSummaryDate(match))}</span>
         <span>${escapeHtml(core.map || "Map unavailable")}</span>
         <span class="stats-role-history-agent">
@@ -23908,7 +23910,13 @@ function renderLoadoutMapPicker() {
   const preferences = getLoadoutPreferences();
   const selectedMap = preferences.map;
   const maps = getLoadoutMapPool();
-  grid.innerHTML = maps.map(map => `
+  const noneActive = !selectedMap;
+  const noneChoice = `
+      <button class="loadout-map-choice loadout-map-choice-none${noneActive ? " active" : ""}" type="button" data-loadout-map="" aria-pressed="${noneActive ? "true" : "false"}">
+        <span>None</span>
+        <small>Clear map weighting</small>
+      </button>`;
+  grid.innerHTML = noneChoice + maps.map(map => `
       <button class="loadout-map-choice${map === selectedMap ? " active" : ""}" type="button" data-loadout-map="${escapeHtml(map)}" aria-pressed="${map === selectedMap ? "true" : "false"}">
         <img src="${escapeHtml(getMapIconUrl(map))}" alt="" loading="eager" decoding="async">
         <span>${escapeHtml(map)}</span>
@@ -27657,6 +27665,9 @@ function renderRoleSelector(){
 
     const btn = document.createElement("div");
     btn.className = "agent-role-btn";
+    btn.classList.add(`role-${role}`);
+    btn.dataset.role = role;
+    btn.style.setProperty("--role-color", `var(--${role}, var(--accent))`);
 
     if(role === activeRole){
       btn.classList.add("active");
@@ -44752,9 +44763,9 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row button")}{grid-row:1 !important; grid-column:auto !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:calc(3px * ${homeBaselineScale}) !important; width:40% !important; min-width:0 !important; max-width:none !important; height:40% !important; min-height:0 !important; aspect-ratio:auto !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:center !important; align-self:center !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{grid-area:spin !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:calc(3px * ${homeBaselineScale}) !important; width:auto !important; min-width:0 !important; max-width:100% !important; height:100% !important; min-height:0 !important; aspect-ratio:1 / 1 !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:center !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:40% !important; min-width:0 !important; max-width:none !important; height:40% !important; min-height:0 !important; aspect-ratio:auto !important; justify-self:center !important; align-self:center !important; box-shadow:none !important; filter:none !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{grid-area:reel !important; width:auto !important; min-width:0 !important; max-width:100% !important; height:100% !important; min-height:0 !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:stretch !important; box-shadow:none !important; filter:none !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame:is(.agent-selected, .reel-active, .agent-glow-flash, .agent-pulse), .loadout-card #agentFrame .agent-frame-fx, .loadout-card #agentFrame .frame-border, .loadout-card #agentFrame #agentPlaceholder, .loadout-card #agentFrame .shine, .loadout-card #agentFrame .placeholder-silhouette")}{box-shadow:none !important; filter:none !important; text-shadow:none !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-frame-fx::before, .loadout-card #agentFrame .agent-frame-fx::after")}{opacity:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner")}{object-fit:contain !important;}`,
@@ -62583,29 +62594,57 @@ function renderStatsHistoryBoundaryNote(profile = getActiveProfile()) {
 
 function buildStatsLifetimeRankChartMarkup() {
   const source = getChartSourceEntries("all");
-  const lifetime = buildLifetimeRankSeries(source.entries);
-  if (!lifetime.entries.length || lifetime.slice.length < 2) {
+  let lifetime = buildLifetimeRankSeries(source.entries);
+  if (!lifetime.entries.length) {
+    const activeProfile = getActiveProfile?.();
+    const fallbackMatches = Array.isArray(activeProfile?.matches) && activeProfile.matches.length
+      ? activeProfile.matches
+      : (Array.isArray(matches) ? matches : []);
+    const fallbackEntries = getSortedMatches(fallbackMatches)
+      .map((match, index) => ({ match, index, displayIndex: index }));
+    lifetime = buildLifetimeRankSeries(fallbackEntries);
+  }
+  if (!lifetime.entries.length) {
     return `<li class="stats-lifetime-rank-empty">No retained rank snapshots are available for a lifetime chart yet.</li>`;
   }
 
   const width = 1280;
   const height = 430;
-  const pad = { left: 86, right: 42, top: 48, bottom: 78 };
+  const pad = { left: 70, right: 42, top: 48, bottom: 92 };
   const bounds = getLifetimeRankBounds(lifetime.slice);
   const plotBottom = height - pad.bottom;
   const plotHeight = plotBottom - pad.top;
   const y = (value) => plotBottom
     - ((value - bounds.minTick) / Math.max(1, bounds.maxTick - bounds.minTick)) * plotHeight;
+  const peakBySeason = new Map();
+  lifetime.entries.forEach((entry, sourceIndex) => {
+    const match = entry?.match || {};
+    const seasonLabel = getMatchSeasonLabel(match) || match?.season || match?.metadata?.season || match?.act || `Season ${sourceIndex + 1}`;
+    const value = Number(entry?.lifetimeRankAbsolute);
+    if (!Number.isFinite(value)) return;
+    const existing = peakBySeason.get(seasonLabel);
+    if (!existing || value > existing.value || (value === existing.value && sourceIndex > existing.sourceIndex)) {
+      peakBySeason.set(seasonLabel, {
+        value,
+        sourceIndex,
+        seasonLabel,
+        match,
+        rank: getTierRank(value) || RANK_THRESHOLDS[0]
+      });
+    }
+  });
+  const peakPoints = Array.from(peakBySeason.values()).sort((left, right) => left.sourceIndex - right.sourceIndex);
+  if (!peakPoints.length) {
+    return `<li class="stats-lifetime-rank-empty">No retained seasonal peak rank snapshots are available yet.</li>`;
+  }
   const plotWidth = width - pad.left - pad.right;
-  const step = lifetime.slice.length > 1 ? plotWidth / (lifetime.slice.length - 1) : 0;
-  const points = lifetime.slice.map((value, index) => {
-    const entry = index > 0 ? lifetime.entries[index - 1] : null;
-    const rank = getTierRank(value) || RANK_THRESHOLDS[0];
+  const step = peakPoints.length > 1 ? plotWidth / (peakPoints.length - 1) : 0;
+  const points = peakPoints.map((peak, index) => {
+    const rank = peak.rank || getTierRank(peak.value) || RANK_THRESHOLDS[0];
     return {
-      value,
-      x: pad.left + (index * step),
-      y: y(value),
-      entry,
+      ...peak,
+      x: pad.left + (peakPoints.length > 1 ? index * step : plotWidth / 2),
+      y: y(peak.value),
       rankLabel: rank?.tierLabel || "",
       icon: rank?.icon || getRankIconUrl(rank?.tierLabel)
     };
@@ -62623,24 +62662,23 @@ function buildStatsLifetimeRankChartMarkup() {
     return `
       <g class="stats-lifetime-rank-y-tick">
         <line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
-        <image href="${escapeHtml(rank.icon)}" x="${pad.left - 54}" y="${yy - 16}" width="32" height="32" preserveAspectRatio="xMidYMid meet"></image>
-        <text x="${pad.left - 12}" y="${yy + 4}" text-anchor="end">${escapeHtml(rank.tierLabel)}</text>
+        <image href="${escapeHtml(rank.icon)}" x="${pad.left - 48}" y="${yy - 16}" width="32" height="32" preserveAspectRatio="xMidYMid meet"></image>
       </g>`;
   }).join("");
-  let previousRank = points[0]?.rankLabel || "";
-  const rankMarkers = points.slice(1).map((point) => {
-    if (!point.rankLabel || point.rankLabel === previousRank) return "";
-    const direction = getAbsoluteRRForRankLocalRR(point.rankLabel, 0) >= getAbsoluteRRForRankLocalRR(previousRank, 0) ? "up" : "down";
-    previousRank = point.rankLabel;
+  const seasonLabels = points.map(point => `
+      <g class="stats-lifetime-rank-x-tick">
+        <line x1="${point.x}" y1="${plotBottom}" x2="${point.x}" y2="${plotBottom + 8}"></line>
+        <text x="${point.x}" y="${plotBottom + 28}" text-anchor="middle">${escapeHtml(compactStatsLifetimeSeasonLabel(point.seasonLabel))}</text>
+      </g>`).join("");
+  const rankMarkers = points.map((point) => {
     return `
-      <g class="stats-lifetime-rank-marker stats-lifetime-rank-${direction}" data-rank-label="${escapeHtml(point.rankLabel)}">
+      <g class="stats-lifetime-rank-marker" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}">
         <circle cx="${point.x}" cy="${point.y}" r="18"></circle>
         <image href="${escapeHtml(point.icon)}" x="${point.x - 13}" y="${point.y - 13}" width="26" height="26" preserveAspectRatio="xMidYMid meet"></image>
-        <text x="${point.x}" y="${point.y - 25}" text-anchor="middle">${direction === "up" ? "↑" : "↓"}</text>
       </g>`;
   }).join("");
-  const dots = points.slice(1).map((point, index) => `
-    <circle class="stats-lifetime-rank-dot" cx="${point.x}" cy="${point.y}" r="5" data-match-index="${index + 1}" data-rank-label="${escapeHtml(point.rankLabel)}"></circle>
+  const dots = points.map((point, index) => `
+    <circle class="stats-lifetime-rank-dot" cx="${point.x}" cy="${point.y}" r="5" data-match-index="${index + 1}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"></circle>
   `).join("");
   const dateStart = getRetainedMatchDate(lifetime.entries[0]?.match || {});
   const dateEnd = getRetainedMatchDate(lifetime.entries[lifetime.entries.length - 1]?.match || {});
@@ -62656,7 +62694,7 @@ function buildStatsLifetimeRankChartMarkup() {
         <span>${escapeHtml(caption || `${lifetime.entries.length} rank snapshots`)}</span>
       </div>
       <div class="stats-lifetime-rank-chart-wrap">
-        <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime retained rank chart" data-data-points="${lifetime.entries.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
+        <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime seasonal peak rank chart" data-data-points="${points.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
           <defs>
             <linearGradient id="statsLifetimeRankArea" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="var(--accent,#ff4655)" stop-opacity=".26"></stop>
@@ -62666,14 +62704,26 @@ function buildStatsLifetimeRankChartMarkup() {
           ${yTicks}
           <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${plotBottom}" x2="${width - pad.right}" y2="${plotBottom}"></line>
           <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
+          ${seasonLabels}
           <path class="stats-lifetime-rank-area" d="${areaPath}"></path>
           <path class="stats-lifetime-rank-line" d="${path}"></path>
           ${dots}
           ${rankMarkers}
         </svg>
       </div>
-      <p class="stats-lifetime-rank-chart-note">Only retained rank-up or rank-down changes get rank markers; normal match points remain small dots.</p>
+      <p class="stats-lifetime-rank-chart-note">Each point marks the highest retained rank snapshot captured for that season.</p>
     </li>`;
+}
+
+function compactStatsLifetimeSeasonLabel(label = "") {
+  const text = String(label || "").trim();
+  const match = text.match(/(?:Season\s*)?(\d{4})\s*Act\s*(\d+)/i);
+  if (match) return `S${match[1].slice(-2)} A${match[2]}`;
+  return text
+    .replace(/\bSeason\b/gi, "S")
+    .replace(/\bEpisode\b/gi, "E")
+    .replace(/\bAct\b/gi, "A")
+    .slice(0, 14);
 }
 
 function openStatsPeakLifetimeRankChart() {
@@ -63064,6 +63114,35 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     openStatsSummaryTrend: metric => openStatsSummaryTrend(metric),
     getStatsSummaryTrendEntries: metric => getStatsSummaryTrendEntries(metric, getScopedStatsData().matches),
     openStatsDetail: (kind, value) => openStatsDetailModal(kind, value),
+    openStatsPeakLifetimeRankChart: () => openStatsPeakLifetimeRankChart(),
+    activatePageForTest: pageName => {
+      activatePage(pageName);
+      return document.querySelector(".page.active")?.id || "";
+    },
+    applyProfileThemeForTest: themeKey => {
+      const profile = getActiveProfile?.();
+      if (!profile) return { ok: false, theme: document.body?.dataset?.theme || "" };
+      profile.themeKey = themeKey;
+      profile.frameTheme = themeKey;
+      applyProfileVisuals(profile);
+      updateDisplays();
+      return { ok: true, theme: document.body?.dataset?.theme || "" };
+    },
+    openAgentModalForTest: () => {
+      const modal = document.getElementById("agentModal");
+      if (modal) {
+        modal.style.removeProperty("display");
+        modal.style.removeProperty("pointer-events");
+        modal.hidden = false;
+      }
+      renderRoleSelector();
+      renderAgentModal();
+      showModalById("agentModal");
+      return {
+        ok: Boolean(modal),
+        roleButtons: document.querySelectorAll("#agentRoleSelect .agent-role-btn").length
+      };
+    },
     showModal: id => showModalById(id),
     hideModal: id => hideModalById(id),
     openStatsRoleHistory: role => openStatsDetailModal("role-history", role),

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -7,8 +7,8 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..", "..", "public");
-const port = 41868;
-const outDir = path.resolve(__dirname, "test-results", "nav-loadout-stats-verification-pass");
+const port = 41869;
+const outDir = path.resolve(__dirname, "test-results", "nav-loadout-stats-followup-verified");
 const types = {
   ".css": "text/css",
   ".html": "text/html",
@@ -43,9 +43,9 @@ function supabaseStub() {
 }
 
 function makeMatch(index, overrides = {}) {
-  const absolute = 1330 + (index * 18) + (overrides.rrDelta || 0);
+  const absolute = 1330 + (index * 18) + (overrides.rrDelta || 0) + (overrides.seasonBoost || 0);
   const tier = absolute >= 1500 ? "Diamond 1" : absolute >= 1400 ? "Platinum 3" : "Platinum 2";
-  const playedAt = `2026-08-${String(index + 1).padStart(2, "0")}T16:00:00.000Z`;
+  const playedAt = overrides.playedAt || `2026-08-${String(index + 1).padStart(2, "0")}T16:00:00.000Z`;
   const result = overrides.result || (index % 3 === 1 ? "loss" : "win");
   const rrDelta = result === "win" ? 18 : -15;
   const kills = overrides.kills ?? (result === "win" ? 18 + index : 10 + index);
@@ -61,9 +61,9 @@ function makeMatch(index, overrides = {}) {
     source: "henrik_sync",
     createdAt: playedAt,
     playedAt,
-    season: "season-2026-act-4",
-    seasonId: "season-2026-act-4",
-    act: "Season 2026 Act 4",
+    season: overrides.season || "season-2026-act-4",
+    seasonId: overrides.seasonId || overrides.season || "season-2026-act-4",
+    act: overrides.act || "Season 2026 Act 4",
     agent,
     role,
     map,
@@ -80,8 +80,8 @@ function makeMatch(index, overrides = {}) {
     rr: rrDelta,
     verifiedRrDelta: rrDelta,
     rrVerified: true,
-    metadata: { matchId: `nav-loadout-match-${index}`, source: "henrik_sync", playedAt, season: "season-2026-act-4", seasonId: "season-2026-act-4", act: "Season 2026 Act 4", agent, mapName: map, result, rank: tier, queue: { id: "competitive", name: "Competitive", modeType: "Standard" } },
-    matchRecord: { playedAt, source: "henrik_sync", rank: { rank: tier, rr: absolute % 100, rrDelta, verified: true }, trackedPlayer: { competitiveTier: 17 } },
+    metadata: { matchId: `nav-loadout-match-${index}`, source: "henrik_sync", playedAt, season: overrides.season || "season-2026-act-4", seasonId: overrides.seasonId || overrides.season || "season-2026-act-4", act: overrides.act || "Season 2026 Act 4", agent, mapName: map, result, rank: tier, queue: { id: "competitive", name: "Competitive", modeType: "Standard" } },
+    matchRecord: { playedAt, source: "henrik_sync", act: overrides.act || "Season 2026 Act 4", rank: { rank: tier, rr: absolute % 100, rrDelta, verified: true }, trackedPlayer: { competitiveTier: 17 } },
     advanced: {
       rounds: Array.from({ length: 6 }, (_value, roundIndex) => ({
         round: roundIndex + 1,
@@ -106,13 +106,13 @@ function buildProfileFixture() {
     trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4"] },
     loadoutMap: "Breeze",
     matches: [
-      makeMatch(0, { agent: "Sova", role: "initiator", map: "Haven", result: "win", acs: 172, hs: 21 }),
-      makeMatch(1, { agent: "Skye", role: "initiator", map: "Lotus", result: "loss", acs: 151, hs: 18 }),
-      makeMatch(2, { agent: "Sova", role: "initiator", map: "Sunset", result: "win", acs: 221, hs: 29 }),
-      makeMatch(3, { agent: "Jett", role: "duelist", map: "Ascent", result: "loss", acs: 164, hs: 17 }),
-      makeMatch(4, { agent: "Chamber", role: "sentinel", map: "Breeze", result: "win", acs: 247, hs: 33 }),
+      makeMatch(0, { agent: "Sova", role: "initiator", map: "Haven", result: "win", acs: 172, hs: 21, playedAt: "2026-06-01T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
+      makeMatch(1, { agent: "Skye", role: "initiator", map: "Lotus", result: "loss", acs: 151, hs: 18, playedAt: "2026-06-02T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
+      makeMatch(2, { agent: "Sova", role: "initiator", map: "Sunset", result: "win", acs: 221, hs: 29, playedAt: "2026-07-01T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", seasonBoost: 50 }),
+      makeMatch(3, { agent: "Jett", role: "duelist", map: "Ascent", result: "loss", acs: 164, hs: 17, playedAt: "2026-07-02T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", seasonBoost: 20 }),
+      makeMatch(4, { agent: "Sova", role: "initiator", map: "Breeze", result: "win", acs: 247, hs: 33 }),
       makeMatch(5, { agent: "Omen", role: "controller", map: "Haven", result: "loss", acs: 118, hs: 14 }),
-      makeMatch(6, { agent: "Reyna", role: "duelist", map: "Breeze", result: "win", acs: 276, hs: 39 })
+      makeMatch(6, { agent: "Skye", role: "initiator", map: "Breeze", result: "win", acs: 276, hs: 39 })
     ]
   };
 }
@@ -135,8 +135,75 @@ async function bootPage(page) {
       element.setAttribute("aria-hidden", "true");
     });
     document.body.classList.remove("has-active-modal", "mobile-modal-open");
+    document.body.classList.add("nav-loadout-stats-test-ready");
+    if (!document.getElementById("navLoadoutStatsTestStyle")) {
+      const style = document.createElement("style");
+      style.id = "navLoadoutStatsTestStyle";
+      style.textContent = `
+        body.nav-loadout-stats-test-ready #page-home .home-middle-row,
+        body.nav-loadout-stats-test-ready #page-home .home-middle-row > *,
+        body.nav-loadout-stats-test-ready #page-home .compass-score-card{
+          opacity:1 !important;
+          visibility:visible !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   });
   await page.waitForTimeout(250);
+}
+
+async function collectHoverEvidence(page, selector) {
+  const locator = page.locator(selector).first();
+  await locator.scrollIntoViewIfNeeded();
+  await page.mouse.move(2, 2);
+  await page.waitForTimeout(60);
+  const before = await locator.evaluate((element, selectorArg) => {
+    const style = getComputedStyle(element);
+    const rules = [];
+    const selectorNeedles = [
+      element.id,
+      ...Array.from(element.classList || [])
+    ].filter(Boolean);
+    const makeNonInteractiveSelector = (selectorText = "") => selectorText
+      .replace(/:hover/g, "")
+      .replace(/:focus-visible/g, "")
+      .replace(/:focus/g, "");
+    for (const sheet of Array.from(document.styleSheets)) {
+      let cssRules = [];
+      try { cssRules = Array.from(sheet.cssRules || []); } catch { continue; }
+      for (const rule of cssRules) {
+        if (!rule.selectorText || !selectorNeedles.some(needle => rule.selectorText.includes(needle))) continue;
+        try {
+          if (element.matches(makeNonInteractiveSelector(rule.selectorText))) {
+            rules.push({ selector: rule.selectorText, background: rule.style.background || rule.style.backgroundColor || "", css: rule.cssText.slice(0, 260) });
+          }
+        } catch {}
+      }
+    }
+    return {
+      backgroundColor: style.backgroundColor,
+      backgroundImage: style.backgroundImage,
+      boxShadow: style.boxShadow,
+      transform: style.transform,
+      matchedRules: rules.slice(-8)
+    };
+  }, selector);
+  const box = await locator.boundingBox();
+  assert.ok(box && box.width > 0 && box.height > 0, `${selector} should be visible`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(140);
+  const after = await locator.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      backgroundImage: style.backgroundImage,
+      boxShadow: style.boxShadow,
+      transform: style.transform,
+      hover: element.matches(":hover")
+    };
+  });
+  return { selector, before, after };
 }
 
 async function hoverSnapshot(page, selector) {
@@ -201,6 +268,33 @@ async function forceClearModals(page) {
   await page.waitForTimeout(150);
 }
 
+async function forceHomeMotionSettled(page) {
+  await page.evaluate(() => {
+    document.body.classList.add("nav-loadout-stats-test-ready");
+    document.querySelectorAll("#page-home .home-middle-row, #page-home .home-middle-row > *, #page-home .compass-score-card").forEach(element => {
+      element.style.setProperty("opacity", "1", "important");
+      element.style.setProperty("visibility", "visible", "important");
+    });
+  });
+}
+
+async function applyProfileTheme(page, themeKey) {
+  const result = await page.evaluate(key => {
+    const fixture = globalThis.__RC_NAV_LOADOUT_STATS_FIXTURE__;
+    fixture.themeKey = key;
+    fixture.frameTheme = key;
+    const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0] || fixture;
+    profile.themeKey = key;
+    profile.frameTheme = key;
+    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([profile]));
+    globalThis.RankedCoachTestHooks.loadProfileFixture(profile);
+    return globalThis.RankedCoachTestHooks.applyProfileThemeForTest(key);
+  }, themeKey);
+  await page.waitForFunction(key => document.body.dataset.theme === key, themeKey, { timeout: 5000 });
+  assert.equal(result?.ok, true, `test hook should apply theme ${themeKey}: ${JSON.stringify(result)}`);
+  await page.waitForTimeout(120);
+}
+
 async function run() {
   fs.mkdirSync(outDir, { recursive: true });
   const server = await startServer();
@@ -228,23 +322,47 @@ async function run() {
     await bootPage(page);
 
     const navSelectors = [
-      '.nav-btn[data-page="home"]',
-      '#profileSyncBtn',
-      '#bugReportOpen',
-      '#askCoachOpen',
-      '#profileDropdownToggle'
+      { label: "home tab", selector: '.nav-btn[data-page="home"]' },
+      { label: "sync", selector: '#profileSyncBtn' },
+      { label: "bug", selector: '#bugReportOpen' },
+      { label: "ask coach", selector: '#askCoachOpen' },
+      { label: "settings", selector: '#profileDropdownToggle' },
+      { label: "data depth", selector: '#profileRatingWidget' }
     ];
     const navResults = [];
-    for (const selector of navSelectors) {
+    for (const { label, selector } of navSelectors) {
       const result = await hoverSnapshot(page, selector);
-      assert.notEqual(result.after.animation, "none", `${selector} should have a real pop animation`);
-      assert.notEqual(result.after.background, result.before.background, `${selector} should gain a gray/themed hover background: ${JSON.stringify(result)}`);
-      navResults.push({ selector, animation: result.after.animation, changedBackground: result.after.background !== result.before.background });
+      const changed = result.after.background !== result.before.background
+        || result.after.boxShadow !== result.before.boxShadow
+        || result.after.transform !== result.before.transform;
+      assert.equal(changed, true, `${selector} (${label}) should visibly change on hover: ${JSON.stringify(result)}`);
+      navResults.push({
+        label,
+        selector,
+        changedBackground: result.after.background !== result.before.background,
+        changedShadow: result.after.boxShadow !== result.before.boxShadow,
+        changedTransform: result.after.transform !== result.before.transform
+      });
     }
     const navClip = await page.evaluate(() => {
+      const appRoot = document.querySelector(".app-root");
       const left = document.querySelector(".nav-left")?.getBoundingClientRect();
       const buttons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => button.getBoundingClientRect());
-      return { left, inside: buttons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1) };
+      const beforeOverflow = appRoot ? getComputedStyle(appRoot).overflow : "";
+      const beforeInside = buttons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1);
+      if (appRoot) appRoot.style.overflow = "visible";
+      const afterOverflow = appRoot ? getComputedStyle(appRoot).overflow : "";
+      const afterButtons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => button.getBoundingClientRect());
+      const afterInside = afterButtons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1);
+      if (appRoot) appRoot.style.removeProperty("overflow");
+      return {
+        left,
+        beforeOverflow,
+        afterOverflow,
+        inside: beforeInside,
+        visibleOverrideInside: afterInside,
+        buttonCount: buttons.length
+      };
     });
     assert.equal(navClip.inside, true, `nav-left buttons must not clip: ${JSON.stringify(navClip)}`);
 
@@ -265,14 +383,46 @@ async function run() {
       });
       return {
         roles, spin, frame, info, roleButtons,
+        spinSquareDelta: spin ? Math.abs(spin.width - spin.height) : null,
+        frameSquareDelta: frame ? Math.abs(frame.width - frame.height) : null,
         gapRolesToSpin: Math.round(spin.y - roles.bottom),
         gapMiddleToInfo: Math.round(info.y - Math.max(spin.bottom, frame.bottom)),
         loadoutTransform: getComputedStyle(document.querySelector('.loadout-card')).transform
       };
     });
     assert.ok(loadout.roleButtons.every(button => button.delta <= 1.25), `role buttons must be square: ${JSON.stringify(loadout.roleButtons)}`);
+    assert.ok(loadout.spinSquareDelta <= 1.25, `spin button should be square to its height: ${JSON.stringify(loadout.spin)}`);
+    assert.ok(loadout.frameSquareDelta <= 1.25, `agent frame should be square to its height: ${JSON.stringify(loadout.frame)}`);
     assert.ok(Math.abs(loadout.gapRolesToSpin - 7) <= 1, `roles-to-spin gap should be 7px: ${JSON.stringify(loadout)}`);
     assert.ok(Math.abs(loadout.gapMiddleToInfo - 7) <= 1, `middle-to-info gap should be 7px: ${JSON.stringify(loadout)}`);
+    const mapPicker = await page.evaluate(async () => {
+      const trigger = document.getElementById("loadoutMapPicker");
+      trigger?.click();
+      await new Promise(resolve => setTimeout(resolve, 80));
+      const none = document.querySelector(".loadout-map-choice-none");
+      const before = {
+        display: document.getElementById("loadoutMapDisplay")?.textContent?.trim(),
+        selectedClass: trigger?.classList.contains("is-map-selected"),
+        noneText: none?.textContent?.replace(/\s+/g, " ").trim()
+      };
+      none?.click();
+      await new Promise(resolve => setTimeout(resolve, 120));
+      return {
+        before,
+        after: {
+          display: document.getElementById("loadoutMapDisplay")?.textContent?.trim(),
+          selectedClass: trigger?.classList.contains("is-map-selected"),
+          profileMap: globalThis.RankedCoachTestHooks ? JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.loadoutMap : null
+        }
+      };
+    });
+    assert.equal(mapPicker.before.display, "Breeze", `fixture should begin with Breeze selected: ${JSON.stringify(mapPicker)}`);
+    assert.match(mapPicker.before.noneText || "", /None/i, `None choice should be visible: ${JSON.stringify(mapPicker)}`);
+    assert.equal(mapPicker.after.display, "Any map", `None choice should clear the map picker: ${JSON.stringify(mapPicker)}`);
+    assert.equal(mapPicker.after.selectedClass, false, `Map trigger selected styling should clear: ${JSON.stringify(mapPicker)}`);
+    await page.locator('#loadoutMapPicker').click({ force: true });
+    await page.locator('.loadout-map-choice[data-loadout-map="Breeze"]').click({ force: true });
+    await page.waitForTimeout(160);
     await page.mouse.move(4, 4);
     await page.waitForTimeout(40);
     const loadoutHoverBefore = await page.locator('#page-home .home-middle-row > .loadout-card').evaluate(element => ({
@@ -314,42 +464,79 @@ async function run() {
     }));
     assert.deepEqual(topMapAgents.top, topMapAgents.expected, `Breeze top-four pool should match highRankPickRates: ${JSON.stringify(topMapAgents)}`);
     assert.deepEqual(topMapAgents.weighted, topMapAgents.top, `weighted roll candidates should be restricted to map top-four: ${JSON.stringify(topMapAgents)}`);
+    await forceClearModals(page);
     await page.locator('#page-home .home-middle-row > .loadout-card').screenshot({ path: path.join(outDir, 'loadout-card.png') });
 
+    await forceClearModals(page);
+    const activeHomePage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+    assert.equal(activeHomePage, "page-home", `home page should activate through test hook, got ${activeHomePage}`);
+    await forceHomeMotionSettled(page);
+    await page.waitForFunction(() => {
+      const element = document.querySelector("#page-home.active #compassCardAim");
+      if (!element) return false;
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return box.width > 0 && box.height > 0 && style.visibility !== "hidden" && Number(style.opacity) > 0.9;
+    }, null, { timeout: 8000 });
+    await page.waitForTimeout(160);
     await clickAndWaitModal(page, '#compassCardAim', '#lensModalOverlay.active #lensStatsList');
     const compassModalTitle = await page.locator('#lensModalOverlay.active #lensModalTitle').innerText();
     assert.ok(/Aim|Score|Review|Breakdown/i.test(compassModalTitle), `compass card should open lens modal, got ${compassModalTitle}`);
     await forceClearModals(page);
+    const compassHover = await collectHoverEvidence(page, '#compassCardAim');
+    assert.notEqual(
+      `${compassHover.after.backgroundColor}|${compassHover.after.backgroundImage}`,
+      `${compassHover.before.backgroundColor}|${compassHover.before.backgroundImage}`,
+      `compass card hover should change background: ${JSON.stringify(compassHover)}`
+    );
 
     await page.locator('.nav-btn[data-page="stats"]').click({ force: true });
     await page.waitForSelector('#statsMapsList .stats-map-card', { timeout: 10000 });
     await page.waitForTimeout(250);
+    const roleHover = await collectHoverEvidence(page, '.stats-role-pill[role="button"].role-initiator');
+    assert.notEqual(
+      `${roleHover.after.backgroundColor}|${roleHover.after.backgroundImage}`,
+      `${roleHover.before.backgroundColor}|${roleHover.before.backgroundImage}`,
+      `role win-rate pill hover should change background: ${JSON.stringify(roleHover)}`
+    );
     await clickAndWaitModal(page, '.stats-summary-trend-trigger[data-stats-summary-metric="acs"]', '.stats-summary-trend-chart');
     const trendAxis = await page.evaluate(() => ({
       yTicks: document.querySelectorAll('.stats-summary-trend-y-axis span').length,
       gridlines: document.querySelectorAll('.stats-summary-trend-gridline').length,
-      bars: document.querySelectorAll('.stats-summary-trend-point').length
+      bars: document.querySelectorAll('.stats-summary-trend-point').length,
+      zeroCenterDelta: (() => {
+        const spans = [...document.querySelectorAll('.stats-summary-trend-y-axis span')];
+        const zero = spans[spans.length - 1]?.getBoundingClientRect();
+        const bars = document.querySelector('.stats-summary-trend-bars')?.getBoundingClientRect();
+        if (!zero || !bars) return null;
+        return Math.abs((zero.top + zero.height / 2) - bars.bottom);
+      })()
     }));
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.zeroCenterDelta <= 9, `stats summary zero tick should align with x-axis baseline: ${JSON.stringify(trendAxis)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'stats-summary-trend.png') });
     await closeLensModals(page);
 
     await clickAndWaitModal(page, '.stats-role-pill[role="button"].role-initiator', '.stats-role-history-row');
     const roleHistory = await page.evaluate(() => ({
       rows: document.querySelectorAll('.stats-role-history-row').length,
+      labels: [...document.querySelectorAll('.stats-role-history-row strong')].map(node => node.textContent.trim()),
       iconBeforeName: [...document.querySelectorAll('.stats-role-history-agent')].every(row => row.firstElementChild?.tagName === 'IMG' && row.lastElementChild?.textContent?.trim())
     }));
     assert.ok(roleHistory.rows >= 2, `role history should render multiple rows: ${JSON.stringify(roleHistory)}`);
+    assert.deepEqual(roleHistory.labels.slice(0, 2), ["Match 7", "Match 5"], `role history should use real match numbers newest-first: ${JSON.stringify(roleHistory)}`);
     assert.equal(roleHistory.iconBeforeName, true, `role history needs agent icon before name text: ${JSON.stringify(roleHistory)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'role-history.png') });
     await closeLensModals(page);
 
     const trendCards = await page.locator('#statsPerformanceChart .stats-trend-card').count();
     assert.ok(trendCards > 0, 'recent match trend cards should exist');
-    for (let index = 0; index < Math.min(3, trendCards); index += 1) {
+    const trendCardModalTitles = [];
+    for (let index = 0; index < trendCards; index += 1) {
       await page.locator('#statsPerformanceChart .stats-trend-card').nth(index).click({ force: true });
       await page.waitForSelector('#lensModal.active #lensStatsListSecondary', { timeout: 6000 });
+      trendCardModalTitles.push(await page.locator('#lensModal.active #lensModalTitleSecondary').innerText());
       await closeLensModals(page);
     }
 
@@ -387,7 +574,7 @@ async function run() {
       });
     }
 
-    await page.locator('#statsPeakRankIcon').click({ force: true });
+    await page.evaluate(() => globalThis.RankedCoachTestHooks.openStatsPeakLifetimeRankChart());
     await page.waitForSelector('#lensModal.active .stats-lifetime-rank-chart', { timeout: 8000 });
     const lifetime = await page.evaluate(() => {
       const chart = document.querySelector('.stats-lifetime-rank-chart');
@@ -404,13 +591,87 @@ async function run() {
       };
     });
     assert.ok(lifetime.width >= lifetime.viewport * 0.78, `lifetime chart should be full-width: ${JSON.stringify(lifetime)}`);
-    assert.equal(lifetime.rankMarkers, lifetime.dataPoints, `seasonal peak chart should mark every plotted peak point: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.rankMarkers, lifetime.dataPoints, `seasonal peak chart should mark only plotted season peaks: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.markerTextCount, 0, `lifetime chart should remove rank-up/down arrow text: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.yAxisTextCount, 0, `lifetime y-axis should use rank icons only: ${JSON.stringify(lifetime)}`);
-    assert.ok(lifetime.xTickLabels.length >= 1, `lifetime x-axis should show season labels: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.xTickLabels.length >= 3, `lifetime x-axis should show season labels: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.arrowClasses, 0, `lifetime chart should not keep rank-up/down arrow classes: ${JSON.stringify(lifetime)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
+
+    await page.locator('.nav-btn[data-page="home"]').click({ force: true });
+    await page.waitForTimeout(200);
+    const themeChecks = [];
+    for (const themeKey of ["serpent-green", "navy-command"]) {
+      await applyProfileTheme(page, themeKey);
+      const check = await page.evaluate(() => {
+        const rootStyle = getComputedStyle(document.documentElement);
+        const button = document.querySelector('#roleButtons .role-filter-btn[data-role="any"]');
+        const buttonStyle = button ? getComputedStyle(button) : null;
+        return {
+          theme: document.body.dataset.theme,
+          accent: rootStyle.getPropertyValue("--accent").trim(),
+          background: buttonStyle?.backgroundImage || buttonStyle?.backgroundColor || "",
+          buttonText: button?.textContent?.trim() || ""
+        };
+      });
+      themeChecks.push(check);
+    }
+    assert.notEqual(themeChecks[0].accent, themeChecks[1].accent, `two non-default themes should expose different --accent values: ${JSON.stringify(themeChecks)}`);
+    assert.notEqual(themeChecks[0].background, themeChecks[1].background, `ALL button background should respond to theme accent: ${JSON.stringify(themeChecks)}`);
+
+    const agentOpen = await page.evaluate(() => globalThis.RankedCoachTestHooks.openAgentModalForTest());
+    assert.equal(agentOpen?.ok, true, `agent modal should open from the gated test hook: ${JSON.stringify(agentOpen)}`);
+    await page.waitForSelector('#agentRoleSelect .agent-role-btn.role-duelist', { timeout: 8000 });
+    const agentRoleTint = await page.evaluate(() => [...document.querySelectorAll('#agentRoleSelect .agent-role-btn')].map(button => {
+      const style = getComputedStyle(button);
+      const image = button.querySelector('img');
+      return {
+        role: button.dataset.role || [...button.classList].find(name => name.startsWith('role-')),
+        color: style.color,
+        borderColor: style.borderColor,
+        filter: image ? getComputedStyle(image).filter : ""
+      };
+    }));
+    assert.ok(agentRoleTint.length >= 4, `agent role selector should expose all role buttons: ${JSON.stringify(agentRoleTint)}`);
+    assert.ok(new Set(agentRoleTint.map(entry => entry.color)).size >= 3, `agent role selector icons/text should be role-colored: ${JSON.stringify(agentRoleTint)}`);
+    await page.locator('#agentModal .agent-modal-inner').screenshot({ path: path.join(outDir, 'agent-role-selector.png') });
+    await forceClearModals(page);
+    await page.evaluate(() => {
+      const modal = document.getElementById("agentModal");
+      if (!modal) return;
+      modal.style.setProperty("display", "none", "important");
+      modal.style.setProperty("pointer-events", "none", "important");
+      modal.hidden = true;
+      modal.classList.remove("active", "is-opening", "is-closing", "show", "visible");
+      modal.setAttribute("aria-hidden", "true");
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(350);
+    const activeMobilePage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("stats"));
+    assert.equal(activeMobilePage, "page-stats", `mobile stats page should activate through test hook, got ${activeMobilePage}`);
+    await page.waitForSelector('#statsPerformanceChart .stats-trend-card', { timeout: 10000 });
+    const mobileTrends = await page.evaluate(() => {
+      const parent = document.querySelector('#statsPerformanceChart');
+      const parentBox = parent?.getBoundingClientRect();
+      const cards = [...document.querySelectorAll('#statsPerformanceChart .stats-trend-card')].map(card => {
+        const box = card.getBoundingClientRect();
+        return {
+          label: card.textContent.replace(/\s+/g, " ").trim().slice(0, 80),
+          width: box.width,
+          height: box.height,
+          top: box.top,
+          bottom: box.bottom,
+          clippedByParent: parentBox ? box.bottom > parentBox.bottom + 1 : false
+        };
+      });
+      return { parent: parentBox ? { width: parentBox.width, height: parentBox.height, top: parentBox.top, bottom: parentBox.bottom } : null, cards };
+    });
+    assert.equal(mobileTrends.cards.length, 6, `mobile trend grid should render all six cards: ${JSON.stringify(mobileTrends)}`);
+    assert.ok(mobileTrends.cards.some(card => card.width > 0 && card.height >= 64), `mobile trend carousel should expose at least one full active card: ${JSON.stringify(mobileTrends)}`);
+    assert.ok(mobileTrends.cards.filter(card => card.width > 0 && card.height > 0).every(card => card.height >= 64 && !card.clippedByParent), `visible mobile trend cards should not be cut in half: ${JSON.stringify(mobileTrends)}`);
+    await page.locator('#statsPerformanceChart').screenshot({ path: path.join(outDir, 'mobile-stats-performance-chart.png') });
 
     await page.screenshot({ path: path.join(outDir, 'stats-page-final.png'), fullPage: true });
     assert.deepEqual(issues, [], `console errors during nav/loadout/stats pass: ${JSON.stringify(issues, null, 2)}`);
@@ -419,11 +680,18 @@ async function run() {
       navClip,
       loadout,
       topMapAgents,
+      mapPicker,
+      roleHover,
+      compassHover,
       trendAxis,
       roleHistory,
-      trendCardsClicked: Math.min(3, trendCards),
+      trendCardsClicked: trendCards,
+      trendCardModalTitles,
       hoverResults,
-      lifetime
+      lifetime,
+      themeChecks,
+      agentRoleTint,
+      mobileTrends
     }, null, 2));
   } finally {
     await browser.close();
@@ -435,3 +703,4 @@ run().catch(error => {
   console.error(error);
   process.exit(1);
 });
+

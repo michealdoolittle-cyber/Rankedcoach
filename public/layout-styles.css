@@ -3270,13 +3270,13 @@ html body #page-home .loadout-card #spinAgentBtn{
   flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
-  width:100% !important;
+  width:auto !important;
   min-width:0 !important;
-  max-width:none !important;
+  max-width:100% !important;
   height:100% !important;
   min-height:0 !important;
-  aspect-ratio:auto !important;
-  justify-self:stretch !important;
+  aspect-ratio:1 / 1 !important;
+  justify-self:center !important;
   align-self:stretch !important;
 }
 
@@ -3285,13 +3285,13 @@ html body #page-home .loadout-card #agentFrame.agent-frame{
   grid-area:reel !important;
   display:grid !important;
   place-items:center !important;
-  width:100% !important;
+  width:auto !important;
   min-width:0 !important;
-  max-width:none !important;
+  max-width:100% !important;
   height:100% !important;
   min-height:0 !important;
-  aspect-ratio:auto !important;
-  justify-self:stretch !important;
+  aspect-ratio:1 / 1 !important;
+  justify-self:center !important;
   align-self:stretch !important;
   overflow:hidden !important;
   isolation:isolate !important;
