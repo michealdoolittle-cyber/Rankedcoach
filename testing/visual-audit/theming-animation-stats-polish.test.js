@@ -145,13 +145,16 @@ async function run() {
 
     const mapSnapshot = await page.evaluate(() => ({
       count: document.querySelectorAll("#statsMapsList .stats-map-card").length,
-      allActive: [...document.querySelectorAll("#statsMapsList .stats-map-card")].every(card => card.dataset.activePool === "true"),
+      activeCount: [...document.querySelectorAll("#statsMapsList .stats-map-card")].filter(card => card.dataset.activePool === "true").length,
+      lockedCount: [...document.querySelectorAll("#statsMapsList .stats-map-card")].filter(card => card.dataset.activePool === "false" && card.disabled).length,
+      outOfSeasonNames: [...document.querySelectorAll("#statsMapsList .stats-map-card[data-active-pool='false'] .stats-map-out-name")].map(node => node.textContent.trim()),
       names: [...document.querySelectorAll("#statsMapsList .stats-map-card .stats-main-text")].map(node => node.textContent.trim()),
       columns: getComputedStyle(document.getElementById("statsMapsList")).gridTemplateColumns.split(" ").length
     }));
-    assert.ok(mapSnapshot.count > 0 && mapSnapshot.count <= 9, `selected season should show only its competitive pool: ${JSON.stringify(mapSnapshot)}`);
-    assert.equal(mapSnapshot.allActive, true, `out-of-season maps must be absent, not disabled: ${JSON.stringify(mapSnapshot)}`);
-    assert.equal(mapSnapshot.columns, 3, `desktop map grid must be 3 columns: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.count, 13, `selected season should show every map preview: ${JSON.stringify(mapSnapshot)}`);
+    assert.ok(mapSnapshot.activeCount > 0 && mapSnapshot.lockedCount > 0, `active and off-season map states should both be represented: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.activeCount + mapSnapshot.lockedCount, 13, `off-season maps must be locked instead of removed: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.columns, 4, `desktop map grid must be 4 compact columns: ${JSON.stringify(mapSnapshot)}`);
 
     const selector = page.locator("#statsActSelector");
     const options = await selector.locator("option").evaluateAll(nodes => nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));
@@ -168,8 +171,10 @@ async function run() {
     const currentNames = mapSnapshot.names.join("|");
     await selector.selectOption(options[1].value, { force: true });
     await page.waitForTimeout(250);
+    const selectedSeasonAfterChange = await selector.inputValue();
     const alternateNames = await page.locator("#statsMapsList .stats-main-text").allTextContents();
-    assert.notEqual(alternateNames.join("|"), currentNames, "season selection must refresh the map pool");
+    assert.equal(alternateNames.length, 13, "season selection should keep all map previews rendered");
+    assert.equal(selectedSeasonAfterChange, options[1].value, "season selection must accept the alternate season");
     await selector.selectOption(options[0].value, { force: true });
     await page.waitForTimeout(250);
 

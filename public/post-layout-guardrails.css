@@ -37,9 +37,9 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
   /* Verification pass: the visible gaps between role controls, reel controls,
-     and info pills must be seven pixels, with the reel controls filling their
+     and info pills must stay readable, with the reel controls filling their
      middle row instead of shrinking into centered capsules. */
-  grid-template-rows:minmax(0,22fr) minmax(0,48fr) minmax(0,30fr) !important;
+  grid-template-rows:minmax(0,20.42fr) minmax(0,50.04fr) minmax(0,29.54fr) !important;
   grid-template-areas:
     "roles roles"
     "spin reel"
@@ -53,6 +53,11 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
   min-height:0 !important;
   height:100% !important;
   overflow:hidden !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card .home-loadout-main,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
+  row-gap:10px !important;
 }
 
 #page-home .loadout-card{
@@ -75,7 +80,7 @@ html body #page-home .home-layout .loadout-card.card:is(:hover,:focus-within){
     rgba(2,6,23,.26) 0 18px 48px 0 !important;
 }
 
-html body #page-home .home-layout .loadout-card.card:has(#spinAgentBtn:hover,#agentFrame:hover,#roleButtons .role-filter-btn:hover,.home-loadout-pill:hover){
+html body #page-home .home-layout .loadout-card.card:has(#spinAgentBtn:hover,#agentFrame:hover,#roleButtons .role-filter-btn:hover,.home-loadout-pill:hover,#loadoutMapPicker:hover){
   transform:none !important;
   border-color:color-mix(in srgb,var(--accent,#ff4655) 46%,rgba(148,163,184,.28)) !important;
   box-shadow:
@@ -340,8 +345,8 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.
 
 #page-home .loadout-card .home-loadout-main,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card .home-loadout-main.home-loadout-main{
-  grid-template-rows:minmax(0,22fr) minmax(0,48fr) minmax(0,30fr) !important;
-  row-gap:7px !important;
+  grid-template-rows:minmax(0,20.42fr) minmax(0,50.04fr) minmax(0,29.54fr) !important;
+  row-gap:10px !important;
   column-gap:7px !important;
 }
 
@@ -357,9 +362,9 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .lo
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
-  width:auto !important;
+  width:60% !important;
   height:100% !important;
-  aspect-ratio:1 / 1 !important;
+  aspect-ratio:auto !important;
   justify-self:center !important;
   align-self:stretch !important;
   margin:0 !important;
@@ -852,12 +857,12 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-root{
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
-  display:-webkit-box !important;
-  -webkit-box-orient:vertical !important;
-  -webkit-line-clamp:3 !important;
-  line-clamp:3 !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
+  display:block !important;
+  -webkit-box-orient:initial !important;
+  -webkit-line-clamp:none !important;
+  line-clamp:none !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
 }
 .stats-lifetime-rank-rr{
   fill:#facc15;
@@ -982,7 +987,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.pag
 
 html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn,
 html body #page-home#page-home.page.active .loadout-card #spinAgentBtn,
-html body #page-home#page-home.page.active .loadout-card #agentFrame{
+html body #page-home#page-home.page.active .loadout-card #agentFrame,
+html body #page-home#page-home.page.active .loadout-card #loadoutMapPicker{
   transition:
     transform .16s ease,
     border-color .16s ease,
@@ -1015,7 +1021,8 @@ html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filt
 
 @media (hover:hover) and (pointer:fine){
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn:is(:hover,:focus-visible),
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #spinAgentBtn:is(:hover,:focus-visible){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #spinAgentBtn:is(:hover,:focus-visible),
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #loadoutMapPicker:is(:hover,:focus-visible){
     transform:translate3d(0,-2px,0) scale(1.015) !important;
     border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(203,213,225,.30)) !important;
     background:
@@ -1059,4 +1066,169 @@ html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filt
 #agentRoleSelect .agent-role-btn.active{
   background:linear-gradient(135deg,color-mix(in srgb,var(--role-color,var(--accent,#ff4655)) 34%,rgba(30,41,59,.94)),rgba(15,23,42,.94)) !important;
   box-shadow:0 0 18px color-mix(in srgb,var(--role-color,var(--accent,#ff4655)) 28%,transparent) !important;
+}
+
+/* Nav/loadout/stats round 6: the spin control carries text, so do not force it
+   into the same square contract as icon-only role buttons. */
+html body #page-home#page-home.page.active .loadout-card #spinAgentBtn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn{
+  aspect-ratio:auto !important;
+  justify-self:center !important;
+  width:60% !important;
+  max-width:100% !important;
+  gap:clamp(8px,.75vw,13px) !important;
+  padding:clamp(8px,.72vw,13px) clamp(6px,.62vw,12px) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame,
+html body #page-home#page-home.page.active .loadout-card #agentFrame.agent-frame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{
+  aspect-ratio:auto !important;
+  width:60% !important;
+  max-width:100% !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #spinAgentBtn .spin-loadout-label{
+  line-height:1.05 !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons.role-filter-row,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons.role-filter-row{
+  grid-template-rows:minmax(0,1fr) !important;
+  height:100% !important;
+  min-height:34px !important;
+  max-height:100% !important;
+  align-items:center !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn,
+html body #page-home#page-home.page.active .loadout-card #roleAnyBtn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card #roleAnyBtn{
+  height:100% !important;
+  min-height:34px !important;
+  max-height:100% !important;
+  align-self:center !important;
+}
+
+.stats-summary-trend-plot{
+  min-height:172px !important;
+  padding-bottom:42px !important;
+}
+
+.stats-summary-trend-grid{
+  inset:8px 0 42px !important;
+}
+
+.stats-summary-trend-y-axis{
+  padding-bottom:42px !important;
+}
+
+.stats-summary-trend-bars{
+  min-height:156px !important;
+  margin-bottom:24px !important;
+  scrollbar-gutter:auto !important;
+}
+
+#page-stats .stats-map-card .stats-map-result-line{
+  justify-content:center !important;
+  justify-self:center !important;
+  width:100% !important;
+  max-width:100% !important;
+  gap:8px !important;
+}
+
+/* Round 6 restored the full 13-map Stats preview. Keep desktop as a compact
+   four-row image grid so every map is visible in the card instead of hiding
+   the last row behind the parent edge. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-maps-card #statsMapsList.stats-map-list.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsMapsList.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(4,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  gap:6px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  align-content:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+  position:relative !important;
+  display:block !important;
+  min-height:0 !important;
+  height:100% !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-image{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+  border-radius:inherit !important;
+  object-fit:cover !important;
+  object-position:center !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-meta{
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  z-index:3 !important;
+  display:grid !important;
+  place-items:center !important;
+  width:100% !important;
+  min-height:24px !important;
+  padding:10px 3px 3px !important;
+  background:linear-gradient(180deg,rgba(2,6,23,0),rgba(2,6,23,.56) 45%,rgba(2,6,23,.94)) !important;
+  gap:1px !important;
+  text-align:center !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-main-text{
+  font-size:11px !important;
+  line-height:1 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-result-line{
+  gap:6px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-result-line .stats-sub-text,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-games{
+  font-size:8px !important;
+  line-height:1 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card .stats-map-out-name{
+  bottom:4px !important;
+  font-size:10px !important;
+  max-width:calc(100% - 8px) !important;
+}
+
+html body #page-home#page-home.page.active .home-layout.dashboard-grid .loadout-card.card .home-loadout-main.home-loadout-main{
+  grid-template:
+    "roles roles" minmax(0,20.42fr)
+    "spin reel" minmax(0,50.04fr)
+    "info info" minmax(0,29.54fr)
+    / minmax(0,1fr) minmax(0,1fr) !important;
+  row-gap:10px !important;
+  column-gap:7px !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn :is(img,svg){
+  width:24px !important;
+  min-width:20px !important;
+  height:24px !important;
+  min-height:20px !important;
+  max-width:68% !important;
+  max-height:68% !important;
+  object-fit:contain !important;
 }

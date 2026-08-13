@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260812-session-prep-round6-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round6-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -20686,7 +20686,7 @@ function getChartSourceEntries(size = currentSize) {
   let runningRR = 0;
   const orderedSourceMatches = sourceMatches
     .map((match, index) => ({ match, index }))
-    .sort((a, b) => new Date(a?.match?.createdAt || a?.match?.metadata?.playedAt || 0).getTime() - new Date(b?.match?.createdAt || b?.match?.metadata?.playedAt || 0).getTime());
+    .sort((a, b) => getMatchSortTimestamp(a?.match || {}) - getMatchSortTimestamp(b?.match || {}));
 
   const allEntries = orderedSourceMatches.map(({ match, index }) => {
     const snapshot = getMatchRankSnapshot(match);
@@ -22803,7 +22803,12 @@ async function refreshProfileDeletionTombstonesFromCloud(userId = "") {
     splitLiveProfilesFromTombstones(data?.profiles_json);
     // This is the stale-session guard. If another device deleted a profile,
     // remove it from this device before this device serializes its full state.
-    removeLocallyDeletedProfiles({ persist: true });
+    const removedLocalProfiles = removeLocallyDeletedProfiles({ persist: true });
+    if (removedLocalProfiles) {
+      renderProfilesUI?.();
+      updateProfileHeaderUI?.();
+      updateDisplays?.();
+    }
     return true;
   } catch (error) {
     // A transient read failure must not discard a local change. The next save
@@ -25422,7 +25427,7 @@ function getMatchRankSnapshot(match = {}) {
     rr: getOptionalFiniteNumber(match?.rrTotal ?? canonicalRank.rr),
     rrDelta: getOptionalFiniteNumber(match?.verifiedRrDelta ?? canonicalRank.rrDelta ?? match?.rr),
     verified: match?.rrVerified === true || match?.metadata?.rrVerified === true || canonicalRank.verified === true,
-    playedAt: match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || "",
+    playedAt: match?.playedAt || match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || "",
     match
   };
 }
@@ -52938,6 +52943,10 @@ function updateProfile(id, data){
 
 function setActiveProfile(id){
 
+  if (currentAuthUser?.id && supabaseClient?.from && !backendSyncState.applyingRemote) {
+    void refreshProfileDeletionTombstonesFromCloud(currentAuthUser.id);
+  }
+
   const current = getActiveProfile();
   const switchingProfile = String(current?.id || "") !== String(id || "");
 
@@ -53343,9 +53352,101 @@ function isPlaceholderStatsActLabel(value = "") {
     .includes(String(value || "").trim().toLowerCase());
 }
 
+const KNOWN_VALORANT_ACT_LABELS_BY_ID = Object.freeze({
+  "4539cac3-47ae-90e5-3d01-b3812ca3274e": "Episode 8 Act 3",
+  "52ca6698-41c1-e7de-4008-8994d2221209": "Episode 9 Act 1",
+  "292f58db-4c17-89a7-b1c0-ba988f0e9d98": "Episode 9 Act 2",
+  "dcde7346-4085-de4f-c463-2489ed47983b": "Episode 9 Act 3",
+  "476b0893-4c2e-abd6-c5fe-708facff0772": "Season 2025 Act 1",
+  "16118998-4705-5813-86dd-0292a2439d90": "Season 2025 Act 2",
+  "aef237a0-494d-3a14-a1c8-ec8de84e309c": "Season 2025 Act 3",
+  "ac12e9b3-47e6-9599-8fa1-0bb473e5efc7": "Season 2025 Act 4",
+  "5adc33fa-4f30-2899-f131-6fba64c5dd3a": "Season 2025 Act 5",
+  "4c4b8cff-43eb-13d3-8f14-96b783c90cd2": "Season 2025 Act 6",
+  "3ea2b318-423b-cf86-25da-7cbb0eefbe2d": "Season 2026 Act 1",
+  "9d85c932-4820-c060-09c3-668636d4df1b": "Season 2026 Act 2",
+  "ce2783e8-44fc-dd48-3da3-33b5ba6c4a22": "Season 2026 Act 3",
+  "4f0864e2-40af-28a4-de2c-0e9e64e75f23": "Season 2026 Act 4",
+  "8102cd81-43a0-d0d7-bd59-47b8fe9bed1b": "Season 2026 Act 5",
+  "d816f426-48ea-f052-117f-9697a155b319": "Season 2026 Act 6"
+});
+
+const KNOWN_VALORANT_ACT_LABELS_BY_SHORT = Object.freeze({
+  e8a3: "Episode 8 Act 3",
+  e9a1: "Episode 9 Act 1",
+  e9a2: "Episode 9 Act 2",
+  e9a3: "Episode 9 Act 3",
+  e10a1: "Season 2025 Act 1",
+  e10a2: "Season 2025 Act 2",
+  e10a3: "Season 2025 Act 3",
+  e10a4: "Season 2025 Act 4",
+  e10a5: "Season 2025 Act 5",
+  e10a6: "Season 2025 Act 6",
+  e11a1: "Season 2026 Act 1",
+  e11a2: "Season 2026 Act 2",
+  e11a3: "Season 2026 Act 3",
+  e11a4: "Season 2026 Act 4",
+  e11a5: "Season 2026 Act 5",
+  e11a6: "Season 2026 Act 6"
+});
+
+const KNOWN_VALORANT_ACT_DATE_RANGES = Object.freeze([
+  ["Episode 8 Act 3", "2024-04-30T00:00:00Z", "2024-06-26T00:00:00Z"],
+  ["Episode 9 Act 1", "2024-06-26T00:00:00Z", "2024-08-28T00:00:00Z"],
+  ["Episode 9 Act 2", "2024-08-28T00:00:00Z", "2024-10-23T00:00:00Z"],
+  ["Episode 9 Act 3", "2024-10-23T00:00:00Z", "2025-01-08T00:00:00Z"],
+  ["Season 2025 Act 1", "2025-01-08T00:00:00Z", "2025-03-05T00:00:00Z"],
+  ["Season 2025 Act 2", "2025-03-05T00:00:00Z", "2025-04-30T00:00:00Z"],
+  ["Season 2025 Act 3", "2025-04-30T00:00:00Z", "2025-06-25T00:00:00Z"],
+  ["Season 2025 Act 4", "2025-06-25T00:00:00Z", "2025-08-20T00:00:00Z"],
+  ["Season 2025 Act 5", "2025-08-20T00:00:00Z", "2025-10-15T00:00:00Z"],
+  ["Season 2025 Act 6", "2025-10-15T00:00:00Z", "2026-01-07T00:00:00Z"],
+  ["Season 2026 Act 1", "2026-01-07T00:00:00Z", "2026-03-18T00:00:00Z"],
+  ["Season 2026 Act 2", "2026-03-18T00:00:00Z", "2026-04-29T00:00:00Z"],
+  ["Season 2026 Act 3", "2026-04-29T00:00:00Z", "2026-06-24T00:00:00Z"],
+  ["Season 2026 Act 4", "2026-06-24T00:00:00Z", "2026-08-19T00:00:00Z"],
+  ["Season 2026 Act 5", "2026-08-19T00:00:00Z", "2026-10-14T00:00:00Z"],
+  ["Season 2026 Act 6", "2026-10-14T00:00:00Z", "2027-01-06T00:00:00Z"]
+]);
+
+function getKnownValorantActLabel(value = "") {
+  if (!value) return "";
+  if (typeof value === "object") {
+    return getKnownValorantActLabel(value.label)
+      || getKnownValorantActLabel(value.displayName)
+      || getKnownValorantActLabel(value.name)
+      || getKnownValorantActLabel(value.short)
+      || getKnownValorantActLabel(value.id)
+      || getKnownValorantActLabel(value.uuid)
+      || getKnownValorantActLabel(value.seasonId);
+  }
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const normalized = text.toLowerCase();
+  return KNOWN_VALORANT_ACT_LABELS_BY_ID[normalized]
+    || KNOWN_VALORANT_ACT_LABELS_BY_SHORT[normalized]
+    || "";
+}
+
+function getKnownValorantActLabelForDate(match = {}) {
+  if (!match || isDemoFixtureMatch(match)) return "";
+  const date = getRetainedMatchDate(match);
+  if (!date) return "";
+  const time = date.getTime();
+  const found = KNOWN_VALORANT_ACT_DATE_RANGES.find(([_label, start, end]) => {
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    return Number.isFinite(startTime) && Number.isFinite(endTime) && time >= startTime && time < endTime;
+  });
+  return found?.[0] || "";
+}
+
 function normalizeValorantSeasonLabel(value = "") {
+  const known = getKnownValorantActLabel(value);
+  if (known) return known;
   const label = String(value || "").trim();
-  return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(label) || label;
+  return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(label)
+    || label;
 }
 
 function normalizeSeasonDescriptorValue(value = "") {
@@ -53473,15 +53574,23 @@ function purgeDemoFixtureMatches(matchList = []) {
 }
 
 function getMatchSeasonLabel(match = {}) {
+  const explicitDemoAct = match?.metadata?.demoAct
+    || match?.demoAct
+    || match?.matchRecord?.metadata?.demoAct
+    || "";
   const isDemo = isDemoFixtureMatch(match);
   const value = String(
-    (isDemo ? (match?.metadata?.demoAct || match?.demoAct) : "")
+    (isDemo ? explicitDemoAct : "")
     || match?.metadata?.act
     || match?.act
     || match?.matchRecord?.act
     || match?.matchRecord?.metadata?.act
     || getRawHenrikSeasonMetadata(match)?.season?.short
     || getMatchSeasonShort(match)
+    || getKnownValorantActLabel(match?.metadata?.season)
+    || getKnownValorantActLabel(match?.season)
+    || getKnownValorantActLabel(match?.seasonId || match?.metadata?.seasonId || match?.matchRecord?.season)
+    || getKnownValorantActLabelForDate(match)
     || ""
   ).trim();
   const label = normalizeValorantSeasonLabel(value);
@@ -62238,9 +62347,10 @@ function renderStatsMapsModel() {
     }
     return String(a).localeCompare(String(b));
   });
-  // Stats is a season view. A map outside the selected competitive pool does
-  // not belong in this grid; in-pool maps remain visible even without data.
-  const renderMapNames = activeMapNames;
+  const outOfSeasonMapNames = ALL_VALORANT_MAP_NAMES
+    .filter(mapName => !poolSet.has(String(mapName).toLowerCase()))
+    .sort((a, b) => String(a).localeCompare(String(b)));
+  const renderMapNames = [...activeMapNames, ...outOfSeasonMapNames];
 
   container.innerHTML = "";
   container.classList.add("stats-map-grid");
@@ -62248,8 +62358,8 @@ function renderStatsMapsModel() {
   renderMapNames.forEach((mapName) => {
     const map = mapByName.get(String(mapName || "").toLowerCase()) || null;
     const hasData = Boolean(map && safeNumber(map.matchesPlayed || map.matches) > 0);
-    const isActivePool = true;
-    const canOpen = hasData;
+    const isActivePool = poolSet.has(String(mapName || "").toLowerCase());
+    const canOpen = hasData && isActivePool;
     const winrateValue = safeNumber(map?.winrate);
     const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
     const matchCount = safeNumber(map?.matchesPlayed || map?.matches);
@@ -62259,18 +62369,22 @@ function renderStatsMapsModel() {
     card.disabled = !canOpen;
     card.dataset.activePool = isActivePool ? "true" : "false";
     card.dataset.hasData = hasData ? "true" : "false";
-    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"} is-active-pool${!hasData ? " is-no-data" : ""}`;
+    card.dataset.excluded = isActivePool ? "false" : "true";
+    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"} ${isActivePool ? "is-active-pool" : "is-out-of-season is-excluded"}${isActivePool && !hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
       <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork" loading="lazy" decoding="async">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">
-          ${hasData
+          ${hasData && isActivePool
             ? `<span class="stats-sub-text ${winrateTone}">${Math.round(winrateValue)}% WR</span><span class="stats-map-games">${escapeHtml(matchCopy)}</span>`
-            : `<span class="stats-map-no-data-tag">No Data</span>`
+            : isActivePool
+              ? `<span class="stats-map-no-data-tag">No Data</span>`
+              : ""
           }
         </span>
       </div>
+      ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span><span class="stats-map-out-name">${escapeHtml(mapName)}</span>` : ""}
     `;
     if (canOpen) {
       card.addEventListener("click", () => openStatsDetailModal("map", map.map));

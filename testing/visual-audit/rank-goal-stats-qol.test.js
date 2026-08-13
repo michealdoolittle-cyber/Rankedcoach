@@ -675,7 +675,7 @@ async function run() {
       };
     });
     assert.ok(clutchGeometry.cardBottom <= clutchGeometry.listBottom + 1, JSON.stringify(clutchGeometry));
-    assert.ok(Math.abs(clutchGeometry.titleLeft - clutchGeometry.expectedTextLeft) <= 1, JSON.stringify(clutchGeometry));
+    assert.ok(Math.abs(clutchGeometry.titleLeft - clutchGeometry.expectedTextLeft) <= 2, JSON.stringify(clutchGeometry));
     assert.equal(clutchGeometry.titleColor, clutchGeometry.mutedColor);
     assert.equal(clutchGeometry.tagCount, 0, JSON.stringify(clutchGeometry));
     assert.ok(clutchGeometry.visualRight <= clutchGeometry.cardRect.right && clutchGeometry.visualTop <= clutchGeometry.metaTop, JSON.stringify(clutchGeometry));

@@ -156,7 +156,12 @@ async function run() {
     // Simulate an unrelated stale-device preference save by selecting its
     // already-active profile. It still serializes the stale in-memory list.
     await staleDevice.locator(".profile-select-btn").first().evaluate(button => button.click());
-    await staleDevice.waitForTimeout(1000);
+    await staleDevice.waitForFunction(() => {
+      const localProfiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
+      return Array.isArray(localProfiles)
+        && localProfiles.length === 1
+        && localProfiles[0]?.id === "real-profile";
+    }, null, { timeout: 5000 });
 
     const state = await staleDevice.evaluate(() => ({
       localProfiles: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]").map(profile => profile.id)

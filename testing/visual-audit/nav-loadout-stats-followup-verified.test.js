@@ -127,6 +127,7 @@ function buildProfileFixture() {
 function makeDemoActOnlyMatch(index, demoAct, overrides = {}) {
   const match = makeMatch(index, {
     ...overrides,
+    source: "demo-fixture",
     act: "",
     season: "",
     seasonId: "",
@@ -134,9 +135,11 @@ function makeDemoActOnlyMatch(index, demoAct, overrides = {}) {
   });
   match.id = `demo-act-only-match-${index}`;
   match.matchId = `demo-act-only-match-${index}`;
+  match.source = "demo-fixture";
   match.metadata = {
     ...(match.metadata || {}),
     matchId: match.matchId,
+    source: "demo-fixture",
     act: "",
     season: "",
     seasonId: "",
@@ -175,6 +178,89 @@ function buildDemoActLifetimeProfileFixture() {
       makeDemoActOnlyMatch(3, "Season 2026 Act 3", { rank: "Diamond 3", absoluteRr: 1724, agent: "Jett" }),
       makeDemoActOnlyMatch(4, "Season 2026 Act 4", { rank: "Platinum 3", absoluteRr: 1458, agent: "Chamber" }),
       makeDemoActOnlyMatch(5, "Season 2026 Act 4", { rank: "Diamond 1", absoluteRr: 1535, agent: "Sova" })
+    ]
+  };
+}
+
+function makeSeasonIdOnlyLifetimeMatch(index, overrides = {}) {
+  const match = makeMatch(index, {
+    ...overrides,
+    playedAt: overrides.playedAt,
+    act: "",
+    season: overrides.seasonId,
+    seasonId: overrides.seasonId
+  });
+  match.id = `season-id-only-lifetime-match-${index}`;
+  match.matchId = `season-id-only-lifetime-match-${index}`;
+  match.createdAt = "";
+  match.playedAt = overrides.playedAt;
+  match.act = "";
+  match.season = overrides.seasonId;
+  match.seasonId = overrides.seasonId;
+  match.metadata = {
+    ...(match.metadata || {}),
+    matchId: match.matchId,
+    playedAt: overrides.playedAt,
+    act: "",
+    season: overrides.seasonId,
+    seasonId: overrides.seasonId
+  };
+  match.matchRecord = {
+    ...(match.matchRecord || {}),
+    playedAt: overrides.playedAt,
+    act: "",
+    season: overrides.seasonId,
+    rawHenrikPayload: null,
+    metadata: {
+      ...((match.matchRecord || {}).metadata || {}),
+      playedAt: overrides.playedAt,
+      act: "",
+      season: overrides.seasonId,
+      seasonId: overrides.seasonId
+    }
+  };
+  delete match.rawHenrikPayload;
+  return match;
+}
+
+function buildSeasonIdOnlyLifetimeProfileFixture() {
+  return {
+    id: "season-id-only-lifetime-profile",
+    name: "Season ID Only Lifetime",
+    accountName: "Season ID Only Lifetime",
+    isGuest: true,
+    importSource: "henrik_sync",
+    lastSyncSource: "henrik_sync",
+    trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4"] },
+    matches: [
+      makeSeasonIdOnlyLifetimeMatch(0, {
+        seasonId: "4539cac3-47ae-90e5-3d01-b3812ca3274e",
+        playedAt: "2024-05-28T00:38:10.401Z",
+        rank: "Diamond 2",
+        absoluteRr: 1640,
+        rrDelta: 12
+      }),
+      makeSeasonIdOnlyLifetimeMatch(1, {
+        seasonId: "4539cac3-47ae-90e5-3d01-b3812ca3274e",
+        playedAt: "2024-06-22T12:38:59.729Z",
+        rank: "Ascendant 1",
+        absoluteRr: 1816,
+        rrDelta: 18
+      }),
+      makeSeasonIdOnlyLifetimeMatch(2, {
+        seasonId: "5adc33fa-4f30-2899-f131-6fba64c5dd3a",
+        playedAt: "2025-09-28T19:26:14.213Z",
+        rank: "Ascendant 2",
+        absoluteRr: 1944,
+        rrDelta: 16
+      }),
+      makeSeasonIdOnlyLifetimeMatch(3, {
+        seasonId: "4f0864e2-40af-28a4-de2c-0e9e64e75f23",
+        playedAt: "2026-08-05T21:24:17.195Z",
+        rank: "Diamond 1",
+        absoluteRr: 1510,
+        rrDelta: 18
+      })
     ]
   };
 }
@@ -410,6 +496,37 @@ async function verifyDemoActLifetimeGrouping(page) {
   return demoLifetime;
 }
 
+async function verifySeasonIdOnlyLifetimeGrouping(page) {
+  await loadProfileFixtureInPage(page, buildSeasonIdOnlyLifetimeProfileFixture());
+  await activateStatsPage(page);
+  await page.evaluate(() => globalThis.RankedCoachTestHooks.openStatsPeakLifetimeRankChart());
+  await page.waitForSelector('#lensModal.active .stats-lifetime-rank-chart', { timeout: 8000 });
+  const lifetime = await page.evaluate(() => {
+    const xTickLabels = [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].map(node => node.textContent.trim());
+    return {
+      dataPoints: document.querySelectorAll('.stats-lifetime-rank-dot').length,
+      rankMarkers: document.querySelectorAll('.stats-lifetime-rank-marker').length,
+      xTickLabels,
+      markerSeasonLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.dataset.seasonLabel || ""),
+      rankLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.dataset.rankLabel || ""),
+      fallbackSeasonLabels: xTickLabels.filter(label => /^S(?:eason)?\s*\d+$/i.test(label)).length,
+      rawUuidLabels: xTickLabels.filter(label => /^[0-9a-f-]{24,}$/i.test(label)).length
+    };
+  });
+  assert.equal(lifetime.dataPoints, 3, `season-id-only retained matches should group by Riot act id, not by match index: ${JSON.stringify(lifetime)}`);
+  assert.equal(lifetime.rankMarkers, lifetime.dataPoints, `season-id-only rank markers should match plotted seasons: ${JSON.stringify(lifetime)}`);
+  assert.deepEqual(lifetime.xTickLabels, ["E8 A3", "S25 A5", "S26 A4"], `season id/date fallback should produce readable lifetime x-axis labels: ${JSON.stringify(lifetime)}`);
+  assert.ok(lifetime.rankLabels.some(label => /Ascendant 2/i.test(label)), `season-id-only lifetime should preserve the highest retained provider rank: ${JSON.stringify(lifetime)}`);
+  assert.equal(lifetime.fallbackSeasonLabels, 0, `season-id-only lifetime must not fall back to synthetic Season N labels: ${JSON.stringify(lifetime)}`);
+  assert.equal(lifetime.rawUuidLabels, 0, `season-id-only lifetime must not expose Riot UUIDs on the x-axis: ${JSON.stringify(lifetime)}`);
+  await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'season-id-only-lifetime-rank-chart.png') });
+  await forceClearModals(page);
+  await loadProfileFixtureInPage(page, buildProfileFixture());
+  await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+  await forceHomeMotionSettled(page);
+  return lifetime;
+}
+
 async function selectThemeThroughRealUi(page, themeKey) {
   await page.evaluate(() => {
     const dropdown = document.getElementById("profileDropdown");
@@ -633,18 +750,19 @@ async function run() {
       });
       return {
         roles, spin, frame, info, roleButtons,
-        spinSquareDelta: spin ? Math.abs(spin.width - spin.height) : null,
-        frameSquareDelta: frame ? Math.abs(frame.width - frame.height) : null,
+        spinFrameWidthDelta: spin && frame ? Math.abs(spin.width - frame.width) : null,
+        spinFrameHeightDelta: spin && frame ? Math.abs(spin.height - frame.height) : null,
         gapRolesToSpin: Math.round(spin.y - roles.bottom),
         gapMiddleToInfo: Math.round(info.y - Math.max(spin.bottom, frame.bottom)),
         loadoutTransform: getComputedStyle(document.querySelector('.loadout-card')).transform
       };
     });
     assert.ok(loadout.roleButtons.every(button => button.delta <= 1.25), `role buttons must be square: ${JSON.stringify(loadout.roleButtons)}`);
-    assert.ok(loadout.spinSquareDelta <= 1.25, `spin button should be square to its height: ${JSON.stringify(loadout.spin)}`);
-    assert.ok(loadout.frameSquareDelta <= 1.25, `agent frame should be square to its height: ${JSON.stringify(loadout.frame)}`);
-    assert.ok(Math.abs(loadout.gapRolesToSpin - 7) <= 1, `roles-to-spin gap should be 7px: ${JSON.stringify(loadout)}`);
-    assert.ok(Math.abs(loadout.gapMiddleToInfo - 7) <= 1, `middle-to-info gap should be 7px: ${JSON.stringify(loadout)}`);
+    assert.ok(loadout.spin.width > 0 && loadout.spin.height > 0, `spin button should remain visible and sized: ${JSON.stringify(loadout.spin)}`);
+    assert.ok(loadout.spin.height >= loadout.roles.height * 0.85, `spin button should keep enough height for text plus icon: ${JSON.stringify(loadout)}`);
+    assert.ok(loadout.spinFrameWidthDelta <= 1.25 && loadout.spinFrameHeightDelta <= 1.25, `spin and agent frame should share the same lane size: ${JSON.stringify(loadout)}`);
+    assert.ok(Math.abs(loadout.gapRolesToSpin - 10) <= 1, `roles-to-spin gap should be 10px: ${JSON.stringify(loadout)}`);
+    assert.ok(Math.abs(loadout.gapMiddleToInfo - 10) <= 1, `middle-to-info gap should be 10px: ${JSON.stringify(loadout)}`);
     const mapPicker = await page.evaluate(async () => {
       const trigger = document.getElementById("loadoutMapPicker");
       trigger?.click();
@@ -686,6 +804,14 @@ async function run() {
     await page.locator('#loadoutMapPicker').click({ force: true });
     await page.locator('.loadout-map-choice[data-loadout-map="Breeze"]').click({ force: true });
     await page.waitForTimeout(160);
+    const mapHover = await hoverSnapshot(page, '#loadoutMapPicker');
+    const mapHoverChanged = mapHover.after.background !== mapHover.before.background
+      || mapHover.after.boxShadow !== mapHover.before.boxShadow
+      || mapHover.after.transform !== mapHover.before.transform
+      || mapHover.after.borderColor !== mapHover.before.borderColor;
+    assert.equal(mapHover.after.hover, true, `map picker should receive pointer hover: ${JSON.stringify(mapHover)}`);
+    assert.equal(mapHoverChanged, true, `map picker should use the same visible hover treatment as loadout controls: ${JSON.stringify(mapHover)}`);
+    await page.locator('#loadoutMapPicker').screenshot({ path: path.join(outDir, 'loadout-map-picker-hover.png') });
     await page.mouse.move(4, 4);
     await page.waitForTimeout(40);
     const loadoutHoverBefore = await page.locator('#page-home .home-middle-row > .loadout-card').evaluate(element => ({
@@ -711,6 +837,28 @@ async function run() {
     assert.equal(loadoutHoverAfter.transform, loadoutHoverBefore.transform, `loadout parent must not pop on hover: ${JSON.stringify({ before: loadoutHoverBefore, after: loadoutHoverAfter })}`);
     assert.notEqual(loadoutHoverAfter.boxShadow, loadoutHoverBefore.boxShadow, `loadout parent should still gain themed hover glow: ${JSON.stringify({ before: loadoutHoverBefore, after: loadoutHoverAfter })}`);
 
+    const spinLayout = await page.locator('#spinAgentBtn').evaluate(button => {
+      const label = button.querySelector('.spin-loadout-label');
+      const icon = button.querySelector('.spin-icon, svg');
+      const buttonBox = button.getBoundingClientRect();
+      const labelBox = label?.getBoundingClientRect();
+      const iconBox = icon?.getBoundingClientRect();
+      const style = getComputedStyle(button);
+      return {
+        button: { width: buttonBox.width, height: buttonBox.height },
+        label: labelBox ? { top: labelBox.top, bottom: labelBox.bottom, height: labelBox.height } : null,
+        icon: iconBox ? { top: iconBox.top, bottom: iconBox.bottom, height: iconBox.height } : null,
+        aspectRatio: style.aspectRatio,
+        gap: style.gap,
+        labelIconGap: labelBox && iconBox ? Math.round(iconBox.top - labelBox.bottom) : null,
+        overlaps: Boolean(labelBox && iconBox && labelBox.bottom > iconBox.top - 1)
+      };
+    });
+    assert.equal(spinLayout.aspectRatio, "auto", `spin button should not be forced into a square when it carries wrapped text: ${JSON.stringify(spinLayout)}`);
+    assert.equal(spinLayout.overlaps, false, `spin label and icon should not overlap: ${JSON.stringify(spinLayout)}`);
+    assert.ok(spinLayout.labelIconGap >= 5, `spin label and icon should have visible separation: ${JSON.stringify(spinLayout)}`);
+    await page.locator('#spinAgentBtn').screenshot({ path: path.join(outDir, 'desktop-spin-label-icon-gap.png') });
+
     const topMapAgents = await page.evaluate(() => ({
       expected: (() => {
         const eligible = new Set(["Chamber", "Clove", "Iso", "Jett", "KAY/O", "Neon", "Reyna", "Sova", "Viper"].map(agent => agent.toLowerCase().replace(/[^a-z0-9]/g, "")));
@@ -735,11 +883,12 @@ async function run() {
     assert.equal(activeHomePage, "page-home", `home page should activate through test hook, got ${activeHomePage}`);
     await forceHomeMotionSettled(page);
     await page.waitForFunction(() => {
-      const element = document.querySelector("#page-home.active #compassCardAim");
+      const home = document.getElementById("page-home");
+      const element = document.getElementById("compassCardAim");
       if (!element) return false;
       const box = element.getBoundingClientRect();
       const style = getComputedStyle(element);
-      return box.width > 0 && box.height > 0 && style.visibility !== "hidden";
+      return home?.classList?.contains("active") && box.width > 0 && box.height > 0 && style.visibility !== "hidden" && style.display !== "none";
     }, null, { timeout: 8000 });
     await page.waitForTimeout(160);
     await clickAndWaitModal(page, '#compassCardAim', '#lensModalOverlay.active #lensStatsList');
@@ -773,6 +922,7 @@ async function run() {
         if (!plot || !bars) return null;
         return Math.round(plot.bottom - bars.bottom);
       })(),
+      barsMarginBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars')).marginBottom,
       zeroCenterDelta: (() => {
         const spans = [...document.querySelectorAll('.stats-summary-trend-y-axis span')];
         const zero = spans[spans.length - 1]?.getBoundingClientRect();
@@ -785,6 +935,7 @@ async function run() {
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
     assert.equal(trendAxis.barsBorderBottom, "0px", `bar layer should not paint a duplicate baseline through the scrollbar area: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.scrollbarReserve >= 20, `trend plot should reserve scrollbar space below the baseline: ${JSON.stringify(trendAxis)}`);
+    assert.ok(Number.parseFloat(trendAxis.barsMarginBottom) >= 20, `custom trend pager needs real margin separation from the 0-axis, not native scrollbar-gutter only: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.zeroCenterDelta <= 9, `stats summary zero tick should align with x-axis baseline: ${JSON.stringify(trendAxis)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'stats-summary-trend.png') });
     await closeLensModals(page);
@@ -863,9 +1014,10 @@ async function run() {
         detailInsideCard: Boolean(detailBox && cardBox && detailBox.bottom <= cardBox.bottom + 1)
       };
     });
-    assert.equal(longTrendCopy.webkitLineClamp, "3", `long trend detail should use an intentional 3-line clamp: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.webkitLineClamp, "none", `long trend detail should remain unclamped: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.overflow, "visible", `long trend detail should not hide readable copy: ${JSON.stringify(longTrendCopy)}`);
     assert.equal(longTrendCopy.detailInsideCard, true, `long trend detail should not be abruptly cut outside the card: ${JSON.stringify(longTrendCopy)}`);
-    assert.ok(longTrendCopy.detailScrollHeight >= longTrendCopy.detailHeight, `constructed detail should remain readable via title while visually clamped: ${JSON.stringify(longTrendCopy)}`);
+    assert.ok(longTrendCopy.detailScrollHeight <= longTrendCopy.detailHeight + 2, `constructed detail should be visually readable without relying on title text: ${JSON.stringify(longTrendCopy)}`);
     await page.locator('#statsPerformanceChart .stats-trend-card').first().screenshot({ path: path.join(outDir, 'stats-trend-long-copy.png') });
     const trendCardModalTitles = [];
     for (let index = 0; index < trendCards; index += 1) {
@@ -972,6 +1124,7 @@ async function run() {
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
     const demoLifetime = await verifyDemoActLifetimeGrouping(page);
+    const seasonIdOnlyLifetime = await verifySeasonIdOnlyLifetimeGrouping(page);
 
     await page.locator('.nav-btn[data-page="home"]').click({ force: true });
     await page.waitForTimeout(200);
@@ -1115,6 +1268,8 @@ async function run() {
       loadout,
       topMapAgents,
       mapPicker,
+      mapHover,
+      spinLayout,
       roleHover,
       compassHover,
       trendAxis,
@@ -1125,6 +1280,7 @@ async function run() {
       hoverResults,
       lifetime,
       demoLifetime,
+      seasonIdOnlyLifetime,
       themeChecks,
       loadoutRound5Evidence,
       agentRoleTint,

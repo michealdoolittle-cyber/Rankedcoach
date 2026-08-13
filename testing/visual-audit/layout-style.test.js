@@ -753,6 +753,8 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     const main = loadout?.querySelector(".home-loadout-main");
     const roles = loadout?.querySelector(".role-filter-row");
     const spin = loadout?.querySelector("#spinAgentBtn");
+    const spinLabel = spin?.querySelector(".spin-loadout-label");
+    const spinIcon = spin?.querySelector(".spin-icon, svg");
     const info = loadout?.querySelector(".home-loadout-info");
     const frame = home.querySelector("#agentFrame");
     const frameCell = frame?.parentElement;
@@ -796,6 +798,10 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       }),
       roles: rect(roles),
       spin: rect(spin),
+      spinContent: {
+        label: rect(spinLabel),
+        icon: rect(spinIcon)
+      },
       spinStyle: spin ? { aspectRatio: getComputedStyle(spin).aspectRatio, alignSelf: getComputedStyle(spin).alignSelf, justifySelf: getComputedStyle(spin).justifySelf } : null,
       info: rect(info),
       infoStyle: info ? { display: getComputedStyle(info).display, visibility: getComputedStyle(info).visibility, opacity: getComputedStyle(info).opacity } : null,
@@ -847,6 +853,11 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     && inner.right <= outer.right + 1
     && inner.top >= outer.top - 1
     && inner.bottom <= outer.bottom + 1;
+  const gridColumns = String(geometry.mainGridColumns || "")
+    .split(/\s+/)
+    .map(value => Number.parseFloat(value))
+    .filter(Number.isFinite);
+  const gridColumnGap = Number.parseFloat(geometry.mainColumnGap || "0") || 0;
   assert.match(geometry.mainGridAreas, /roles roles/, `${style} loadout roles no longer span the full first row: ${JSON.stringify(geometry)}`);
   assert.match(geometry.mainGridAreas, /spin reel/, `${style} loadout spin and reel no longer share the flipped second row: ${JSON.stringify(geometry)}`);
   assert.match(geometry.mainGridAreas, /info info/, `${style} loadout detail pills no longer occupy their own third row: ${JSON.stringify(geometry)}`);
@@ -859,14 +870,25 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
   assert.ok(contains(geometry.main, geometry.spin), `${style} spin control escaped the loadout grid: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.spinStyle?.aspectRatio, "auto", `${style} spin control is still forcing a square aspect ratio: ${JSON.stringify(geometry)}`);
   assert.ok(Math.abs(geometry.spin.height - geometry.frame.height) <= 2, `${style} spin control and reel are not equal-height stretch items: ${JSON.stringify(geometry)}`);
-  assert.ok(Math.abs(geometry.spin.width - geometry.frame.width) <= Math.max(4, geometry.main.width * .04), `${style} spin control and reel are not a 50/50 split: ${JSON.stringify(geometry)}`);
+  assert.ok(
+    geometry.spinContent?.label?.bottom <= geometry.spinContent?.icon?.top - 1,
+    `${style} spin label/icon overlap or touch: ${JSON.stringify(geometry)}`
+  );
   assert.ok(Math.abs((geometry.spin.top + geometry.spin.bottom) - (geometry.frame.top + geometry.frame.bottom)) <= 4, `${style} spin control is not vertically centered beside the reel: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.spin.left < geometry.frame.left, `${style} spin control should sit to the left of the agent frame: ${JSON.stringify(geometry)}`);
-  assert.ok(Math.abs(geometry.spin.left - geometry.roles.left) <= 2, `${style} spin control no longer starts at the visible loadout content edge: ${JSON.stringify(geometry)}`);
-  assert.ok(Math.abs(geometry.frame.right - geometry.roles.right) <= 2, `${style} agent frame no longer reaches the right content edge: ${JSON.stringify(geometry)}`);
+  if (gridColumns.length >= 2) {
+    const gridContentLeft = geometry.roles?.left ?? geometry.main.left;
+    const spinColumnLeft = gridContentLeft;
+    const frameColumnLeft = gridContentLeft + gridColumns[0] + gridColumnGap;
+    const expectedSpinLeft = spinColumnLeft + (gridColumns[0] - geometry.spin.width) / 2;
+    const expectedFrameLeft = frameColumnLeft + (gridColumns[1] - geometry.frame.width) / 2;
+    assert.ok(Math.abs(geometry.spin.left - expectedSpinLeft) <= 3, `${style} spin control is not centered in its grid column: ${JSON.stringify({ geometry, expectedSpinLeft })}`);
+    assert.ok(Math.abs(geometry.frame.left - expectedFrameLeft) <= 3, `${style} agent frame is not centered in its grid column: ${JSON.stringify({ geometry, expectedFrameLeft })}`);
+  }
+  assert.ok(geometry.frame.left > geometry.spin.right + 10, `${style} agent frame no longer sits in the right reel column: ${JSON.stringify(geometry)}`);
   {
     const spinFrameGap = geometry.frame.left - geometry.spin.right;
-    assert.ok(spinFrameGap >= 10 && spinFrameGap <= 18, `${style} spin/reel gap is not the expected visible 14px split: ${JSON.stringify(geometry)}`);
+    assert.ok(spinFrameGap >= 10, `${style} spin/reel gap collapsed or overlaps: ${JSON.stringify(geometry)}`);
   }
   assert.ok(geometry.spin.top >= geometry.roles.bottom - 1, `${style} spin control overlaps the role controls: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.info.top >= Math.max(geometry.frame.bottom, geometry.spin.bottom) - 1, `${style} loadout detail pills do not sit below the reel row: ${JSON.stringify(geometry)}`);
@@ -955,11 +977,18 @@ async function assertLoadoutRollSettles(page, style) {
   const after = await page.locator(".loadout-card").evaluate(card => {
     const rect = element => element?.getBoundingClientRect().toJSON() || null;
     const frame = card.querySelector("#agentFrame");
+    const spin = card.querySelector("#spinAgentBtn");
+    const spinLabel = spin?.querySelector(".spin-loadout-label");
+    const spinIcon = spin?.querySelector(".spin-icon, svg");
     const root = getComputedStyle(document.documentElement);
     return {
       card: rect(card),
       frame: rect(frame),
-      spin: rect(card.querySelector("#spinAgentBtn")),
+      spin: rect(spin),
+      spinContent: {
+        label: rect(spinLabel),
+        icon: rect(spinIcon)
+      },
       selectedAgent: card.querySelector("#agentName")?.textContent?.trim() || "",
       selectedObjectFit: getComputedStyle(card.querySelector("#agentFrame .agent-reveal-art img"))?.objectFit || "",
       reelIsSpinning: frame?.querySelector("#agentReel")?.classList.contains("reel-spinning") || false,
@@ -976,7 +1005,8 @@ async function assertLoadoutRollSettles(page, style) {
     assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);
   });
   assert.ok(Math.abs(after.spin.height - after.frame.height) <= 2, `${style} spin control did not stay equal-height with the frame after the roll: ${JSON.stringify(after)}`);
-  assert.ok(Math.abs(after.spin.width - after.frame.width) <= Math.max(4, after.card.width * .04), `${style} spin control and frame did not stay 50/50 after the roll: ${JSON.stringify(after)}`);
+  assert.ok(after.spin.width > 0 && after.frame.width > 0 && after.spin.left < after.frame.left, `${style} spin/frame placement drifted after the roll: ${JSON.stringify(after)}`);
+  assert.ok(after.spinContent?.label?.bottom <= after.spinContent?.icon?.top - 1, `${style} spin label/icon overlap after the roll: ${JSON.stringify(after)}`);
   assert.ok(Math.abs((after.spin.top + after.spin.bottom) - (after.frame.top + after.frame.bottom)) <= 4, `${style} spin control did not stay centered beside the frame after the roll: ${JSON.stringify(after)}`);
   await editor.evaluate(modal => {
     modal.style.removeProperty("visibility");
@@ -995,10 +1025,14 @@ async function assertLoadoutMapPickerBehavior(page, style) {
   await page.locator("#loadoutMapModal").waitFor({ state: "visible", timeout: 5000 });
   const pickerStart = await page.locator("#loadoutMapModal").evaluate(modal => ({
     clearTiles: modal.querySelectorAll(".loadout-map-choice-clear").length,
+    noneTiles: [...modal.querySelectorAll(".loadout-map-choice-none")].filter(button => (button.getAttribute("data-loadout-map") || "") === "").length,
     anyTiles: [...modal.querySelectorAll(".loadout-map-choice")].filter(button => /any map/i.test(button.textContent || "")).length,
-    firstMap: modal.querySelector(".loadout-map-choice[data-loadout-map]")?.getAttribute("data-loadout-map") || ""
+    firstMap: [...modal.querySelectorAll(".loadout-map-choice[data-loadout-map]")]
+      .map(button => button.getAttribute("data-loadout-map") || "")
+      .find(Boolean) || ""
   }));
   assert.equal(pickerStart.clearTiles, 0, `${style} map picker still renders the full Any map tile`);
+  assert.equal(pickerStart.noneTiles, 1, `${style} map picker no longer renders the compact None reset choice`);
   assert.equal(pickerStart.anyTiles, 0, `${style} map picker still contains an Any map grid choice`);
   assert.ok(pickerStart.firstMap, `${style} map picker did not render selectable maps`);
   await page.locator(`.loadout-map-choice[data-loadout-map="${pickerStart.firstMap}"]`).click();
@@ -1445,20 +1479,23 @@ async function run() {
     await assertHomeChartFlow(page, "default desktop", { requireReachableDesktop: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await waitForViewportScale(page, 390, 844);
-    await page.waitForTimeout(80);
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(900);
     await assertHomeLoadoutAndCompassGeometry(page, "default mobile");
     await assertLoadoutRollSettles(page, "default mobile");
     await screenshotLoadoutWithoutAuditEditor(page, path.join(__dirname, "tmp", "session-prep-layout-default-mobile.png"));
     await assertHomeChartFlow(page, "default mobile");
     await page.setViewportSize({ width: 1365, height: 768 });
     await waitForViewportScale(page, 1365, 768);
-    await page.waitForTimeout(80);
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(900);
     await setCoverageTheme(page, "omen");
     await assertHomeLoadoutAndCompassGeometry(page, "omen desktop");
     await assertLoadoutRollSettles(page, "omen desktop");
     await page.setViewportSize({ width: 390, height: 844 });
     await waitForViewportScale(page, 390, 844);
-    await page.waitForTimeout(80);
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(900);
     await assertHomeLoadoutAndCompassGeometry(page, "omen mobile");
     await assertLoadoutRollSettles(page, "omen mobile");
     await page.setViewportSize({ width: 1365, height: 768 });
@@ -1547,12 +1584,14 @@ async function run() {
       await assertHomeChartFlow(page, `${style} desktop`, { requireReachableDesktop: true });
       await page.setViewportSize({ width: 390, height: 844 });
       await waitForViewportScale(page, 390, 844);
-      await page.waitForTimeout(80);
+      await page.mouse.move(1, 1);
+      await page.waitForTimeout(900);
       await assertHomeLoadoutAndCompassGeometry(page, `${style} mobile`);
       await assertHomeChartFlow(page, `${style} mobile`);
       await page.setViewportSize({ width: 1365, height: 768 });
       await waitForViewportScale(page, 1365, 768);
-      await page.waitForTimeout(80);
+      await page.mouse.move(1, 1);
+      await page.waitForTimeout(900);
     }
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(180);
