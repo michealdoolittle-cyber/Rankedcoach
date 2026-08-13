@@ -823,34 +823,19 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-root{
 .stats-lifetime-rank-dot{fill:var(--accent-2,#38bdf8);stroke:#020617;stroke-width:2;}
 .stats-lifetime-rank-marker circle{fill:rgba(15,23,42,.94);stroke:var(--accent,#ff4655);stroke-width:2;}
 .stats-lifetime-rank-marker{
-  cursor:pointer;
+  cursor:default;
+  pointer-events:none;
 }
 
 .stats-lifetime-rank-marker circle,
 .stats-lifetime-rank-marker image{
-  transition:filter .18s ease,stroke .18s ease,stroke-width .18s ease,opacity .18s ease;
-}
-
-.stats-lifetime-rank-marker:is(:hover,:focus,:focus-visible) circle{
-  stroke:color-mix(in srgb,var(--accent-2,#38bdf8) 72%,#fff 10%);
-  stroke-width:3;
-  filter:drop-shadow(0 0 11px color-mix(in srgb,var(--theme-glow,var(--accent-2,#38bdf8)) 56%,transparent));
-}
-
-.stats-lifetime-rank-marker:is(:hover,:focus,:focus-visible) image{
-  filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent-2,#38bdf8) 52%,transparent));
+  transition:none;
 }
 
 .stats-lifetime-rank-marker.is-peak circle{
   stroke:#facc15;
   stroke-width:3;
   filter:drop-shadow(0 0 10px rgba(250,204,21,.5));
-}
-
-.stats-lifetime-rank-marker.is-peak:is(:hover,:focus,:focus-visible) circle{
-  stroke:#fde68a;
-  stroke-width:4;
-  filter:drop-shadow(0 0 14px rgba(250,204,21,.62));
 }
 .stats-lifetime-rank-marker.is-peak image{
   filter:drop-shadow(0 0 8px rgba(250,204,21,.48));
@@ -1231,4 +1216,165 @@ html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filt
   max-width:68% !important;
   max-height:68% !important;
   object-fit:contain !important;
+}
+
+/* Round 7: Stats summary trend chart now mirrors the post-match chart
+   structure: bars grow to a real baseline, while match labels/scroll affordance
+   live below that baseline instead of sharing/painting it. */
+.stats-summary-trend-chart{
+  grid-template-columns:42px minmax(0,1fr) !important;
+  align-items:stretch !important;
+}
+
+.stats-summary-trend-plot{
+  position:relative !important;
+  display:grid !important;
+  grid-template-rows:minmax(132px,1fr) auto !important;
+  min-width:0 !important;
+  min-height:172px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+}
+
+.stats-summary-trend-y-axis{
+  padding-bottom:28px !important;
+}
+
+.stats-summary-trend-grid{
+  inset:8px 0 28px !important;
+  grid-template-rows:repeat(4,minmax(0,1fr)) !important;
+}
+
+.stats-summary-trend-gridline:last-child{
+  border-bottom:1px solid rgba(226,232,240,.72) !important;
+}
+
+.stats-summary-trend-bars-clip{
+  position:relative !important;
+  z-index:1 !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  border-bottom:1px solid rgba(226,232,240,.72) !important;
+}
+
+.stats-summary-trend-bars{
+  position:relative !important;
+  z-index:1 !important;
+  display:grid !important;
+  grid-auto-flow:column !important;
+  grid-auto-columns:minmax(44px,1fr) !important;
+  align-items:end !important;
+  gap:7px !important;
+  min-width:0 !important;
+  height:100% !important;
+  min-height:132px !important;
+  overflow:hidden !important;
+  padding:8px 0 0 !important;
+  margin:0 !important;
+  border-bottom:0 !important;
+  scrollbar-gutter:auto !important;
+}
+
+.stats-summary-trend-labels{
+  position:relative !important;
+  z-index:2 !important;
+  display:grid !important;
+  grid-auto-flow:column !important;
+  grid-auto-columns:minmax(44px,1fr) !important;
+  gap:7px !important;
+  min-width:0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  padding:7px 0 0 !important;
+  scrollbar-gutter:stable !important;
+}
+
+.stats-summary-trend-point{
+  height:132px !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  align-items:end !important;
+  justify-items:center !important;
+  min-width:44px !important;
+}
+
+.stats-summary-trend-label{
+  display:grid !important;
+  justify-items:center !important;
+  gap:3px !important;
+  min-width:44px !important;
+}
+
+.stats-summary-trend-label small{
+  color:#e2e8f0 !important;
+  font:800 9px/1 var(--font-display,"Rajdhani",sans-serif) !important;
+}
+
+.stats-summary-trend-label em{
+  color:#94a3b8 !important;
+  font:700 8px/1 var(--font-body,"Rajdhani",sans-serif) !important;
+  font-style:normal !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:820px){
+  .stats-summary-trend-bars,
+  .stats-summary-trend-labels{
+    grid-auto-columns:52px !important;
+  }
+}
+
+/* Round 7 correction: lifetime rank markers are informational, not controls. */
+.stats-lifetime-rank-marker{
+  cursor:default !important;
+  pointer-events:none !important;
+}
+
+.stats-lifetime-rank-marker circle,
+.stats-lifetime-rank-marker image{
+  transition:none !important;
+}
+
+/* Round 7: real account copy can be longer than fixtures. Keep both rows the
+   same readable rhythm without clipping the player-facing detail sentence. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  gap:8px !important;
+  margin-top:6px !important;
+  grid-template-rows:repeat(2,minmax(158px,auto)) !important;
+  grid-auto-rows:minmax(158px,auto) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+  grid-template-rows:minmax(334px,auto) minmax(0,1fr) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
+  min-height:334px !important;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights :is(.insights-top-card,.insights-top-shell,.insights-list){
+  overflow-anchor:none !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:is(:hover,:focus-within){
+  transform:none !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card > :is(.stats-chart-wrap,.stats-trends-grid):first-child{
+  margin-top:4px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:158px !important;
+  height:100% !important;
+  align-content:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  align-self:stretch !important;
+  overflow:visible !important;
 }

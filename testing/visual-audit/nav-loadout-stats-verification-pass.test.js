@@ -271,8 +271,8 @@ async function run() {
       };
     });
     assert.ok(loadout.roleButtons.every(button => button.delta <= 1.25), `role buttons must be square: ${JSON.stringify(loadout.roleButtons)}`);
-    assert.ok(Math.abs(loadout.gapRolesToSpin - 7) <= 1, `roles-to-spin gap should be 7px: ${JSON.stringify(loadout)}`);
-    assert.ok(Math.abs(loadout.gapMiddleToInfo - 7) <= 1, `middle-to-info gap should be 7px: ${JSON.stringify(loadout)}`);
+    assert.ok(Math.abs(loadout.gapRolesToSpin - 10) <= 1, `roles-to-spin gap should be 10px: ${JSON.stringify(loadout)}`);
+    assert.ok(Math.abs(loadout.gapMiddleToInfo - 10) <= 1, `middle-to-info gap should be 10px: ${JSON.stringify(loadout)}`);
     await page.mouse.move(4, 4);
     await page.waitForTimeout(40);
     const loadoutHoverBefore = await page.locator('#page-home .home-middle-row > .loadout-card').evaluate(element => ({

@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round6-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round7-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -58745,15 +58745,21 @@ function openStatsSummaryTrend(metric = "kd") {
           <div class="stats-summary-trend-grid" aria-hidden="true">
             ${ticks.map((_tick, index) => `<span class="stats-summary-trend-gridline" style="--trend-grid-row:${index + 1}"></span>`).join("")}
           </div>
-          <div class="stats-summary-trend-bars">
-            ${entries.map(entry => {
-              const ratio = Number.isFinite(Number(entry.value)) ? Math.max(2, Number(entry.value) / maxValue * 100) : 0;
-              return `<div class="stats-summary-trend-point ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}" title="Match ${entry.index} · ${escapeHtml(formatStatsSummaryDate(entry.match))} · ${escapeHtml(formatStatsSummaryTrendValue(entry.value, meta))}">
-                <span class="stats-summary-trend-bar" style="--trend-height:${ratio}%"></span>
-                <small>M${entry.index}</small>
-                <em>${escapeHtml(formatStatsSummaryDate(entry.match))}</em>
-              </div>`;
-            }).join("")}
+          <div class="stats-summary-trend-bars-clip">
+            <div class="stats-summary-trend-bars">
+              ${entries.map(entry => {
+                const ratio = Number.isFinite(Number(entry.value)) ? Math.max(2, Number(entry.value) / maxValue * 100) : 0;
+                return `<div class="stats-summary-trend-point ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}" title="Match ${entry.index} · ${escapeHtml(formatStatsSummaryDate(entry.match))} · ${escapeHtml(formatStatsSummaryTrendValue(entry.value, meta))}">
+                  <span class="stats-summary-trend-bar" style="--trend-height:${ratio}%"></span>
+                </div>`;
+              }).join("")}
+            </div>
+          </div>
+          <div class="stats-summary-trend-labels" aria-hidden="true">
+            ${entries.map(entry => `<span class="stats-summary-trend-label ${Number.isFinite(Number(entry.value)) ? "" : "is-unverified"}">
+              <small>M${entry.index}</small>
+              <em>${escapeHtml(formatStatsSummaryDate(entry.match))}</em>
+            </span>`).join("")}
           </div>
         </div>
       </div>` : `<p class="stats-summary-trend-empty">No verified ${escapeHtml(meta.label)} values exist in this selected season yet.</p>`}
@@ -62809,9 +62815,8 @@ function buildStatsLifetimeRankChartMarkup() {
         <text x="${point.x}" y="${plotBottom + 28}" text-anchor="middle">${escapeHtml(compactStatsLifetimeSeasonLabel(point.seasonLabel))}</text>
       </g>`).join("");
   const rankMarkers = points.map((point) => {
-    const markerLabel = `${point.rankLabel} peak for ${point.seasonLabel || "season"}${point.isRadiantPeak ? `, ${point.radiantPeakRR} RR` : ""}`;
     return `
-      <g class="stats-lifetime-rank-marker${point.isHighestPeak ? " is-peak" : ""}${point.isRadiantPeak ? " is-radiant-peak" : ""}" tabindex="0" role="img" aria-label="${escapeHtml(markerLabel)}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"${point.isRadiantPeak ? ` data-radiant-rr="${escapeHtml(point.radiantPeakRR)}"` : ""}>
+      <g class="stats-lifetime-rank-marker${point.isHighestPeak ? " is-peak" : ""}${point.isRadiantPeak ? " is-radiant-peak" : ""}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"${point.isRadiantPeak ? ` data-radiant-rr="${escapeHtml(point.radiantPeakRR)}"` : ""}>
         ${point.isHighestPeak && point.isRadiantPeak ? `<text class="stats-lifetime-rank-rr" x="${point.x}" y="${Math.max(18, point.y - 30)}" text-anchor="middle">${escapeHtml(point.radiantPeakRR)} RR</text>` : ""}
         <circle cx="${point.x}" cy="${point.y}" r="18"></circle>
         <image href="${escapeHtml(point.icon)}" x="${point.x - 13}" y="${point.y - 13}" width="26" height="26" preserveAspectRatio="xMidYMid meet"></image>

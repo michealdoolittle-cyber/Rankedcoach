@@ -915,14 +915,22 @@ async function run() {
       yTicks: document.querySelectorAll('.stats-summary-trend-y-axis span').length,
       gridlines: document.querySelectorAll('.stats-summary-trend-gridline').length,
       bars: document.querySelectorAll('.stats-summary-trend-point').length,
+      labels: document.querySelectorAll('.stats-summary-trend-label').length,
       barsBorderBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars')).borderBottomWidth,
-      scrollbarReserve: (() => {
-        const plot = document.querySelector('.stats-summary-trend-plot')?.getBoundingClientRect();
-        const bars = document.querySelector('.stats-summary-trend-bars')?.getBoundingClientRect();
-        if (!plot || !bars) return null;
-        return Math.round(plot.bottom - bars.bottom);
+      clipBorderBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars-clip')).borderBottomWidth,
+      labelsOverflowX: getComputedStyle(document.querySelector('.stats-summary-trend-labels')).overflowX,
+      labelsBelowBaseline: (() => {
+        const clip = document.querySelector('.stats-summary-trend-bars-clip')?.getBoundingClientRect();
+        const labels = document.querySelector('.stats-summary-trend-labels')?.getBoundingClientRect();
+        if (!clip || !labels) return null;
+        return Math.round(labels.top - clip.bottom);
       })(),
-      barsMarginBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars')).marginBottom,
+      firstBarBottomDelta: (() => {
+        const clip = document.querySelector('.stats-summary-trend-bars-clip')?.getBoundingClientRect();
+        const bar = document.querySelector('.stats-summary-trend-bar')?.getBoundingClientRect();
+        if (!clip || !bar) return null;
+        return Math.abs(Math.round(bar.bottom - clip.bottom));
+      })(),
       zeroCenterDelta: (() => {
         const spans = [...document.querySelectorAll('.stats-summary-trend-y-axis span')];
         const zero = spans[spans.length - 1]?.getBoundingClientRect();
@@ -933,9 +941,12 @@ async function run() {
     }));
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
+    assert.equal(trendAxis.labels, trendAxis.bars, `stats summary trend labels should be a separate one-for-one scroll row below bars: ${JSON.stringify(trendAxis)}`);
     assert.equal(trendAxis.barsBorderBottom, "0px", `bar layer should not paint a duplicate baseline through the scrollbar area: ${JSON.stringify(trendAxis)}`);
-    assert.ok(trendAxis.scrollbarReserve >= 20, `trend plot should reserve scrollbar space below the baseline: ${JSON.stringify(trendAxis)}`);
-    assert.ok(Number.parseFloat(trendAxis.barsMarginBottom) >= 20, `custom trend pager needs real margin separation from the 0-axis, not native scrollbar-gutter only: ${JSON.stringify(trendAxis)}`);
+    assert.notEqual(trendAxis.clipBorderBottom, "0px", `baseline should belong to the plot clip, not the scrolling labels: ${JSON.stringify(trendAxis)}`);
+    assert.match(trendAxis.labelsOverflowX, /auto|scroll/, `label/pager row should own horizontal overflow below the baseline: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.labelsBelowBaseline >= 0, `match label/pager row should render below the baseline: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.firstBarBottomDelta <= 2, `bars should terminate directly at the baseline: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.zeroCenterDelta <= 9, `stats summary zero tick should align with x-axis baseline: ${JSON.stringify(trendAxis)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'stats-summary-trend.png') });
     await closeLensModals(page);
@@ -1080,6 +1091,8 @@ async function run() {
         markerTabindexes: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("tabindex") || ""),
         markerRoles: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("role") || ""),
         markerAriaLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("aria-label") || ""),
+        markerCursor: getComputedStyle(document.querySelector('.stats-lifetime-rank-marker')).cursor,
+        markerPointerEvents: getComputedStyle(document.querySelector('.stats-lifetime-rank-marker')).pointerEvents,
         yAxisTextCount: document.querySelectorAll('.stats-lifetime-rank-y-tick text').length,
         xTickLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].map(node => node.textContent.trim()),
         rawSeasonKeyLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].filter(node => /season[-_]|act[-_]/i.test(node.textContent)).length,
@@ -1093,9 +1106,11 @@ async function run() {
     assert.equal(lifetime.radiantPeakMarkers, 1, `Radiant highest peak should carry the Radiant peak marker class: ${JSON.stringify(lifetime)}`);
     assert.match(lifetime.radiantPeakText, /^512 RR$/, `Radiant peak should show the actual peak RR: ${JSON.stringify(lifetime)}`);
     assert.ok(lifetime.rankLabels.some(label => /Ascendant 3/i.test(label)), `constructed lifetime fixture should include an Ascendant 3 seasonal peak marker: ${JSON.stringify(lifetime)}`);
-    assert.ok(lifetime.markerTabindexes.every(value => value === "0"), `rank markers should be keyboard focusable for hover/focus treatment: ${JSON.stringify(lifetime)}`);
-    assert.ok(lifetime.markerRoles.every(value => value === "img"), `rank markers should expose readable image semantics while remaining focusable for visual treatment: ${JSON.stringify(lifetime)}`);
-    assert.ok(lifetime.markerAriaLabels.some(label => /512 RR/i.test(label)), `Radiant marker aria-label should include the real RR value: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerTabindexes.every(value => value === ""), `rank markers should not be keyboard-focusable controls: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerRoles.every(value => value === ""), `rank markers should not expose interactive image semantics: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerAriaLabels.every(value => value === ""), `rank markers should not carry focus-style aria labels: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.markerCursor, "default", `rank markers should not imply clickability: ${JSON.stringify(lifetime)}`);
+    assert.equal(lifetime.markerPointerEvents, "none", `rank markers should not receive hover/pointer affordances: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.yAxisTextCount, 0, `lifetime y-axis should use rank icons only: ${JSON.stringify(lifetime)}`);
     assert.ok(lifetime.xTickLabels.length >= 3, `lifetime x-axis should show season labels: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.rawSeasonKeyLabels, 0, `lifetime x-axis should not expose raw internal season keys: ${JSON.stringify(lifetime)}`);
@@ -1111,6 +1126,9 @@ async function run() {
       };
       marker.focus();
       await new Promise(resolve => setTimeout(resolve, 80));
+      const syntheticHover = new MouseEvent("mouseover", { bubbles: true, cancelable: true, view: window });
+      marker.dispatchEvent(syntheticHover);
+      await new Promise(resolve => setTimeout(resolve, 80));
       const afterFocus = {
         focused: document.activeElement === marker,
         stroke: getComputedStyle(circle).stroke,
@@ -1119,8 +1137,10 @@ async function run() {
       };
       return { before, afterFocus };
     });
-    assert.equal(markerHover.afterFocus.focused, true, `peak marker should accept keyboard focus: ${JSON.stringify(markerHover)}`);
-    assert.notEqual(markerHover.afterFocus.strokeWidth, markerHover.before.strokeWidth, `peak marker focus should visibly change the marker: ${JSON.stringify(markerHover)}`);
+    assert.equal(markerHover.afterFocus.focused, false, `peak marker should not accept keyboard focus: ${JSON.stringify(markerHover)}`);
+    assert.equal(markerHover.afterFocus.stroke, markerHover.before.stroke, `peak marker hover/focus should not change stroke: ${JSON.stringify(markerHover)}`);
+    assert.equal(markerHover.afterFocus.strokeWidth, markerHover.before.strokeWidth, `peak marker hover/focus should not change stroke width: ${JSON.stringify(markerHover)}`);
+    assert.equal(markerHover.afterFocus.filter, markerHover.before.filter, `peak marker hover/focus should not change filter/glow: ${JSON.stringify(markerHover)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
     const demoLifetime = await verifyDemoActLifetimeGrouping(page);
