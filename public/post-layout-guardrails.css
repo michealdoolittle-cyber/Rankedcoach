@@ -1396,3 +1396,132 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   max-height:calc(4 * 1.16em) !important;
   line-height:1.16 !important;
 }
+
+/* Round 9: nav-right needs the same resting-state rail treatment as nav-left,
+   not only the hover glow. Keep the exact nav-left gradient/border recipe so
+   both clusters read as one header system before interaction. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-header .nav-right :is(.profile-rating-widget,.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle){
+  background:linear-gradient(
+    145deg,
+    color-mix(in srgb,var(--accent,#ff4655) 24%,#243247 76%),
+    color-mix(in srgb,var(--accent-2,#38bdf8) 15%,#101a2a 85%)
+  ) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 44%,rgba(148,163,184,.28)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 12px rgba(2,6,23,.24) !important;
+}
+
+/* Round 9: the summary trend chart has one canonical plot height. Y labels,
+   gridlines, bars, and the label row all consume the same bounds instead of
+   independently-tuned padding values. */
+.stats-summary-trend-chart{
+  --rc-stats-trend-plot-height:132px;
+  --rc-stats-trend-label-space:30px;
+  grid-template-columns:42px minmax(0,1fr) !important;
+  align-items:start !important;
+}
+
+.stats-summary-trend-y-axis{
+  position:relative !important;
+  display:block !important;
+  height:var(--rc-stats-trend-plot-height) !important;
+  min-height:var(--rc-stats-trend-plot-height) !important;
+  padding:0 !important;
+  margin:0 0 var(--rc-stats-trend-label-space) !important;
+}
+
+.stats-summary-trend-y-axis span,
+.stats-summary-trend-y-axis span:last-child{
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  align-self:auto !important;
+  transform:translateY(-50%) !important;
+}
+
+.stats-summary-trend-y-axis span:nth-child(1){top:0 !important;}
+.stats-summary-trend-y-axis span:nth-child(2){top:25% !important;}
+.stats-summary-trend-y-axis span:nth-child(3){top:50% !important;}
+.stats-summary-trend-y-axis span:nth-child(4){top:75% !important;}
+.stats-summary-trend-y-axis span:nth-child(5){top:100% !important;}
+
+.stats-summary-trend-plot{
+  grid-template-rows:var(--rc-stats-trend-plot-height) var(--rc-stats-trend-label-space) !important;
+  min-height:calc(var(--rc-stats-trend-plot-height) + var(--rc-stats-trend-label-space)) !important;
+}
+
+.stats-summary-trend-grid{
+  inset:0 0 var(--rc-stats-trend-label-space) 0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:space-between !important;
+  grid-template-rows:none !important;
+}
+
+.stats-summary-trend-gridline{
+  flex:0 0 0 !important;
+  height:0 !important;
+}
+
+.stats-summary-trend-bars-clip{
+  height:var(--rc-stats-trend-plot-height) !important;
+}
+
+.stats-summary-trend-bars{
+  height:100% !important;
+  min-height:0 !important;
+  padding:0 !important;
+}
+
+.stats-summary-trend-point{
+  height:100% !important;
+}
+
+.stats-summary-trend-labels{
+  height:var(--rc-stats-trend-label-space) !important;
+  min-height:var(--rc-stats-trend-label-space) !important;
+  padding:7px 0 0 !important;
+}
+
+@media (max-width:820px){
+  .stats-summary-trend-chart{
+    --rc-stats-trend-label-space:32px;
+  }
+}
+
+/* Round 9: Recent Match Trends can no longer expand the first Stats grid row.
+   The top row is a bounded share with internal card shrink/clamp, so Map,
+   Agent, and Weapon Stats start directly beneath it. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+  grid-template-rows:minmax(0,40%) minmax(0,1fr) !important;
+  overflow:hidden !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  align-self:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card{
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:100% !important;
+  overflow:hidden !important;
+  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  gap:7px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card{
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  padding:8px 10px !important;
+}

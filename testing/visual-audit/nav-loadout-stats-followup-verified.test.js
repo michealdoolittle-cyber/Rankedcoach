@@ -650,6 +650,44 @@ async function run() {
       { label: "settings", selector: '#profileDropdownToggle' },
       { label: "data depth", selector: '#profileRatingWidget' }
     ];
+    const navRestingState = await page.evaluate(() => {
+      const readStyle = selector => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        const box = element.getBoundingClientRect();
+        return {
+          selector,
+          backgroundImage: style.backgroundImage,
+          backgroundColor: style.backgroundColor,
+          borderColor: style.borderColor,
+          borderWidth: style.borderTopWidth,
+          boxShadow: style.boxShadow,
+          width: box.width,
+          height: box.height
+        };
+      };
+      const leftReference = readStyle('.nav-left .nav-btn[data-page="logging"]');
+      return {
+        leftReference,
+        rightControls: [
+          readStyle('#profileRatingWidget'),
+          readStyle('#profileSyncBtn'),
+          readStyle('#bugReportOpen'),
+          readStyle('#askCoachOpen'),
+          readStyle('#profileDropdownToggle')
+        ].filter(Boolean)
+      };
+    });
+    assert.ok(navRestingState.leftReference, `nav-left reference button should exist: ${JSON.stringify(navRestingState)}`);
+    assert.match(navRestingState.leftReference.backgroundImage, /linear-gradient/i, `nav-left reference should have a visible resting gradient: ${JSON.stringify(navRestingState)}`);
+    assert.equal(navRestingState.rightControls.length, 5, `all five nav-right controls should be measured at rest: ${JSON.stringify(navRestingState)}`);
+    assert.ok(
+      navRestingState.rightControls.every(control => /linear-gradient/i.test(control.backgroundImage) && control.borderColor === navRestingState.leftReference.borderColor),
+      `nav-right controls should share nav-left's resting gradient/border, not rely on hover only: ${JSON.stringify(navRestingState)}`
+    );
+    await page.locator('.app-header').screenshot({ path: path.join(outDir, 'nav-right-resting-state.png') });
+
     const navResults = [];
     for (const { label, selector } of navSelectors) {
       const result = await hoverSnapshot(page, selector);
@@ -943,18 +981,33 @@ async function run() {
         if (!clip || !labels) return null;
         return Math.round(labels.top - clip.bottom);
       })(),
-      firstBarBottomDelta: (() => {
+      barBaselineDeltas: (() => {
         const clip = document.querySelector('.stats-summary-trend-bars-clip')?.getBoundingClientRect();
-        const bar = document.querySelector('.stats-summary-trend-bar')?.getBoundingClientRect();
-        if (!clip || !bar) return null;
-        return Math.abs(Math.round(bar.bottom - clip.bottom));
+        const bars = [...document.querySelectorAll('.stats-summary-trend-bar')].map(bar => bar.getBoundingClientRect());
+        if (!clip || !bars.length) return [];
+        return bars.map(bar => Math.abs(bar.bottom - clip.bottom));
       })(),
-      zeroCenterDelta: (() => {
+      tickGridDeltas: (() => {
         const spans = [...document.querySelectorAll('.stats-summary-trend-y-axis span')];
-        const zero = spans[spans.length - 1]?.getBoundingClientRect();
+        const gridlines = [...document.querySelectorAll('.stats-summary-trend-gridline')];
+        return spans.map((span, index) => {
+          const tick = span.getBoundingClientRect();
+          const gridline = gridlines[index]?.getBoundingClientRect();
+          if (!gridline) return null;
+          return Math.abs((tick.top + tick.height / 2) - gridline.top);
+        }).filter(value => value !== null);
+      })(),
+      gridBaselineDelta: (() => {
+        const clip = document.querySelector('.stats-summary-trend-bars-clip')?.getBoundingClientRect();
         const gridline = [...document.querySelectorAll('.stats-summary-trend-gridline')].at(-1)?.getBoundingClientRect();
-        if (!zero || !gridline) return null;
-        return Math.abs((zero.top + zero.height / 2) - gridline.bottom);
+        if (!clip || !gridline) return null;
+        return Math.abs(gridline.top - clip.bottom);
+      })(),
+      plotClipHeights: (() => {
+        const axis = document.querySelector('.stats-summary-trend-y-axis')?.getBoundingClientRect();
+        const clip = document.querySelector('.stats-summary-trend-bars-clip')?.getBoundingClientRect();
+        const grid = document.querySelector('.stats-summary-trend-grid')?.getBoundingClientRect();
+        return { axis: axis?.height || 0, clip: clip?.height || 0, grid: grid?.height || 0 };
       })()
     }));
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
@@ -965,8 +1018,11 @@ async function run() {
     assert.notEqual(trendAxis.clipBorderBottom, "0px", `baseline should belong to the plot clip, not the scrolling labels: ${JSON.stringify(trendAxis)}`);
     assert.match(trendAxis.labelsOverflowX, /auto|scroll/, `label/pager row should own horizontal overflow below the baseline: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.labelsBelowBaseline >= 0, `match label/pager row should render below the baseline: ${JSON.stringify(trendAxis)}`);
-    assert.ok(trendAxis.firstBarBottomDelta <= 2, `bars should terminate directly at the baseline: ${JSON.stringify(trendAxis)}`);
-    assert.ok(trendAxis.zeroCenterDelta <= 9, `stats summary zero tick should align with x-axis baseline: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.barBaselineDeltas.every(delta => delta <= 1.5), `bars should terminate directly at the shared baseline: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.tickGridDeltas.every(delta => delta <= 1.5), `y-axis labels should share the same vertical bounds as gridlines: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.gridBaselineDelta <= 1.5, `bottom gridline should land on the same baseline as the bars: ${JSON.stringify(trendAxis)}`);
+    assert.ok(Math.abs(trendAxis.plotClipHeights.axis - trendAxis.plotClipHeights.clip) <= 1.5, `axis and bar clip should use the same plot height: ${JSON.stringify(trendAxis)}`);
+    assert.ok(Math.abs(trendAxis.plotClipHeights.grid - trendAxis.plotClipHeights.clip) <= 1.5, `grid and bar clip should use the same plot height: ${JSON.stringify(trendAxis)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'stats-summary-trend.png') });
     await closeLensModals(page);
 
@@ -984,6 +1040,22 @@ async function run() {
 
     const trendCards = await page.locator('#statsPerformanceChart .stats-trend-card').count();
     assert.ok(trendCards > 0, 'recent match trend cards should exist');
+    const statsGridRows = await page.evaluate(() => {
+      const performance = document.querySelector('#page-stats .stats-performance-card')?.getBoundingClientRect();
+      const breakdown = document.querySelector('#page-stats .stats-breakdown-card')?.getBoundingClientRect();
+      const lowerCards = [...document.querySelectorAll('#page-stats .stats-maps-card,#page-stats .stats-agents-card,#page-stats .stats-weapons-card')].map(card => card.getBoundingClientRect());
+      const firstLowerTop = lowerCards.length ? Math.min(...lowerCards.map(box => box.top)) : 0;
+      return {
+        performance: performance ? { top: performance.top, bottom: performance.bottom, height: performance.height } : null,
+        breakdown: breakdown ? { top: breakdown.top, bottom: breakdown.bottom, height: breakdown.height } : null,
+        firstLowerTop,
+        gapAfterTopRow: performance ? firstLowerTop - performance.bottom : null,
+        heightDelta: performance && breakdown ? Math.abs(performance.height - breakdown.height) : null
+      };
+    });
+    assert.ok(statsGridRows.performance && statsGridRows.breakdown, `stats top-row cards should be measurable: ${JSON.stringify(statsGridRows)}`);
+    assert.ok(statsGridRows.heightDelta <= 1.5, `recent trends and match patterns should keep equal row height: ${JSON.stringify(statsGridRows)}`);
+    assert.ok(statsGridRows.gapAfterTopRow >= 0 && statsGridRows.gapAfterTopRow <= 20, `map/agent/weapon row should start immediately after the bounded top row: ${JSON.stringify(statsGridRows)}`);
     const trendCardBoxes = await page.evaluate(() => {
       const cards = [...document.querySelectorAll('#statsPerformanceChart .stats-trend-card')];
       const boxes = cards.map((card, index) => {
