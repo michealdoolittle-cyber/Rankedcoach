@@ -585,7 +585,7 @@ async function run() {
     assert.ok(compactStatsGeometry.summaryHeight <= 130, JSON.stringify(compactStatsGeometry));
     compactStatsGeometry.bottomCards.forEach(card => assert.ok(card.bottom <= compactStatsGeometry.viewportHeight + 1, JSON.stringify(compactStatsGeometry)));
     compactStatsGeometry.mapMeta.forEach(item => assert.ok(item.bottom <= compactStatsGeometry.mapCardBottom + 1, JSON.stringify(compactStatsGeometry)));
-    assert.ok(compactStatsGeometry.trendDetails.every(item => item.bottom <= item.cardBottom + 1 && item.lineClamp === "none" && item.overflow === "visible" && item.textOverflow === "clip" && item.fontWeight <= 500), JSON.stringify(compactStatsGeometry));
+    assert.ok(compactStatsGeometry.trendDetails.every(item => item.bottom <= item.cardBottom + 1 && item.lineClamp === "4" && item.overflow === "hidden" && item.textOverflow === "clip" && item.fontWeight <= 500), JSON.stringify(compactStatsGeometry));
     assert.ok(compactStatsGeometry.fineStatWeights.length > 0 && compactStatsGeometry.fineStatWeights.every(weight => weight <= 500), JSON.stringify(compactStatsGeometry));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-compact-desktop-stats.png"), fullPage: true });
     await page.setViewportSize({ width: 1440, height: 900 });

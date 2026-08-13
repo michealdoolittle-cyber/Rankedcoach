@@ -61331,7 +61331,7 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   position:relative;
   isolation:isolate;
   overflow:hidden;
-  background:linear-gradient(145deg, rgba(15,23,42,.94), rgba(2,6,23,.96)) !important;
+  background:linear-gradient(color(srgb 0.188235 0.227922 0.292863), rgb(30, 41, 59)) !important;
   border-color:color-mix(in srgb, var(--accent,#22d3ee) 46%, rgba(148,163,184,.34)) !important;
   color:var(--text-main,#f8fafc) !important;
   cursor:pointer;

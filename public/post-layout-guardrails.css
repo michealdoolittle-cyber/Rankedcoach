@@ -699,10 +699,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-root{
   border-top:1px solid rgba(148,163,184,.18);
 }
 
-.stats-summary-trend-gridline:last-child{
-  border-bottom:1px solid rgba(226,232,240,.72);
-}
-
 .stats-summary-trend-bars{
   position:relative !important;
   z-index:1;
@@ -1245,10 +1241,6 @@ html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filt
   grid-template-rows:repeat(4,minmax(0,1fr)) !important;
 }
 
-.stats-summary-trend-gridline:last-child{
-  border-bottom:1px solid rgba(226,232,240,.72) !important;
-}
-
 .stats-summary-trend-bars-clip{
   position:relative !important;
   z-index:1 !important;
@@ -1377,4 +1369,30 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
   align-self:stretch !important;
   overflow:visible !important;
+}
+
+/* Round 8: remove the duplicate stats-summary baseline and return recent
+   trend cards to a compact, uniform 4-line detail read. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  gap:7px !important;
+  margin-top:4px !important;
+  grid-template-rows:repeat(2,minmax(144px,1fr)) !important;
+  grid-auto-rows:minmax(144px,1fr) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:144px !important;
+  height:100% !important;
+  align-content:stretch !important;
+  overflow:hidden !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  align-self:start !important;
+  display:-webkit-box !important;
+  -webkit-box-orient:vertical !important;
+  -webkit-line-clamp:4 !important;
+  overflow:hidden !important;
+  max-height:calc(4 * 1.16em) !important;
+  line-height:1.16 !important;
 }

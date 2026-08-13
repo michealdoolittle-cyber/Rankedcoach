@@ -801,6 +801,23 @@ async function run() {
     assert.ok(mapPicker.before.noneTextStyles.every(style => style.backgroundColor === "rgba(0, 0, 0, 0)" && style.backgroundImage === "none" && style.boxShadow === "none" && style.textShadow === "none"), `None option inner text should not carry its own black backing: ${JSON.stringify(mapPicker.before.noneTextStyles)}`);
     assert.equal(mapPicker.after.display, "Any map", `None choice should clear the map picker: ${JSON.stringify(mapPicker)}`);
     assert.equal(mapPicker.after.selectedClass, false, `Map trigger selected styling should clear: ${JSON.stringify(mapPicker)}`);
+    const mapRestingStyle = await page.evaluate(() => {
+      const role = document.querySelector('#page-home #roleButtons .role-filter-btn:not(.active):not([aria-pressed="true"])')
+        || document.querySelector('#page-home #roleButtons .role-filter-btn');
+      const map = document.querySelector('#loadoutMapPicker');
+      const roleStyle = role ? getComputedStyle(role) : null;
+      const mapStyle = map ? getComputedStyle(map) : null;
+      return {
+        roleBackgroundImage: roleStyle?.backgroundImage || "",
+        mapBackgroundImage: mapStyle?.backgroundImage || "",
+        roleBackgroundColor: roleStyle?.backgroundColor || "",
+        mapBackgroundColor: mapStyle?.backgroundColor || "",
+        mapSelected: map?.classList.contains("is-map-selected") || false
+      };
+    });
+    assert.equal(mapRestingStyle.mapSelected, false, `map picker must be in plain resting state for the background comparison: ${JSON.stringify(mapRestingStyle)}`);
+    assert.equal(mapRestingStyle.mapBackgroundImage, mapRestingStyle.roleBackgroundImage, `plain map picker resting background should match role buttons exactly: ${JSON.stringify(mapRestingStyle)}`);
+    assert.equal(mapRestingStyle.mapBackgroundColor, mapRestingStyle.roleBackgroundColor, `plain map picker resting background color should match role buttons exactly: ${JSON.stringify(mapRestingStyle)}`);
     await page.locator('#loadoutMapPicker').click({ force: true });
     await page.locator('.loadout-map-choice[data-loadout-map="Breeze"]').click({ force: true });
     await page.waitForTimeout(160);
@@ -916,6 +933,7 @@ async function run() {
       gridlines: document.querySelectorAll('.stats-summary-trend-gridline').length,
       bars: document.querySelectorAll('.stats-summary-trend-point').length,
       labels: document.querySelectorAll('.stats-summary-trend-label').length,
+      lastGridlineBorderBottom: getComputedStyle([...document.querySelectorAll('.stats-summary-trend-gridline')].at(-1)).borderBottomWidth,
       barsBorderBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars')).borderBottomWidth,
       clipBorderBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars-clip')).borderBottomWidth,
       labelsOverflowX: getComputedStyle(document.querySelector('.stats-summary-trend-labels')).overflowX,
@@ -942,6 +960,7 @@ async function run() {
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
     assert.equal(trendAxis.labels, trendAxis.bars, `stats summary trend labels should be a separate one-for-one scroll row below bars: ${JSON.stringify(trendAxis)}`);
+    assert.equal(trendAxis.lastGridlineBorderBottom, "0px", `gridlines should not paint a second duplicate baseline: ${JSON.stringify(trendAxis)}`);
     assert.equal(trendAxis.barsBorderBottom, "0px", `bar layer should not paint a duplicate baseline through the scrollbar area: ${JSON.stringify(trendAxis)}`);
     assert.notEqual(trendAxis.clipBorderBottom, "0px", `baseline should belong to the plot clip, not the scrolling labels: ${JSON.stringify(trendAxis)}`);
     assert.match(trendAxis.labelsOverflowX, /auto|scroll/, `label/pager row should own horizontal overflow below the baseline: ${JSON.stringify(trendAxis)}`);
@@ -1025,10 +1044,10 @@ async function run() {
         detailInsideCard: Boolean(detailBox && cardBox && detailBox.bottom <= cardBox.bottom + 1)
       };
     });
-    assert.equal(longTrendCopy.webkitLineClamp, "none", `long trend detail should remain unclamped: ${JSON.stringify(longTrendCopy)}`);
-    assert.equal(longTrendCopy.overflow, "visible", `long trend detail should not hide readable copy: ${JSON.stringify(longTrendCopy)}`);
-    assert.equal(longTrendCopy.detailInsideCard, true, `long trend detail should not be abruptly cut outside the card: ${JSON.stringify(longTrendCopy)}`);
-    assert.ok(longTrendCopy.detailScrollHeight <= longTrendCopy.detailHeight + 2, `constructed detail should be visually readable without relying on title text: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.webkitLineClamp, "4", `long trend detail should use the round8 4-line compact clamp: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.overflow, "hidden", `long trend detail should clip only after the 4-line read: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.detailInsideCard, true, `long trend detail should stay inside the card: ${JSON.stringify(longTrendCopy)}`);
+    assert.ok(longTrendCopy.detailScrollHeight >= longTrendCopy.detailHeight, `constructed detail should be clamped by height, not overflow the card: ${JSON.stringify(longTrendCopy)}`);
     await page.locator('#statsPerformanceChart .stats-trend-card').first().screenshot({ path: path.join(outDir, 'stats-trend-long-copy.png') });
     const trendCardModalTitles = [];
     for (let index = 0; index < trendCards; index += 1) {
