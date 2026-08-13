@@ -653,6 +653,20 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 
 /* Nav/loadout/stats verification pass — final overrides kept at EOF so older
    round-specific guardrails cannot quietly win the cascade. */
+/* Round 4: desktop header hover effects need room for their pop/glow.  Keep
+   mobile's dedicated scroll surface untouched; it still owns overflow-y:auto. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-scale-wrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-root{
+  overflow:visible !important;
+}
+
+.app-header,
+.app-header .nav-left,
+.app-header .nav-logo,
+.app-header .nav-links{
+  overflow:visible !important;
+}
+
 .stats-summary-trend-plot{
   position:relative;
   min-width:0;
@@ -689,7 +703,8 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   z-index:1;
   min-height:156px;
   padding:8px 0 0 !important;
-  border-bottom:1px solid rgba(226,232,240,.82) !important;
+  border-bottom:0 !important;
+  scrollbar-gutter:stable;
 }
 
 .stats-summary-trend-y-axis span:last-child{
@@ -802,13 +817,47 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 .stats-lifetime-rank-line{fill:none;stroke:var(--accent,#ff4655);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 36%,transparent));}
 .stats-lifetime-rank-dot{fill:var(--accent-2,#38bdf8);stroke:#020617;stroke-width:2;}
 .stats-lifetime-rank-marker circle{fill:rgba(15,23,42,.94);stroke:var(--accent,#ff4655);stroke-width:2;}
+.stats-lifetime-rank-marker{
+  cursor:pointer;
+}
+
+.stats-lifetime-rank-marker circle,
+.stats-lifetime-rank-marker image{
+  transition:filter .18s ease,stroke .18s ease,stroke-width .18s ease,opacity .18s ease;
+}
+
+.stats-lifetime-rank-marker:is(:hover,:focus,:focus-visible) circle{
+  stroke:color-mix(in srgb,var(--accent-2,#38bdf8) 72%,#fff 10%);
+  stroke-width:3;
+  filter:drop-shadow(0 0 11px color-mix(in srgb,var(--theme-glow,var(--accent-2,#38bdf8)) 56%,transparent));
+}
+
+.stats-lifetime-rank-marker:is(:hover,:focus,:focus-visible) image{
+  filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent-2,#38bdf8) 52%,transparent));
+}
+
 .stats-lifetime-rank-marker.is-peak circle{
   stroke:#facc15;
   stroke-width:3;
   filter:drop-shadow(0 0 10px rgba(250,204,21,.5));
 }
+
+.stats-lifetime-rank-marker.is-peak:is(:hover,:focus,:focus-visible) circle{
+  stroke:#fde68a;
+  stroke-width:4;
+  filter:drop-shadow(0 0 14px rgba(250,204,21,.62));
+}
 .stats-lifetime-rank-marker.is-peak image{
   filter:drop-shadow(0 0 8px rgba(250,204,21,.48));
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  display:-webkit-box !important;
+  -webkit-box-orient:vertical !important;
+  -webkit-line-clamp:3 !important;
+  line-clamp:3 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
 }
 .stats-lifetime-rank-rr{
   fill:#facc15;
@@ -912,9 +961,10 @@ html body #page-stats#page-stats.page.active #statsPeakRankIcon{
   min-width:0;
   max-width:100%;
   overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  line-height:1;
+  white-space:normal !important;
+  overflow-wrap:anywhere;
+  text-overflow:clip;
+  line-height:.95;
 }
 
 @media (max-width:520px){

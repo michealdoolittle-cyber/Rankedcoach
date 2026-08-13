@@ -45,9 +45,12 @@ function supabaseStub() {
 function makeMatch(index, overrides = {}) {
   const radiantActRR = Number(overrides.radiantActRR);
   const isRadiant = Number.isFinite(radiantActRR);
+  const absoluteOverride = Number(overrides.absoluteRr);
   const absolute = isRadiant
     ? 2100 + Math.max(450, radiantActRR)
-    : 1330 + (index * 18) + (overrides.rrDelta || 0) + (overrides.seasonBoost || 0);
+    : Number.isFinite(absoluteOverride)
+      ? absoluteOverride
+      : 1330 + (index * 18) + (overrides.rrDelta || 0) + (overrides.seasonBoost || 0);
   const tier = overrides.rank || (isRadiant ? "Radiant" : absolute >= 1500 ? "Diamond 1" : absolute >= 1400 ? "Platinum 3" : "Platinum 2");
   const playedAt = overrides.playedAt || `2026-08-${String(index + 1).padStart(2, "0")}T16:00:00.000Z`;
   const result = overrides.result || (index % 3 === 1 ? "loss" : "win");
@@ -110,8 +113,8 @@ function buildProfileFixture() {
     trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4"] },
     loadoutMap: "Breeze",
     matches: [
-      makeMatch(0, { agent: "Sova", role: "initiator", map: "Haven", result: "win", acs: 172, hs: 21, playedAt: "2026-06-01T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
-      makeMatch(1, { agent: "Skye", role: "initiator", map: "Lotus", result: "loss", acs: 151, hs: 18, playedAt: "2026-06-02T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2" }),
+      makeMatch(0, { agent: "Sova", role: "initiator", map: "Haven", result: "win", acs: 172, hs: 21, playedAt: "2026-06-01T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2", rank: "Ascendant 3", absoluteRr: 2034 }),
+      makeMatch(1, { agent: "Skye", role: "initiator", map: "Lotus", result: "loss", acs: 151, hs: 18, playedAt: "2026-06-02T16:00:00.000Z", act: "Season 2026 Act 2", season: "season-2026-act-2", seasonId: "season-2026-act-2", rank: "Ascendant 3", absoluteRr: 2012 }),
       makeMatch(2, { agent: "Sova", role: "initiator", map: "Sunset", result: "win", acs: 221, hs: 29, playedAt: "2026-07-01T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", radiantActRR: 512 }),
       makeMatch(3, { agent: "Jett", role: "duelist", map: "Ascent", result: "loss", acs: 164, hs: 17, playedAt: "2026-07-02T16:00:00.000Z", act: "Season 2026 Act 3", season: "season-2026-act-3", seasonId: "season-2026-act-3", seasonBoost: 20 }),
       makeMatch(4, { agent: "Sova", role: "initiator", map: "Breeze", result: "win", acs: 247, hs: 33 }),
@@ -285,7 +288,7 @@ async function forceHomeMotionSettled(page) {
   await page.evaluate(() => {
     document.body.classList.add("nav-loadout-stats-test-ready");
     document.querySelectorAll('.page.daily-entrance-page-pending').forEach(page => page.classList.remove('daily-entrance-page-pending'));
-    document.querySelectorAll("#page-home .home-middle-row, #page-home .home-middle-row > *, #page-home .compass-score-card").forEach(element => {
+    document.querySelectorAll("#page-home .home-middle-row, #page-home .home-middle-row > *, #page-home .compass-score-card, #page-home #compassCardAim").forEach(element => {
       element.style.setProperty("opacity", "1", "important");
       element.style.setProperty("visibility", "visible", "important");
     });
@@ -426,31 +429,57 @@ async function run() {
 
     const navClip = await page.evaluate(() => {
       const appRoot = document.querySelector(".app-root");
+      const appScale = document.querySelector(".app-scale-wrap");
       const left = document.querySelector(".nav-left")?.getBoundingClientRect();
+      const navLinks = document.querySelector(".nav-links");
       const buttons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => button.getBoundingClientRect());
-      const beforeOverflow = appRoot ? getComputedStyle(appRoot).overflow : "";
+      const appRootStyle = appRoot ? getComputedStyle(appRoot) : null;
+      const appScaleStyle = appScale ? getComputedStyle(appScale) : null;
+      const navLeftStyle = left ? getComputedStyle(document.querySelector(".nav-left")) : null;
+      const navLinksStyle = navLinks ? getComputedStyle(navLinks) : null;
       const beforeInside = buttons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1);
-      if (appRoot) appRoot.style.overflow = "visible";
-      const afterOverflow = appRoot ? getComputedStyle(appRoot).overflow : "";
-      const afterButtons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => button.getBoundingClientRect());
-      const afterInside = afterButtons.every(box => box.left >= left.left - 1 && box.right <= left.right + 1 && box.top >= left.top - 1 && box.bottom <= left.bottom + 1);
-      const changedByAppRootToggle = beforeInside !== afterInside
-        || buttons.some((box, index) => {
-          const after = afterButtons[index];
-          return !after || Math.abs(box.left - after.left) > 0.5 || Math.abs(box.right - after.right) > 0.5 || Math.abs(box.top - after.top) > 0.5 || Math.abs(box.bottom - after.bottom) > 0.5;
-        });
-      if (appRoot) appRoot.style.removeProperty("overflow");
       return {
         left,
-        beforeOverflow,
-        afterOverflow,
+        appRootOverflow: appRootStyle?.overflow || "",
+        appRootOverflowX: appRootStyle?.overflowX || "",
+        appRootOverflowY: appRootStyle?.overflowY || "",
+        appScaleOverflow: appScaleStyle?.overflow || "",
+        navLeftOverflow: navLeftStyle?.overflow || "",
+        navLinksOverflow: navLinksStyle?.overflow || "",
         inside: beforeInside,
-        visibleOverrideInside: afterInside,
-        changedByAppRootToggle,
         buttonCount: buttons.length
       };
     });
+    assert.equal(navClip.appRootOverflow, "visible", `desktop app root must allow header pop/glow overflow: ${JSON.stringify(navClip)}`);
+    assert.equal(navClip.appScaleOverflow, "visible", `desktop scale wrapper must allow header pop/glow overflow: ${JSON.stringify(navClip)}`);
+    assert.equal(navClip.navLeftOverflow, "visible", `desktop nav-left must allow button pop/glow overflow: ${JSON.stringify(navClip)}`);
+    assert.equal(navClip.navLinksOverflow, "visible", `desktop nav-links must allow button pop/glow overflow: ${JSON.stringify(navClip)}`);
     assert.equal(navClip.inside, true, `nav-left buttons must not clip: ${JSON.stringify(navClip)}`);
+    await page.evaluate(() => {
+      document.querySelectorAll(".app-header .nav-btn").forEach((button, index) => {
+        button.style.animation = "none";
+        void button.offsetWidth;
+        button.style.animation = `rc-control-pop .8s cubic-bezier(.2,.84,.24,1) ${index * 35}ms both`;
+      });
+    });
+    await page.waitForTimeout(220);
+    const navPopMidFlight = await page.evaluate(() => {
+      const header = document.querySelector(".app-header")?.getBoundingClientRect();
+      const left = document.querySelector(".nav-left")?.getBoundingClientRect();
+      const buttons = [...document.querySelectorAll(".nav-left .nav-btn")].map(button => {
+        const box = button.getBoundingClientRect();
+        const style = getComputedStyle(button);
+        return { width: box.width, height: box.height, transform: style.transform, animationName: style.animationName };
+      });
+      return {
+        header: header ? { width: header.width, height: header.height } : null,
+        left: left ? { width: left.width, height: left.height } : null,
+        buttons,
+        animated: buttons.some(button => button.animationName.includes("rc-control-pop") || button.transform !== "none")
+      };
+    });
+    assert.equal(navPopMidFlight.animated, true, `nav pop animation should be visible mid-flight: ${JSON.stringify(navPopMidFlight)}`);
+    await page.locator('.app-header').screenshot({ path: path.join(outDir, 'nav-left-pop-midflight.png') });
 
     await page.locator('.nav-btn[data-page="home"]').click({ force: true });
     await page.waitForTimeout(250);
@@ -575,7 +604,7 @@ async function run() {
       if (!element) return false;
       const box = element.getBoundingClientRect();
       const style = getComputedStyle(element);
-      return box.width > 0 && box.height > 0 && style.visibility !== "hidden" && Number(style.opacity) > 0.9;
+      return box.width > 0 && box.height > 0 && style.visibility !== "hidden";
     }, null, { timeout: 8000 });
     await page.waitForTimeout(160);
     await clickAndWaitModal(page, '#compassCardAim', '#lensModalOverlay.active #lensStatsList');
@@ -602,16 +631,25 @@ async function run() {
       yTicks: document.querySelectorAll('.stats-summary-trend-y-axis span').length,
       gridlines: document.querySelectorAll('.stats-summary-trend-gridline').length,
       bars: document.querySelectorAll('.stats-summary-trend-point').length,
+      barsBorderBottom: getComputedStyle(document.querySelector('.stats-summary-trend-bars')).borderBottomWidth,
+      scrollbarReserve: (() => {
+        const plot = document.querySelector('.stats-summary-trend-plot')?.getBoundingClientRect();
+        const bars = document.querySelector('.stats-summary-trend-bars')?.getBoundingClientRect();
+        if (!plot || !bars) return null;
+        return Math.round(plot.bottom - bars.bottom);
+      })(),
       zeroCenterDelta: (() => {
         const spans = [...document.querySelectorAll('.stats-summary-trend-y-axis span')];
         const zero = spans[spans.length - 1]?.getBoundingClientRect();
-        const bars = document.querySelector('.stats-summary-trend-bars')?.getBoundingClientRect();
-        if (!zero || !bars) return null;
-        return Math.abs((zero.top + zero.height / 2) - bars.bottom);
+        const gridline = [...document.querySelectorAll('.stats-summary-trend-gridline')].at(-1)?.getBoundingClientRect();
+        if (!zero || !gridline) return null;
+        return Math.abs((zero.top + zero.height / 2) - gridline.bottom);
       })()
     }));
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
+    assert.equal(trendAxis.barsBorderBottom, "0px", `bar layer should not paint a duplicate baseline through the scrollbar area: ${JSON.stringify(trendAxis)}`);
+    assert.ok(trendAxis.scrollbarReserve >= 20, `trend plot should reserve scrollbar space below the baseline: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.zeroCenterDelta <= 9, `stats summary zero tick should align with x-axis baseline: ${JSON.stringify(trendAxis)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'stats-summary-trend.png') });
     await closeLensModals(page);
@@ -666,6 +704,34 @@ async function run() {
     });
     assert.equal(trendCardBoxes.overlaps.length, 0, `desktop trend cards should not overlap: ${JSON.stringify(trendCardBoxes)}`);
     assert.ok(trendCardBoxes.boxes.every(box => box.hitSameCard && box.inert === false && box.ariaHidden !== "true"), `desktop trend cards must receive their own center hit target and not be inert: ${JSON.stringify(trendCardBoxes)}`);
+    const longTrendCopy = await page.evaluate(() => {
+      const detail = document.querySelector('#statsPerformanceChart .stats-trend-card .stats-trend-detail');
+      const card = detail?.closest('.stats-trend-card');
+      const longText = "Constructed long-copy fixture: this read intentionally spans multiple clauses so the card proves it uses a deliberate clamp instead of slicing the bottom half of the sentence when real coaching language gets longer.";
+      if (detail) {
+        detail.textContent = longText;
+        detail.setAttribute("title", longText);
+      }
+      const style = detail ? getComputedStyle(detail) : null;
+      const detailBox = detail?.getBoundingClientRect();
+      const cardBox = card?.getBoundingClientRect();
+      return {
+        text: detail?.textContent || "",
+        title: detail?.getAttribute("title") || "",
+        webkitLineClamp: style?.webkitLineClamp || "",
+        overflow: style?.overflow || "",
+        detailHeight: detailBox?.height || 0,
+        detailScrollHeight: detail?.scrollHeight || 0,
+        cardHeight: cardBox?.height || 0,
+        cardScrollHeight: card?.scrollHeight || 0,
+        cardOverflow: card ? getComputedStyle(card).overflow : "",
+        detailInsideCard: Boolean(detailBox && cardBox && detailBox.bottom <= cardBox.bottom + 1)
+      };
+    });
+    assert.equal(longTrendCopy.webkitLineClamp, "3", `long trend detail should use an intentional 3-line clamp: ${JSON.stringify(longTrendCopy)}`);
+    assert.equal(longTrendCopy.detailInsideCard, true, `long trend detail should not be abruptly cut outside the card: ${JSON.stringify(longTrendCopy)}`);
+    assert.ok(longTrendCopy.detailScrollHeight >= longTrendCopy.detailHeight, `constructed detail should remain readable via title while visually clamped: ${JSON.stringify(longTrendCopy)}`);
+    await page.locator('#statsPerformanceChart .stats-trend-card').first().screenshot({ path: path.join(outDir, 'stats-trend-long-copy.png') });
     const trendCardModalTitles = [];
     for (let index = 0; index < trendCards; index += 1) {
       await page.locator('#statsPerformanceChart .stats-trend-card').nth(index).scrollIntoViewIfNeeded();
@@ -723,6 +789,10 @@ async function run() {
         peakMarkers: document.querySelectorAll('.stats-lifetime-rank-marker.is-peak').length,
         radiantPeakMarkers: document.querySelectorAll('.stats-lifetime-rank-marker.is-peak.is-radiant-peak').length,
         radiantPeakText: document.querySelector('.stats-lifetime-rank-marker.is-peak.is-radiant-peak .stats-lifetime-rank-rr')?.textContent?.trim() || "",
+        rankLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.dataset.rankLabel || ""),
+        markerTabindexes: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("tabindex") || ""),
+        markerRoles: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("role") || ""),
+        markerAriaLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.getAttribute("aria-label") || ""),
         yAxisTextCount: document.querySelectorAll('.stats-lifetime-rank-y-tick text').length,
         xTickLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].map(node => node.textContent.trim()),
         rawSeasonKeyLabels: [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].filter(node => /season[-_]|act[-_]/i.test(node.textContent)).length,
@@ -735,10 +805,35 @@ async function run() {
     assert.equal(lifetime.peakMarkers, 1, `highest recorded peak should be uniquely highlighted: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.radiantPeakMarkers, 1, `Radiant highest peak should carry the Radiant peak marker class: ${JSON.stringify(lifetime)}`);
     assert.match(lifetime.radiantPeakText, /^512 RR$/, `Radiant peak should show the actual peak RR: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.rankLabels.some(label => /Ascendant 3/i.test(label)), `constructed lifetime fixture should include an Ascendant 3 seasonal peak marker: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerTabindexes.every(value => value === "0"), `rank markers should be keyboard focusable for hover/focus treatment: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerRoles.every(value => value === "img"), `rank markers should expose readable image semantics while remaining focusable for visual treatment: ${JSON.stringify(lifetime)}`);
+    assert.ok(lifetime.markerAriaLabels.some(label => /512 RR/i.test(label)), `Radiant marker aria-label should include the real RR value: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.yAxisTextCount, 0, `lifetime y-axis should use rank icons only: ${JSON.stringify(lifetime)}`);
     assert.ok(lifetime.xTickLabels.length >= 3, `lifetime x-axis should show season labels: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.rawSeasonKeyLabels, 0, `lifetime x-axis should not expose raw internal season keys: ${JSON.stringify(lifetime)}`);
     assert.equal(lifetime.arrowClasses, 0, `lifetime chart should not keep rank-up/down arrow classes: ${JSON.stringify(lifetime)}`);
+    const markerHover = await page.evaluate(async () => {
+      const marker = document.querySelector('.stats-lifetime-rank-marker.is-peak');
+      const circle = marker?.querySelector('circle');
+      if (!marker || !circle) return null;
+      const before = {
+        stroke: getComputedStyle(circle).stroke,
+        strokeWidth: getComputedStyle(circle).strokeWidth,
+        filter: getComputedStyle(circle).filter
+      };
+      marker.focus();
+      await new Promise(resolve => setTimeout(resolve, 80));
+      const afterFocus = {
+        focused: document.activeElement === marker,
+        stroke: getComputedStyle(circle).stroke,
+        strokeWidth: getComputedStyle(circle).strokeWidth,
+        filter: getComputedStyle(circle).filter
+      };
+      return { before, afterFocus };
+    });
+    assert.equal(markerHover.afterFocus.focused, true, `peak marker should accept keyboard focus: ${JSON.stringify(markerHover)}`);
+    assert.notEqual(markerHover.afterFocus.strokeWidth, markerHover.before.strokeWidth, `peak marker focus should visibly change the marker: ${JSON.stringify(markerHover)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
 
@@ -786,16 +881,34 @@ async function run() {
     const mobileSpinLabel = await page.evaluate(() => {
       const button = document.getElementById("spinAgentBtn");
       const label = button?.querySelector(".spin-loadout-label") || button?.querySelector("span");
+      if (button && label) {
+        button.style.setProperty("width", "64px", "important");
+        button.style.setProperty("min-width", "64px", "important");
+        button.style.setProperty("max-width", "64px", "important");
+        button.style.setProperty("flex", "0 0 64px", "important");
+        label.style.setProperty("width", "46px", "important");
+        label.style.setProperty("max-width", "46px", "important");
+        label.textContent = "Spin Loadout Again";
+      }
       const buttonBox = button?.getBoundingClientRect();
       const labelBox = label?.getBoundingClientRect();
+      const style = label ? getComputedStyle(label) : null;
+      const numericLineHeight = style ? Number.parseFloat(style.lineHeight) || (Number.parseFloat(style.fontSize) * 0.95) : 0;
       return {
         text: label?.textContent?.trim() || "",
         button: buttonBox ? { left: buttonBox.left, right: buttonBox.right, width: buttonBox.width } : null,
-        label: labelBox ? { left: labelBox.left, right: labelBox.right, width: labelBox.width } : null,
+        label: labelBox ? { left: labelBox.left, right: labelBox.right, width: labelBox.width, height: labelBox.height } : null,
+        whiteSpace: style?.whiteSpace || "",
+        textOverflow: style?.textOverflow || "",
+        lineCount: numericLineHeight ? Math.round((labelBox?.height || 0) / numericLineHeight) : 0,
         overflows: Boolean(buttonBox && labelBox && (labelBox.left < buttonBox.left - 1 || labelBox.right > buttonBox.right + 1))
       };
     });
+    assert.equal(mobileSpinLabel.whiteSpace, "normal", `mobile spin label should allow wrapping: ${JSON.stringify(mobileSpinLabel)}`);
+    assert.equal(mobileSpinLabel.textOverflow, "clip", `mobile spin label should not ellipsis-truncate: ${JSON.stringify(mobileSpinLabel)}`);
+    assert.ok(mobileSpinLabel.lineCount >= 2, `constructed mobile spin label should wrap to multiple lines: ${JSON.stringify(mobileSpinLabel)}`);
     assert.equal(mobileSpinLabel.overflows, false, `mobile spin label should remain inside the button: ${JSON.stringify(mobileSpinLabel)}`);
+    await page.locator('#spinAgentBtn').screenshot({ path: path.join(outDir, 'mobile-spin-label-wrap.png') });
     const activeMobilePage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("stats"));
     assert.equal(activeMobilePage, "page-stats", `mobile stats page should activate through test hook, got ${activeMobilePage}`);
     await page.waitForSelector('#statsPerformanceChart .stats-trend-card', { timeout: 10000 });

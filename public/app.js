@@ -62695,8 +62695,9 @@ function buildStatsLifetimeRankChartMarkup() {
         <text x="${point.x}" y="${plotBottom + 28}" text-anchor="middle">${escapeHtml(compactStatsLifetimeSeasonLabel(point.seasonLabel))}</text>
       </g>`).join("");
   const rankMarkers = points.map((point) => {
+    const markerLabel = `${point.rankLabel} peak for ${point.seasonLabel || "season"}${point.isRadiantPeak ? `, ${point.radiantPeakRR} RR` : ""}`;
     return `
-      <g class="stats-lifetime-rank-marker${point.isHighestPeak ? " is-peak" : ""}${point.isRadiantPeak ? " is-radiant-peak" : ""}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"${point.isRadiantPeak ? ` data-radiant-rr="${escapeHtml(point.radiantPeakRR)}"` : ""}>
+      <g class="stats-lifetime-rank-marker${point.isHighestPeak ? " is-peak" : ""}${point.isRadiantPeak ? " is-radiant-peak" : ""}" tabindex="0" role="img" aria-label="${escapeHtml(markerLabel)}" data-rank-label="${escapeHtml(point.rankLabel)}" data-season-label="${escapeHtml(point.seasonLabel || "")}"${point.isRadiantPeak ? ` data-radiant-rr="${escapeHtml(point.radiantPeakRR)}"` : ""}>
         ${point.isHighestPeak && point.isRadiantPeak ? `<text class="stats-lifetime-rank-rr" x="${point.x}" y="${Math.max(18, point.y - 30)}" text-anchor="middle">${escapeHtml(point.radiantPeakRR)} RR</text>` : ""}
         <circle cx="${point.x}" cy="${point.y}" r="18"></circle>
         <image href="${escapeHtml(point.icon)}" x="${point.x - 13}" y="${point.y - 13}" width="26" height="26" preserveAspectRatio="xMidYMid meet"></image>
@@ -63138,7 +63139,7 @@ function renderStatsPerformanceClean() {
           <div class="stats-main-text">${escapeHtml(trend?.label || "Read")}</div>
           <div class="stats-sub-text">${escapeHtml(trend?.value || "--")}</div>
         </div>
-        <div class="stats-trend-detail">${escapeHtml(trend?.detail || "No detail available yet.")}</div>
+        <div class="stats-trend-detail" title="${escapeHtml(trend?.detail || "No detail available yet.")}">${escapeHtml(trend?.detail || "No detail available yet.")}</div>
       </button>
     `;
   }).join("");
