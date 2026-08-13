@@ -124,6 +124,61 @@ function buildProfileFixture() {
   };
 }
 
+function makeDemoActOnlyMatch(index, demoAct, overrides = {}) {
+  const match = makeMatch(index, {
+    ...overrides,
+    act: "",
+    season: "",
+    seasonId: "",
+    playedAt: overrides.playedAt || `2026-0${Math.min(9, index + 1)}-0${(index % 2) + 1}T16:00:00.000Z`
+  });
+  match.id = `demo-act-only-match-${index}`;
+  match.matchId = `demo-act-only-match-${index}`;
+  match.metadata = {
+    ...(match.metadata || {}),
+    matchId: match.matchId,
+    act: "",
+    season: "",
+    seasonId: "",
+    demoAct
+  };
+  match.matchRecord = {
+    ...(match.matchRecord || {}),
+    act: "",
+    metadata: {
+      ...((match.matchRecord || {}).metadata || {}),
+      act: "",
+      season: "",
+      seasonId: "",
+      demoAct
+    }
+  };
+  match.act = "";
+  match.season = "";
+  match.seasonId = "";
+  return match;
+}
+
+function buildDemoActLifetimeProfileFixture() {
+  return {
+    id: "demo-act-lifetime-profile",
+    name: "Demo Act Lifetime",
+    accountName: "Demo Act Lifetime",
+    isGuest: true,
+    importSource: "henrik_sync",
+    lastSyncSource: "henrik_sync",
+    trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 2", "Season 2026 Act 3", "Season 2026 Act 4"] },
+    matches: [
+      makeDemoActOnlyMatch(0, "Season 2026 Act 2", { rank: "Ascendant 2", absoluteRr: 1970, agent: "Sova" }),
+      makeDemoActOnlyMatch(1, "Season 2026 Act 2", { rank: "Ascendant 3", absoluteRr: 2031, agent: "Skye" }),
+      makeDemoActOnlyMatch(2, "Season 2026 Act 3", { rank: "Diamond 2", absoluteRr: 1662, agent: "Omen" }),
+      makeDemoActOnlyMatch(3, "Season 2026 Act 3", { rank: "Diamond 3", absoluteRr: 1724, agent: "Jett" }),
+      makeDemoActOnlyMatch(4, "Season 2026 Act 4", { rank: "Platinum 3", absoluteRr: 1458, agent: "Chamber" }),
+      makeDemoActOnlyMatch(5, "Season 2026 Act 4", { rank: "Diamond 1", absoluteRr: 1535, agent: "Sova" })
+    ]
+  };
+}
+
 async function bootPage(page) {
   await page.goto(`http://127.0.0.1:${port}/index.html?navLoadoutStats=${Date.now()}`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 20000 });
@@ -223,7 +278,9 @@ async function hoverSnapshot(page, selector) {
     background: (getComputedStyle(element).backgroundImage && getComputedStyle(element).backgroundImage !== "none") ? getComputedStyle(element).backgroundImage : getComputedStyle(element).backgroundColor,
     animation: getComputedStyle(element).animationName,
     transform: getComputedStyle(element).transform,
-    boxShadow: getComputedStyle(element).boxShadow
+    boxShadow: getComputedStyle(element).boxShadow,
+    borderColor: getComputedStyle(element).borderColor,
+    filter: getComputedStyle(element).filter
   }));
   const box = await locator.boundingBox();
   assert.ok(box && box.width > 0 && box.height > 0, `hover target must be visible: ${selector}`);
@@ -234,6 +291,8 @@ async function hoverSnapshot(page, selector) {
     animation: getComputedStyle(element).animationName,
     transform: getComputedStyle(element).transform,
     boxShadow: getComputedStyle(element).boxShadow,
+    borderColor: getComputedStyle(element).borderColor,
+    filter: getComputedStyle(element).filter,
     hover: element.matches(":hover"),
     hit: (() => {
       const rect = element.getBoundingClientRect();
@@ -310,6 +369,47 @@ async function activateStatsPage(page) {
   await page.waitForTimeout(160);
 }
 
+async function loadProfileFixtureInPage(page, profile) {
+  await page.evaluate(fixture => {
+    localStorage.setItem("valtracker_active_profile_id", fixture.id);
+    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([fixture]));
+    globalThis.__RC_NAV_LOADOUT_STATS_FIXTURE__ = fixture;
+    globalThis.RankedCoachTestHooks.loadProfileFixture(fixture);
+  }, profile);
+  await page.waitForTimeout(200);
+}
+
+async function verifyDemoActLifetimeGrouping(page) {
+  await loadProfileFixtureInPage(page, buildDemoActLifetimeProfileFixture());
+  await activateStatsPage(page);
+  await page.evaluate(() => globalThis.RankedCoachTestHooks.openStatsPeakLifetimeRankChart());
+  await page.waitForSelector('#lensModal.active .stats-lifetime-rank-chart', { timeout: 8000 });
+  const demoLifetime = await page.evaluate(() => {
+    const dots = [...document.querySelectorAll('.stats-lifetime-rank-dot')];
+    const xTickLabels = [...document.querySelectorAll('.stats-lifetime-rank-x-tick text')].map(node => node.textContent.trim());
+    return {
+      dataPoints: dots.length,
+      rankMarkers: document.querySelectorAll('.stats-lifetime-rank-marker').length,
+      xTickLabels,
+      rankLabels: [...document.querySelectorAll('.stats-lifetime-rank-marker')].map(marker => marker.dataset.rankLabel || ""),
+      rawSeasonKeyLabels: xTickLabels.filter(label => /season[-_]|act[-_]/i.test(label)).length,
+      fallbackSeasonLabels: xTickLabels.filter(label => /^Season\s+\d+$/i.test(label)).length
+    };
+  });
+  assert.equal(demoLifetime.dataPoints, 3, `demoAct-only lifetime profile should group six matches into three season points: ${JSON.stringify(demoLifetime)}`);
+  assert.equal(demoLifetime.rankMarkers, demoLifetime.dataPoints, `demoAct-only lifetime rank markers should match plotted seasons: ${JSON.stringify(demoLifetime)}`);
+  assert.deepEqual(demoLifetime.xTickLabels, ["S26 A2", "S26 A3", "S26 A4"], `demoAct labels should drive readable x-axis ticks: ${JSON.stringify(demoLifetime)}`);
+  assert.ok(demoLifetime.rankLabels.some(label => /Ascendant 3/i.test(label)), `demoAct lifetime should preserve the Ascendant 3 seasonal peak: ${JSON.stringify(demoLifetime)}`);
+  assert.equal(demoLifetime.rawSeasonKeyLabels, 0, `demoAct x-axis should not expose raw season keys: ${JSON.stringify(demoLifetime)}`);
+  assert.equal(demoLifetime.fallbackSeasonLabels, 0, `demoAct x-axis should not fall back to synthetic Season N labels: ${JSON.stringify(demoLifetime)}`);
+  await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'demo-act-lifetime-rank-chart.png') });
+  await forceClearModals(page);
+  await loadProfileFixtureInPage(page, buildProfileFixture());
+  await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+  await forceHomeMotionSettled(page);
+  return demoLifetime;
+}
+
 async function selectThemeThroughRealUi(page, themeKey) {
   await page.evaluate(() => {
     const dropdown = document.getElementById("profileDropdown");
@@ -362,6 +462,41 @@ async function selectThemeThroughRealUi(page, themeKey) {
   evidence.savedBodyTheme = await page.evaluate(() => document.body.dataset.theme || "");
   await forceClearModals(page);
   return evidence;
+}
+
+async function collectLoadoutRound5Evidence(page, themeKey) {
+  const activeHome = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+  assert.equal(activeHome, "page-home", `home page should activate before collecting loadout round5 evidence, got ${activeHome}`);
+  await forceHomeMotionSettled(page);
+  await forceClearModals(page);
+  const activeAny = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const button = document.querySelector('#roleButtons .role-filter-btn[data-role="any"]');
+    const style = button ? getComputedStyle(button) : null;
+    const background = style && style.backgroundImage && style.backgroundImage !== "none" ? style.backgroundImage : (style?.backgroundColor || "");
+    return {
+      accent: rootStyle.getPropertyValue("--accent").trim(),
+      accent2: rootStyle.getPropertyValue("--accent-2").trim(),
+      background,
+      borderColor: style?.borderColor || "",
+      boxShadow: style?.boxShadow || "",
+      active: Boolean(button?.classList.contains("active") || button?.getAttribute("aria-pressed") === "true")
+    };
+  });
+  const anyHover = await hoverSnapshot(page, '#roleButtons .role-filter-btn[data-role="any"]');
+  const duelistHover = await hoverSnapshot(page, '#roleDuelistBtn');
+  const spinHover = await hoverSnapshot(page, '#spinAgentBtn');
+  await page.locator('#page-home .loadout-card').screenshot({ path: path.join(outDir, `loadout-buttons-hover-${themeKey}.png`) });
+  const agentFrameHover = await hoverSnapshot(page, '#agentFrame');
+  await page.locator('#page-home .loadout-card').screenshot({ path: path.join(outDir, `loadout-agent-frame-hover-${themeKey}.png`) });
+  return {
+    themeKey,
+    activeAny,
+    anyHover,
+    duelistHover,
+    spinHover,
+    agentFrameHover
+  };
 }
 
 async function run() {
@@ -836,15 +971,41 @@ async function run() {
     assert.notEqual(markerHover.afterFocus.strokeWidth, markerHover.before.strokeWidth, `peak marker focus should visibly change the marker: ${JSON.stringify(markerHover)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'lifetime-rank-chart.png') });
     await forceClearModals(page);
+    const demoLifetime = await verifyDemoActLifetimeGrouping(page);
 
     await page.locator('.nav-btn[data-page="home"]').click({ force: true });
     await page.waitForTimeout(200);
     const themeChecks = [];
+    const loadoutRound5Evidence = [];
     for (const themeKey of ["serpent-green", "navy-command"]) {
       themeChecks.push(await selectThemeThroughRealUi(page, themeKey));
+      loadoutRound5Evidence.push(await collectLoadoutRound5Evidence(page, themeKey));
     }
     assert.notEqual(themeChecks[0].accent, themeChecks[1].accent, `two non-default themes should expose different --accent values: ${JSON.stringify(themeChecks)}`);
     assert.notEqual(themeChecks[0].background, themeChecks[1].background, `ALL button background should respond to theme accent: ${JSON.stringify(themeChecks)}`);
+    for (const evidence of loadoutRound5Evidence) {
+      assert.equal(evidence.activeAny.active, true, `ALL loadout role should remain active for theme ${evidence.themeKey}: ${JSON.stringify(evidence.activeAny)}`);
+      assert.ok(evidence.activeAny.background.includes(evidence.activeAny.accent) || evidence.activeAny.background !== "none", `ALL active loadout role should expose the selected theme accent: ${JSON.stringify(evidence.activeAny)}`);
+      for (const key of ["anyHover", "duelistHover", "spinHover"]) {
+        const result = evidence[key];
+        const changed = result.after.background !== result.before.background
+          || result.after.boxShadow !== result.before.boxShadow
+          || result.after.transform !== result.before.transform
+          || result.after.borderColor !== result.before.borderColor;
+        assert.equal(changed, true, `${key} should gain the round5 gray pop hover in ${evidence.themeKey}: ${JSON.stringify(result)}`);
+      }
+      const frame = evidence.agentFrameHover;
+      const frameChanged = frame.after.boxShadow !== frame.before.boxShadow
+        || frame.after.transform !== frame.before.transform
+        || frame.after.borderColor !== frame.before.borderColor
+        || frame.after.filter !== frame.before.filter;
+      assert.equal(frameChanged, true, `agent image frame should gain its own hover highlight in ${evidence.themeKey}: ${JSON.stringify(frame)}`);
+    }
+    assert.notEqual(
+      loadoutRound5Evidence[0].activeAny.background,
+      loadoutRound5Evidence[1].activeAny.background,
+      `ALL loadout role active background should differ across selected themes: ${JSON.stringify(loadoutRound5Evidence.map(entry => entry.activeAny))}`
+    );
 
     const agentOpen = await page.evaluate(() => globalThis.RankedCoachTestHooks.openAgentModalForTest());
     assert.equal(agentOpen?.ok, true, `agent modal should open from the gated test hook: ${JSON.stringify(agentOpen)}`);
@@ -963,7 +1124,9 @@ async function run() {
       trendCardModalTitles,
       hoverResults,
       lifetime,
+      demoLifetime,
       themeChecks,
+      loadoutRound5Evidence,
       agentRoleTint,
       mobileSpinLabel,
       mobileTrends,

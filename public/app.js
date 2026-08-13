@@ -62744,6 +62744,8 @@ function buildStatsLifetimeRankChartMarkup() {
 function getStatsLifetimeSeasonLabel(match = {}, fallback = "") {
   const values = [
     getMatchSeasonLabel(match),
+    match?.metadata?.demoAct,
+    match?.demoAct,
     match?.metadata?.act,
     match?.act,
     match?.matchRecord?.act,

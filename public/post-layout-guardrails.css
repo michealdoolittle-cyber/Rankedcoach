@@ -974,6 +974,76 @@ html body #page-stats#page-stats.page.active #statsPeakRankIcon{
   }
 }
 
+/* Nav/loadout/stats round 5: active loadout controls use the selected theme and child hovers get a soft gray pop. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card .home-loadout-main,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons.role-filter-row{
+  overflow:visible !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn,
+html body #page-home#page-home.page.active .loadout-card #spinAgentBtn,
+html body #page-home#page-home.page.active .loadout-card #agentFrame{
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="any"].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="any"][aria-pressed="true"]{
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 72%,rgba(255,255,255,.18)) !important;
+  background:linear-gradient(135deg,var(--accent,#ff4655),var(--accent-2,#f97316)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 54%,transparent),
+    0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 30%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn.active:not([data-role="any"]),
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[aria-pressed="true"]:not([data-role="any"]){
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 70%,rgba(255,255,255,.18)) !important;
+  background:
+    radial-gradient(circle at 18% 0%,color-mix(in srgb,var(--accent,#ff4655) 28%,transparent),transparent 48%),
+    linear-gradient(135deg,color-mix(in srgb,var(--accent,#ff4655) 72%,rgba(51,65,85,.76)),color-mix(in srgb,var(--accent-2,#f97316) 58%,rgba(15,23,42,.88))) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 48%,transparent),
+    0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 28%,transparent) !important;
+  color:#fff !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn:is(:hover,:focus-visible),
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #spinAgentBtn:is(:hover,:focus-visible){
+    transform:translate3d(0,-2px,0) scale(1.015) !important;
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(203,213,225,.30)) !important;
+    background:
+      radial-gradient(circle at 22% 0%,color-mix(in srgb,var(--accent,#ff4655) 18%,transparent),transparent 44%),
+      linear-gradient(135deg,color-mix(in srgb,var(--accent,#ff4655) 14%,rgba(71,85,105,.94)),color-mix(in srgb,var(--accent-2,#f97316) 9%,rgba(30,41,59,.98))) !important;
+    box-shadow:
+      0 12px 24px rgba(0,0,0,.26),
+      inset 0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 18%,transparent),
+      0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 22%,transparent) !important;
+    outline:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #agentFrame:is(:hover,:focus-visible){
+    transform:translate3d(0,-2px,0) scale(1.018) !important;
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 72%,rgba(255,255,255,.22)) !important;
+    box-shadow:
+      0 0 0 2px color-mix(in srgb,var(--accent,#ff4655) 38%,transparent),
+      0 0 24px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 32%,transparent),
+      0 16px 30px rgba(2,6,23,.30) !important;
+    filter:brightness(1.06) saturate(1.04) !important;
+    outline:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #agentFrame:is(:hover,:focus-visible) :is(.agent-reveal-art img,.agent-frame-portrait,.frame-art-inner){
+    filter:brightness(1.07) saturate(1.05) drop-shadow(0 12px 18px rgba(0,0,0,.32)) !important;
+  }
+}
+
 #agentRoleSelect .agent-role-btn.role-duelist{--role-color:var(--duelist,#ff4655) !important;}
 #agentRoleSelect .agent-role-btn.role-controller{--role-color:var(--controller,#7b3fbf) !important;}
 #agentRoleSelect .agent-role-btn.role-initiator{--role-color:var(--initiator,#3b82f6) !important;}
