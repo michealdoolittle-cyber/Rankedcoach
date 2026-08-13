@@ -403,15 +403,15 @@ async function run() {
         })
       };
     });
-    assert.equal(statsMapPoolState.total, 13, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.total, 7, JSON.stringify(statsMapPoolState));
     assert.deepEqual([...statsMapPoolState.active].sort(), ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"]);
-    assert.deepEqual([...statsMapPoolState.out].sort(), ["Abyss", "Bind", "Corrode", "Fracture", "Icebox", "Pearl"]);
+    assert.deepEqual([...statsMapPoolState.out].sort(), []);
     assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outBadges, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outNamesCentered, true, JSON.stringify(statsMapPoolState));
     assert.match(statsMapPoolState.summitImage, /\/assets\/library\/maps\/thumbs\/summit\.jpg$/i);
     assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
-    assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.excludedCrosses, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));
     assert.ok(await page.locator("#page-stats .stats-trend-context .trend-signal-media").count() > 0);
     const trendImages = page.locator("#page-stats .stats-trend-context .trend-signal-media.has-image img");

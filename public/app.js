@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round9-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round10-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -12597,17 +12597,22 @@ function openStatsDetailModal(kind, value) {
       .filter(({ core }) => getCompassRoleKey(core.role) === roleKey)
       .slice()
       .reverse();
-    title.textContent = `${roleLabel} Match History`;
+    title.textContent = formatModalTitleWithValue(`${roleLabel} Match History`, getStatsRoleHistoryOriginValue(roleKey));
     tabsHost.innerHTML = "";
     tabsHost.style.display = "none";
     list.className = "lens-stats-list stats-role-history-list";
     list.innerHTML = roleMatches.length ? roleMatches.map(({ match, core, matchNumber }) => {
       const result = String(core.result || "").toLowerCase();
       const resultClass = result === "win" ? "is-win" : result === "loss" ? "is-loss" : "is-draw";
+      const mapName = core.map || "Map unavailable";
+      const mapIcon = core.map ? getMapIconUrl(core.map) : "";
       return `<li class="stats-role-history-row ${resultClass}">
         <strong>Match ${Number.isFinite(Number(matchNumber)) ? Number(matchNumber) : "—"}</strong>
         <span>${escapeHtml(formatStatsSummaryDate(match))}</span>
-        <span>${escapeHtml(core.map || "Map unavailable")}</span>
+        <span class="stats-role-history-map">
+          ${mapIcon ? `<img src="${escapeHtml(mapIcon)}" alt="" loading="lazy" decoding="async">` : ""}
+          <span>${escapeHtml(mapName)}</span>
+        </span>
         <span class="stats-role-history-agent">
           ${core.agent ? `<img src="${escapeHtml(getAgentIconUrl(core.agent))}" alt="" loading="lazy" decoding="async">` : ""}
           <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
@@ -44779,10 +44784,10 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row > .loadout-card, .home-middle-row > .compass-panel, .home-middle-row > .rr-card")}{min-height:0 !important; height:100% !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important; grid-template-rows:minmax(0,30.42fr) minmax(0,40.04fr) minmax(0,29.54fr) !important; grid-template-areas:\"roles roles\" \"spin reel\" \"info info\" !important; column-gap:calc(14px * ${homeBaselineScale}) !important; row-gap:calc(14px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; align-items:stretch !important; zoom:1 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{grid-area:roles !important; display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; width:100% !important; min-width:0 !important; height:auto !important; min-height:calc(34px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; height:100% !important; min-height:0 !important; max-height:none !important; align-self:stretch !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-area:info !important; display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-template-rows:minmax(0, 1fr) !important; height:100% !important; min-height:0 !important; max-height:none !important; align-self:stretch !important; gap:calc(6px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{grid-area:auto !important; height:100% !important; padding:calc(5px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important; min-height:0 !important; align-self:stretch !important; align-items:center !important; justify-content:center !important; flex-direction:column !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(15px * ${homeBaselineScale}) !important; display:block !important; line-height:1.08 !important; flex:0 1 auto !important; width:100% !important; margin:0 !important; text-align:center !important; justify-content:center !important; padding-block:.04em .1em !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #focusDisplay")}{font-size:clamp(calc(15px * ${homeBaselineScale}), calc(1.35vw * ${homeBaselineScale}), calc(24px * ${homeBaselineScale})) !important; display:block !important; line-height:1.04 !important; flex:0 1 auto !important; width:100% !important; margin:0 !important; text-align:center !important; justify-content:center !important; padding-block:.04em .1em !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row button")}{grid-row:1 !important; grid-column:auto !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
@@ -48857,7 +48862,7 @@ function selectAgentFromModal(agent){
   }, spinDuration);
   
   // APPLY LAST LOGGED FOCUS IF EXISTS
-if(pendingFocusFromLog){
+if(pendingFocusFromLog && focusDisplay){
   focusDisplay.textContent = pendingFocusFromLog;
   pendingFocusFromLog = null;
 }
@@ -50190,7 +50195,7 @@ stampLogEntrySeasonIdentity(entry, getActiveProfile());
       applyAgentToHome(entry.agent);
     }
 
-    if(entry.focus){
+    if(entry.focus && focusDisplay){
       focusDisplay.textContent = entry.focus;
     }
   } else {
@@ -58077,19 +58082,20 @@ if(icon){
     return;
   }
 
-  const previousAgent = String(agentName?.textContent || "").trim();
+  const previousAgent = String(activeAgent || agentName?.textContent || "").trim();
   const eligibleForThisRoll = agents.length > 1
     ? agents.filter(agent => agent !== previousAgent)
     : agents;
   const pick = pickLoadoutAgent(eligibleForThisRoll, selectedMap);
 
+  const previousFocus = String(focusDisplay?.textContent || "").trim();
   let newFocus;
   do {
     newFocus = focusPool[Math.floor(Math.random() * focusPool.length)];
-  } while (focusPool.length > 1 && newFocus === focusDisplay.textContent);
+  } while (focusPool.length > 1 && newFocus === previousFocus);
 
-  agentName.classList.remove("agent-neutral");
-  focusDisplay.classList.remove("focus-neutral");
+  agentName?.classList.remove("agent-neutral");
+  focusDisplay?.classList.remove("focus-neutral");
 
   // ---------------------------
   // TEXT SYNC
@@ -58100,11 +58106,11 @@ if(icon){
 
 setTimeout(() => {
 
-  animateText(agentName, pick);
-  animateText(focusDisplay, newFocus);
+  if (agentName) animateText(agentName, pick);
+  if (focusDisplay) animateText(focusDisplay, newFocus);
 
-  triggerStatGlow(agentName);
-  triggerStatGlow(focusDisplay);
+  if (agentName) triggerStatGlow(agentName);
+  if (focusDisplay) triggerStatGlow(focusDisplay);
 
 }, TEXT_ANIM_SYNC_DELAY);
 
@@ -58201,11 +58207,11 @@ function flipSpinIcon(){
         }, 300);
       }
 
-      agentName.classList.remove(
+      agentName?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
 
-      focusDisplay.classList.remove(
+      focusDisplay?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
       const logAgentText = document.getElementById("logAgentText");
@@ -58223,8 +58229,8 @@ function flipSpinIcon(){
       );
 
       if (role) {
-        agentName.classList.add(`role-${role}`);
-        focusDisplay.classList.add(`role-${role}`);
+        agentName?.classList.add(`role-${role}`);
+        focusDisplay?.classList.add(`role-${role}`);
         logAgentText?.classList.add(`role-${role}`);
         logFocusSelect?.classList.add(`role-${role}`);
         focusPreviewText?.classList.add(`role-${role}`);
@@ -58665,11 +58671,9 @@ function renderStatsOverviewTiles(model = getPlayerModel(), scopedMatches = getS
 
 const STATS_SUMMARY_TREND_META = Object.freeze({
   kd: { label: "K/D", suffix: "", decimals: 2 },
-  winrate: { label: "Win Rate", suffix: "%", decimals: 0 },
   kast: { label: "KAST", suffix: "%", decimals: 0 },
   hs: { label: "Headshot %", suffix: "%", decimals: 0 },
-  acs: { label: "ACS", suffix: "", decimals: 0 },
-  matches: { label: "Matches Played", suffix: "", decimals: 0 }
+  acs: { label: "ACS", suffix: "", decimals: 0 }
 });
 
 function getSummaryMatchKast(match = {}) {
@@ -58683,14 +58687,9 @@ function getStatsSummaryTrendEntries(metric = "kd", scopedMatches = []) {
     const core = getMatchCore(match);
     let value = null;
     if (metric === "kd") value = core.deaths ? safeDivide(core.kills, core.deaths) : (core.kills ? core.kills : null);
-    if (metric === "winrate") {
-      const result = String(core.result || "").toLowerCase();
-      value = result === "win" ? 100 : result === "loss" ? 0 : null;
-    }
     if (metric === "kast") value = getSummaryMatchKast(match);
     if (metric === "hs") value = Number.isFinite(Number(core.hs)) ? Number(core.hs) : null;
     if (metric === "acs") value = Number.isFinite(Number(core.acs)) ? Number(core.acs) : null;
-    if (metric === "matches") value = index + 1;
     return { match, core, index: index + 1, value };
   });
 }
@@ -58704,6 +58703,31 @@ function formatStatsSummaryDate(match = {}) {
 function formatStatsSummaryTrendValue(value, meta) {
   if (!Number.isFinite(Number(value))) return "—";
   return `${Number(value).toFixed(meta.decimals)}${meta.suffix}`;
+}
+
+function getStatsSummaryOriginValue(metric = "") {
+  const key = String(metric || "").trim();
+  if (!key) return "";
+  const selectorSafeKey = typeof CSS !== "undefined" && typeof CSS.escape === "function"
+    ? CSS.escape(key)
+    : key.replace(/"/g, "\\\"");
+  const origin = document.querySelector(`[data-stats-summary-metric="${selectorSafeKey}"] .stat-value`);
+  return String(origin?.textContent || "").trim();
+}
+
+function formatModalTitleWithValue(label = "", value = "") {
+  const cleanLabel = String(label || "").trim();
+  const cleanValue = String(value || "").trim();
+  return cleanValue && cleanValue !== "--" && cleanValue !== "—"
+    ? `${cleanLabel}: ${cleanValue}`
+    : cleanLabel;
+}
+
+function getStatsRoleHistoryOriginValue(roleKey = "") {
+  const key = String(roleKey || "").trim().toLowerCase();
+  if (!key) return "";
+  const origin = document.querySelector(`#statsRoleProgressRow .stats-role-pill.role-${key} .stats-role-pill-percent`);
+  return String(origin?.textContent || "").trim();
 }
 
 function buildStatsSummaryTrendTicks(maxValue = 1, meta = {}) {
@@ -58729,14 +58753,13 @@ function openStatsSummaryTrend(metric = "kd") {
   const verified = entries.filter(entry => Number.isFinite(Number(entry.value)));
   const maxValue = Math.max(1, ...verified.map(entry => Number(entry.value)));
   const ticks = buildStatsSummaryTrendTicks(maxValue, meta);
-  title.textContent = `${meta.label} Trend`;
+  title.textContent = formatModalTitleWithValue(`${meta.label} Trend`, getStatsSummaryOriginValue(metric));
   tabsHost.innerHTML = "";
   tabsHost.style.display = "none";
   list.className = "lens-stats-list stats-summary-trend-list";
   list.innerHTML = `
     <li class="stats-summary-trend-shell">
       <div class="stats-summary-trend-head">
-        <strong>${escapeHtml(meta.label)}</strong>
         <span>Season high: ${escapeHtml(formatStatsSummaryTrendValue(maxValue, meta))}</span>
       </div>
       ${verified.length ? `<div class="stats-summary-trend-chart" role="img" aria-label="${escapeHtml(meta.label)} trend across ${verified.length} selected-season matches">
@@ -62353,10 +62376,7 @@ function renderStatsMapsModel() {
     }
     return String(a).localeCompare(String(b));
   });
-  const outOfSeasonMapNames = ALL_VALORANT_MAP_NAMES
-    .filter(mapName => !poolSet.has(String(mapName).toLowerCase()))
-    .sort((a, b) => String(a).localeCompare(String(b)));
-  const renderMapNames = [...activeMapNames, ...outOfSeasonMapNames];
+  const renderMapNames = activeMapNames;
 
   container.innerHTML = "";
   container.classList.add("stats-map-grid");

@@ -801,6 +801,48 @@ async function run() {
     assert.ok(loadout.spinFrameWidthDelta <= 1.25 && loadout.spinFrameHeightDelta <= 1.25, `spin and agent frame should share the same lane size: ${JSON.stringify(loadout)}`);
     assert.ok(Math.abs(loadout.gapRolesToSpin - 10) <= 1, `roles-to-spin gap should be 10px: ${JSON.stringify(loadout)}`);
     assert.ok(Math.abs(loadout.gapMiddleToInfo - 10) <= 1, `middle-to-info gap should be 10px: ${JSON.stringify(loadout)}`);
+    const loadoutInfoLayout = await page.evaluate(() => {
+      const rect = selector => {
+        const box = document.querySelector(selector)?.getBoundingClientRect();
+        return box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height } : null;
+      };
+      const info = rect('#page-home .loadout-card .home-loadout-info');
+      const map = rect('#loadoutMapPicker');
+      const focus = rect('#page-home .loadout-card .home-loadout-focus-pill');
+      const spin = rect('#spinAgentBtn');
+      const frame = rect('#agentFrame');
+      const focusText = document.getElementById("focusDisplay");
+      if (focusText) focusText.textContent = "Crosshair Placement";
+      const focusTextBox = focusText?.getBoundingClientRect();
+      const focusStyle = focusText ? getComputedStyle(focusText) : null;
+      return {
+        removedAgentPill: document.getElementById("agentName") === null,
+        pillCount: document.querySelectorAll('#page-home .loadout-card .home-loadout-info .home-loadout-pill').length,
+        info,
+        map,
+        focus,
+        spin,
+        frame,
+        mapUnderSpinCenterDelta: map && spin ? Math.abs((map.left + map.right) / 2 - (spin.left + spin.right) / 2) : null,
+        focusUnderFrameCenterDelta: focus && frame ? Math.abs((focus.left + focus.right) / 2 - (frame.left + frame.right) / 2) : null,
+        widthDelta: map && focus ? Math.abs(map.width - focus.width) : null,
+        fillWidthDelta: info && map && focus ? Math.abs((map.width + focus.width) - info.width) : null,
+        longFocusText: focusText?.textContent || "",
+        longFocusScrollWidth: focusText?.scrollWidth || 0,
+        longFocusClientWidth: focusText?.clientWidth || 0,
+        longFocusWhiteSpace: focusStyle?.whiteSpace || "",
+        longFocusFontSize: focusStyle?.fontSize || "",
+        longFocusTextBox: focusTextBox ? { width: focusTextBox.width, height: focusTextBox.height } : null
+      };
+    });
+    assert.equal(loadoutInfoLayout.removedAgentPill, true, `redundant #agentName pill should be fully removed: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.equal(loadoutInfoLayout.pillCount, 2, `info row should only contain Map and Focus pills: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.ok(loadoutInfoLayout.widthDelta <= 2, `Map and Focus pills should split the info row evenly: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.ok(loadoutInfoLayout.fillWidthDelta <= 10, `Map and Focus pills should fill the removed Agent pill's row space: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.ok(loadoutInfoLayout.mapUnderSpinCenterDelta <= Math.max(12, loadoutInfoLayout.map.width * 0.08), `Map pill should center under Spin Loadout: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.ok(loadoutInfoLayout.focusUnderFrameCenterDelta <= Math.max(12, loadoutInfoLayout.focus.width * 0.08), `Focus pill should center under the agent frame: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.equal(loadoutInfoLayout.longFocusWhiteSpace, "nowrap", `long focus text should stay on one line: ${JSON.stringify(loadoutInfoLayout)}`);
+    assert.ok(loadoutInfoLayout.longFocusScrollWidth <= loadoutInfoLayout.longFocusClientWidth + 1, `longest focus text should fit the widened pill without overflow: ${JSON.stringify(loadoutInfoLayout)}`);
     const mapPicker = await page.evaluate(async () => {
       const trigger = document.getElementById("loadoutMapPicker");
       trigger?.click();
@@ -933,6 +975,46 @@ async function run() {
     await forceClearModals(page);
     await page.locator('#page-home .home-middle-row > .loadout-card').screenshot({ path: path.join(outDir, 'loadout-card.png') });
 
+    const beforeRollGeometry = await page.locator('#page-home .home-middle-row > .loadout-card').evaluate(card => {
+      const rect = element => element?.getBoundingClientRect().toJSON() || null;
+      return {
+        card: rect(card),
+        spin: rect(card.querySelector('#spinAgentBtn')),
+        frame: rect(card.querySelector('#agentFrame'))
+      };
+    });
+    await page.locator('#spinAgentBtn').evaluate(button => button.click());
+    await page.waitForFunction(() => document.querySelector("#agentReel")?.classList.contains("reel-spinning"), null, { timeout: 3000 }).catch(() => {});
+    await page.waitForFunction(() => !document.querySelector("#agentReel")?.classList.contains("reel-spinning"), null, { timeout: 15000 });
+    await page.waitForFunction(() => !document.querySelector(".premium-moment-overlay.is-active, .premium-moment-overlay.has-broadcast"), null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(350);
+    const postRollState = await page.locator('#page-home .home-middle-row > .loadout-card').evaluate(card => {
+      const rect = element => element?.getBoundingClientRect().toJSON() || null;
+      const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0] || null;
+      const pendingStore = JSON.parse(localStorage.getItem("rankedcoach_pending_loadout_rolls_v1") || "{}");
+      const pendingRoll = profile?.id ? (pendingStore[profile.id] || profile.pendingLoadoutRoll || null) : null;
+      return {
+        removedAgentPill: document.getElementById("agentName") === null,
+        pendingAgent: String(pendingRoll?.agent || "").trim(),
+        pendingFocus: String(pendingRoll?.focus || "").trim(),
+        logAgent: document.getElementById("logAgentText")?.textContent?.trim() || "",
+        logFocus: document.getElementById("logFocusSelect")?.value || "",
+        focusDisplay: document.getElementById("focusDisplay")?.textContent?.trim() || "",
+        card: rect(card),
+        spin: rect(card.querySelector('#spinAgentBtn')),
+        frame: rect(card.querySelector('#agentFrame'))
+      };
+    });
+    assert.equal(postRollState.removedAgentPill, true, `#agentName should stay removed after a real roll: ${JSON.stringify(postRollState)}`);
+    assert.ok(postRollState.pendingAgent && postRollState.pendingAgent !== "-", `pending loadout roll should retain the rolled agent without the pill: ${JSON.stringify(postRollState)}`);
+    assert.equal(postRollState.logAgent, postRollState.pendingAgent, `Logging form agent should update from the real roll with the pill removed: ${JSON.stringify(postRollState)}`);
+    assert.equal(postRollState.logFocus, postRollState.pendingFocus, `Logging form focus should update from the real roll: ${JSON.stringify(postRollState)}`);
+    assert.equal(postRollState.focusDisplay, postRollState.pendingFocus, `visible focus pill should mirror the rolled focus: ${JSON.stringify(postRollState)}`);
+    assert.ok(Math.abs(postRollState.card.width - beforeRollGeometry.card.width) <= 1.5 && Math.abs(postRollState.card.height - beforeRollGeometry.card.height) <= 1.5, `loadout card dimensions should stay stable after roll: ${JSON.stringify({ beforeRollGeometry, postRollState })}`);
+    assert.ok(Math.abs(postRollState.spin.width - beforeRollGeometry.spin.width) <= 1.5 && Math.abs(postRollState.spin.height - beforeRollGeometry.spin.height) <= 1.5, `spin button dimensions should stay stable after roll: ${JSON.stringify({ beforeRollGeometry, postRollState })}`);
+    assert.ok(Math.abs(postRollState.frame.width - beforeRollGeometry.frame.width) <= 1.5 && Math.abs(postRollState.frame.height - beforeRollGeometry.frame.height) <= 1.5, `agent frame dimensions should stay stable after roll: ${JSON.stringify({ beforeRollGeometry, postRollState })}`);
+    await page.locator('#page-home .home-middle-row > .loadout-card').screenshot({ path: path.join(outDir, 'loadout-card-after-roll-agent-pill-removed.png') });
+
     await forceClearModals(page);
     const activeHomePage = await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
     assert.equal(activeHomePage, "page-home", `home page should activate through test hook, got ${activeHomePage}`);
@@ -959,6 +1041,63 @@ async function run() {
 
     await activateStatsPage(page);
     await page.waitForSelector('#statsMapsList .stats-map-card', { timeout: 10000 });
+    const statsMapPool = await page.locator('#statsMapsList').evaluate(container => {
+      const cards = [...container.querySelectorAll('.stats-map-card')];
+      return {
+        count: cards.length,
+        active: cards.filter(card => card.dataset.activePool === "true").map(card => card.querySelector('.stats-main-text')?.textContent?.trim() || ""),
+        inactive: cards.filter(card => card.dataset.activePool === "false").map(card => card.querySelector('.stats-main-text')?.textContent?.trim() || ""),
+        outOfSeasonBadges: cards.filter(card => card.querySelector('.stats-map-out-badge,.stats-map-out-name,.stats-map-excluded-x')).length,
+        disabledInactive: cards.filter(card => card.dataset.activePool === "false" && (card.disabled || card.getAttribute("aria-disabled") === "true")).length
+      };
+    });
+    assert.ok(statsMapPool.count > 0, `Stats map pool should render active-season maps: ${JSON.stringify(statsMapPool)}`);
+    assert.equal(statsMapPool.inactive.length, 0, `Stats map pool should not render out-of-season maps: ${JSON.stringify(statsMapPool)}`);
+    assert.equal(statsMapPool.outOfSeasonBadges, 0, `Stats map pool should have no out-of-season X/badge remnants: ${JSON.stringify(statsMapPool)}`);
+    assert.equal(statsMapPool.disabledInactive, 0, `Stats map pool should not include disabled out-of-season cards: ${JSON.stringify(statsMapPool)}`);
+    const seasonPoolChecks = [];
+    const statsSeasonOptions = await page.locator('#statsActSelector option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
+    for (const optionValue of statsSeasonOptions.slice(0, 2)) {
+      await page.locator('#statsActSelector').selectOption(optionValue, { force: true });
+      await page.waitForTimeout(180);
+      seasonPoolChecks.push(await page.locator('#statsMapsList').evaluate((container, selected) => {
+        const cards = [...container.querySelectorAll('.stats-map-card')];
+        return {
+          selected,
+          count: cards.length,
+          inactiveCount: cards.filter(card => card.dataset.activePool === "false").length,
+          names: cards.map(card => card.querySelector('.stats-main-text')?.textContent?.trim() || "")
+        };
+      }, optionValue));
+    }
+    assert.ok(seasonPoolChecks.every(check => check.count > 0 && check.inactiveCount === 0), `Every tested season should render active maps only: ${JSON.stringify(seasonPoolChecks)}`);
+    await page.locator('#statsActSelector').selectOption(statsSeasonOptions[0], { force: true });
+    await page.waitForTimeout(180);
+    const statsSummaryOrder = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll('.stats-summary-grid .stat-block')];
+      const modalActiveBefore = document.getElementById("lensModal")?.classList.contains("active") || false;
+      return {
+        labels: tiles.map(tile => tile.querySelector('.stat-label')?.textContent?.trim() || ""),
+        metrics: tiles.map(tile => tile.dataset.statsSummaryMetric || ""),
+        triggerMetrics: [...document.querySelectorAll('.stats-summary-grid .stats-summary-trend-trigger')].map(tile => tile.dataset.statsSummaryMetric || ""),
+        staticMetrics: [...document.querySelectorAll('.stats-summary-grid .stats-summary-static')].map(tile => tile.dataset.statsSummaryMetric || ""),
+        staticStyles: [...document.querySelectorAll('.stats-summary-grid .stats-summary-static')].map(tile => {
+          const style = getComputedStyle(tile);
+          return {
+            metric: tile.dataset.statsSummaryMetric || "",
+            pointerEvents: style.pointerEvents,
+            cursor: style.cursor,
+            role: tile.getAttribute("role") || "",
+            tabindex: tile.getAttribute("tabindex") || ""
+          };
+        }),
+        modalActiveBefore
+      };
+    });
+    assert.deepEqual(statsSummaryOrder.metrics, ["kd", "kast", "winrate", "hs", "acs", "matches"], `Stats summary tile metric order should be K/D, KAST, Win Rate, HS%, ACS, Matches: ${JSON.stringify(statsSummaryOrder)}`);
+    assert.deepEqual(statsSummaryOrder.triggerMetrics.sort(), ["acs", "hs", "kast", "kd"], `Only K/D, KAST, HS%, and ACS should remain interactive: ${JSON.stringify(statsSummaryOrder)}`);
+    assert.deepEqual(statsSummaryOrder.staticMetrics.sort(), ["matches", "winrate"], `Win Rate and Matches Played should be static: ${JSON.stringify(statsSummaryOrder)}`);
+    assert.ok(statsSummaryOrder.staticStyles.every(style => style.pointerEvents === "none" && !style.role && !style.tabindex), `Static stats summary tiles should have no pointer behavior: ${JSON.stringify(statsSummaryOrder)}`);
     const roleHover = await collectHoverEvidence(page, '.stats-role-pill[role="button"].role-initiator');
     assert.notEqual(
       `${roleHover.after.backgroundColor}|${roleHover.after.backgroundImage}`,
@@ -967,6 +1106,11 @@ async function run() {
     );
     await clickAndWaitModal(page, '.stats-summary-trend-trigger[data-stats-summary-metric="acs"]', '.stats-summary-trend-chart');
     const trendAxis = await page.evaluate(() => ({
+      title: document.getElementById("lensModalTitleSecondary")?.textContent?.trim() || "",
+      headStrongCount: document.querySelectorAll('.stats-summary-trend-head strong').length,
+      headText: document.querySelector('.stats-summary-trend-head')?.textContent?.replace(/\s+/g, " ").trim() || "",
+      headJustifyContent: getComputedStyle(document.querySelector('.stats-summary-trend-head')).justifyContent,
+      headTextAlign: getComputedStyle(document.querySelector('.stats-summary-trend-head')).textAlign,
       yTicks: document.querySelectorAll('.stats-summary-trend-y-axis span').length,
       gridlines: document.querySelectorAll('.stats-summary-trend-gridline').length,
       bars: document.querySelectorAll('.stats-summary-trend-point').length,
@@ -1010,6 +1154,10 @@ async function run() {
         return { axis: axis?.height || 0, clip: clip?.height || 0, grid: grid?.height || 0 };
       })()
     }));
+    assert.match(trendAxis.title, /^ACS Trend:\s*\d+/, `stats summary trend title should include the originating ACS value: ${JSON.stringify(trendAxis)}`);
+    assert.equal(trendAxis.headStrongCount, 0, `stats summary trend head should remove the redundant strong wrapper: ${JSON.stringify(trendAxis)}`);
+    assert.match(trendAxis.headText, /^Season high:/, `stats summary trend head should keep only centered supporting span text: ${JSON.stringify(trendAxis)}`);
+    assert.equal(trendAxis.headTextAlign, "center", `stats summary trend info line should be centered: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.yTicks > 2, `stats summary trend needs more than two y-axis ticks: ${JSON.stringify(trendAxis)}`);
     assert.ok(trendAxis.gridlines > 2, `stats summary trend needs gridlines: ${JSON.stringify(trendAxis)}`);
     assert.equal(trendAxis.labels, trendAxis.bars, `stats summary trend labels should be a separate one-for-one scroll row below bars: ${JSON.stringify(trendAxis)}`);
@@ -1028,13 +1176,19 @@ async function run() {
 
     await clickAndWaitModal(page, '.stats-role-pill[role="button"].role-initiator', '.stats-role-history-row');
     const roleHistory = await page.evaluate(() => ({
+      title: document.getElementById("lensModalTitleSecondary")?.textContent?.trim() || "",
       rows: document.querySelectorAll('.stats-role-history-row').length,
       labels: [...document.querySelectorAll('.stats-role-history-row strong')].map(node => node.textContent.trim()),
-      iconBeforeName: [...document.querySelectorAll('.stats-role-history-agent')].every(row => row.firstElementChild?.tagName === 'IMG' && row.lastElementChild?.textContent?.trim())
+      iconBeforeName: [...document.querySelectorAll('.stats-role-history-agent')].every(row => row.firstElementChild?.tagName === 'IMG' && row.lastElementChild?.textContent?.trim()),
+      mapIconBeforeName: [...document.querySelectorAll('.stats-role-history-map')].every(row => row.firstElementChild?.tagName === 'IMG' && row.lastElementChild?.textContent?.trim()),
+      mapIconSrcs: [...document.querySelectorAll('.stats-role-history-map img')].map(image => image.getAttribute("src") || "")
     }));
     assert.ok(roleHistory.rows >= 2, `role history should render multiple rows: ${JSON.stringify(roleHistory)}`);
+    assert.match(roleHistory.title, /^Initiator Match History:\s*\d+%/, `role history title should include the originating role win-rate value: ${JSON.stringify(roleHistory)}`);
     assert.deepEqual(roleHistory.labels.slice(0, 2), ["Match 3", "Match 1"], `role history should use season-scoped match numbers newest-first: ${JSON.stringify(roleHistory)}`);
     assert.equal(roleHistory.iconBeforeName, true, `role history needs agent icon before name text: ${JSON.stringify(roleHistory)}`);
+    assert.equal(roleHistory.mapIconBeforeName, true, `role history needs map icon before map text: ${JSON.stringify(roleHistory)}`);
+    assert.ok(roleHistory.mapIconSrcs.every(src => /\/assets\/library\/maps\/thumbs\//i.test(src)), `role history map icons should use getMapIconUrl assets: ${JSON.stringify(roleHistory)}`);
     await page.locator('#lensModal.active > .lens-modal').screenshot({ path: path.join(outDir, 'role-history.png') });
     await closeLensModals(page);
 
@@ -1092,6 +1246,13 @@ async function run() {
     });
     assert.equal(trendCardBoxes.overlaps.length, 0, `desktop trend cards should not overlap: ${JSON.stringify(trendCardBoxes)}`);
     assert.ok(trendCardBoxes.boxes.every(box => box.hitSameCard && box.inert === false && box.ariaHidden !== "true"), `desktop trend cards must receive their own center hit target and not be inert: ${JSON.stringify(trendCardBoxes)}`);
+    const trendPillHover = await hoverSnapshot(page, '#statsPerformanceChart .stats-trend-card .stats-trend-tone');
+    assert.equal(trendPillHover.after.hover, true, `trend tone pill should be hoverable: ${JSON.stringify(trendPillHover)}`);
+    assert.notEqual(
+      `${trendPillHover.after.background}|${trendPillHover.after.boxShadow}|${trendPillHover.after.transform}`,
+      `${trendPillHover.before.background}|${trendPillHover.before.boxShadow}|${trendPillHover.before.transform}`,
+      `trend tone pill should gain gray hover/background treatment without clipping: ${JSON.stringify(trendPillHover)}`
+    );
     const longTrendCopy = await page.evaluate(() => {
       const detail = document.querySelector('#statsPerformanceChart .stats-trend-card .stats-trend-detail');
       const card = detail?.closest('.stats-trend-card');
@@ -1163,6 +1324,95 @@ async function run() {
         changedTransform: result.after.transform !== result.before.transform
       });
     }
+    const peakRankIconPolish = await page.locator('#statsPeakRankIcon').evaluate(icon => {
+      const style = getComputedStyle(icon);
+      return {
+        borderColor: style.borderColor,
+        borderWidth: style.borderTopWidth,
+        boxShadow: style.boxShadow,
+        background: style.backgroundImage !== "none" ? style.backgroundImage : style.backgroundColor,
+        animationName: style.animationName,
+        width: icon.getBoundingClientRect().width,
+        height: icon.getBoundingClientRect().height
+      };
+    });
+    assert.notEqual(peakRankIconPolish.borderColor, "rgba(0, 0, 0, 0)", `peak rank icon needs a visible theme border: ${JSON.stringify(peakRankIconPolish)}`);
+    assert.notEqual(peakRankIconPolish.borderWidth, "0px", `peak rank icon needs a visible border width: ${JSON.stringify(peakRankIconPolish)}`);
+    assert.notEqual(peakRankIconPolish.boxShadow, "none", `peak rank icon should have thematic highlight/glow: ${JSON.stringify(peakRankIconPolish)}`);
+    const peakRankHover = await hoverSnapshot(page, '#statsPeakRankIcon');
+    assert.notEqual(
+      `${peakRankHover.after.boxShadow}|${peakRankHover.after.transform}|${peakRankHover.after.borderColor}`,
+      `${peakRankHover.before.boxShadow}|${peakRankHover.before.transform}|${peakRankHover.before.borderColor}`,
+      `peak rank icon should pop/highlight on hover: ${JSON.stringify(peakRankHover)}`
+    );
+    await activateStatsPage(page);
+    await page.locator('#page-stats .stats-summary-card').scrollIntoViewIfNeeded();
+    const visibleSeasonSelector = await page.evaluate(() => {
+      const native = document.getElementById("statsActSelector");
+      const mobile = document.getElementById("statsActMobileTrigger");
+      const isVisible = element => {
+        if (!element) return false;
+        const box = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return box.width > 0 && box.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      };
+      return isVisible(native) ? "#statsActSelector" : isVisible(mobile) ? "#statsActMobileTrigger" : "";
+    });
+    assert.ok(visibleSeasonSelector, "a visible Stats season selector pill should exist");
+    const seasonSelectorHover = await hoverSnapshot(page, visibleSeasonSelector);
+    assert.notEqual(
+      `${seasonSelectorHover.after.background}|${seasonSelectorHover.after.boxShadow}|${seasonSelectorHover.after.transform}`,
+      `${seasonSelectorHover.before.background}|${seasonSelectorHover.before.boxShadow}|${seasonSelectorHover.before.transform}`,
+      `Stats season selector should pop/highlight on hover: ${JSON.stringify(seasonSelectorHover)}`
+    );
+
+    await page.evaluate(() => globalThis.RankedCoachTestHooks.activatePageForTest("home"));
+    await forceHomeMotionSettled(page);
+    const impactGoalPolish = await page.evaluate(() => {
+      const matchingRuleText = selectorNeedle => {
+        const matches = [];
+        for (const sheet of Array.from(document.styleSheets)) {
+          let cssRules = [];
+          try { cssRules = Array.from(sheet.cssRules || []); } catch { continue; }
+          for (const rule of cssRules) {
+            if (rule.selectorText?.includes(selectorNeedle)) matches.push(rule.cssText);
+          }
+        }
+        return matches.join("\n").slice(-1600);
+      };
+      const read = selector => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        return {
+          selector,
+          color: style.color,
+          background: style.backgroundImage !== "none" ? style.backgroundImage : style.backgroundColor,
+          borderColor: style.borderColor,
+          boxShadow: style.boxShadow,
+          width: element.getBoundingClientRect().width,
+          height: element.getBoundingClientRect().height
+        };
+      };
+      const result = {
+        accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+        impact: read("#impactRolePill"),
+        goal: read("#goalRRWidget")
+      };
+      result.impactRules = matchingRuleText("#impactRolePill");
+      result.goalRules = matchingRuleText("#goalRRWidget");
+      return result;
+    });
+    assert.match(impactGoalPolish.impactRules, /var\(--accent/i, `impact role pill should be theme-variable driven, not hardcoded red: ${JSON.stringify(impactGoalPolish)}`);
+    assert.ok(impactGoalPolish.impact && impactGoalPolish.impact.background && impactGoalPolish.impact.background !== "none" && impactGoalPolish.impact.background !== "rgba(0, 0, 0, 0)", `impact role pill should have thematic pill backing: ${JSON.stringify(impactGoalPolish)}`);
+    assert.ok(impactGoalPolish.goal && /rgba|linear-gradient/i.test(impactGoalPolish.goal.background), `RR goal widget should have gray/themed backing: ${JSON.stringify(impactGoalPolish)}`);
+    const goalHover = await hoverSnapshot(page, '#goalRRWidget');
+    assert.notEqual(
+      `${goalHover.after.background}|${goalHover.after.boxShadow}|${goalHover.after.transform}`,
+      `${goalHover.before.background}|${goalHover.before.boxShadow}|${goalHover.before.transform}`,
+      `RR goal widget should pop/highlight on hover: ${JSON.stringify(goalHover)}`
+    );
+    await activateStatsPage(page);
 
     await page.evaluate(() => globalThis.RankedCoachTestHooks.openStatsPeakLifetimeRankChart());
     await page.waitForSelector('#lensModal.active .stats-lifetime-rank-chart', { timeout: 8000 });

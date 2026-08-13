@@ -151,9 +151,10 @@ async function run() {
       names: [...document.querySelectorAll("#statsMapsList .stats-map-card .stats-main-text")].map(node => node.textContent.trim()),
       columns: getComputedStyle(document.getElementById("statsMapsList")).gridTemplateColumns.split(" ").length
     }));
-    assert.equal(mapSnapshot.count, 13, `selected season should show every map preview: ${JSON.stringify(mapSnapshot)}`);
-    assert.ok(mapSnapshot.activeCount > 0 && mapSnapshot.lockedCount > 0, `active and off-season map states should both be represented: ${JSON.stringify(mapSnapshot)}`);
-    assert.equal(mapSnapshot.activeCount + mapSnapshot.lockedCount, 13, `off-season maps must be locked instead of removed: ${JSON.stringify(mapSnapshot)}`);
+    assert.ok(mapSnapshot.count > 0, `selected season should show active-pool map previews: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.activeCount, mapSnapshot.count, `Stats map grid should render active-pool maps only: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.lockedCount, 0, `off-season maps should be removed from Stats map grid, not locked: ${JSON.stringify(mapSnapshot)}`);
+    assert.equal(mapSnapshot.outOfSeasonNames.length, 0, `off-season map labels should not render in Stats map grid: ${JSON.stringify(mapSnapshot)}`);
     assert.equal(mapSnapshot.columns, 4, `desktop map grid must be 4 compact columns: ${JSON.stringify(mapSnapshot)}`);
 
     const selector = page.locator("#statsActSelector");
@@ -173,7 +174,7 @@ async function run() {
     await page.waitForTimeout(250);
     const selectedSeasonAfterChange = await selector.inputValue();
     const alternateNames = await page.locator("#statsMapsList .stats-main-text").allTextContents();
-    assert.equal(alternateNames.length, 13, "season selection should keep all map previews rendered");
+    assert.ok(alternateNames.length > 0, "season selection should keep active-pool map previews rendered");
     assert.equal(selectedSeasonAfterChange, options[1].value, "season selection must accept the alternate season");
     await selector.selectOption(options[0].value, { force: true });
     await page.waitForTimeout(250);
@@ -196,7 +197,7 @@ async function run() {
       transform: getComputedStyle(document.querySelector("#lensModal .lens-modal")).transform,
       filter: getComputedStyle(document.querySelector("#lensModal .lens-modal")).filter
     }));
-    assert.equal(summarySnapshot.title, "ACS Trend");
+    assert.match(summarySnapshot.title, /^ACS Trend:\s*\d+/, `summary modal title should include the originating ACS value: ${JSON.stringify(summarySnapshot)}`);
     assert.equal(summarySnapshot.bars, 5, `summary trend must include all selected-season matches: ${JSON.stringify(summarySnapshot)}`);
     assert.equal(summarySnapshot.high, "271", `Y scale should use recorded season high: ${JSON.stringify(summarySnapshot)}`);
     assert.equal(summarySnapshot.filter, "none", `modal must resolve sharp, not blurred: ${JSON.stringify(summarySnapshot)}`);
@@ -212,7 +213,7 @@ async function run() {
       losses: document.querySelectorAll(".stats-role-history-row.is-loss").length,
       rows: document.querySelectorAll(".stats-role-history-row").length
     }));
-    assert.equal(roleSnapshot.title, "Initiator Match History");
+    assert.match(roleSnapshot.title, /^Initiator Match History:\s*\d+%/, `role history modal title should include the originating role value: ${JSON.stringify(roleSnapshot)}`);
     assert.equal(roleSnapshot.rows, 3);
     assert.equal(roleSnapshot.wins, 2);
     assert.equal(roleSnapshot.losses, 1);

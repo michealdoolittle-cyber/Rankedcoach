@@ -892,7 +892,7 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
   }
   assert.ok(geometry.spin.top >= geometry.roles.bottom - 1, `${style} spin control overlaps the role controls: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.info.top >= Math.max(geometry.frame.bottom, geometry.spin.bottom) - 1, `${style} loadout detail pills do not sit below the reel row: ${JSON.stringify(geometry)}`);
-  assert.equal(geometry.infoPills.length, 3, `${style} loadout detail pills are incomplete: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.infoPills.length, 2, `${style} loadout detail pills should only show Map and Focus after removing the Agent pill: ${JSON.stringify(geometry)}`);
   geometry.infoPills.forEach(pill => {
     assert.ok(contains(geometry.info, pill.rect) && pill.display !== "none" && pill.visibility === "visible" && Number(pill.opacity) > 0, `${style} loadout detail pill is not visible inside its row: ${JSON.stringify(geometry)}`);
     assert.ok(Number.parseFloat(pill.label.fontSize) <= 15 && Number.parseFloat(pill.value.fontSize) <= 16, `${style} loadout detail text no longer fits its third-row pill: ${JSON.stringify(geometry)}`);
@@ -989,7 +989,8 @@ async function assertLoadoutRollSettles(page, style) {
         label: rect(spinLabel),
         icon: rect(spinIcon)
       },
-      selectedAgent: card.querySelector("#agentName")?.textContent?.trim() || "",
+      removedAgentPill: document.getElementById("agentName") === null,
+      logAgent: document.getElementById("logAgentText")?.textContent?.trim() || "",
       selectedObjectFit: getComputedStyle(card.querySelector("#agentFrame .agent-reveal-art img"))?.objectFit || "",
       reelIsSpinning: frame?.querySelector("#agentReel")?.classList.contains("reel-spinning") || false,
       cardTransform: getComputedStyle(card).transform,
@@ -999,7 +1000,8 @@ async function assertLoadoutRollSettles(page, style) {
     };
   });
   assert.equal(after.reelIsSpinning, false, `${style} reel did not settle after a real roll: ${JSON.stringify(after)}`);
-  assert.ok(after.selectedAgent && after.selectedAgent !== "-", `${style} roll did not select an agent: ${JSON.stringify(after)}`);
+  assert.equal(after.removedAgentPill, true, `${style} should not rely on the removed Agent info-row pill: ${JSON.stringify(after)}`);
+  assert.ok(after.logAgent && after.logAgent !== "Choose agent" && after.logAgent !== "-", `${style} roll did not prefill the Logging agent field: ${JSON.stringify(after)}`);
   assert.equal(after.selectedObjectFit, "contain", `${style} selected rolled agent art was cropped instead of contained: ${JSON.stringify(after)}`);
   ["card", "frame", "spin"].forEach(key => {
     assert.ok(Math.abs(after[key].width - before[key].width) <= 1 && Math.abs(after[key].height - before[key].height) <= 1, `${style} roll changed ${key} geometry: ${JSON.stringify({ before, after })}`);

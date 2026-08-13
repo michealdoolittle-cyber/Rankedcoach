@@ -195,7 +195,8 @@ async function inspectLoadout(page) {
       frameFxBeforeOpacity: style(frame, "::before")?.opacity || "",
       frameFxAfterOpacity: style(frame, "::after")?.opacity || "",
       spinLabel: spin?.querySelector(".spin-loadout-label")?.textContent?.trim() || "",
-      selectedAgent: card.querySelector("#agentName")?.textContent?.trim() || ""
+      removedAgentPill: document.getElementById("agentName") === null,
+      logAgent: document.getElementById("logAgentText")?.textContent?.trim() || ""
     };
   });
 }
@@ -353,7 +354,8 @@ async function runVariant(browser, variant) {
   validateLoadout(after, `${variant.name} after roll`);
   approx(after.card.width, before.card.width, 1.5, `${variant.name} card width should stay stable after roll`);
   approx(after.card.height, before.card.height, 1.5, `${variant.name} card height should stay stable after roll`);
-  assert.ok(after.selectedAgent && after.selectedAgent !== "-", `${variant.name} real roll did not select an agent: ${JSON.stringify(after)}`);
+  assert.equal(after.removedAgentPill, true, `${variant.name} should not rely on the removed Agent info-row pill: ${JSON.stringify(after)}`);
+  assert.ok(after.logAgent && after.logAgent !== "Choose agent" && after.logAgent !== "-", `${variant.name} real roll did not prefill the Logging agent field: ${JSON.stringify(after)}`);
   await clearVisualOverlays(page);
   await makeHomeVisibleForScreenshot(page);
   await page.screenshot({ path: path.join(outDir, `${variant.name}-after-roll.png`) });
@@ -362,7 +364,7 @@ async function runVariant(browser, variant) {
   return {
     variant: variant.name,
     before: { card: before.card, main: before.main, rows: before.rows, rowPercent: before.rowPercent, columns: before.columns, areas: before.areas, imageFit: before.imageFit, frameBoxShadow: before.frameBoxShadow },
-    after: { card: after.card, main: after.main, rows: after.rows, rowPercent: after.rowPercent, columns: after.columns, areas: after.areas, imageFit: after.imageFit, frameBoxShadow: after.frameBoxShadow, selectedAgent: after.selectedAgent },
+    after: { card: after.card, main: after.main, rows: after.rows, rowPercent: after.rowPercent, columns: after.columns, areas: after.areas, imageFit: after.imageFit, frameBoxShadow: after.frameBoxShadow, removedAgentPill: after.removedAgentPill, logAgent: after.logAgent },
     consoleErrors
   };
 }
