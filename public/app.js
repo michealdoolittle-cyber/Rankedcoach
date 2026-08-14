@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-copy-03";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-library-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -18837,6 +18837,22 @@ function enterGuestModeAfterLogout() {
   renderChart?.(currentSize);
 }
 
+function refreshGuestTutorialLibrarySurface(step = {}) {
+  if (step?.page !== "library") return;
+  const library = globalThis.RankedCoachGamesenseLibrary;
+  if (!library) return;
+  try {
+    library.setPageActive?.(true);
+    if (typeof library.showOverview === "function") {
+      library.showOverview({ direction: "replace" });
+    } else if (typeof library.render === "function") {
+      library.render({ direction: "replace" });
+    }
+  } catch (error) {
+    console.warn("Guest tutorial Library refresh skipped", error);
+  }
+}
+
 function refreshGuestTutorialDemoSurfaces(step = {}) {
   const profile = getActiveProfile?.();
   const profileMatches = Array.isArray(profile?.matches) ? profile.matches.slice() : [];
@@ -18860,6 +18876,7 @@ function refreshGuestTutorialDemoSurfaces(step = {}) {
         displayIndex: latestSessionEntry ? sessionEntries.length - 1 : null
       });
     }
+    refreshGuestTutorialLibrarySurface(step);
   } catch (error) {
     console.warn("Guest tutorial demo surface refresh skipped", error);
   }

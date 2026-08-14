@@ -114,6 +114,16 @@ async function run() {
       assert.equal(demoState.entryChoice, "guest", "guest tutorial skip should keep guest mode");
       assert.equal(demoState.activeAuth, false, "guest tutorial skip should close auth");
       assert.ok(demoState.matchCount >= 700, `guest demo should load built-in matches: ${JSON.stringify(demoState)}`);
+      await page.evaluate(() => document.querySelector('.nav-btn[data-page="library"]')?.click());
+      await page.waitForFunction(() => document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length >= 5, null, { timeout: 10000 });
+      const libraryNavState = await page.evaluate(() => ({
+        active: document.getElementById("page-library")?.classList.contains("active") || false,
+        topicCards: document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length,
+        heading: document.querySelector("#gamesenseLibraryView")?.textContent || ""
+      }));
+      assert.equal(libraryNavState.active, true, "normal Library nav click should activate the Library page");
+      assert.ok(libraryNavState.topicCards >= 5, `normal Library nav click should render topic cards: ${JSON.stringify(libraryNavState)}`);
+      assert.match(libraryNavState.heading, /Open dossier/i, "normal Library nav click should render the dossier topic surface");
       assert.deepEqual(issues, [], "guest tutorial demo path should not emit console/page errors");
       await page.close();
     }
@@ -212,6 +222,17 @@ async function run() {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
       await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "23 / 23", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length >= 5, null, { timeout: 10000 });
+      const finalLibraryState = await page.evaluate(() => ({
+        active: document.getElementById("page-library")?.classList.contains("active") || false,
+        title: document.getElementById("appTutorialTitle")?.textContent || "",
+        topicCards: document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length,
+        visibleCopy: document.querySelector("#gamesenseLibraryView")?.textContent || ""
+      }));
+      assert.equal(finalLibraryState.active, true, "final tutorial slide should activate the Library page");
+      assert.equal(finalLibraryState.title, "GameSense Library", "final tutorial slide should still be the Library slide");
+      assert.ok(finalLibraryState.topicCards >= 5, `final tutorial Library slide should render topic cards: ${JSON.stringify(finalLibraryState)}`);
+      assert.match(finalLibraryState.visibleCopy, /Open dossier/i, "final tutorial Library slide should show the dossier overview instead of an empty page");
       const finalRestart = await page.evaluate(() => {
         const restart = document.getElementById("appTutorialRestart");
         return {

@@ -4999,7 +4999,7 @@
     render({ direction: itemId || state.topic !== "overview" ? "forward" : "none" });
   }
 
-  function resetLibrary() {
+  function showLibraryOverview(options = {}) {
     state.topic = "overview";
     state.itemId = "";
     state.role = "";
@@ -5014,7 +5014,12 @@
     state.playlistFilter = "Home";
     state.crosshairTab = "All";
     state.crosshairSort = "desc";
-    render({ direction: "backward" });
+    const direction = ["backward", "replace", "none"].includes(options?.direction) ? options.direction : "replace";
+    render({ direction });
+  }
+
+  function resetLibrary() {
+    showLibraryOverview({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
       ? document.querySelector(".app-root")
@@ -5643,6 +5648,7 @@
     open: openLibrary,
     render,
     reset: resetLibrary,
+    showOverview: showLibraryOverview,
     refreshOwnerControls: () => render({ direction: "replace" }),
     setPageActive: setLibraryPageActive,
     getPublishedKnowledge: () => publishedKnowledge.slice()
