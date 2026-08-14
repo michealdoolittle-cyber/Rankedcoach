@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-warmup-04";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-race-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -867,6 +867,12 @@ function canOpenDailyWarmupCheck() {
   const blockingModal = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening, .lens-modal-overlay.is-closing")]
     .some(modal => modal.id !== "dailyWarmupModal" && modal.getAttribute("aria-hidden") !== "true");
   return !blockingModal;
+}
+
+function cancelDailyWarmupCheck() {
+  if (!dailyWarmupPromptTimer) return;
+  window.clearTimeout(dailyWarmupPromptTimer);
+  dailyWarmupPromptTimer = 0;
 }
 
 function scheduleDailyWarmupCheck(delay = 700) {
@@ -17903,6 +17909,7 @@ function notifyDailyEntranceMotionReady() {
   );
 
   if (warmupRequired && !hasDailyEntranceBlockingSurface({ includeWarmup: false })) {
+    revealDailyEntrancePendingPage(pageId);
     openDailyWarmupCheck();
   }
 
@@ -18863,7 +18870,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "home",
     selector: ".app-header",
     title: "Start with the top bar",
-    copy: "Use the left tabs to move between Home, Logging, Stats, Insights, and Library. The center widgets track your current RR path and goal rank. The right side holds profile, sync, Ask Coach, and account options."
+    copy: "Use the left tabs to move between Home, Logging, Stats, Insights, and Library. The center widgets track your current RR path and goal rank. The right side holds the bug report tool, Ask Coach chatbot, profile, sync, and account options."
   },
   {
     page: "home",
@@ -18887,13 +18894,13 @@ const GUEST_TUTORIAL_STEPS = [
     page: "home",
     selector: ".improvement-card",
     title: "What Improved Recently",
-    copy: "These reads compare recent match movement against the active sample. They are meant to show what is changing fastest, not to judge one isolated game."
+    copy: "These reads compare recent match trends against the active match window. They are meant to show what is improving the most."
   },
   {
     page: "home",
     selector: ".loadout-card",
     title: "Role, agent, and focus generator",
-    copy: "Use this section to rotate role, agent, and focus category ideas before queueing. It keeps your session goals clear without forcing one rigid plan."
+    copy: "Use this section to select the map you are queued for, choose your role, spin for your agent, and receive a short term focus before the game begins."
   },
   {
     page: "home",
@@ -19393,6 +19400,11 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
   guestEntryInProgress = true;
   closeGuestTutorialChoice();
   setGuestButtonLoading(true, withTutorial ? "Loading tutorial..." : "Loading demo...");
+  if (withTutorial) {
+    dailyEntranceMotionTutorialPending = true;
+    cancelDailyWarmupCheck();
+    revealDailyEntrancePendingPage("home");
+  }
 
   try {
     await withAppLoadingVeil(withTutorial ? "Loading demo and tutorial..." : "Loading guest dashboard...", async () => {
@@ -19403,16 +19415,18 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
       closeAuthModal(true);
     });
     if (withTutorial) {
-      dailyEntranceMotionTutorialPending = true;
-      window.setTimeout(() => {
+      cancelDailyWarmupCheck();
+      revealDailyEntrancePendingPage("home");
+      window.requestAnimationFrame(() => {
         startGuestTutorial();
         dailyEntranceMotionTutorialPending = false;
         notifyDailyEntranceMotionReady();
-      }, 420);
+      });
     } else {
       notifyDailyEntranceMotionReady();
     }
   } catch (error) {
+    dailyEntranceMotionTutorialPending = false;
     localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
     alert(error?.message || "Unable to enter guest mode.");
   } finally {
@@ -19474,13 +19488,24 @@ function waitForGuestTutorialTarget(step = {}, options = {}) {
   });
 }
 
-function revealDailyEntrancePendingPageForTutorial(pageId = "home") {
+function revealDailyEntrancePendingPage(pageId = "home") {
   const root = document.getElementById(`page-${pageId || "home"}`);
   if (!root) return;
   root.classList.remove("daily-entrance-page-pending");
-  root.style.removeProperty("opacity");
-  root.style.removeProperty("pointer-events");
-  root.style.removeProperty("transition");
+  root.style.setProperty("transition", "none", "important");
+  root.style.setProperty("opacity", "1", "important");
+  root.style.setProperty("transform", "translate3d(0,0,0) scale(1)", "important");
+  root.style.setProperty("pointer-events", "auto", "important");
+  void root.offsetWidth;
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      if (root.classList.contains("daily-entrance-page-pending")) return;
+      root.style.removeProperty("opacity");
+      root.style.removeProperty("transform");
+      root.style.removeProperty("pointer-events");
+      root.style.removeProperty("transition");
+    });
+  });
   if (document.body?.dataset.dailyEntrancePage === pageId) {
     delete document.body.dataset.dailyEntrancePage;
   }
@@ -19528,7 +19553,7 @@ function scheduleGuestTutorialOverlayFollowUps(renderToken) {
       if (renderToken !== guestTutorialRenderToken) return;
       if (!document.getElementById("appTutorialOverlay")?.classList.contains("active")) return;
       const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
-      revealDailyEntrancePendingPageForTutorial(step?.page || "home");
+      revealDailyEntrancePendingPage(step?.page || "home");
       scheduleGuestTutorialOverlayPosition();
     }, delay);
   });
@@ -19620,7 +19645,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   clearTutorialTarget();
   const tutorialPage = step.page || "home";
   activatePage?.(tutorialPage);
-  revealDailyEntrancePendingPageForTutorial(tutorialPage);
+  revealDailyEntrancePendingPage(tutorialPage);
   refreshGuestTutorialDemoSurfaces(step);
 
   const title = document.getElementById("appTutorialTitle");
@@ -19654,6 +19679,8 @@ function startGuestTutorial() {
   ensureGuestTutorialShells();
   const overlay = document.getElementById("appTutorialOverlay");
   if (!overlay) return;
+  cancelDailyWarmupCheck();
+  revealDailyEntrancePendingPage("home");
   overlay.classList.add("active");
   document.body.classList.add("app-tutorial-running");
   guestTutorialIndex = 0;

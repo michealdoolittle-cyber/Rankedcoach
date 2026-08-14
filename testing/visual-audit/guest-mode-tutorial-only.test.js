@@ -119,6 +119,49 @@ async function run() {
     }
 
     {
+      const { page, issues } = await openPage(browser);
+      await page.waitForSelector("#authModal.active #authGuestBtn", { timeout: 15000 });
+      await page.evaluate(() => document.getElementById("authGuestBtn")?.click());
+      await page.waitForSelector("#guestTutorialChoiceModal.active", { timeout: 15000 });
+      await page.evaluate(() => document.getElementById("guestTutorialStartBtn")?.click());
+      await page.waitForSelector("#appTutorialOverlay.active", { timeout: 15000 });
+      await page.waitForSelector("#appTutorialTitle:text(\"Start with the top bar\")", { timeout: 15000 });
+      const tutorialState = await page.evaluate(() => ({
+        copy: document.getElementById("appTutorialCopy")?.textContent || "",
+        count: document.getElementById("appTutorialCount")?.textContent || "",
+        warmupActive: document.getElementById("dailyWarmupModal")?.classList.contains("active") || false,
+        homePending: document.getElementById("page-home")?.classList.contains("daily-entrance-page-pending") || false,
+        homeOpacity: getComputedStyle(document.getElementById("page-home")).opacity
+      }));
+      assert.equal(tutorialState.count, "1 / 23", "tutorial should start on slide 1");
+      assert.match(tutorialState.copy, /bug report tool/i, "slide 1 should mention the bug report tool");
+      assert.match(tutorialState.copy, /Ask Coach chatbot/i, "slide 1 should mention Ask Coach chatbot");
+      assert.equal(tutorialState.warmupActive, false, "warmup should not open over the tutorial start");
+      assert.equal(tutorialState.homePending, false, "tutorial start should release daily entrance pending page");
+      assert.equal(tutorialState.homeOpacity, "1", "tutorial start should not leave the Home page invisible");
+      for (let i = 0; i < 4; i += 1) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      }
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "5 / 23", null, { timeout: 8000 });
+      const slideFiveCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
+      assert.equal(
+        slideFiveCopy,
+        "These reads compare recent match trends against the active match window. They are meant to show what is improving the most.",
+        "slide 5 should use the requested improvement wording"
+      );
+      await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "6 / 23", null, { timeout: 8000 });
+      const slideSixCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
+      assert.equal(
+        slideSixCopy,
+        "Use this section to select the map you are queued for, choose your role, spin for your agent, and receive a short term focus before the game begins.",
+        "slide 6 should use the requested loadout wording"
+      );
+      assert.deepEqual(issues, [], "guest tutorial start path should not emit console/page errors");
+      await page.close();
+    }
+
+    {
       const { page, issues } = await openPage(browser, `(${seedGuestProfile.toString()})({ riotId: "" });`);
       await page.evaluate(() => document.getElementById("profileAddBtn")?.click());
       await page.waitForSelector("#authModal.active .auth-intent-message", { timeout: 15000 });
