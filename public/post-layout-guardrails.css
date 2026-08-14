@@ -2358,15 +2358,15 @@ html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.controller .placeholder-silhouette,
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.initiator .placeholder-silhouette,
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.sentinel .placeholder-silhouette{
-  inset:9% !important;
-  width:82% !important;
-  height:82% !important;
-  max-width:82% !important;
-  max-height:82% !important;
+  inset:-4% !important;
+  width:108% !important;
+  height:108% !important;
+  max-width:108% !important;
+  max-height:108% !important;
   object-fit:contain !important;
   object-position:center center !important;
   opacity:.3 !important;
-  transform:scale(.92) !important;
+  transform:scale(1.08) !important;
   filter:
     grayscale(1)
     brightness(0)
@@ -2381,7 +2381,7 @@ html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame 
 
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .agent-placeholder.is-spinning .placeholder-silhouette{
   opacity:.34 !important;
-  transform:scale(.96) !important;
+  transform:scale(1.18) !important;
   filter:
     grayscale(1)
     brightness(0)
@@ -2425,11 +2425,11 @@ html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.
 @keyframes rcLoadoutMysterySilhouetteBreath{
   0%,100%{
     opacity:.24;
-    transform:scale(.9);
+    transform:scale(1.08);
   }
   50%{
     opacity:.32;
-    transform:scale(.94);
+    transform:scale(1.16);
   }
 }
 
