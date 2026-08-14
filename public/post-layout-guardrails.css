@@ -1789,3 +1789,350 @@ html body #page-home #impactRolePill.impact-role-pill:not([data-role]){
     grid-column:1 !important;
   }
 }
+
+/* 2026-08-14 focused regression guards:
+   - RR-to-goal keeps the correct color but no longer lets page art bleed
+     through as a transparent wash.
+   - the loadout reel is hidden after the spin settles so the selected agent
+     art remains the only visible image in the frame.
+   - current-pool Map Stats fill the card as a 3-row desktop canvas.
+   - Stats Summary trend labels and bars share one horizontal scroll span. */
+#goalRRWidget.nav-rr-widget{
+  background:
+    radial-gradient(circle at 18% 0%,rgb(64 78 98) 0%,rgb(51 65 85) 44%,rgb(30 41 59) 72%),
+    linear-gradient(145deg,rgb(51 65 85),rgb(15 23 42)) !important;
+  background-color:rgb(30 41 59) !important;
+  border-color:color-mix(in srgb,var(--accent,#ff4655) 44%,rgba(148,163,184,.32)) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #goalRRWidget.nav-rr-widget:is(:hover,:focus-visible){
+  background:
+    radial-gradient(circle at 20% 0%,color-mix(in srgb,var(--accent,#ff4655) 28%,rgb(51 65 85) 72%) 0%,rgb(51 65 85) 48%,rgb(30 41 59) 76%),
+    linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 16%,rgb(51 65 85) 84%),color-mix(in srgb,var(--accent-2,#38bdf8) 10%,rgb(15 23 42) 90%)) !important;
+  background-color:rgb(30 41 59) !important;
+}
+
+html body #page-home .loadout-card #agentFrame #agentReel{
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+html body #page-home .loadout-card #agentFrame #agentReel.reel-spinning,
+html body #page-home .loadout-card #agentFrame.reel-active #agentReel{
+  opacity:.92 !important;
+  visibility:visible !important;
+}
+
+html body #page-home .loadout-card #agentFrame #agentReel.reel-placeholder{
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+
+html body #page-home .loadout-card #agentFrame .agent-reveal-art,
+html body #page-home .loadout-card #agentFrame .agent-frame-art{
+  overflow:hidden !important;
+}
+
+html body #page-home .loadout-card #agentFrame .agent-reveal-art img,
+html body #page-home .loadout-card #agentFrame .agent-frame-portrait,
+html body #page-home .loadout-card #agentFrame .frame-art-inner{
+  left:50% !important;
+  top:50% !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:
+    translate(
+      calc(-50% + var(--agent-art-x-scaled,var(--agent-art-x,0px))),
+      calc(-50% + var(--agent-art-y-scaled,var(--agent-art-y,0px)))
+    )
+    scale(var(--agent-art-scale,1)) !important;
+  transform-origin:center center !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-maps-card #statsMapsList.stats-map-list.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsMapsList.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(3,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  height:calc(100% - 7px) !important;
+  min-height:0 !important;
+  margin-top:-1px !important;
+  padding-top:8px !important;
+  align-content:stretch !important;
+  overflow:visible !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-maps-card{
+  overflow:visible !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+  transform-origin:center center !important;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease,filter .16s ease !important;
+  will-change:transform !important;
+  z-index:1 !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card:is(:hover,:focus-visible){
+    transform:translate3d(0,-3px,0) scale(1.018) !important;
+    z-index:12 !important;
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 58%,rgba(255,255,255,.18)) !important;
+    box-shadow:
+      0 12px 24px rgba(2,6,23,.34),
+      0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 26%,transparent) !important;
+  }
+}
+
+.stats-summary-modal-title-value{
+  font-weight:1000 !important;
+  color:#fff !important;
+  text-shadow:0 0 12px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 24%,transparent) !important;
+}
+
+.stats-summary-trend-bars,
+.stats-summary-trend-labels{
+  grid-auto-columns:minmax(54px,1fr) !important;
+}
+
+.stats-summary-trend-bars{
+  width:max-content !important;
+  min-width:100% !important;
+  will-change:transform !important;
+}
+
+.stats-summary-trend-labels{
+  min-width:0 !important;
+  scroll-behavior:auto !important;
+}
+
+#page-home #impactRolePill.impact-role-pill[data-role="duelist"]{
+  color:var(--duelist,#ff4655) !important;
+  border-color:color-mix(in srgb,var(--duelist,#ff4655) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--duelist,#ff4655) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--duelist,#ff4655) 26%,transparent) !important;
+}
+
+#page-home #impactRolePill.impact-role-pill[data-role="controller"]{
+  color:var(--controller,#a855f7) !important;
+  border-color:color-mix(in srgb,var(--controller,#a855f7) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--controller,#a855f7) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--controller,#a855f7) 26%,transparent) !important;
+}
+
+#page-home #impactRolePill.impact-role-pill[data-role="initiator"]{
+  color:var(--initiator,#3b82f6) !important;
+  border-color:color-mix(in srgb,var(--initiator,#3b82f6) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--initiator,#3b82f6) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--initiator,#3b82f6) 26%,transparent) !important;
+}
+
+#page-home #impactRolePill.impact-role-pill[data-role="sentinel"]{
+  color:var(--sentinel,#22c55e) !important;
+  border-color:color-mix(in srgb,var(--sentinel,#22c55e) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--sentinel,#22c55e) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--sentinel,#22c55e) 26%,transparent) !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home #impactRolePill.impact-role-pill[data-role]:is(:hover,:focus-visible){
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 72%,rgba(255,255,255,.22)) !important;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 44%,transparent),
+      0 0 18px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 32%,transparent) !important;
+    transform:translate3d(0,-2px,0) !important;
+    outline:none !important;
+  }
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Duelist"].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Duelist"][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--duelist,#ff4655),color-mix(in srgb,var(--duelist,#ff4655) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--duelist,#ff4655) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--duelist,#ff4655) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Controller"].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Controller"][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--controller,#a855f7),color-mix(in srgb,var(--controller,#a855f7) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--controller,#a855f7) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--controller,#a855f7) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Initiator"].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Initiator"][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--initiator,#3b82f6),color-mix(in srgb,var(--initiator,#3b82f6) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--initiator,#3b82f6) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--initiator,#3b82f6) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Sentinel"].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[data-role="Sentinel"][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--sentinel,#22c55e),color-mix(in srgb,var(--sentinel,#22c55e) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--sentinel,#22c55e) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--sentinel,#22c55e) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn.active:not([data-role="any"]):is(:hover,:focus-visible),
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons .role-filter-btn[aria-pressed="true"]:not([data-role="any"]):is(:hover,:focus-visible){
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 76%,rgba(255,255,255,.22)) !important;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 46%,transparent),
+      0 0 20px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 34%,transparent) !important;
+  }
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats.page.active .stats-maps-card #statsMapsList.stats-map-grid .stats-map-card.stats-map-card:is(:hover,:focus-visible){
+    transform:translate3d(0,-3px,0) scale(1.018) !important;
+    z-index:18 !important;
+  }
+}
+
+html body #page-home#page-home #impactRolePill.impact-role-pill[data-role="duelist" i]{
+  color:var(--duelist,#ff4655) !important;
+  border-color:color-mix(in srgb,var(--duelist,#ff4655) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--duelist,#ff4655) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--duelist,#ff4655) 26%,transparent) !important;
+}
+
+html body #page-home#page-home #impactRolePill.impact-role-pill[data-role="controller" i]{
+  color:var(--controller,#a855f7) !important;
+  border-color:color-mix(in srgb,var(--controller,#a855f7) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--controller,#a855f7) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--controller,#a855f7) 26%,transparent) !important;
+}
+
+html body #page-home#page-home #impactRolePill.impact-role-pill[data-role="initiator" i]{
+  color:var(--initiator,#3b82f6) !important;
+  border-color:color-mix(in srgb,var(--initiator,#3b82f6) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--initiator,#3b82f6) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--initiator,#3b82f6) 26%,transparent) !important;
+}
+
+html body #page-home#page-home #impactRolePill.impact-role-pill[data-role="sentinel" i]{
+  color:var(--sentinel,#22c55e) !important;
+  border-color:color-mix(in srgb,var(--sentinel,#22c55e) 62%,rgba(148,163,184,.24)) !important;
+  background:color-mix(in srgb,var(--sentinel,#22c55e) 18%,rgba(15,23,42,.9)) !important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--sentinel,#22c55e) 26%,transparent) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Duelist" i].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Duelist" i][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--duelist,#ff4655),color-mix(in srgb,var(--duelist,#ff4655) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--duelist,#ff4655) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--duelist,#ff4655) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Controller" i].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Controller" i][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--controller,#a855f7),color-mix(in srgb,var(--controller,#a855f7) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--controller,#a855f7) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--controller,#a855f7) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Initiator" i].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Initiator" i][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--initiator,#3b82f6),color-mix(in srgb,var(--initiator,#3b82f6) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--initiator,#3b82f6) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--initiator,#3b82f6) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Sentinel" i].active,
+html body #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[data-role="Sentinel" i][aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--sentinel,#22c55e),color-mix(in srgb,var(--sentinel,#22c55e) 64%,#111827)) !important;
+  border-color:color-mix(in srgb,var(--sentinel,#22c55e) 75%,white 8%) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--sentinel,#22c55e) 38%,transparent) !important;
+  color:#fff !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home #impactRolePill.impact-role-pill[data-role]:is(:hover,:focus-visible),
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn.active:not([data-role="any"]):is(:hover,:focus-visible),
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home#page-home.page.active .loadout-card #roleButtons#roleButtons .role-filter-btn.role-filter-btn[aria-pressed="true"]:not([data-role="any"]):is(:hover,:focus-visible){
+    border-color:color-mix(in srgb,var(--accent,#ff4655) 76%,rgba(255,255,255,.22)) !important;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 46%,transparent),
+      0 0 20px color-mix(in srgb,var(--theme-glow,var(--accent,#ff4655)) 34%,transparent) !important;
+  }
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card{
+  overflow:hidden !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  box-sizing:border-box !important;
+  height:calc(100% - 4px) !important;
+  padding-top:6px !important;
+  overflow:visible !important;
+  row-gap:6px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card{
+  min-height:0 !important;
+  padding-top:7px !important;
+  padding-bottom:7px !important;
+  transform-origin:center center !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card .stats-trend-copy{
+  min-width:0 !important;
+  overflow:hidden !important;
+  gap:1px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card .stats-sub-text{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  font-size:clamp(12px,.78vw,15px) !important;
+  line-height:1 !important;
+  letter-spacing:.01em !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card .stats-main-text{
+  font-size:clamp(13px,.92vw,16px) !important;
+  line-height:1.02 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+/* Insights trend mobile-tab polish: the selected trend tab keeps the default
+   neutral card surface, while the opened content body stays transparent so it
+   does not inherit the same gray panel treatment. */
+html body #page-insights#page-insights .insights-trends-card .insight-trends.has-open-card > .insight-trend-row.open.is-mobile-trend-tab-active{
+  background:
+    radial-gradient(circle at 18% 0%,rgba(148,163,184,.16),transparent 46%),
+    linear-gradient(145deg,rgba(51,65,85,.92),rgba(15,23,42,.96)) !important;
+  background-color:rgb(30,41,59) !important;
+  border-color:rgba(148,163,184,.34) !important;
+  color:var(--text-main,#f8fafc) !important;
+  box-shadow:0 10px 22px rgba(2,6,23,.28) !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .insight-trends.has-open-card > .trend-content.open.is-mobile-trend-content-active,
+html body #page-insights#page-insights .insights-trends-card .insight-trends.has-open-card > .trend-content.open.is-mobile-trend-content-active.trend-content-animate{
+  background:transparent !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+}

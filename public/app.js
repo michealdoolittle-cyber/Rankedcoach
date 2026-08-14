@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260813-nav-loadout-stats-round10-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-goal-loadout-map-slider-02";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -58723,6 +58723,15 @@ function formatModalTitleWithValue(label = "", value = "") {
     : cleanLabel;
 }
 
+function formatStatsSummaryModalTitleMarkup(label = "", value = "") {
+  const cleanLabel = String(label || "").trim();
+  const cleanValue = String(value || "").trim();
+  if (!cleanValue || cleanValue === "--" || cleanValue === "—") {
+    return escapeHtml(cleanLabel);
+  }
+  return `${escapeHtml(cleanLabel)}: <span class="stats-summary-modal-title-value">${escapeHtml(cleanValue)}</span>`;
+}
+
 function getStatsRoleHistoryOriginValue(roleKey = "") {
   const key = String(roleKey || "").trim().toLowerCase();
   if (!key) return "";
@@ -58753,7 +58762,7 @@ function openStatsSummaryTrend(metric = "kd") {
   const verified = entries.filter(entry => Number.isFinite(Number(entry.value)));
   const maxValue = Math.max(1, ...verified.map(entry => Number(entry.value)));
   const ticks = buildStatsSummaryTrendTicks(maxValue, meta);
-  title.textContent = formatModalTitleWithValue(`${meta.label} Trend`, getStatsSummaryOriginValue(metric));
+  title.innerHTML = formatStatsSummaryModalTitleMarkup(`${meta.label} Trend`, getStatsSummaryOriginValue(metric));
   tabsHost.innerHTML = "";
   tabsHost.style.display = "none";
   list.className = "lens-stats-list stats-summary-trend-list";
@@ -58788,7 +58797,35 @@ function openStatsSummaryTrend(metric = "kd") {
       </div>` : `<p class="stats-summary-trend-empty">No verified ${escapeHtml(meta.label)} values exist in this selected season yet.</p>`}
     </li>
   `;
+  bindStatsSummaryTrendScroll(list);
   showModalById("lensModal");
+}
+
+function bindStatsSummaryTrendScroll(root = document) {
+  root.querySelectorAll(".stats-summary-trend-chart").forEach(chart => {
+    const labels = chart.querySelector(".stats-summary-trend-labels");
+    const bars = chart.querySelector(".stats-summary-trend-bars");
+    const barsClip = chart.querySelector(".stats-summary-trend-bars-clip");
+    if (!labels || !bars || !barsClip) return;
+    if (chart.dataset.statsSummaryScrollBound !== "true") {
+      labels.addEventListener("scroll", () => updateStatsSummaryTrendScroll(chart), { passive: true });
+      chart.dataset.statsSummaryScrollBound = "true";
+    }
+    requestAnimationFrame(() => updateStatsSummaryTrendScroll(chart));
+    requestAnimationFrame(() => requestAnimationFrame(() => updateStatsSummaryTrendScroll(chart)));
+  });
+}
+
+function updateStatsSummaryTrendScroll(chart) {
+  const labels = chart?.querySelector?.(".stats-summary-trend-labels");
+  const bars = chart?.querySelector?.(".stats-summary-trend-bars");
+  const barsClip = chart?.querySelector?.(".stats-summary-trend-bars-clip");
+  if (!labels || !bars || !barsClip) return;
+  const labelScrollable = Math.max(0, labels.scrollWidth - labels.clientWidth);
+  const barScrollable = Math.max(0, bars.scrollWidth - barsClip.clientWidth);
+  const progress = labelScrollable > 0 ? labels.scrollLeft / labelScrollable : 0;
+  const offset = Math.round(barScrollable * Math.min(1, Math.max(0, progress)));
+  bars.style.transform = offset ? `translate3d(${-offset}px,0,0)` : "";
 }
 
 function bindStatsSummaryTrendTriggers() {
