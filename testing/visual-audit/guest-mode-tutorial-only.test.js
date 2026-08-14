@@ -165,6 +165,64 @@ async function run() {
         "The compass compares Aim, Game Sense, Teamwork, and Discipline from your available match data and logs so you can spot your strongest category and the area you are weaker in.",
         "slide 7 should use the requested compass wording"
       );
+      for (let i = 0; i < 7; i += 1) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      }
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "14 / 23", null, { timeout: 10000 });
+      const slideFourteenCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
+      assert.equal(
+        slideFourteenCopy,
+        "The summary card shows the current season stat snapshot, peak progress, selected season window, and role winrate. The stat cards, peak progress, and role cards can be selected to pull up relevant info and graphs for each of them respectively.",
+        "slide 14 should use the requested stats overview wording"
+      );
+      for (let i = 0; i < 4; i += 1) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      }
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "18 / 23", null, { timeout: 10000 });
+      const slideEighteenRestart = await page.evaluate(() => {
+        const restart = document.getElementById("appTutorialRestart");
+        return {
+          hidden: restart?.hidden ?? false,
+          ariaHidden: restart?.getAttribute("aria-hidden") || "",
+          display: restart ? getComputedStyle(restart).display : ""
+        };
+      });
+      assert.equal(slideEighteenRestart.hidden, true, "slide 18 should not expose Start over");
+      assert.equal(slideEighteenRestart.ariaHidden, "true", "slide 18 Start over should be aria-hidden");
+      assert.equal(slideEighteenRestart.display, "none", "slide 18 Start over should not be visible");
+      for (let i = 0; i < 2; i += 1) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      }
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "20 / 23", null, { timeout: 10000 });
+      const slideTwenty = await page.evaluate(() => ({
+        title: document.getElementById("appTutorialTitle")?.textContent || "",
+        copy: document.getElementById("appTutorialCopy")?.textContent || ""
+      }));
+      assert.equal(slideTwenty.title, "Main Focus", "slide 20 should be Main Focus after the Insights reorder");
+      assert.equal(slideTwenty.copy, "This is the one thing RankedCoach thinks is most worth working on next.", "slide 20 should keep the Main Focus copy");
+      await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "21 / 23", null, { timeout: 10000 });
+      const slideTwentyOne = await page.evaluate(() => ({
+        title: document.getElementById("appTutorialTitle")?.textContent || "",
+        copy: document.getElementById("appTutorialCopy")?.textContent || ""
+      }));
+      assert.equal(slideTwentyOne.title, "Important Insights", "slide 21 should be Important Insights after the Insights reorder");
+      assert.equal(slideTwentyOne.copy, "These reads are most likely to matter right now. Use the filters to split problems, watch items, and strengths.", "slide 21 should keep the Important Insights copy");
+      for (let i = 0; i < 2; i += 1) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      }
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "23 / 23", null, { timeout: 10000 });
+      const finalRestart = await page.evaluate(() => {
+        const restart = document.getElementById("appTutorialRestart");
+        return {
+          hidden: restart?.hidden ?? true,
+          ariaHidden: restart?.getAttribute("aria-hidden") || "",
+          display: restart ? getComputedStyle(restart).display : ""
+        };
+      });
+      assert.equal(finalRestart.hidden, false, "final slide should expose Start over");
+      assert.equal(finalRestart.ariaHidden, "false", "final slide Start over should be announced");
+      assert.notEqual(finalRestart.display, "none", "final slide Start over should be visible");
       assert.deepEqual(issues, [], "guest tutorial start path should not emit console/page errors");
       await page.close();
     }

@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-race-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-copy-03";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -18948,7 +18948,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "stats",
     selector: ".stats-summary-card",
     title: "Stats overview",
-    copy: "The summary card shows the current statistical snapshot, peak progress, selected season window, and role progress context."
+    copy: "The summary card shows the current season stat snapshot, peak progress, selected season window, and role winrate. The stat cards, peak progress, and role cards can be selected to pull up relevant info and graphs for each of them respectively."
   },
   {
     page: "stats",
@@ -18982,15 +18982,15 @@ const GUEST_TUTORIAL_STEPS = [
   },
   {
     page: "insights",
-    selector: ".insights-top-card",
-    title: "Important Insights",
-    copy: "These reads are most likely to matter right now. Use the filters to split problems, watch items, and strengths."
-  },
-  {
-    page: "insights",
     selector: ".insights-action-card",
     title: "Main Focus",
     copy: "This is the one thing RankedCoach thinks is most worth working on next."
+  },
+  {
+    page: "insights",
+    selector: ".insights-top-card",
+    title: "Important Insights",
+    copy: "These reads are most likely to matter right now. Use the filters to split problems, watch items, and strengths."
   },
   {
     page: "insights",
@@ -19654,6 +19654,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   const back = document.getElementById("appTutorialBack");
   const next = document.getElementById("appTutorialNext");
   const restart = document.getElementById("appTutorialRestart");
+  const actions = document.querySelector("#appTutorialCard .app-tutorial-actions");
   const isLast = guestTutorialIndex === GUEST_TUTORIAL_STEPS.length - 1;
 
   if (title) title.textContent = step.title || "RankedCoach tutorial";
@@ -19661,7 +19662,13 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   if (count) count.textContent = `${guestTutorialIndex + 1} / ${GUEST_TUTORIAL_STEPS.length}`;
   if (back) back.disabled = guestTutorialIndex === 0;
   if (next) next.textContent = isLast ? "Complete" : "Next";
-  if (restart) restart.hidden = !isLast;
+  actions?.classList.toggle("has-restart", isLast);
+  if (restart) {
+    restart.hidden = !isLast;
+    restart.setAttribute("aria-hidden", isLast ? "false" : "true");
+    if (isLast) restart.style.removeProperty("display");
+    else restart.style.setProperty("display", "none", "important");
+  }
 
   waitForGuestTutorialTarget(step).then(target => {
     if (renderToken !== guestTutorialRenderToken || GUEST_TUTORIAL_STEPS[guestTutorialIndex] !== step) return;

@@ -18497,14 +18497,22 @@ min-height:0;
 
 .app-tutorial-actions{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:8px;
   margin-top:16px;
+}
+
+.app-tutorial-actions.has-restart{
+  grid-template-columns:1fr 1fr 1fr;
 }
 
 .app-tutorial-actions .pd-item{
   justify-content:center;
   min-height:42px;
+}
+
+.app-tutorial-actions #appTutorialRestart[hidden]{
+  display:none !important;
 }
 
 .app-tutorial-primary{
