@@ -2136,3 +2136,147 @@ html body #page-insights#page-insights .insights-trends-card .insight-trends.has
   background-color:transparent !important;
   box-shadow:none !important;
 }
+
+/* 2026-08-14 focused polish:
+   - Stats agent/weapon tiles regain the same small pop-up hover as map tiles.
+   - The real active loadout agent art stays centered after a spin settles.
+   - Supporting Reads are selectable neutral pills; Trend Signal readouts are
+     passive riot-blue panels, not gray buttons.
+   - Recent Match Trends keep neutral gray cards and use theme-color hover,
+     never a hard red fill.
+   - The score-weighting collapse symbol is a square control. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-agents-card,.stats-weapons-card,#statsAgentsList,#statsWeaponsList,.stats-agent-desktop-column,.stats-weapon-image-row){
+  overflow:visible !important;
+}
+
+#page-stats :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data){
+  transform-origin:center center !important;
+  will-change:transform !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats.page.active :is(.stats-agent-mini-card,.stats-agent-card,.stats-agent-row,.stats-desktop-weapon-tile:not(:disabled),.stats-weapon-tile.has-data,.stats-weapon-family-row.has-data):is(:hover,:focus-visible){
+    transform:translate3d(0,-3px,0) scale(1.018) !important;
+    z-index:18 !important;
+    border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 64%,rgba(255,255,255,.18)) !important;
+    background:
+      radial-gradient(circle at 18% 0%,color-mix(in srgb,var(--accent-2,#38bdf8) 20%,transparent),transparent 44%),
+      linear-gradient(135deg,color-mix(in srgb,var(--accent-2,#38bdf8) 15%,rgba(51,65,85,.86)),rgba(15,23,42,.94)) !important;
+    box-shadow:
+      0 12px 24px rgba(2,6,23,.34),
+      0 0 18px color-mix(in srgb,var(--accent-2,#38bdf8) 28%,transparent) !important;
+  }
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame :is(.agent-reveal-art img,.agent-frame-portrait,.frame-art-inner){
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:
+    translate(
+      calc(-50% + var(--agent-art-x-scaled,var(--agent-art-x,0px))),
+      calc(-50% + var(--agent-art-y-scaled,var(--agent-art-y,0px)))
+    )
+    scale(var(--agent-art-scale,1)) !important;
+  transform-origin:center center !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentReel .reel-icon{
+  width:100% !important;
+  height:var(--agent-reel-step,var(--agent-frame-unit,100%)) !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]{
+  background:
+    radial-gradient(circle at 18% 0%,rgba(148,163,184,.14),transparent 46%),
+    linear-gradient(145deg,rgba(51,65,85,.88),rgba(15,23,42,.96)) !important;
+  background-color:rgb(30,41,59) !important;
+  border-color:rgba(148,163,184,.30) !important;
+  color:var(--text-main,#f8fafc) !important;
+  box-shadow:0 8px 18px rgba(2,6,23,.22) !important;
+  cursor:pointer !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]:is(:hover,:focus-visible,.open,.is-mobile-trend-tab-active){
+  background:
+    radial-gradient(circle at 18% 0%,color-mix(in srgb,var(--accent-2,#38bdf8) 16%,rgba(148,163,184,.12)),transparent 46%),
+    linear-gradient(145deg,rgba(51,65,85,.92),rgba(15,23,42,.96)) !important;
+  border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 54%,rgba(148,163,184,.34)) !important;
+  box-shadow:
+    0 10px 22px rgba(2,6,23,.28),
+    0 0 14px color-mix(in srgb,var(--accent-2,#38bdf8) 20%,transparent) !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-grid,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-grid{
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-card,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-card,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open.trend-content-animate .trend-signal-card{
+  cursor:default !important;
+  pointer-events:none !important;
+  transform:none !important;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(56,189,248,.12),transparent 45%),
+    linear-gradient(145deg,rgba(14,45,71,.92),rgba(8,18,36,.97)) !important;
+  background-color:rgb(8,18,36) !important;
+  border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 46%,rgba(148,163,184,.22)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 14px 28px rgba(2,6,23,.24) !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-card:is(:hover,:focus-visible),
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-card:is(:hover,:focus-visible){
+  transform:none !important;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(56,189,248,.12),transparent 45%),
+    linear-gradient(145deg,rgba(14,45,71,.92),rgba(8,18,36,.97)) !important;
+  border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 46%,rgba(148,163,184,.22)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 14px 28px rgba(2,6,23,.24) !important;
+}
+
+#lensWeightingToggle > span{
+  aspect-ratio:1 / 1 !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  border-radius:2px !important;
+  clip-path:none !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  padding:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card{
+  background:
+    radial-gradient(circle at 18% 0%,rgba(148,163,184,.12),transparent 46%),
+    linear-gradient(145deg,rgba(51,65,85,.82),rgba(15,23,42,.96)) !important;
+  background-color:rgb(30,41,59) !important;
+  border-color:rgba(148,163,184,.30) !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats.page.active #statsPerformanceChart .stats-trend-card.stats-select-card:is(:hover,:focus-visible){
+    border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 62%,rgba(203,213,225,.28)) !important;
+    background:
+      radial-gradient(circle at 20% 0%,color-mix(in srgb,var(--accent-2,#38bdf8) 20%,transparent),transparent 46%),
+      linear-gradient(145deg,color-mix(in srgb,var(--accent-2,#38bdf8) 14%,rgba(71,85,105,.92)),rgba(15,23,42,.96)) !important;
+    box-shadow:
+      0 10px 22px rgba(2,6,23,.28),
+      0 0 16px color-mix(in srgb,var(--accent-2,#38bdf8) 24%,transparent) !important;
+  }
+}
