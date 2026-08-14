@@ -157,6 +157,14 @@ async function run() {
         "Use this section to select the map you are queued for, choose your role, spin for your agent, and receive a short term focus before the game begins.",
         "slide 6 should use the requested loadout wording"
       );
+      await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "7 / 23", null, { timeout: 8000 });
+      const slideSevenCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
+      assert.equal(
+        slideSevenCopy,
+        "The compass compares Aim, Game Sense, Teamwork, and Discipline from your available match data and logs so you can spot your strongest category and the area you are weaker in.",
+        "slide 7 should use the requested compass wording"
+      );
       assert.deepEqual(issues, [], "guest tutorial start path should not emit console/page errors");
       await page.close();
     }

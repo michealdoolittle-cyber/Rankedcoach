@@ -18906,7 +18906,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "home",
     selector: ".compass-panel",
     title: "Compass categories",
-    copy: "The compass compares Aim, Game Sense, Teamwork, and Discipline from your available match data and logs so you can spot your strongest category and your clearest improvement area quickly."
+    copy: "The compass compares Aim, Game Sense, Teamwork, and Discipline from your available match data and logs so you can spot your strongest category and the area you are weaker in."
   },
   {
     page: "home",
