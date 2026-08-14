@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-library-02";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-tutorial-insights-polish-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -18599,6 +18599,7 @@ function hideAppLoadingVeil({ force = false } = {}) {
 
 async function withAppLoadingVeil(message = "Preparing your dashboard...", task = async () => {}, options = {}) {
   showAppLoadingVeil(message, { percent: 8, ...options });
+  await waitForNextPaintFrame();
   const startedAt = Date.now();
   try {
     return await task();
@@ -18858,6 +18859,18 @@ function refreshGuestTutorialLibrarySurface(step = {}) {
   }
 }
 
+function waitForNextPaintFrame() {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
+      globalThis.setTimeout?.(resolve, 0);
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
+
 function getGuestTutorialDemoMatch(profileMatches = []) {
   return [...profileMatches].reverse().find(match => match && typeof match === "object")
     || createMatchSummaryPreviewRecord?.()
@@ -18937,6 +18950,8 @@ function refreshGuestTutorialDemoSurfaces(step = {}) {
       switch (page) {
         case "home":
           renderChart?.(currentSize);
+          syncWeeklyFocus?.();
+          syncImprovementCardSub?.();
           break;
         case "logging":
           renderLogFeed?.({ force: true });
@@ -19280,7 +19295,9 @@ function openGuestTutorialComplete() {
   showModalById?.("guestTutorialCompleteModal");
 }
 
-function buildClientTutorialDemoMatches(count = 750) {
+const GUEST_TUTORIAL_DEMO_MATCH_COUNT = 120;
+
+function buildClientTutorialDemoMatches(count = GUEST_TUTORIAL_DEMO_MATCH_COUNT) {
   const actPlans = [
     {
       label: "Season 2025 Act 5",
@@ -60814,7 +60831,7 @@ function applyImportedMatches(matchList = [], options = {}){
 
 async function importDemoMatches(options = {}){
   if (options.preferBuiltIn) {
-    const matchList = buildClientTutorialDemoMatches(750);
+    const matchList = buildClientTutorialDemoMatches(GUEST_TUTORIAL_DEMO_MATCH_COUNT);
     activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
     activeStatsActKey = "";
     applyImportedMatches(matchList, {
@@ -60852,7 +60869,7 @@ async function importDemoMatches(options = {}){
     };
   } catch (error) {
     console.warn("Demo endpoint unavailable; using built-in tutorial fixture.", error);
-    const matchList = buildClientTutorialDemoMatches(750);
+    const matchList = buildClientTutorialDemoMatches(GUEST_TUTORIAL_DEMO_MATCH_COUNT);
     activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
     activeStatsActKey = "";
     applyImportedMatches(matchList, {

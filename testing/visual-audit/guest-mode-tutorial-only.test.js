@@ -104,7 +104,7 @@ async function run() {
       await page.evaluate(() => document.getElementById("guestTutorialSkipBtn")?.click());
       await page.waitForFunction(() => {
         const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0] || {};
-        return Array.isArray(profile.matches) && profile.matches.length >= 700;
+        return Array.isArray(profile.matches) && profile.matches.length >= 100;
       }, null, { timeout: 15000 });
       const demoState = await page.evaluate(() => ({
         entryChoice: localStorage.getItem("valtracker_entry_choice_v1"),
@@ -113,7 +113,7 @@ async function run() {
       }));
       assert.equal(demoState.entryChoice, "guest", "guest tutorial skip should keep guest mode");
       assert.equal(demoState.activeAuth, false, "guest tutorial skip should close auth");
-      assert.ok(demoState.matchCount >= 700, `guest demo should load built-in matches: ${JSON.stringify(demoState)}`);
+      assert.ok(demoState.matchCount >= 100, `guest demo should load enough built-in matches to populate tutorial surfaces: ${JSON.stringify(demoState)}`);
       await page.evaluate(() => document.querySelector('.nav-btn[data-page="library"]')?.click());
       await page.waitForFunction(() => document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length >= 5, null, { timeout: 10000 });
       const libraryNavState = await page.evaluate(() => ({

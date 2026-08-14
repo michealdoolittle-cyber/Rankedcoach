@@ -9904,6 +9904,204 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   margin:clamp(108px, 15vw, 168px) 0 10px;
 }
 
+/* 2026-08-14 tutorial + insights polish shared animation/base styles.
+   The end-of-file guard below wins the late Insight rail cascade. */
+@keyframes rc-control-pop{
+  0%{transform:scale(.96);opacity:.78;}
+  58%{transform:scale(1.025);opacity:1;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
+    min-height:clamp(250px,28vh,360px) !important;
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+    min-height:clamp(220px,24vh,320px) !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    grid-template-rows:auto auto minmax(118px,auto) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-preview{
+    display:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing.open .insight-expand{
+    display:grid !important;
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    grid-template-rows:minmax(108px,auto) auto !important;
+    gap:8px !important;
+    height:auto !important;
+    min-height:128px !important;
+    max-height:none !important;
+    margin:6px 0 0 !important;
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-block{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
+    gap:5px !important;
+    min-height:108px !important;
+    height:auto !important;
+    max-height:none !important;
+    padding:9px 10px !important;
+    overflow:visible !important;
+    white-space:normal !important;
+    font-size:12px !important;
+    line-height:1.22 !important;
+  }
+}
+
+#page-insights .insights-top-card .insight-card{
+  transition:
+    transform .18s cubic-bezier(.2,.84,.24,1),
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease,
+    filter .18s ease !important;
+  transform-origin:center center;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card:not(.open):hover,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card:not(.open):focus-within{
+  transform:translateY(-3px) scale(1.01) !important;
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 72%,#fff 8%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 16px 30px rgba(0,0,0,.32),
+    0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 32%,transparent) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.open:hover,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.open:focus-within{
+  transform:none !important;
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 68%,#fff 8%) !important;
+}
+
+#weeklyFocusSummary .weekly-focus-pill,
+.improvement-card .timeline-pill,
+.compass-score-card,
+.chart-controls .graph-btn,
+#page-logging .logging-launch-tile,
+#logCalendarTrigger,
+#matchSummaryModal .match-summary-close,
+#matchSummaryModal [data-match-summary-tab],
+#matchSummaryModal [data-match-summary-stat],
+#matchSummaryModal [data-match-economy-toggle],
+#page-logging .log-report-btn,
+#page-logging .log-edit-btn,
+[data-gamesense-open="maps"],
+[data-gamesense-open="agents"],
+[data-gamesense-open="weapons"]{
+  animation:rc-control-pop .34s cubic-bezier(.2,.84,.24,1) both;
+  transform-origin:center center;
+  transition:
+    transform .16s cubic-bezier(.2,.84,.24,1),
+    border-color .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(
+  #weeklyFocusSummary .weekly-focus-pill,
+  .improvement-card .timeline-pill,
+  .compass-score-card,
+  .chart-controls .graph-btn,
+  #page-logging .logging-launch-tile,
+  #logCalendarTrigger,
+  #matchSummaryModal .match-summary-close,
+  #matchSummaryModal [data-match-summary-tab],
+  #matchSummaryModal [data-match-summary-stat],
+  #matchSummaryModal [data-match-economy-toggle],
+  #page-logging .log-report-btn,
+  #page-logging .log-edit-btn,
+  [data-gamesense-open="maps"],
+  [data-gamesense-open="agents"],
+  [data-gamesense-open="weapons"]
+):is(:hover,:focus-visible){
+  transform:translateY(-2px) scale(1.015) !important;
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 72%,#fff 8%) !important;
+  box-shadow:
+    0 10px 20px rgba(0,0,0,.24),
+    0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 30%,transparent) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-row{
+  position:relative !important;
+  isolation:isolate !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-row::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:50%;
+  top:42%;
+  width:clamp(64px,5vw,92px);
+  aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle,
+      color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 34%,transparent) 0 22%,
+      rgba(250,204,21,.16) 23% 42%,
+      transparent 68%);
+  filter:blur(12px);
+  opacity:.72;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-icon,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-copy{
+  position:relative !important;
+  z-index:2 !important;
+}
+
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insights-list.has-open-card .insight-card.open .insight-expand{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  #weeklyFocusSummary .weekly-focus-pill,
+  .improvement-card .timeline-pill,
+  .compass-score-card,
+  .chart-controls .graph-btn,
+  #page-logging .logging-launch-tile,
+  #logCalendarTrigger,
+  #matchSummaryModal .match-summary-close,
+  #matchSummaryModal [data-match-summary-tab],
+  #matchSummaryModal [data-match-summary-stat],
+  #matchSummaryModal [data-match-economy-toggle],
+  #page-logging .log-report-btn,
+  #page-logging .log-edit-btn,
+  [data-gamesense-open="maps"],
+  [data-gamesense-open="agents"],
+  [data-gamesense-open="weapons"]{
+    animation:none !important;
+  }
+}
+
 /* Desktop Logging launcher + explicit app-update action. The final display
    guard below keeps saved layout styles from turning the form permanent. */
 .app-toast-action{
@@ -62065,4 +62263,106 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
     text-align:center;
   }
 
+}
+
+/* Final cascade guard for 2026-08-14 tutorial + insights polish. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
+    min-height:clamp(250px,28vh,360px) !important;
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+    min-height:clamp(220px,24vh,320px) !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    grid-template-rows:auto auto minmax(118px,auto) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-preview{
+    display:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing.open .insight-expand{
+    display:grid !important;
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    grid-template-rows:minmax(108px,auto) auto !important;
+    gap:8px !important;
+    height:auto !important;
+    min-height:128px !important;
+    max-height:none !important;
+    margin:6px 0 0 !important;
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-block{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
+    gap:5px !important;
+    min-height:108px !important;
+    height:auto !important;
+    max-height:none !important;
+    padding:9px 10px !important;
+    overflow:visible !important;
+    white-space:normal !important;
+    font-size:12px !important;
+    line-height:1.22 !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card:not(.open):hover,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card:not(.open):focus-within{
+    transform:translateY(-3px) scale(1.01) !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 72%,#fff 8%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 16px 30px rgba(0,0,0,.32),
+      0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 32%,transparent) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.open:hover,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.open:focus-within{
+    transform:none !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 68%,#fff 8%) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(
+    #weeklyFocusSummary .weekly-focus-pill,
+    .improvement-card .timeline-pill,
+    .compass-score-card,
+    .chart-controls .graph-btn,
+    #page-logging .logging-launch-tile,
+    #logCalendarTrigger,
+    #matchSummaryModal .match-summary-close,
+    #matchSummaryModal [data-match-summary-tab],
+    #matchSummaryModal [data-match-summary-stat],
+    #matchSummaryModal [data-match-economy-toggle],
+    #page-logging .log-report-btn,
+    #page-logging .log-edit-btn,
+    [data-gamesense-open="maps"],
+    [data-gamesense-open="agents"],
+    [data-gamesense-open="weapons"]
+  ):is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.015) !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 72%,#fff 8%) !important;
+    box-shadow:
+      0 10px 20px rgba(0,0,0,.24),
+      0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 30%,transparent) !important;
+  }
+}
+
+#page-logging :is(.log-report-btn,.log-edit-btn){
+  height:32px !important;
+  min-height:32px !important;
+  animation:none !important;
 }
