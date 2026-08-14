@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-stats-insights-hover-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-loadout-insights-polish-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -25732,7 +25732,7 @@ function setRandomSilhouette(){
   const index = Math.floor(Math.random() * keys.length);
   const agent = keys[index];
 
-  img.src = getAgentIconUrl(agent);
+  img.src = getAgentSilhouetteUrl(agent);
 
 }
 
@@ -25757,7 +25757,7 @@ function startSilhouetteShuffle() {
     const pool = allAgents?.length ? allAgents : Object.keys(AGENT_SIL_MAP);
     if (pool?.length) {
       const agent = pool[Math.floor(Math.random() * pool.length)];
-      img.src = getAgentIconUrl(agent);
+      img.src = getAgentSilhouetteUrl(agent);
     }
 
     delay = Math.max(38, delay - 8);
@@ -25792,8 +25792,8 @@ function resetPlaceholder() {
   const sil = document.getElementById("placeholderSilhouette");
   if (sil) {
     sil.classList.remove("silhouette-reveal");
-    sil.style.opacity = "0.25";
-    sil.style.transform = "scale(1.1)";
+    sil.style.opacity = "0.16";
+    sil.style.transform = "scale(0.86)";
   }
 }
 
@@ -26016,7 +26016,7 @@ function applyAgentSilhouette(agent) {
   if (!sil) return;
 
   const key = (agent || "").toLowerCase();
-  const url = getAgentIconUrl(key);
+  const url = getAgentSilhouetteUrl(key);
   if (!url) return;
 
   sil.classList.remove("silhouette-reveal");
@@ -26030,6 +26030,13 @@ function getAgentIconUrl(agent){
   return key
     ? `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${key}.png`
     : "";
+}
+
+function getAgentSilhouetteUrl(agent){
+  const key = String(agent || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key
+    ? (getAgentIconUrl(key) || DEFAULT_AGENT_SILHOUETTE_SRC)
+    : DEFAULT_AGENT_SILHOUETTE_SRC;
 }
 
 function getRankIconUrl(label){

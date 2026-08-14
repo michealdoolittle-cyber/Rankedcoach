@@ -2280,3 +2280,135 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerfor
       0 0 16px color-mix(in srgb,var(--accent-2,#38bdf8) 24%,transparent) !important;
   }
 }
+
+/* 2026-08-14 follow-up polish:
+   Supporting Reads remain neutral gray but regain the tactile tile lift.
+   Trend Signal panels are passive dark navy readouts, matching Important
+   Insights' content surface instead of acting like blue buttons.
+   Loadout selected art ignores old square-frame offsets in the new wide frame,
+   and the pre-roll mystery silhouette goes back to obscured/guessable. */
+html body #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]{
+  position:relative !important;
+  transform-origin:center center !important;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease !important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]:is(:hover,:focus-visible){
+    transform:translate3d(0,-3px,0) scale(1.016) !important;
+    z-index:12 !important;
+  }
+}
+
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-grid,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-grid{
+  background:
+    radial-gradient(circle at 16% 0%,rgba(56,189,248,.07),transparent 42%),
+    linear-gradient(145deg,rgba(7,14,32,.96),rgba(2,6,23,.99)) !important;
+  background-color:rgb(2,6,23) !important;
+  border-radius:18px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-card,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-card,
+html body #page-insights#page-insights .insights-trends-card .trend-content.open.trend-content-animate .trend-signal-card,
+html body #page-insights#page-insights .insights-trends-card .trend-content .trend-signal-card:is(:hover,:focus-visible),
+html body #page-insights#page-insights .insights-trends-card .trend-content.open .trend-signal-card:is(:hover,:focus-visible){
+  cursor:default !important;
+  pointer-events:none !important;
+  transform:none !important;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(56,189,248,.055),transparent 45%),
+    linear-gradient(145deg,rgba(8,15,35,.96),rgba(2,6,23,.99)) !important;
+  background-color:rgb(2,6,23) !important;
+  border-color:rgba(56,189,248,.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 12px 24px rgba(2,6,23,.25) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-selected :is(#agentRevealArt img,.agent-reveal-art img,.agent-frame-portrait){
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:translate(-50%, -50%) scale(var(--agent-art-scale,1)) !important;
+  transform-origin:center center !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-selected #agentPlaceholder,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.reel-active #agentPlaceholder{
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder{
+  overflow:hidden !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::before,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  border-radius:inherit !important;
+  pointer-events:none !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::before{
+  z-index:14 !important;
+  background:
+    radial-gradient(circle at 50% 48%,transparent 0 27%,rgba(2,6,23,.13) 48%,rgba(2,6,23,.56) 82%),
+    linear-gradient(135deg,rgba(15,23,42,.10),rgba(2,6,23,.48)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::after{
+  z-index:15 !important;
+  opacity:.42 !important;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 14px,rgba(56,189,248,.08) 14px 15px,transparent 15px 31px),
+    linear-gradient(180deg,rgba(2,6,23,.02),rgba(2,6,23,.34)) !important;
+  mix-blend-mode:screen !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .placeholder-silhouette,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.duelist .placeholder-silhouette,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.controller .placeholder-silhouette,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.initiator .placeholder-silhouette,
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.sentinel .placeholder-silhouette{
+  inset:9% !important;
+  width:82% !important;
+  height:82% !important;
+  max-width:82% !important;
+  max-height:82% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  opacity:.46 !important;
+  transform:scale(.9) !important;
+  filter:
+    grayscale(1)
+    invert(.72)
+    brightness(.72)
+    contrast(1.24)
+    blur(1.15px)
+    drop-shadow(0 0 12px color-mix(in srgb,var(--agent-role-color,var(--accent-2,#38bdf8)) 34%,transparent)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .agent-placeholder.is-spinning .placeholder-silhouette{
+  opacity:.38 !important;
+  transform:scale(.92) !important;
+  filter:
+    grayscale(1)
+    invert(.72)
+    brightness(.62)
+    contrast(1.25)
+    blur(2.6px)
+    drop-shadow(0 0 14px color-mix(in srgb,var(--agent-role-color,var(--accent-2,#38bdf8)) 36%,transparent)) !important;
+}
