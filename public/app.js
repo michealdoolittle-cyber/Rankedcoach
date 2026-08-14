@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-library-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-flow-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -18853,6 +18853,64 @@ function refreshGuestTutorialLibrarySurface(step = {}) {
   }
 }
 
+function getGuestTutorialDemoMatch(profileMatches = []) {
+  return [...profileMatches].reverse().find(match => match && typeof match === "object")
+    || createMatchSummaryPreviewRecord?.()
+    || null;
+}
+
+function refreshGuestTutorialLoggingSurface(step = {}, profileMatches = []) {
+  if (step?.page !== "logging") return;
+  const surface = String(step.tutorialSurface || "").trim();
+  try {
+    if (surface !== "match-report") closeMatchSummaryModal?.();
+
+    if (surface !== "embedded-return") {
+      restoreDailyTrainingModalFromLoggingLauncher?.();
+    }
+
+    switch (surface) {
+      case "launcher":
+      case "warmup-tile":
+      case "postmatch-tile": {
+        if (isDesktopLoggingViewport?.()) setDesktopLoggingView?.("launcher", { preserveEmbedded: true });
+        else setMobileLoggingFormStage?.("launcher", { preserveEmbedded: true });
+        renderLoggingLauncher?.();
+        break;
+      }
+      case "match-report": {
+        if (isDesktopLoggingViewport?.()) setDesktopLoggingView?.("launcher", { preserveEmbedded: true });
+        else setMobileLoggingFormStage?.("launcher", { preserveEmbedded: true });
+        renderLoggingLauncher?.();
+        const demoMatch = getGuestTutorialDemoMatch(profileMatches);
+        if (demoMatch) openMatchSummaryModal?.(demoMatch);
+        break;
+      }
+      case "embedded-return": {
+        closeMatchSummaryModal?.();
+        if (!openLoggingWarmupExperience?.()) {
+          if (isDesktopLoggingViewport?.()) setDesktopLoggingView?.("launcher", { preserveEmbedded: true });
+          else setMobileLoggingFormStage?.("launcher", { preserveEmbedded: true });
+          renderLoggingLauncher?.();
+        }
+        break;
+      }
+      case "form":
+      case "ratings":
+      default: {
+        setLoggingLauncherFormView?.({ scroll: false });
+        updateLoggingDebriefPreview?.();
+        break;
+      }
+    }
+  } catch (error) {
+    console.warn("Guest tutorial Logging refresh skipped", error);
+  }
+}
+
+let guestTutorialRefreshedPages = new Set();
+let guestTutorialCachedMatchCount = -1;
+
 function refreshGuestTutorialDemoSurfaces(step = {}) {
   const profile = getActiveProfile?.();
   const profileMatches = Array.isArray(profile?.matches) ? profile.matches.slice() : [];
@@ -18860,16 +18918,39 @@ function refreshGuestTutorialDemoSurfaces(step = {}) {
     matches = profileMatches;
   }
   try {
-    recomputeFromMatches?.();
-    updateDisplays?.();
-    initStatsPage?.();
-    renderStatsAgents?.();
-    renderStatsMaps?.();
-    renderStatsWeapons?.();
-    renderInsights?.();
-    renderLogFeed?.({ force: true });
-    renderChart?.(currentSize);
-    if (step.page === "home" || step.selector === ".rr-card") {
+    const page = String(step.page || "home").trim() || "home";
+    const matchCount = profileMatches.length;
+    const matchStateChanged = matchCount !== guestTutorialCachedMatchCount;
+    if (matchStateChanged) {
+      guestTutorialCachedMatchCount = matchCount;
+      guestTutorialRefreshedPages = new Set();
+      recomputeFromMatches?.();
+      updateDisplays?.();
+    }
+    const needsPageRefresh = !guestTutorialRefreshedPages.has(page);
+    if (needsPageRefresh) {
+      switch (page) {
+        case "home":
+          renderChart?.(currentSize);
+          break;
+        case "logging":
+          renderLogFeed?.({ force: true });
+          break;
+        case "stats":
+          initStatsPage?.();
+          renderStatsAgents?.();
+          renderStatsMaps?.();
+          renderStatsWeapons?.();
+          break;
+        case "insights":
+          renderInsights?.();
+          break;
+        default:
+          break;
+      }
+      guestTutorialRefreshedPages.add(page);
+    }
+    if (page === "home" && (needsPageRefresh || step.selector === ".rr-card")) {
       const sessionEntries = typeof getSessionMatchEntries === "function" ? getSessionMatchEntries() : [];
       const latestSessionEntry = sessionEntries[sessionEntries.length - 1] || null;
       updateRRMatchStats?.(latestSessionEntry?.match || profileMatches[profileMatches.length - 1] || null, latestSessionEntry?.index ?? null, {
@@ -18877,6 +18958,7 @@ function refreshGuestTutorialDemoSurfaces(step = {}) {
       });
     }
     refreshGuestTutorialLibrarySurface(step);
+    refreshGuestTutorialLoggingSurface(step, profileMatches);
   } catch (error) {
     console.warn("Guest tutorial demo surface refresh skipped", error);
   }
@@ -18939,13 +19021,50 @@ const GUEST_TUTORIAL_STEPS = [
   },
   {
     page: "logging",
+    selector: "#loggingDesktopLauncher",
+    tutorialSurface: "launcher",
+    title: "Logging opens with choices",
+    copy: "Logging starts at a launcher now. Choose Warm-Up before queueing or Post-Match Training after ranked, instead of landing straight inside the reflection form."
+  },
+  {
+    page: "logging",
+    selector: ".logging-launch-tile-warmup",
+    tutorialSurface: "warmup-tile",
+    title: "Warm-Up tile",
+    copy: "Use Warm-Up to build a short pre-match drill plan before you queue. These choices can carry into the session so the app knows what you meant to practice."
+  },
+  {
+    page: "logging",
+    selector: ".logging-launch-tile-postmatch",
+    tutorialSurface: "postmatch-tile",
+    title: "Post-Match Training tile",
+    copy: "Use Post-Match Training after your final game to log a quick aim session, then keep that training marker tied to the session."
+  },
+  {
+    page: "logging",
+    selector: ["#matchSummaryModal .match-summary-modal", "#matchSummaryModal", ".log-report-btn"],
+    tutorialSurface: "match-report",
+    title: "Match report",
+    copy: "When a new match syncs, RankedCoach can open a match report first. Review the round timeline, stats, weapons, and economy, then close it to finish the reflection."
+  },
+  {
+    page: "logging",
+    selector: ["#loggingLauncherEmbedded #dailyWarmupSkip", "#loggingLauncherEmbedded .daily-warmup-card", "#loggingLauncherEmbedded"],
+    tutorialSurface: "embedded-return",
+    title: "Exit back to the launcher",
+    copy: "Embedded Warm-Up and Post-Match Training flows close back to the launcher. The reflection form appears when there is a synced match ready to review or when you open an existing log."
+  },
+  {
+    page: "logging",
     selector: ".logging-form",
+    tutorialSurface: "form",
     title: "Logging form",
-    copy: "After each match, capture the agent, focus category, map, ratings, comms, and notes. These reflections are the behavioral layer that helps RankedCoach explain why stats may be moving."
+    copy: "After a synced match is ready for review, use the form to capture the agent, focus category, map, ratings, comms, and notes. These reflections are the behavioral layer behind the coaching reads."
   },
   {
     page: "logging",
     selector: ".logging-score-grid",
+    tutorialSurface: "ratings",
     title: "Ratings and comms",
     copy: "Performance, mood, team comms, and self comms help connect match quality to session behavior. These are quick taps so logging does not become extra work."
   },
@@ -19030,6 +19149,7 @@ let guestTutorialPositionLocked = false;
 let guestTutorialPositionFrame = 0;
 let guestTutorialPositionTimer = 0;
 let guestTutorialRenderToken = 0;
+const GUEST_TUTORIAL_TARGET_POLL_MS = 90;
 
 function ensureGuestTutorialShells() {
   if (!document.getElementById("guestTutorialChoiceModal")) {
@@ -19487,9 +19607,20 @@ function isGuestTutorialTargetReady(target) {
 function waitForGuestTutorialTarget(step = {}, options = {}) {
   const timeoutMs = Math.max(300, Number(options.timeoutMs) || 2200);
   const startedAt = performance.now();
+  const renderToken = Number(options.renderToken) || 0;
+  const isStale = () => renderToken > 0 && renderToken !== guestTutorialRenderToken;
+  if (isStale()) return Promise.resolve(null);
+  const immediateTarget = getTutorialTargetCandidate(step);
+  if (isGuestTutorialTargetReady(immediateTarget)) {
+    return Promise.resolve(immediateTarget);
+  }
 
   return new Promise(resolve => {
     const check = () => {
+      if (isStale()) {
+        resolve(null);
+        return;
+      }
       const target = getTutorialTargetCandidate(step);
       if (isGuestTutorialTargetReady(target)) {
         resolve(target);
@@ -19499,9 +19630,9 @@ function waitForGuestTutorialTarget(step = {}, options = {}) {
         resolve(getTutorialTarget(step));
         return;
       }
-      window.requestAnimationFrame(check);
+      window.setTimeout(check, Number(options.pollMs) || GUEST_TUTORIAL_TARGET_POLL_MS);
     };
-    window.requestAnimationFrame(check);
+    window.setTimeout(check, Math.min(60, Number(options.pollMs) || GUEST_TUTORIAL_TARGET_POLL_MS));
   });
 }
 
@@ -19687,7 +19818,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
     else restart.style.setProperty("display", "none", "important");
   }
 
-  waitForGuestTutorialTarget(step).then(target => {
+  waitForGuestTutorialTarget(step, { renderToken }).then(target => {
     if (renderToken !== guestTutorialRenderToken || GUEST_TUTORIAL_STEPS[guestTutorialIndex] !== step) return;
     if (!target) return;
     guestTutorialActiveTarget = target;
@@ -19703,6 +19834,8 @@ function startGuestTutorial() {
   ensureGuestTutorialShells();
   const overlay = document.getElementById("appTutorialOverlay");
   if (!overlay) return;
+  guestTutorialRefreshedPages = new Set();
+  guestTutorialCachedMatchCount = -1;
   cancelDailyWarmupCheck();
   revealDailyEntrancePendingPage("home");
   overlay.classList.add("active");
@@ -19717,6 +19850,8 @@ function stopGuestTutorial({ completed = false } = {}) {
   const overlay = document.getElementById("appTutorialOverlay");
   overlay?.classList.remove("active");
   document.body.classList.remove("app-tutorial-running");
+  closeMatchSummaryModal?.();
+  restoreDailyTrainingModalFromLoggingLauncher?.();
   guestTutorialRenderToken += 1;
   guestTutorialPositionLocked = false;
   window.clearTimeout(guestTutorialPositionTimer);
