@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-flow-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-library-02";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -18841,8 +18841,13 @@ function refreshGuestTutorialLibrarySurface(step = {}) {
   if (step?.page !== "library") return;
   const library = globalThis.RankedCoachGamesenseLibrary;
   if (!library) return;
+  const libraryTopic = String(step.libraryTopic || "").trim();
   try {
     library.setPageActive?.(true);
+    if (libraryTopic && libraryTopic !== "overview" && typeof library.open === "function") {
+      library.open(libraryTopic);
+      return;
+    }
     if (typeof library.showOverview === "function") {
       library.showOverview({ direction: "replace" });
     } else if (typeof library.render === "function") {
@@ -19042,17 +19047,17 @@ const GUEST_TUTORIAL_STEPS = [
   },
   {
     page: "logging",
-    selector: ["#matchSummaryModal .match-summary-modal", "#matchSummaryModal", ".log-report-btn"],
-    tutorialSurface: "match-report",
-    title: "Match report",
-    copy: "When a new match syncs, RankedCoach can open a match report first. Review the round timeline, stats, weapons, and economy, then close it to finish the reflection."
-  },
-  {
-    page: "logging",
     selector: ["#loggingLauncherEmbedded #dailyWarmupSkip", "#loggingLauncherEmbedded .daily-warmup-card", "#loggingLauncherEmbedded"],
     tutorialSurface: "embedded-return",
     title: "Exit back to the launcher",
     copy: "Embedded Warm-Up and Post-Match Training flows close back to the launcher. The reflection form appears when there is a synced match ready to review or when you open an existing log."
+  },
+  {
+    page: "logging",
+    selector: ["#matchSummaryModal .match-summary-modal", "#matchSummaryModal", ".log-report-btn"],
+    tutorialSurface: "match-report",
+    title: "Match report",
+    copy: "When a new match syncs, RankedCoach can open a match report first. Review the round timeline, stats, weapons, and economy, then close it to finish the reflection."
   },
   {
     page: "logging",
@@ -19139,6 +19144,41 @@ const GUEST_TUTORIAL_STEPS = [
     selector: ["#gamesenseLibraryView .gamesense-topic-card", "#gamesenseLibraryView", "#page-library"],
     title: "GameSense Library",
     copy: "Use the Library as the reference hub for maps, agents, weapons, playlists, crosshairs, and dossiers. It is where RankedCoach keeps strategy context outside your personal match history."
+  },
+  {
+    page: "library",
+    selector: [".gamesense-agents-gallery-head", "#gamesenseLibraryView .gamesense-agent-role-filter", "#gamesenseLibraryView"],
+    libraryTopic: "agents",
+    title: "Agent dossiers",
+    copy: "Open Agents to review role expectations, ability details, lore, map fit, pick-rate context, and the specific reasons an agent may belong in a comp."
+  },
+  {
+    page: "library",
+    selector: [".gamesense-weapons-gallery-head", "#gamesenseLibraryView .gamesense-entry-grid-weapons", "#gamesenseLibraryView"],
+    libraryTopic: "weapons",
+    title: "Weapon dossiers",
+    copy: "Open Weapons to compare weapon art, damage ranges, economy notes, map-fit suggestions, skin archives, and conversion reads."
+  },
+  {
+    page: "library",
+    selector: [".gamesense-playlist-filters", ".gamesense-playlist-panel", "#gamesenseLibraryView"],
+    libraryTopic: "playlist",
+    title: "Playlist library",
+    copy: "Use Playlist for trusted coaching videos, VOD categories, settings and gear references, historical guides, and autoplay by category."
+  },
+  {
+    page: "library",
+    selector: [".gamesense-crosshair-panel", ".gamesense-crosshair-toolbar", "#gamesenseLibraryView"],
+    libraryTopic: "crosshairs",
+    title: "Crosshair library",
+    copy: "Use Crosshairs to browse pro and community codes, rendered previews, copy buttons, likes, favorites, and team-filtered pro setups."
+  },
+  {
+    page: "library",
+    selector: [".gamesense-patch-notes-feed", "#gamesenseLibraryView .gamesense-overview", "#gamesenseLibraryView"],
+    libraryTopic: "overview",
+    title: "Patch notes",
+    copy: "The Library overview also surfaces the newest official VALORANT patch notes, summarized around the actual changes so players can see what shifted before queueing."
   }
 ];
 

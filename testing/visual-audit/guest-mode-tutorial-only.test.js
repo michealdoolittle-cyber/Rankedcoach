@@ -143,7 +143,7 @@ async function run() {
         homePending: document.getElementById("page-home")?.classList.contains("daily-entrance-page-pending") || false,
         homeOpacity: getComputedStyle(document.getElementById("page-home")).opacity
       }));
-      assert.equal(tutorialState.count, "1 / 28", "tutorial should start on slide 1");
+      assert.equal(tutorialState.count, "1 / 33", "tutorial should start on slide 1");
       assert.match(tutorialState.copy, /bug report tool/i, "slide 1 should mention the bug report tool");
       assert.match(tutorialState.copy, /Ask Coach chatbot/i, "slide 1 should mention Ask Coach chatbot");
       assert.equal(tutorialState.warmupActive, false, "warmup should not open over the tutorial start");
@@ -152,7 +152,7 @@ async function run() {
       for (let i = 0; i < 4; i += 1) {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "5 / 28", null, { timeout: 8000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "5 / 33", null, { timeout: 8000 });
       const slideFiveCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
       assert.equal(
         slideFiveCopy,
@@ -160,7 +160,7 @@ async function run() {
         "slide 5 should use the requested improvement wording"
       );
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "6 / 28", null, { timeout: 8000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "6 / 33", null, { timeout: 8000 });
       const slideSixCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
       assert.equal(
         slideSixCopy,
@@ -168,7 +168,7 @@ async function run() {
         "slide 6 should use the requested loadout wording"
       );
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "7 / 28", null, { timeout: 8000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "7 / 33", null, { timeout: 8000 });
       const slideSevenCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
       assert.equal(
         slideSevenCopy,
@@ -178,7 +178,7 @@ async function run() {
       for (let i = 0; i < 3; i += 1) {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "10 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "10 / 33", null, { timeout: 10000 });
       const loggingLauncher = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         visible: Boolean(document.querySelector("#loggingDesktopLauncher")?.getBoundingClientRect()?.height),
@@ -188,7 +188,7 @@ async function run() {
       assert.equal(loggingLauncher.visible, true, "Logging launcher should be visible for its tutorial step");
       assert.match(loggingLauncher.copy, /Warm-Up before queueing/i, "Logging launcher copy should explain warm-up first");
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "11 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "11 / 33", null, { timeout: 10000 });
       const warmupTileState = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         visible: Boolean(document.querySelector(".logging-launch-tile-warmup")?.getBoundingClientRect()?.height)
@@ -196,7 +196,7 @@ async function run() {
       assert.equal(warmupTileState.title, "Warm-Up tile", "slide 11 should highlight Warm-Up");
       assert.equal(warmupTileState.visible, true, "Warm-Up tile should be visible for its tutorial step");
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "12 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "12 / 33", null, { timeout: 10000 });
       const postMatchTileState = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         visible: Boolean(document.querySelector(".logging-launch-tile-postmatch")?.getBoundingClientRect()?.height)
@@ -204,30 +204,30 @@ async function run() {
       assert.equal(postMatchTileState.title, "Post-Match Training tile", "slide 12 should highlight Post-Match Training");
       assert.equal(postMatchTileState.visible, true, "Post-Match Training tile should be visible for its tutorial step");
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "13 / 28", null, { timeout: 10000 });
-      await page.waitForSelector("#matchSummaryModal.active .match-summary-modal", { timeout: 10000 });
-      const matchReportState = await page.evaluate(() => ({
-        title: document.getElementById("appTutorialTitle")?.textContent || "",
-        modalActive: document.getElementById("matchSummaryModal")?.classList.contains("active") || false,
-        reportTitle: document.getElementById("matchSummaryTitle")?.textContent || ""
-      }));
-      assert.equal(matchReportState.title, "Match report", "slide 13 should highlight the match report");
-      assert.equal(matchReportState.modalActive, true, "match report modal should be active for its tutorial step");
-      assert.match(matchReportState.reportTitle, / on /i, "match report should render real report content");
-      await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "14 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "13 / 33", null, { timeout: 10000 });
       const exitStepState = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         matchModalActive: document.getElementById("matchSummaryModal")?.classList.contains("active") || false,
         embeddedVisible: Boolean(document.querySelector("#loggingLauncherEmbedded .daily-warmup-card")?.getBoundingClientRect()?.height),
         closeVisible: Boolean(document.querySelector("#loggingLauncherEmbedded #dailyWarmupSkip")?.getBoundingClientRect()?.height)
       }));
-      assert.equal(exitStepState.title, "Exit back to the launcher", "slide 14 should explain returning from embedded experiences");
-      assert.equal(exitStepState.matchModalActive, false, "match report should close before the embedded-exit step");
+      assert.equal(exitStepState.title, "Exit back to the launcher", "slide 13 should explain returning from embedded experiences");
+      assert.equal(exitStepState.matchModalActive, false, "match report should not be active for the embedded-exit step");
       assert.equal(exitStepState.embeddedVisible, true, "embedded warm-up should be visible for the exit tutorial step");
       assert.equal(exitStepState.closeVisible, true, "embedded warm-up Close control should be visible for the exit tutorial step");
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "15 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "14 / 33", null, { timeout: 10000 });
+      await page.waitForSelector("#matchSummaryModal.active .match-summary-modal", { timeout: 10000 });
+      const matchReportState = await page.evaluate(() => ({
+        title: document.getElementById("appTutorialTitle")?.textContent || "",
+        modalActive: document.getElementById("matchSummaryModal")?.classList.contains("active") || false,
+        reportTitle: document.getElementById("matchSummaryTitle")?.textContent || ""
+      }));
+      assert.equal(matchReportState.title, "Match report", "slide 14 should highlight the match report");
+      assert.equal(matchReportState.modalActive, true, "match report modal should be active for its tutorial step");
+      assert.match(matchReportState.reportTitle, / on /i, "match report should render real report content");
+      await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "15 / 33", null, { timeout: 10000 });
       const loggingFormState = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         formVisible: Boolean(document.querySelector(".logging-form")?.getBoundingClientRect()?.height),
@@ -241,7 +241,7 @@ async function run() {
       for (let i = 0; i < 4; i += 1) {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "19 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "19 / 33", null, { timeout: 10000 });
       const slideNineteenCopy = await page.evaluate(() => document.getElementById("appTutorialCopy")?.textContent || "");
       assert.equal(
         slideNineteenCopy,
@@ -262,7 +262,7 @@ async function run() {
       for (let i = 0; i < 6; i += 1) {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "25 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "25 / 33", null, { timeout: 10000 });
       const slideTwentyFive = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         copy: document.getElementById("appTutorialCopy")?.textContent || ""
@@ -270,7 +270,7 @@ async function run() {
       assert.equal(slideTwentyFive.title, "Main Focus", "Main Focus should come before Important Insights after the Insights reorder");
       assert.equal(slideTwentyFive.copy, "This is the one thing RankedCoach thinks is most worth working on next.", "Main Focus should keep the requested copy");
       await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "26 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "26 / 33", null, { timeout: 10000 });
       const slideTwentySix = await page.evaluate(() => ({
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         copy: document.getElementById("appTutorialCopy")?.textContent || ""
@@ -280,18 +280,40 @@ async function run() {
       for (let i = 0; i < 2; i += 1) {
         await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
       }
-      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "28 / 28", null, { timeout: 10000 });
+      await page.waitForFunction(() => document.getElementById("appTutorialCount")?.textContent === "28 / 33", null, { timeout: 10000 });
       await page.waitForFunction(() => document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length >= 5, null, { timeout: 10000 });
-      const finalLibraryState = await page.evaluate(() => ({
+      const libraryOverviewState = await page.evaluate(() => ({
         active: document.getElementById("page-library")?.classList.contains("active") || false,
         title: document.getElementById("appTutorialTitle")?.textContent || "",
         topicCards: document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card").length,
         visibleCopy: document.querySelector("#gamesenseLibraryView")?.textContent || ""
       }));
-      assert.equal(finalLibraryState.active, true, "final tutorial slide should activate the Library page");
-      assert.equal(finalLibraryState.title, "GameSense Library", "final tutorial slide should still be the Library slide");
-      assert.ok(finalLibraryState.topicCards >= 5, `final tutorial Library slide should render topic cards: ${JSON.stringify(finalLibraryState)}`);
-      assert.match(finalLibraryState.visibleCopy, /Open dossier/i, "final tutorial Library slide should show the dossier overview instead of an empty page");
+      assert.equal(libraryOverviewState.active, true, "Library overview slide should activate the Library page");
+      assert.equal(libraryOverviewState.title, "GameSense Library", "Library overview slide should introduce the Library");
+      assert.ok(libraryOverviewState.topicCards >= 5, `Library overview slide should render topic cards: ${JSON.stringify(libraryOverviewState)}`);
+      assert.match(libraryOverviewState.visibleCopy, /Open dossier/i, "Library overview slide should show the dossier overview instead of an empty page");
+      const librarySlideChecks = [
+        { count: "29 / 33", title: "Agent dossiers", selector: ".gamesense-agents-gallery-head", copy: /role expectations/i },
+        { count: "30 / 33", title: "Weapon dossiers", selector: ".gamesense-weapons-gallery-head", copy: /damage ranges/i },
+        { count: "31 / 33", title: "Playlist library", selector: ".gamesense-playlist-filters", copy: /trusted coaching videos/i },
+        { count: "32 / 33", title: "Crosshair library", selector: ".gamesense-crosshair-panel", copy: /pro and community codes/i },
+        { count: "33 / 33", title: "Patch notes", selector: ".gamesense-patch-notes-feed", copy: /official VALORANT patch notes/i }
+      ];
+      for (const check of librarySlideChecks) {
+        await page.evaluate(() => document.getElementById("appTutorialNext")?.click());
+        await page.waitForFunction(expected => document.getElementById("appTutorialCount")?.textContent === expected, check.count, { timeout: 10000 });
+        await page.waitForSelector(check.selector, { timeout: 10000 });
+        const libraryStepState = await page.evaluate(selector => ({
+          title: document.getElementById("appTutorialTitle")?.textContent || "",
+          copy: document.getElementById("appTutorialCopy")?.textContent || "",
+          visible: Boolean(document.querySelector(selector)?.getBoundingClientRect()?.height),
+          restartHidden: document.getElementById("appTutorialRestart")?.hidden ?? true
+        }), check.selector);
+        assert.equal(libraryStepState.title, check.title, `${check.count} should be ${check.title}`);
+        assert.match(libraryStepState.copy, check.copy, `${check.title} should use the requested Library walkthrough copy`);
+        assert.equal(libraryStepState.visible, true, `${check.title} should highlight real Library content`);
+        assert.equal(libraryStepState.restartHidden, check.count !== "33 / 33", "Start over should only appear on the final slide");
+      }
       const finalRestart = await page.evaluate(() => {
         const restart = document.getElementById("appTutorialRestart");
         return {
