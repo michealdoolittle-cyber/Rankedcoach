@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-silhouette-scale-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-guest-tutorial-warmup-04";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -861,6 +861,7 @@ function openDailyWarmupCheck() {
 function canOpenDailyWarmupCheck() {
   if (document.documentElement?.classList.contains("app-booting")) return false;
   if (!hasCompletedAppEntryChoice?.()) return false;
+  if (typeof hasDailyEntranceBlockingSurface === "function" && hasDailyEntranceBlockingSurface({ includeWarmup: false })) return false;
   const activePage = getActivePageElement?.()?.id || "";
   if (!["page-home", "page-logging"].includes(activePage)) return false;
   const blockingModal = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening, .lens-modal-overlay.is-closing")]
@@ -18862,7 +18863,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "home",
     selector: ".app-header",
     title: "Start with the top bar",
-    copy: "Use the left tabs to move between Home, Logging, Stats, and Insights. The center widgets track your current RR path and goal rank. The right side holds profile, sync, Ask Coach, and account options."
+    copy: "Use the left tabs to move between Home, Logging, Stats, Insights, and Library. The center widgets track your current RR path and goal rank. The right side holds profile, sync, Ask Coach, and account options."
   },
   {
     page: "home",
@@ -18989,6 +18990,12 @@ const GUEST_TUTORIAL_STEPS = [
     selector: ".insights-trends-card",
     title: "Supporting Reads",
     copy: "These reads show what backs up the main read: matches, logs, roles, and repeat patterns."
+  },
+  {
+    page: "library",
+    selector: ["#gamesenseLibraryView .gamesense-topic-card", "#gamesenseLibraryView", "#page-library"],
+    title: "GameSense Library",
+    copy: "Use the Library as the reference hub for maps, agents, weapons, playlists, crosshairs, and dossiers. It is where RankedCoach keeps strategy context outside your personal match history."
   }
 ];
 
@@ -18998,6 +19005,7 @@ let guestTutorialActiveTarget = null;
 let guestTutorialPositionLocked = false;
 let guestTutorialPositionFrame = 0;
 let guestTutorialPositionTimer = 0;
+let guestTutorialRenderToken = 0;
 
 function ensureGuestTutorialShells() {
   if (!document.getElementById("guestTutorialChoiceModal")) {
@@ -19422,6 +19430,63 @@ function getTutorialTarget(step = {}) {
   return document.querySelector(".app-header") || document.body;
 }
 
+function getTutorialTargetCandidate(step = {}) {
+  const selectors = Array.isArray(step.selector) ? step.selector : [step.selector];
+  for (const selector of selectors) {
+    if (!selector) continue;
+    const target = document.querySelector(selector);
+    if (target) return target;
+  }
+  return null;
+}
+
+function isGuestTutorialTargetReady(target) {
+  if (!target || !(target instanceof Element)) return false;
+  const rect = target.getBoundingClientRect();
+  if (rect.width < 24 || rect.height < 16) return false;
+  const style = window.getComputedStyle(target);
+  if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+  const text = String(target.textContent || "").replace(/\s+/g, " ").trim();
+  if (text.length >= 2) return true;
+  if (target.matches?.("img,svg,canvas,video,input,select,textarea,button")) return true;
+  if (target.querySelector?.("img,svg,canvas,video,input,select,textarea,button,.stats-map-card,.stats-agent-card,.stats-weapon-card,.gamesense-topic-card")) return true;
+  return target.childElementCount > 0 && rect.width >= 40 && rect.height >= 40;
+}
+
+function waitForGuestTutorialTarget(step = {}, options = {}) {
+  const timeoutMs = Math.max(300, Number(options.timeoutMs) || 2200);
+  const startedAt = performance.now();
+
+  return new Promise(resolve => {
+    const check = () => {
+      const target = getTutorialTargetCandidate(step);
+      if (isGuestTutorialTargetReady(target)) {
+        resolve(target);
+        return;
+      }
+      if (performance.now() - startedAt >= timeoutMs) {
+        resolve(getTutorialTarget(step));
+        return;
+      }
+      window.requestAnimationFrame(check);
+    };
+    window.requestAnimationFrame(check);
+  });
+}
+
+function revealDailyEntrancePendingPageForTutorial(pageId = "home") {
+  const root = document.getElementById(`page-${pageId || "home"}`);
+  if (!root) return;
+  root.classList.remove("daily-entrance-page-pending");
+  root.style.removeProperty("opacity");
+  root.style.removeProperty("pointer-events");
+  root.style.removeProperty("transition");
+  if (document.body?.dataset.dailyEntrancePage === pageId) {
+    delete document.body.dataset.dailyEntrancePage;
+  }
+  document.body?.classList.remove("daily-entrance-motion-active");
+}
+
 function clearTutorialTarget() {
   if (guestTutorialActiveTarget) {
     guestTutorialActiveTarget.classList.remove("app-tutorial-focus-target");
@@ -19457,6 +19522,18 @@ function scheduleGuestTutorialOverlayPosition(delay = 0) {
   }
 }
 
+function scheduleGuestTutorialOverlayFollowUps(renderToken) {
+  [180, 460, 900].forEach(delay => {
+    window.setTimeout(() => {
+      if (renderToken !== guestTutorialRenderToken) return;
+      if (!document.getElementById("appTutorialOverlay")?.classList.contains("active")) return;
+      const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
+      revealDailyEntrancePendingPageForTutorial(step?.page || "home");
+      scheduleGuestTutorialOverlayPosition();
+    }, delay);
+  });
+}
+
 function positionGuestTutorialOverlay(options = {}) {
   const force = Boolean(options?.force);
   if (guestTutorialPositionLocked && !force) return;
@@ -19468,7 +19545,15 @@ function positionGuestTutorialOverlay(options = {}) {
   const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
   if (!overlay?.classList.contains("active") || !spotlight || !arrow || !card || !step) return;
 
-  const target = getTutorialTarget(step);
+  let target = guestTutorialActiveTarget;
+  if (!target || !target.isConnected || !isGuestTutorialTargetReady(target)) {
+    target = getTutorialTarget(step);
+  }
+  if (target !== guestTutorialActiveTarget) {
+    clearTutorialTarget();
+    guestTutorialActiveTarget = target;
+  }
+  target.classList.add("app-tutorial-focus-target");
   const rect = target.getBoundingClientRect();
   const pad = 8;
   const safe = 14;
@@ -19530,34 +19615,39 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
   if (!step) return;
 
+  const renderToken = ++guestTutorialRenderToken;
   guestTutorialPositionLocked = true;
   clearTutorialTarget();
-  activatePage?.(step.page || "home");
+  const tutorialPage = step.page || "home";
+  activatePage?.(tutorialPage);
+  revealDailyEntrancePendingPageForTutorial(tutorialPage);
   refreshGuestTutorialDemoSurfaces(step);
 
-  window.setTimeout(() => {
-    const target = getTutorialTarget(step);
+  const title = document.getElementById("appTutorialTitle");
+  const copy = document.getElementById("appTutorialCopy");
+  const count = document.getElementById("appTutorialCount");
+  const back = document.getElementById("appTutorialBack");
+  const next = document.getElementById("appTutorialNext");
+  const restart = document.getElementById("appTutorialRestart");
+  const isLast = guestTutorialIndex === GUEST_TUTORIAL_STEPS.length - 1;
+
+  if (title) title.textContent = step.title || "RankedCoach tutorial";
+  if (copy) copy.textContent = step.copy || "";
+  if (count) count.textContent = `${guestTutorialIndex + 1} / ${GUEST_TUTORIAL_STEPS.length}`;
+  if (back) back.disabled = guestTutorialIndex === 0;
+  if (next) next.textContent = isLast ? "Complete" : "Next";
+  if (restart) restart.hidden = !isLast;
+
+  waitForGuestTutorialTarget(step).then(target => {
+    if (renderToken !== guestTutorialRenderToken || GUEST_TUTORIAL_STEPS[guestTutorialIndex] !== step) return;
+    if (!target) return;
     guestTutorialActiveTarget = target;
     target.classList.add("app-tutorial-focus-target");
     target.scrollIntoView?.({ behavior: "auto", block: "center", inline: "center" });
 
-    const title = document.getElementById("appTutorialTitle");
-    const copy = document.getElementById("appTutorialCopy");
-    const count = document.getElementById("appTutorialCount");
-    const back = document.getElementById("appTutorialBack");
-    const next = document.getElementById("appTutorialNext");
-    const restart = document.getElementById("appTutorialRestart");
-    const isLast = guestTutorialIndex === GUEST_TUTORIAL_STEPS.length - 1;
-
-    if (title) title.textContent = step.title || "RankedCoach tutorial";
-    if (copy) copy.textContent = step.copy || "";
-    if (count) count.textContent = `${guestTutorialIndex + 1} / ${GUEST_TUTORIAL_STEPS.length}`;
-    if (back) back.disabled = guestTutorialIndex === 0;
-    if (next) next.textContent = isLast ? "Complete" : "Next";
-    if (restart) restart.hidden = !isLast;
-
     scheduleGuestTutorialOverlayPosition();
-  }, 120);
+    scheduleGuestTutorialOverlayFollowUps(renderToken);
+  });
 }
 
 function startGuestTutorial() {
@@ -19576,6 +19666,7 @@ function stopGuestTutorial({ completed = false } = {}) {
   const overlay = document.getElementById("appTutorialOverlay");
   overlay?.classList.remove("active");
   document.body.classList.remove("app-tutorial-running");
+  guestTutorialRenderToken += 1;
   guestTutorialPositionLocked = false;
   window.clearTimeout(guestTutorialPositionTimer);
   if (guestTutorialPositionFrame) {
