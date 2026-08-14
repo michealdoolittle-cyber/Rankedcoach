@@ -2353,31 +2353,6 @@ html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame 
   overflow:hidden !important;
 }
 
-html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::before,
-html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::after{
-  content:"" !important;
-  position:absolute !important;
-  inset:0 !important;
-  border-radius:inherit !important;
-  pointer-events:none !important;
-}
-
-html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::before{
-  z-index:14 !important;
-  background:
-    radial-gradient(circle at 50% 48%,transparent 0 27%,rgba(2,6,23,.13) 48%,rgba(2,6,23,.56) 82%),
-    linear-gradient(135deg,rgba(15,23,42,.10),rgba(2,6,23,.48)) !important;
-}
-
-html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame #agentPlaceholder::after{
-  z-index:15 !important;
-  opacity:.42 !important;
-  background:
-    repeating-linear-gradient(90deg,transparent 0 14px,rgba(56,189,248,.08) 14px 15px,transparent 15px 31px),
-    linear-gradient(180deg,rgba(2,6,23,.02),rgba(2,6,23,.34)) !important;
-  mix-blend-mode:screen !important;
-}
-
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .placeholder-silhouette,
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.duelist .placeholder-silhouette,
 html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.controller .placeholder-silhouette,
@@ -2390,25 +2365,94 @@ html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.
   max-height:82% !important;
   object-fit:contain !important;
   object-position:center center !important;
-  opacity:.46 !important;
-  transform:scale(.9) !important;
-  filter:
-    grayscale(1)
-    invert(.72)
-    brightness(.72)
-    contrast(1.24)
-    blur(1.15px)
-    drop-shadow(0 0 12px color-mix(in srgb,var(--agent-role-color,var(--accent-2,#38bdf8)) 34%,transparent)) !important;
-}
-
-html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .agent-placeholder.is-spinning .placeholder-silhouette{
-  opacity:.38 !important;
+  opacity:.3 !important;
   transform:scale(.92) !important;
   filter:
     grayscale(1)
-    invert(.72)
-    brightness(.62)
+    brightness(0)
+    contrast(1.2)
+    blur(4px)
+    drop-shadow(0 0 10px color-mix(in srgb,var(--agent-role-color,var(--accent-2,#38bdf8)) 30%,transparent)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .agent-placeholder.is-idle-cycling .placeholder-silhouette{
+  animation:rcLoadoutMysterySilhouetteBreath 2.8s ease-in-out infinite !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame .agent-placeholder.is-spinning .placeholder-silhouette{
+  opacity:.34 !important;
+  transform:scale(.96) !important;
+  filter:
+    grayscale(1)
+    brightness(0)
     contrast(1.25)
-    blur(2.6px)
+    blur(6px)
     drop-shadow(0 0 14px color-mix(in srgb,var(--agent-role-color,var(--accent-2,#38bdf8)) 36%,transparent)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.duelist .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.2) blur(4px) drop-shadow(0 0 10px rgba(255,70,85,.34)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.controller .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.2) blur(4px) drop-shadow(0 0 10px rgba(168,85,247,.34)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.initiator .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.2) blur(4px) drop-shadow(0 0 10px rgba(59,130,246,.34)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.sentinel .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.2) blur(4px) drop-shadow(0 0 10px rgba(34,197,94,.34)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.duelist .agent-placeholder.is-spinning .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.25) blur(6px) drop-shadow(0 0 14px rgba(255,70,85,.40)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.controller .agent-placeholder.is-spinning .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.25) blur(6px) drop-shadow(0 0 14px rgba(168,85,247,.40)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.initiator .agent-placeholder.is-spinning .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.25) blur(6px) drop-shadow(0 0 14px rgba(59,130,246,.40)) !important;
+}
+
+html body #page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.sentinel .agent-placeholder.is-spinning .placeholder-silhouette{
+  filter:grayscale(1) brightness(0) contrast(1.25) blur(6px) drop-shadow(0 0 14px rgba(34,197,94,.40)) !important;
+}
+
+@keyframes rcLoadoutMysterySilhouetteBreath{
+  0%,100%{
+    opacity:.24;
+    transform:scale(.9);
+  }
+  50%{
+    opacity:.32;
+    transform:scale(.94);
+  }
+}
+
+/* Supporting Reads hover safe-area: compact desktop layout was clipping the
+   top-row lift against the card header/subtext zone. Keep the same gray tile
+   treatment, but let the tile rise into its own header area. */
+@media (hover:hover) and (pointer:fine){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card .insight-trends{
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card .insight-trends{
+    padding-top:4px !important;
+    margin-top:-4px !important;
+    isolation:isolate !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]{
+    will-change:transform !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights#page-insights .insights-trends-card .insight-trends > .insight-trend-row[data-trend]:is(:hover,:focus-visible){
+    z-index:24 !important;
+  }
 }

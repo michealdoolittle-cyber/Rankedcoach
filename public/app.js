@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-loadout-insights-polish-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260814-supporting-reads-overflow-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -25741,17 +25741,19 @@ function stopSilhouetteShuffle() {
     clearTimeout(silhouetteShuffleTimer);
     silhouetteShuffleTimer = null;
   }
-  agentPlaceholder?.classList.remove("is-spinning");
+  agentPlaceholder?.classList.remove("is-spinning", "is-idle-cycling");
 }
 
-function startSilhouetteShuffle() {
+function startSilhouetteShuffle(options = {}) {
   const img = document.getElementById("placeholderSilhouette");
   if (!img) return;
 
+  const mode = options?.mode === "idle" ? "idle" : "spin";
+  const isIdle = mode === "idle";
   stopSilhouetteShuffle();
-  agentPlaceholder?.classList.add("is-spinning");
+  agentPlaceholder?.classList.add(isIdle ? "is-idle-cycling" : "is-spinning");
 
-  let delay = 120;
+  let delay = isIdle ? 1250 : 120;
 
   const tick = () => {
     const pool = allAgents?.length ? allAgents : Object.keys(AGENT_SIL_MAP);
@@ -25760,7 +25762,9 @@ function startSilhouetteShuffle() {
       img.src = getAgentSilhouetteUrl(agent);
     }
 
-    delay = Math.max(38, delay - 8);
+    delay = isIdle
+      ? (1050 + Math.floor(Math.random() * 520))
+      : Math.max(38, delay - 8);
     silhouetteShuffleTimer = setTimeout(tick, delay);
   };
 
@@ -25795,13 +25799,15 @@ function resetPlaceholder() {
     sil.style.opacity = "0.16";
     sil.style.transform = "scale(0.86)";
   }
+
+  startSilhouetteShuffle({ mode: "idle" });
 }
 
 function runPlaceholderExitAnimation() {
   const ph = agentPlaceholder;
   if (!ph) return;
 
-  startSilhouetteShuffle();
+  startSilhouetteShuffle({ mode: "spin" });
   ph.classList.add("placeholder-glitch");
 
   setTimeout(() => {
@@ -25944,6 +25950,7 @@ function renderAgentFrameArt(agentNameStr = "") {
   const frame = document.getElementById("agentFrame");
   if (!agentFrameArt || !frame) return;
 
+  stopSilhouetteShuffle();
   syncAgentUnifiedFrameGeometry(frame);
   const art = getAgentFrameArtState(agentNameStr);
   const key = String(agentNameStr || "").toLowerCase();
