@@ -35,6 +35,14 @@
   ],
   "abilities": [
     {
+      "id": "m-pulse",
+      "name": "M-pulse",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/abilities/grenade/displayicon.png",
+      "summary": "EQUIP M-pulse. ALT-FIRE to toggle between Concuss and Healing outputs. FIRE to throw the device. Upon landing, M-pulse sends out sound waves, either Concussing or Healing players.",
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+    },
+    {
       "id": "waveform",
       "name": "Waveform",
       "slot": "Q - Basic",
@@ -190,10 +198,10 @@
     "entityName": "Miks",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-03T15:22:53.288Z",
+    "generatedAt": "2026-08-14T19:25:07.625Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-03"
+    "lastReviewed": "2026-08-14"
   },
   "_fieldMeta": {
     "id": {

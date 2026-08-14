@@ -119,7 +119,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
       "uuid": "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -216,7 +216,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
       "uuid": "5f8d3a7f-467b-97f3-062c-13acf203c006",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -313,7 +313,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
       "uuid": "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -410,7 +410,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
       "uuid": "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -507,7 +507,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
       "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -608,7 +608,7 @@
       ],
       "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -705,7 +705,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US",
       "uuid": "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -802,7 +802,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/dade69b4-4f5a-8528-247b-219e5a1facd6?language=en-US",
       "uuid": "dade69b4-4f5a-8528-247b-219e5a1facd6",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -899,7 +899,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
       "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -996,7 +996,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
       "uuid": "95b78ed7-4637-86d9-7e41-71ba8c293152",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1093,7 +1093,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c?language=en-US",
       "uuid": "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1202,7 +1202,7 @@
       ],
       "uuid": "add6443a-41bd-e414-f6ad-e58d267f4e95",
       "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1299,7 +1299,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
       "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1396,7 +1396,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/1e58de9c-4950-5125-93e9-a0aee9f98746?language=en-US",
       "uuid": "1e58de9c-4950-5125-93e9-a0aee9f98746",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1406,6 +1406,14 @@
       "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/fullportrait.png",
       "abilities": [
+        {
+          "id": "m-pulse",
+          "name": "M-pulse",
+          "slot": "E - Signature",
+          "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/abilities/grenade/displayicon.png",
+          "summary": "EQUIP M-pulse. ALT-FIRE to toggle between Concuss and Healing outputs. FIRE to throw the device. Upon landing, M-pulse sends out sound waves, either Concussing or Healing players.",
+          "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+        },
         {
           "id": "waveform",
           "name": "Waveform",
@@ -1472,7 +1480,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
       "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1569,7 +1577,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
       "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1670,7 +1678,7 @@
       ],
       "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1789,7 +1797,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
       "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1895,7 +1903,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
       "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -1992,7 +2000,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
       "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2093,7 +2101,7 @@
       ],
       "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2190,7 +2198,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
       "uuid": "6f2a04ca-43e0-be17-7f36-b3908627744d",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2299,7 +2307,7 @@
       ],
       "uuid": "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2396,7 +2404,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
       "uuid": "b444168c-4e35-8076-db47-ef9bf368f384",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2493,7 +2501,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
       "uuid": "92eeef5d-43b5-1d4a-8d03-b3927a09034b",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2602,7 +2610,7 @@
       ],
       "uuid": "707eab51-4836-f488-046a-cda6bf494859",
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2699,7 +2707,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
       "uuid": "efba5359-4016-a1e5-7626-b1ae76895940",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2796,7 +2804,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
       "uuid": "df1cb487-4902-002e-5c17-d28e83e78588",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -2893,7 +2901,7 @@
       ],
       "source": "https://valorant-api.com/v1/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89?language=en-US",
       "uuid": "7f94d92c-4234-0a36-9646-3a87eb8b5c89",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     }
   ],
@@ -3148,7 +3156,7 @@
       "coordinates": "70° 50' AJ\" N, 9° 00' VX\" W",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -3391,7 +3399,7 @@
       "coordinates": "45°26'BF'N,12°20'Q'E",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -3647,7 +3655,7 @@
       "coordinates": "34°2'A'N,6°51'Z'W",
       "source": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -3893,7 +3901,7 @@
       "coordinates": "26°11'AG\"N 71°10'WY\"W",
       "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -4126,7 +4134,7 @@
       "coordinates": "48° 38' FH\" N8, 1° 33' YV\" W8",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -4369,7 +4377,7 @@
       "coordinates": "35°48'BI\"N 106°08'YQ\"W",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -4602,7 +4610,7 @@
       "coordinates": "27°28'A'N,89°38'WZ'E",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -4868,7 +4876,7 @@
       ],
       "source": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -5171,7 +5179,7 @@
       "coordinates": "14°07'AD.4\"N8 74°53'XY\"E8",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -5454,7 +5462,7 @@
       "coordinates": "38°42'ED\"N8 9°08'XS\"W8",
       "calloutLabelsBakedIn": true,
       "dataStatus": "in-review",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -5710,7 +5718,7 @@
       "coordinates": "35°41'CD'N,139°41'WX'E",
       "source": "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -5966,7 +5974,7 @@
       ],
       "source": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     },
     {
@@ -6152,7 +6160,7 @@
       ],
       "source": "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US",
       "dataStatus": "verified",
-      "lastReviewed": "2026-08-03",
+      "lastReviewed": "2026-08-14",
       "patchVersion": "13.02"
     }
   ],
@@ -6183,7 +6191,7 @@
           }
         ],
         "source": "https://valorant-api.com/v1/weapons/55d8a0f4-4274-ca67-fe2c-06ab45efdf58?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6219,7 +6227,7 @@
           }
         ],
         "source": "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6255,7 +6263,7 @@
         ],
         "uuid": "910be174-449b-c412-ab22-d0873436b21b",
         "source": "https://valorant-api.com/v1/weapons/910be174-449b-c412-ab22-d0873436b21b?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6279,7 +6287,7 @@
         ],
         "uuid": "ae3de142-4d85-2547-dd26-4e90bed35cf7",
         "source": "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6309,7 +6317,7 @@
         ],
         "uuid": "29a0cfab-485b-f5d5-779a-b59f85e204a8",
         "source": "https://valorant-api.com/v1/weapons/29a0cfab-485b-f5d5-779a-b59f85e204a8?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6339,7 +6347,7 @@
         ],
         "uuid": "44d4e95c-4157-0037-81b2-17841bf2e8e3",
         "source": "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6369,7 +6377,7 @@
         ],
         "uuid": "1baa85b4-4c70-1284-64bb-6481dfc3bb4e",
         "source": "https://valorant-api.com/v1/weapons/1baa85b4-4c70-1284-64bb-6481dfc3bb4e?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6393,7 +6401,7 @@
         ],
         "uuid": "4ade7faa-4cf1-8376-95ef-39884480959b",
         "source": "https://valorant-api.com/v1/weapons/4ade7faa-4cf1-8376-95ef-39884480959b?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6429,7 +6437,7 @@
         ],
         "uuid": "ec845bf4-4f79-ddda-a3da-0db3774b2794",
         "source": "https://valorant-api.com/v1/weapons/ec845bf4-4f79-ddda-a3da-0db3774b2794?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6453,7 +6461,7 @@
         ],
         "uuid": "c4883e50-4494-202c-3ec3-6b8a9284f00b",
         "source": "https://valorant-api.com/v1/weapons/c4883e50-4494-202c-3ec3-6b8a9284f00b?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6483,7 +6491,7 @@
           }
         ],
         "source": "https://valorant-api.com/v1/weapons/63e6c2b6-4a8e-869c-3d4c-e38355226584?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6507,7 +6515,7 @@
         ],
         "uuid": "a03b24d3-4319-996d-0f8c-94bbfba1dfc7",
         "source": "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6531,7 +6539,7 @@
         ],
         "uuid": "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c",
         "source": "https://valorant-api.com/v1/weapons/5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6561,7 +6569,7 @@
         ],
         "uuid": "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a",
         "source": "https://valorant-api.com/v1/weapons/ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6591,7 +6599,7 @@
         ],
         "uuid": "e336c6b8-418d-9340-d77f-7a9e4cfe0702",
         "source": "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6627,7 +6635,7 @@
         ],
         "uuid": "42da8ccc-40d5-affc-beec-15aa47b42eda",
         "source": "https://valorant-api.com/v1/weapons/42da8ccc-40d5-affc-beec-15aa47b42eda?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6663,7 +6671,7 @@
         ],
         "uuid": "462080d1-4035-2937-7c09-27aa2a5c27a7",
         "source": "https://valorant-api.com/v1/weapons/462080d1-4035-2937-7c09-27aa2a5c27a7?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6693,7 +6701,7 @@
         ],
         "uuid": "f7e1b454-4ad4-1063-ec0a-159e56b58941",
         "source": "https://valorant-api.com/v1/weapons/f7e1b454-4ad4-1063-ec0a-159e56b58941?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     },
@@ -6717,7 +6725,7 @@
         ],
         "uuid": "9c82e19d-4575-0200-1a81-3eacf00cf872",
         "source": "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US",
-        "lastReviewed": "2026-08-03",
+        "lastReviewed": "2026-08-14",
         "patchVersion": "13.02"
       }
     }
