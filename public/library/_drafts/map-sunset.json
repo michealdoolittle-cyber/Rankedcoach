@@ -181,7 +181,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-08-14",
+  "lastReviewed": "2026-08-15",
   "patchVersion": "13.02",
   "plantSpots": [],
   "plantRateNote": "No source-verified named spike-plant locations are published for Sunset in the retained Library sources. The map is shown without fabricated site-centroid markers.",
@@ -1211,7 +1211,7 @@
     "entityName": "Sunset",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-15T01:54:36.056Z",
+    "generatedAt": "2026-08-15T07:03:42.806Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-15"

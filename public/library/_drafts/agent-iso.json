@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c?language=en-US",
   "uuid": "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
-  "lastReviewed": "2026-08-14",
+  "lastReviewed": "2026-08-15",
   "patchVersion": "13.02",
   "pickRate": 5.0075,
   "pickRateRank": 18,
@@ -232,7 +232,7 @@
     "entityName": "Iso",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-15T01:54:36.056Z",
+    "generatedAt": "2026-08-15T07:03:42.806Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-15"

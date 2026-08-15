@@ -867,7 +867,7 @@
   "coordinates": "26°11'AG\"N 71°10'WY\"W",
   "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-08-14",
+  "lastReviewed": "2026-08-15",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "statsSource": {
@@ -1574,7 +1574,7 @@
     "entityName": "Breeze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-15T01:54:36.056Z",
+    "generatedAt": "2026-08-15T07:03:42.806Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-15"

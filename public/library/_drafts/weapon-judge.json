@@ -52,7 +52,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "ec845bf4-4f79-ddda-a3da-0db3774b2794",
   "source": "https://valorant-api.com/v1/weapons/ec845bf4-4f79-ddda-a3da-0db3774b2794?language=en-US",
-  "lastReviewed": "2026-08-14",
+  "lastReviewed": "2026-08-15",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -61,7 +61,7 @@
     "entityName": "Judge",
     "operation": "merge",
     "groupId": "shotguns",
-    "generatedAt": "2026-08-15T01:54:36.056Z",
+    "generatedAt": "2026-08-15T07:03:42.806Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-15"
