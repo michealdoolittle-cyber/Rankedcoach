@@ -137,7 +137,7 @@
   ],
   "uuid": "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
   "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "pickRate": 49.6788,
   "pickRateRank": 3,
@@ -233,10 +233,10 @@
     "entityName": "Sova",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {

@@ -40,7 +40,20 @@
       "slot": "E - Signature",
       "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/abilities/grenade/displayicon.png",
       "summary": "EQUIP M-pulse. ALT-FIRE to toggle between Concuss and Healing outputs. FIRE to throw the device. Upon landing, M-pulse sends out sound waves, either Concussing or Healing players.",
-      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+      "stats": {
+        "Cost": "250 credits",
+        "Charges": "2",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "M-pulse preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
+      "setup": "M-pulse must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/71696d85f7392dc2dbbefbf7d6d53b478dd50d1e.mp4?accountingTag=VAL",
+        "title": "M-pulse",
+        "source": "https://playvalorant.com/en-us/agents/miks/",
+        "provider": "riot"
+      }
     },
     {
       "id": "waveform",
@@ -120,7 +133,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
   "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "pickRate": 4.211,
   "pickRateRank": 19,
@@ -198,10 +211,10 @@
     "entityName": "Miks",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {

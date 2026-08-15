@@ -135,7 +135,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
   "uuid": "92eeef5d-43b5-1d4a-8d03-b3927a09034b",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "pickRate": 2.857,
   "pickRateRank": 24,
@@ -225,10 +225,10 @@
     "entityName": "Veto",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {

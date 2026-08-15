@@ -332,7 +332,7 @@
   "coordinates": "38°42'ED\"N8 9°08'XS\"W8",
   "calloutLabelsBakedIn": true,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
@@ -1321,10 +1321,10 @@
     "entityName": "Pearl",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {

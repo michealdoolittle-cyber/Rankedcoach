@@ -35,7 +35,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c",
   "source": "https://valorant-api.com/v1/weapons/5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c?language=en-US",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -44,10 +44,10 @@
     "entityName": "Outlaw",
     "operation": "merge",
     "groupId": "snipers",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {

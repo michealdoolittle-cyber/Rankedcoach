@@ -52,7 +52,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "910be174-449b-c412-ab22-d0873436b21b",
   "source": "https://valorant-api.com/v1/weapons/910be174-449b-c412-ab22-d0873436b21b?language=en-US",
-  "lastReviewed": "2026-08-03",
+  "lastReviewed": "2026-08-14",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -61,10 +61,10 @@
     "entityName": "Bucky",
     "operation": "merge",
     "groupId": "shotguns",
-    "generatedAt": "2026-08-14T19:25:07.625Z",
+    "generatedAt": "2026-08-15T01:54:36.056Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-14"
+    "lastReviewed": "2026-08-15"
   },
   "_fieldMeta": {
     "id": {
