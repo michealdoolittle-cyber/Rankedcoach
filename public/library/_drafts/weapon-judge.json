@@ -61,7 +61,7 @@
     "entityName": "Judge",
     "operation": "merge",
     "groupId": "shotguns",
-    "generatedAt": "2026-08-15T07:03:42.806Z",
+    "generatedAt": "2026-08-15T13:05:08.354Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-15"
