@@ -62366,3 +62366,55 @@ html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-rin
   min-height:32px !important;
   animation:none !important;
 }
+
+/* 2026-08-16 Library/footer/performance polish.  Animated themes remain live,
+   but heavy scene/hover FX pause for a beat during typing, scrolling, and
+   modal activation so input does not hitch under translucent card layers. */
+body.rc-motion-relief .app-root::before,
+body.rc-motion-relief .app-root::after{
+  animation-play-state:paused !important;
+}
+
+body.rc-motion-relief #themeBuilderHoverFxCanvas,
+body.rc-motion-relief #themeBuilderHoverFxVideo,
+body.rc-motion-relief .theme-builder-card-smoke-video{
+  opacity:0 !important;
+  animation-play-state:paused !important;
+  pointer-events:none !important;
+}
+
+.placeholder-silhouette.is-silhouette-swapping{
+  opacity:0 !important;
+  transform:scale(.98) !important;
+  filter:grayscale(1) brightness(0) contrast(1.2) blur(7px) !important;
+  transition-duration:.26s,.26s,.26s !important;
+}
+
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home > #siteFooter,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats > .site-footer{
+    display:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card #statsPerformanceChart.stats-trends-grid{
+    transform-origin:center;
+    transition:transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, border-color .2s ease;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card #statsPerformanceChart.stats-trends-grid:hover,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card #statsPerformanceChart.stats-trends-grid:focus-within{
+    transform:translateY(-2px) scale(1.006) !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 72%,#fff 8%) !important;
+    box-shadow:
+      0 12px 24px rgba(0,0,0,.26),
+      0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 32%,transparent) !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .placeholder-silhouette.is-silhouette-swapping,
+  #page-stats .stats-performance-card #statsPerformanceChart.stats-trends-grid{
+    transition:none !important;
+    animation:none !important;
+  }
+}

@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260814-tutorial-insights-polish-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260816-library-animations-perf-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -19714,7 +19714,10 @@ function revealDailyEntrancePendingPage(pageId = "home") {
   if (document.body?.dataset.dailyEntrancePage === pageId) {
     delete document.body.dataset.dailyEntrancePage;
   }
+  suppressRankedCoachMotionRelief(760);
   document.body?.classList.remove("daily-entrance-motion-active");
+  document.body?.classList.remove("rc-motion-relief");
+  document.body?.classList.remove("page-motion-budget-active");
 }
 
 function clearTutorialTarget() {
@@ -20102,6 +20105,11 @@ let loadoutValueTextMutationObserver = null;
 let loadoutValueTextResizeObserver = null;
 let loadoutValueTextFitRaf = 0;
 let silhouetteShuffleTimer = null;
+let silhouetteSwapTimer = null;
+let silhouetteSwapToken = 0;
+let rankedCoachMotionReliefTimer = 0;
+let rankedCoachMotionReliefSuppressUntil = 0;
+let rankedCoachMotionReliefInstalled = false;
 let impactRolePill;
 let goalRRWidget;
 
@@ -26066,8 +26074,51 @@ function setRandomSilhouette(){
   const index = Math.floor(Math.random() * keys.length);
   const agent = keys[index];
 
-  img.src = getAgentSilhouetteUrl(agent);
+  setPlaceholderSilhouetteSource(agent, { immediate: true });
 
+}
+
+function setPlaceholderSilhouetteSource(agent, options = {}) {
+  const img = document.getElementById("placeholderSilhouette");
+  if (!img) return;
+
+  const key = String(agent || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const url = getAgentSilhouetteUrl(key);
+  if (!url) return;
+
+  const currentKey = img.dataset.silhouetteAgent || "";
+  const hasSource = Boolean(img.getAttribute("src"));
+  const immediate = Boolean(options.immediate) || !hasSource || prefersReducedMotion();
+  if (currentKey === key && hasSource) {
+    img.classList.remove("is-silhouette-swapping");
+    return;
+  }
+
+  if (silhouetteSwapTimer) {
+    clearTimeout(silhouetteSwapTimer);
+    silhouetteSwapTimer = null;
+  }
+
+  silhouetteSwapToken += 1;
+  const token = silhouetteSwapToken;
+
+  if (immediate) {
+    img.src = url;
+    img.dataset.silhouetteAgent = key;
+    img.classList.remove("is-silhouette-swapping");
+    return;
+  }
+
+  img.classList.add("is-silhouette-swapping");
+  silhouetteSwapTimer = setTimeout(() => {
+    if (token !== silhouetteSwapToken) return;
+    img.src = url;
+    img.dataset.silhouetteAgent = key;
+    requestAnimationFrame(() => {
+      if (token !== silhouetteSwapToken) return;
+      img.classList.remove("is-silhouette-swapping");
+    });
+  }, 260);
 }
 
 function stopSilhouetteShuffle() {
@@ -26075,6 +26126,12 @@ function stopSilhouetteShuffle() {
     clearTimeout(silhouetteShuffleTimer);
     silhouetteShuffleTimer = null;
   }
+  if (silhouetteSwapTimer) {
+    clearTimeout(silhouetteSwapTimer);
+    silhouetteSwapTimer = null;
+  }
+  silhouetteSwapToken += 1;
+  document.getElementById("placeholderSilhouette")?.classList.remove("is-silhouette-swapping");
   agentPlaceholder?.classList.remove("is-spinning", "is-idle-cycling");
 }
 
@@ -26093,7 +26150,7 @@ function startSilhouetteShuffle(options = {}) {
     const pool = allAgents?.length ? allAgents : Object.keys(AGENT_SIL_MAP);
     if (pool?.length) {
       const agent = pool[Math.floor(Math.random() * pool.length)];
-      img.src = getAgentSilhouetteUrl(agent);
+      setPlaceholderSilhouetteSource(agent, { immediate: !isIdle });
     }
 
     delay = isIdle
@@ -26362,7 +26419,7 @@ function applyAgentSilhouette(agent) {
 
   sil.classList.remove("silhouette-reveal");
   void sil.offsetWidth;
-  sil.src = url;
+  setPlaceholderSilhouetteSource(key, { immediate: true });
   sil.classList.add("silhouette-reveal");
 }
 
@@ -41332,11 +41389,67 @@ const THEME_BUILDER_GROUP_CONFIGS = [
 themeBuilderState = loadThemeBuilderState();
 let themeBuilderUiState = loadThemeBuilderUiState();
 
+function pulseRankedCoachMotionRelief(duration = 700) {
+  if (typeof document === "undefined" || !document.body || prefersReducedMotion()) return;
+  const now = typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+  if (rankedCoachMotionReliefSuppressUntil && now < rankedCoachMotionReliefSuppressUntil) return;
+  if (document.body.classList.contains("daily-entrance-motion-active")) return;
+  document.body.classList.add("rc-motion-relief");
+  stopThemeBuilderFx?.();
+  if (rankedCoachMotionReliefTimer) {
+    clearTimeout(rankedCoachMotionReliefTimer);
+  }
+  rankedCoachMotionReliefTimer = setTimeout(() => {
+    rankedCoachMotionReliefTimer = 0;
+    document.body?.classList.remove("rc-motion-relief");
+  }, Math.max(180, Math.min(1800, Number(duration) || 700)));
+}
+
+function suppressRankedCoachMotionRelief(duration = 700) {
+  if (typeof document === "undefined") return;
+  const now = typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+  rankedCoachMotionReliefSuppressUntil = now + Math.max(180, Math.min(1800, Number(duration) || 700));
+  if (rankedCoachMotionReliefTimer) {
+    clearTimeout(rankedCoachMotionReliefTimer);
+    rankedCoachMotionReliefTimer = 0;
+  }
+  document.body?.classList.remove("rc-motion-relief");
+}
+
+globalThis.RankedCoachSuppressMotionRelief = suppressRankedCoachMotionRelief;
+
+function installRankedCoachMotionRelief() {
+  if (rankedCoachMotionReliefInstalled || typeof document === "undefined") return;
+  rankedCoachMotionReliefInstalled = true;
+  const passiveCapture = { capture: true, passive: true };
+  const capture = { capture: true };
+  document.addEventListener("pointerdown", () => pulseRankedCoachMotionRelief(520), passiveCapture);
+  document.addEventListener("touchstart", () => pulseRankedCoachMotionRelief(680), passiveCapture);
+  document.addEventListener("wheel", () => pulseRankedCoachMotionRelief(420), passiveCapture);
+  document.addEventListener("scroll", () => pulseRankedCoachMotionRelief(360), passiveCapture);
+  document.addEventListener("focusin", () => pulseRankedCoachMotionRelief(760), capture);
+  document.addEventListener("input", () => pulseRankedCoachMotionRelief(1250), capture);
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isTypingTarget =
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target?.isContentEditable;
+    pulseRankedCoachMotionRelief(isTypingTarget ? 1250 : 520);
+  }, capture);
+}
+
 // ========================
 // INIT
 // ========================
 function initApp(){
   applyBrowserCompatibilityMode();
+  installRankedCoachMotionRelief();
   installMobileNavBehavior();
   syncMobileViewportState();
   scaleApp();
@@ -46325,6 +46438,7 @@ function renderThemeBuilderFxFrame(now) {
 }
 
 function handleThemeBuilderFxPointerOver(event) {
+  if (document.body?.classList.contains("rc-motion-relief")) return;
   const config = getThemeBuilderFxConfigForElement(event.target);
   if (!config) return;
   const element = event.target.closest(config.selector);

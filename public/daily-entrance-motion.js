@@ -1132,7 +1132,10 @@
     releaseAllHolds(run);
     releasePendingPage(document.getElementById(`page-${run.pageId}`));
     if (runtime.activeRun === run) runtime.activeRun = null;
+    window.RankedCoachSuppressMotionRelief?.(760);
     document.body?.classList.remove("daily-entrance-motion-active");
+    document.body?.classList.remove("rc-motion-relief");
+    document.body?.classList.remove("page-motion-budget-active");
     if (document.body?.dataset.dailyEntrancePage === run.pageId) {
       delete document.body.dataset.dailyEntrancePage;
     }

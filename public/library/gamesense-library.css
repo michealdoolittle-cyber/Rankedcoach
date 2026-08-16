@@ -5245,3 +5245,72 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
   .gamesense-map-canvas-row.is-heatmap{grid-template-columns:1fr;}
   .gamesense-heatmap-meta{min-height:0;padding:12px;}
 }
+
+/* 2026-08-16 targeted Library animation polish. */
+@keyframes gamesense-control-pop{
+  0%{transform:translateY(0) scale(.985);}
+  58%{transform:translateY(-3px) scale(1.018);}
+  100%{transform:translateY(-2px) scale(1.01);}
+}
+
+.gamesense-entry-card.gamesense-weapon-entry-card,
+.gamesense-comp-agents :is(button,figure),
+.gamesense-weapon-suggestion-grid :is(article,.gamesense-weapon-suggestion),
+.gamesense-agent-lore-history details,
+.gamesense-ability-grid button,
+.gamesense-playlist-controls :is(button,select,input),
+.gamesense-playlist-controls{
+  transform-origin:center;
+  transition:
+    transform .2s cubic-bezier(.22,1,.36,1),
+    border-color .2s ease,
+    background-color .2s ease,
+    box-shadow .2s ease;
+}
+
+@media (hover:hover){
+  .gamesense-entry-card.gamesense-weapon-entry-card:is(:hover,:focus-visible),
+  .gamesense-weapon-suggestion-grid :is(article,.gamesense-weapon-suggestion):is(:hover,:focus-within),
+  .gamesense-agent-lore-history details:is(:hover,:focus-within){
+    transform:translateY(-2px) scale(1.01);
+    animation:gamesense-control-pop .24s cubic-bezier(.22,1,.36,1) both;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--gamesense-cool,#58d4c8)) 72%,#fff 8%) !important;
+    background-color:color-mix(in srgb,var(--theme-accent,var(--gamesense-cool,#58d4c8)) 12%,rgba(7,16,24,.86)) !important;
+    box-shadow:
+      0 14px 28px rgba(0,0,0,.3),
+      0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--gamesense-cool,#58d4c8)) 32%,transparent),
+      0 0 22px color-mix(in srgb,var(--theme-accent,var(--gamesense-cool,#58d4c8)) 18%,transparent) !important;
+  }
+
+  .gamesense-comp-agents :is(button,figure):is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.01);
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .gamesense-ability-grid button:is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.01);
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .gamesense-playlist-controls:is(:hover,:focus-within){
+    transform:translateY(-2px) scale(1.006);
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .gamesense-playlist-controls :is(button,select,input):is(:hover,:focus-visible){
+    transform:translateY(-1px) scale(1.006);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .gamesense-entry-card.gamesense-weapon-entry-card,
+  .gamesense-comp-agents :is(button,figure),
+  .gamesense-weapon-suggestion-grid :is(article,.gamesense-weapon-suggestion),
+  .gamesense-agent-lore-history details,
+  .gamesense-ability-grid button,
+  .gamesense-playlist-controls,
+  .gamesense-playlist-controls :is(button,select,input){
+    transition:none !important;
+    animation:none !important;
+  }
+}
