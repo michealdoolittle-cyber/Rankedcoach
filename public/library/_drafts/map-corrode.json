@@ -1214,10 +1214,10 @@
     "entityName": "Corrode",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-15T18:52:34.600Z",
+    "generatedAt": "2026-08-16T02:01:16.659Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-15"
+    "lastReviewed": "2026-08-16"
   },
   "_fieldMeta": {
     "id": {
