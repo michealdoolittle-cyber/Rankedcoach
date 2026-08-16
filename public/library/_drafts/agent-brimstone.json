@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
   "uuid": "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
-  "lastReviewed": "2026-08-15",
+  "lastReviewed": "2026-08-16",
   "patchVersion": "13.02",
   "pickRate": 1.6,
   "pickRateRank": 29,
@@ -232,7 +232,7 @@
     "entityName": "Brimstone",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-16T02:01:16.659Z",
+    "generatedAt": "2026-08-16T07:06:28.784Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-16"

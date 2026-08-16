@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US",
   "uuid": "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
-  "lastReviewed": "2026-08-15",
+  "lastReviewed": "2026-08-16",
   "patchVersion": "13.02",
   "pickRate": 3.0978,
   "pickRateRank": 23,
@@ -232,7 +232,7 @@
     "entityName": "Deadlock",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-16T02:01:16.659Z",
+    "generatedAt": "2026-08-16T07:06:28.784Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-16"

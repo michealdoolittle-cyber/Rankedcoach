@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
   "uuid": "95b78ed7-4637-86d9-7e41-71ba8c293152",
-  "lastReviewed": "2026-08-15",
+  "lastReviewed": "2026-08-16",
   "patchVersion": "13.02",
   "pickRate": 2.2054,
   "pickRateRank": 25,
@@ -232,7 +232,7 @@
     "entityName": "Harbor",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-16T02:01:16.659Z",
+    "generatedAt": "2026-08-16T07:06:28.784Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-16"

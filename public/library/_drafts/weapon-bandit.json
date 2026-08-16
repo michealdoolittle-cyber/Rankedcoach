@@ -28,7 +28,7 @@
     }
   ],
   "source": "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US",
-  "lastReviewed": "2026-08-15",
+  "lastReviewed": "2026-08-16",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -37,7 +37,7 @@
     "entityName": "Bandit",
     "operation": "merge",
     "groupId": "sidearms",
-    "generatedAt": "2026-08-16T02:01:16.659Z",
+    "generatedAt": "2026-08-16T07:06:28.784Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-16"

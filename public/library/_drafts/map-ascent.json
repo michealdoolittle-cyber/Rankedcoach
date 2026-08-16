@@ -292,7 +292,7 @@
   "coordinates": "45°26'BF'N,12°20'Q'E",
   "calloutLabelsBakedIn": true,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-08-15",
+  "lastReviewed": "2026-08-16",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
@@ -1265,7 +1265,7 @@
     "entityName": "Ascent",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-16T02:01:16.659Z",
+    "generatedAt": "2026-08-16T07:06:28.784Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-16"
