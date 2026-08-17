@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260817-library-interaction-followup-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260817-collective-directive-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -685,7 +685,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
         : `Show only ${meta.label} agents`);
     return `
       <button class="daily-warmup-picker-tile daily-warmup-picker-role role-${role}${selected ? " is-selected" : ""}${isActiveFilter ? " is-filter-active" : ""}" type="button" data-loadout-picker-item="${kind === "exclude" ? "role" : "role-filter"}" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${role}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : ""}${filtersOneTrick ? ` aria-pressed="${isActiveFilter ? "true" : "false"}"` : ""} aria-label="${escapeHtml(roleTitle)}" title="${escapeHtml(roleTitle)}">
-        <img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+        ${renderRoleIconImage(role, "", "", `aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low"`)}
         <span>${escapeHtml(meta.label)}</span>
       </button>
     `;
@@ -708,7 +708,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
     const agents = allAgents.filter((agent) => agentRoles[agent] === role);
     return `
       <section class="daily-warmup-picker-agent-group role-${role}" style="--loadout-role-color:${meta.color}">
-        <div class="daily-warmup-picker-agent-group-head"><img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low"><span>${escapeHtml(meta.label)}</span></div>
+        <div class="daily-warmup-picker-agent-group-head">${renderRoleIconImage(role, "", "", `aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low"`)}<span>${escapeHtml(meta.label)}</span></div>
         <div class="daily-warmup-picker-agent-grid">${agents.map(renderAgentTile).join("")}</div>
       </section>
     `;
@@ -3334,6 +3334,7 @@ function shouldAllowMobilePageSwipeStart(target, startX, startY) {
   if (!isMobileLayoutViewport()) return false;
   if (document.body?.classList.contains("mobile-modal-open")) return false;
   if (!target?.closest?.(".page.active")) return false;
+  if (target?.closest?.(".gamesense-crosshair-panel, .gamesense-crosshair-grid, .gamesense-crosshair-toolbar, .match-summary-scroll-frame, .match-summary-timeline-scroll, .match-summary-economy-scroll, .stats-lifetime-rank-chart-wrap, [data-mobile-scroll-surface]")) return false;
   if (target?.closest?.("[data-gamesense-map-viewport], .gamesense-map-tools, .gamesense-map-view-tabs, [data-gamesense-collection-preview], .gamesense-playlist-filters, .gamesense-video-card, .gamesense-video-embed")) return false;
   if (!isMobileSwipeInsideCenterZone(startX, startY)) return false;
   return !target?.closest?.("input, textarea, select, option, [contenteditable='true']");
@@ -12325,7 +12326,7 @@ function getTrendSignalIconMarkup(item = {}) {
     if (roleIcon) {
       return `
         <div class="trend-signal-media has-icon role-icon" data-icon-kind="role" data-role="${escapeHtml(roleKey)}">
-          <img src="${escapeHtml(roleIcon)}" alt="${escapeHtml(roleKey)} role">
+          ${renderRoleIconImage(roleKey, "", `${roleKey} role`)}
         </div>
       `;
     }
@@ -16750,7 +16751,7 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
 function renderMatchSummaryRoleBadge(roleKey = "") {
   const key = getCompassRoleKey(roleKey);
   const icon = ROLE_ICON_MAP?.[key] || "";
-  return icon ? `<span class="match-summary-role-badge role-${escapeHtml(key)}"><img src="${escapeHtml(icon)}" alt="" aria-hidden="true"></span>` : "";
+  return icon ? `<span class="match-summary-role-badge role-${escapeHtml(key)}">${renderRoleIconImage(key, "", "", `aria-hidden="true"`)}</span>` : "";
 }
 
 function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(match)) {
@@ -17088,7 +17089,7 @@ function renderMatchSummaryModal(match = {}, options = {}) {
   content.innerHTML = `
     <header class="match-summary-header is-${escapeHtml(result)}">
       <div class="match-summary-agent-art"><img src="${escapeHtml(getAgentIconUrl(agent))}" alt="${escapeHtml(agent)}"></div>
-      ${roleIcon ? `<div class="match-summary-role-art role-${escapeHtml(roleKey)}"><img src="${escapeHtml(roleIcon)}" alt="${escapeHtml(roleKey)} role"></div>` : ""}
+      ${roleIcon ? `<div class="match-summary-role-art role-${escapeHtml(roleKey)}">${renderRoleIconImage(roleKey, "", `${roleKey} role`)}</div>` : ""}
       <div class="match-summary-title-block">
         <span class="match-summary-kicker">Match Report</span>
         <h2 id="matchSummaryTitle">${escapeHtml(agent)} on ${escapeHtml(mapName)}</h2>
@@ -24359,6 +24360,23 @@ const ROLE_ICON_MAP = {
   duelist:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/duelist_role.png"
 };
 
+const ROLE_ICON_FALLBACK_SRC = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#101827"/><circle cx="32" cy="32" r="17" fill="none" stroke="#7dd3fc" stroke-width="5" opacity=".78"/><circle cx="32" cy="32" r="5" fill="#f6c453"/></svg>')}`;
+
+function getRoleIconFallbackAttrs() {
+  return `data-role-icon-fallback="${ROLE_ICON_FALLBACK_SRC}" onerror="this.onerror=null;this.src=this.dataset.roleIconFallback;this.classList.add('is-role-icon-fallback');"`;
+}
+
+function renderRoleIconImage(roleKey = "", className = "", alt = "", attrs = "") {
+  const key = String(roleKey || "").trim().toLowerCase();
+  const src = ROLE_ICON_MAP[key] || "";
+  const classes = [className, `role-${key}`].filter(Boolean).join(" ");
+  const normalizedAttrs = String(attrs || "").trim();
+  if (!src) {
+    return `<img${classes ? ` class="${escapeHtml(`${classes} is-role-icon-fallback`.trim())}"` : ` class="is-role-icon-fallback"`} src="${ROLE_ICON_FALLBACK_SRC}" alt="${escapeHtml(alt)}"${normalizedAttrs ? ` ${normalizedAttrs}` : ""}>`;
+  }
+  return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"${normalizedAttrs ? ` ${normalizedAttrs}` : ""} ${getRoleIconFallbackAttrs()}>`;
+}
+
 // ========================
 // AGENT SILHOUETTE MAP
 // ========================
@@ -28115,7 +28133,7 @@ function renderRoleSelector(){
     const icon = ROLE_ICON_MAP[role];
 
     btn.innerHTML = icon
-      ? `<img src="${icon}" />`
+      ? renderRoleIconImage(role, "", "", `aria-hidden="true"`)
       : `<span>${role}</span>`;
 
     btn.onclick = () => {
@@ -45313,6 +45331,15 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-stat span")}{font-size:calc(10px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-stat strong")}{font-size:calc(14px * ${homeBaselineScale}) !important;}`
         );
+        const mobileThemeScope = `html.is-mobile-layout body.is-mobile-layout[data-theme="${escapeCssString(themeKey)}"]`;
+        chunks.push(
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .home-layout.dashboard-grid .loadout-card.card .home-loadout-main.home-loadout-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; grid-template-rows:42px minmax(150px,1fr) 58px 58px !important; grid-template-areas:"roles roles" "spin reel" "map-pill map-pill" "focus-pill focus-pill" !important; min-height:340px !important; height:auto !important; gap:8px !important; padding:7px !important; align-items:stretch !important; justify-items:stretch !important;}`,
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card .home-loadout-info.home-loadout-info{display:contents !important; grid-area:auto !important; min-height:0 !important; height:auto !important;}`,
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card #spinAgentBtn#spinAgentBtn{grid-area:spin !important; width:min(100%,158px) !important; height:min(100%,158px) !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:center !important;}`,
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card #agentFrame#agentFrame,${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card #agentFrame#agentFrame.agent-frame{grid-area:reel !important; width:min(100%,158px) !important; height:min(100%,158px) !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:center !important;}`,
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card #loadoutMapPicker#loadoutMapPicker.home-loadout-pill{grid-area:map-pill !important; grid-column:1 / -1 !important; width:100% !important; height:58px !important; min-height:58px !important; justify-self:stretch !important; align-self:stretch !important;}`,
+          `${mobileThemeScope} #page-home#page-home#page-home.page.active .loadout-card .home-loadout-focus-pill.home-loadout-pill{grid-area:focus-pill !important; grid-column:1 / -1 !important; width:100% !important; height:58px !important; min-height:58px !important; justify-self:stretch !important; align-self:stretch !important;}`
+        );
       }
 
       chunks.push(
@@ -49743,7 +49770,7 @@ function setTimelinePillVisual(pill, item) {
   pill.querySelector(".coaching-role-badge")?.remove();
   const roleKey = String(item?.roleKey || "").toLowerCase();
   if (ROLE_ICON_MAP[roleKey]) {
-    pill.insertAdjacentHTML("beforeend", `<span class="coaching-role-badge role-${escapeHtml(roleKey)}" title="${escapeHtml(formatReadableLabel(roleKey))} role"><img src="${escapeHtml(ROLE_ICON_MAP[roleKey])}" alt=""></span>`);
+    pill.insertAdjacentHTML("beforeend", `<span class="coaching-role-badge role-${escapeHtml(roleKey)}" title="${escapeHtml(formatReadableLabel(roleKey))} role">${renderRoleIconImage(roleKey, "", "", `aria-hidden="true"`)}</span>`);
   }
 }
 
@@ -62739,7 +62766,7 @@ function renderStatsAgentsModel() {
       column.dataset.agentRole = roleMeta.key;
       column.innerHTML = `
         <div class="stats-agent-desktop-heading role-${escapeHtml(roleMeta.key)}" data-role="${escapeHtml(roleMeta.key)}">
-          <img src="${escapeHtml(ROLE_ICON_MAP[roleMeta.key] || "")}" alt="" loading="lazy" decoding="async">
+          ${renderRoleIconImage(roleMeta.key, "", "", `aria-hidden="true" loading="lazy" decoding="async"`)}
           <span>${escapeHtml(roleMeta.label)}</span>
         </div>
       `;
@@ -62783,7 +62810,7 @@ function renderStatsAgentsModel() {
     filter.setAttribute("aria-label", "Filter agents by role");
     filter.innerHTML = roleFilters.map((role) => `
       <button type="button" class="stats-mobile-role-filter-btn ${role.key === mobileStatsAgentRole ? "active" : ""}" data-stats-agent-role="${escapeHtml(role.key)}" aria-pressed="${role.key === mobileStatsAgentRole ? "true" : "false"}">
-        <img src="${escapeHtml(ROLE_ICON_MAP[role.key] || "")}" alt="" loading="lazy" decoding="async">
+        ${renderRoleIconImage(role.key, "", "", `aria-hidden="true" loading="lazy" decoding="async"`)}
         <span>${escapeHtml(role.label)}</span>
       </button>
     `).join("");
@@ -63615,7 +63642,7 @@ function renderStatsRoleProgress() {
     }
     pill.innerHTML = `
       <div class="stats-role-pill-main">
-        <img class="stats-role-pill-icon" src="${escapeHtml(ROLE_ICON_MAP[role.roleKey] || "")}" alt="${escapeHtml(role.label)} role icon">
+        ${renderRoleIconImage(role.roleKey, "stats-role-pill-icon", `${role.label} role icon`)}
         <span class="stats-role-pill-label">${escapeHtml(role.label)}</span>
       </div>
       <div class="stats-role-pill-value">

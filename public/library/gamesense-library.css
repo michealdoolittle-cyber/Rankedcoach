@@ -689,12 +689,14 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{height:100%;object-fit:cover;}
 .gamesense-topic-card[data-gamesense-topic="agents"] .gamesense-topic-collage{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:0;opacity:.64;background:linear-gradient(135deg,#17253a,#070d18);}
 .gamesense-topic-role-agent{position:relative;display:grid;grid-template-rows:36px minmax(0,1fr);align-items:end;justify-items:center;min-width:0;height:100%;padding:14px 4px 0;}
-.gamesense-role-svg{width:24px;height:24px;color:currentColor;fill:color-mix(in srgb,currentColor 72%,#fff 18%);stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55));}
 .gamesense-topic-role-agent.role-duelist{color:#ff4655;}
 .gamesense-topic-role-agent.role-controller{color:#a78bfa;}
 .gamesense-topic-role-agent.role-initiator{color:#38bdf8;}
 .gamesense-topic-role-agent.role-sentinel{color:#34d399;}
 .gamesense-topic-role-icon{width:30px !important;height:30px !important;object-fit:contain !important;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55)) !important;}
+.gamesense-topic-role-icon.is-role-icon-fallback,
+.gamesense-agent-role-icon.is-role-icon-fallback,
+.gamesense-comp-pick-role-icon.is-role-icon-fallback{opacity:.82;border-radius:999px;background:rgba(15,23,42,.72);}
 .gamesense-topic-agent-art{width:100% !important;height:100% !important;min-height:0;object-fit:contain !important;object-position:center bottom;filter:saturate(.9) contrast(1.08) drop-shadow(0 12px 16px rgba(0,0,0,.72)) !important;}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;gap:9px;padding:12px 16px 112px;opacity:.62;background:linear-gradient(135deg,#17253a,#070d18);}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{background:linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.26) 48%,rgba(2,6,23,.98));}

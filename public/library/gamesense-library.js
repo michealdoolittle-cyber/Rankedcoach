@@ -1167,19 +1167,27 @@
     return !exists;
   }
 
-  function renderRoleIcon(role = "", className = "") {
+  const roleIconMap = Object.freeze({
+    controller: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/role_controller.png",
+    duelist: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/duelist_role.png",
+    initiator: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/initiator_role.png",
+    sentinel: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/sentinel_role.png"
+  });
+
+  const roleIconFallbackSrc = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#101827"/><circle cx="32" cy="32" r="17" fill="none" stroke="#7dd3fc" stroke-width="5" opacity=".78"/><circle cx="32" cy="32" r="5" fill="#f6c453"/></svg>')}`;
+
+  function getRoleIconFallbackAttrs() {
+    return `data-role-icon-fallback="${roleIconFallbackSrc}" onerror="this.onerror=null;this.src=this.dataset.roleIconFallback;this.classList.add('is-role-icon-fallback');"`;
+  }
+
+  function renderRoleIconImage(role = "", className = "", alt = "") {
     const key = assetSlug(role);
-    const classes = ["gamesense-role-svg", className, `role-${key}`].filter(Boolean).join(" ");
-    const body = key === "duelist"
-      ? `<path d="M12 4 20 12 12 20 4 12Z"></path><path d="m7 7 10 10M17 7 7 17"></path>`
-      : key === "controller"
-        ? `<path d="M4.5 17.5 12 6l7.5 11.5H15l-3-4.7-3 4.7Z"></path><path d="M8 20h8"></path>`
-        : key === "initiator"
-          ? `<path d="M5 5h14l-6 7 6 7H5l6-7Z"></path><path d="M8 5 15 19"></path>`
-          : key === "sentinel"
-            ? `<path d="M12 4 20 7v5.2c0 4.2-3.1 7.2-8 8.8-4.9-1.6-8-4.6-8-8.8V7Z"></path><path d="M8 10h8M10 14h4"></path>`
-            : `<circle cx="12" cy="12" r="8"></circle>`;
-    return `<svg class="${escapeHtml(classes)}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
+    const src = roleIconMap[key] || "";
+    const classes = [className, `role-${key}`].filter(Boolean).join(" ");
+    if (!src) {
+      return `<img class="${escapeHtml(`${classes} is-role-icon-fallback`.trim())}" src="${roleIconFallbackSrc}" alt="${escapeHtml(alt)}" aria-hidden="true" loading="lazy" decoding="async">`;
+    }
+    return `<img class="${escapeHtml(classes)}" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" aria-hidden="true" loading="lazy" decoding="async" ${getRoleIconFallbackAttrs()}>`;
   }
 
   function getCrosshairEntry(id = "") {
@@ -1658,7 +1666,7 @@
         const fullPortrait = agent.portrait || getAgentFallbackIcon(agent.label || fallback);
         return `
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
-            ${renderRoleIcon(role, "gamesense-topic-role-icon")}
+            ${renderRoleIconImage(role, "gamesense-topic-role-icon")}
             ${getDeferredCollageImageMarkup(thumbnail || fullPortrait, "gamesense-topic-agent-art", {
               ...eagerCollageOptions,
               fallbackSrc: thumbnail ? fullPortrait : ""
@@ -2737,7 +2745,7 @@
       const activeRole = roles.includes(state.agentRole) ? state.agentRole : "all";
       items = activeRole === "all" ? items : items.filter(item => assetSlug(item.role) === activeRole);
       controls = `<div class="gamesense-agent-role-filter" role="tablist" aria-label="Filter agents by role">
-        ${roles.map(role => `<button type="button" data-gamesense-agent-role-filter="${role}"${role === "all" ? "" : ` data-role-tone="${role}"`} class="${role === activeRole ? "active" : ""}" aria-selected="${role === activeRole}">${role === "all" ? `<span class="gamesense-agent-role-all-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : renderRoleIcon(role, "gamesense-agent-role-icon")}<span>${role === "all" ? "All Agents" : role}</span></button>`).join("")}
+        ${roles.map(role => `<button type="button" data-gamesense-agent-role-filter="${role}"${role === "all" ? "" : ` data-role-tone="${role}"`} class="${role === activeRole ? "active" : ""}" aria-selected="${role === activeRole}">${role === "all" ? `<span class="gamesense-agent-role-all-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : renderRoleIconImage(role, "gamesense-agent-role-icon")}<span>${role === "all" ? "All Agents" : role}</span></button>`).join("")}
       </div>`;
     }
     return `
@@ -3277,7 +3285,7 @@
           return `<article class="gamesense-comp-pick-row">
             <div class="gamesense-comp-pick-identity">
               <img class="gamesense-comp-pick-art" src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
-              <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}${renderRoleIcon(normalizedRole, "gamesense-comp-pick-role-icon")}</strong>
+              <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}${renderRoleIconImage(normalizedRole, "gamesense-comp-pick-role-icon")}</strong>
             </div>
             <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
             <div class="gamesense-comp-pick-rates">

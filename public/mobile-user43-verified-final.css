@@ -10434,6 +10434,32 @@
     margin-inline: auto !important;
   }
 
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-map-card .stats-map-result-line.stats-map-result-line {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-map-card .stats-map-result-line.stats-map-result-line :is(.stats-sub-text, .stats-map-games) {
+    display: inline-flex !important;
+    flex: 0 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 50% !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+    font-size: clamp(7.5px, 2.2vw, 9.5px) !important;
+    line-height: 1 !important;
+    letter-spacing: -.01em !important;
+  }
+
   html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList.stats-weapon-list {
     gap: 10px !important;
   }
