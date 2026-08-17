@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260817-mobile-rank-chart-scroll-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260817-insights-layout-perf-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -26986,8 +26986,16 @@ function renderInsightCards() {
   scheduleInsightListOverflowSync(container);
 }
 
+function isLayoutSafeForActivePage(element) {
+  if (!(element instanceof Element)) return true;
+  const owningPage = element.closest?.(".page");
+  if (owningPage instanceof HTMLElement && owningPage !== getActivePageElement()) return false;
+  return true;
+}
+
 function syncInsightListOverflow(container = document.getElementById("insightsList")) {
   if (!container) return;
+  if (!isLayoutSafeForActivePage(container)) return;
 
   if (isMobileLayoutViewport()) {
     container.classList.remove("is-scrollable");
@@ -27198,6 +27206,7 @@ function bindInsightCards(){
 function replayOpenInsightTrendAnimation() {
   const content = document.querySelector(".trend-content.open");
   if (!content) return;
+  if (!isLayoutSafeForActivePage(content)) return;
   content.classList.remove("trend-content-animate");
   void content.offsetWidth;
   content.classList.add("trend-content-animate");
@@ -27235,7 +27244,7 @@ function bindInsightTrendRows(){
     contents.forEach((content) => {
       const isOpen = String(content.dataset.trendContent || "").trim().toLowerCase() === normalizedKey;
       content.classList.toggle("open", isOpen);
-      if (isOpen) {
+      if (isOpen && isLayoutSafeForActivePage(content)) {
         content.classList.remove("trend-content-animate");
         void content.offsetWidth;
         content.classList.add("trend-content-animate");
@@ -56998,7 +57007,10 @@ function activatePage(pageId, options = {}){
         }, 96);
       }
       if (pageId === "insights") {
-        requestAnimationFrame(() => enforceInsightsActionFluidWidth());
+        requestAnimationFrame(() => {
+          enforceInsightsActionFluidWidth();
+          scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+        });
       }
       return;
     }
@@ -62459,6 +62471,7 @@ function clearInsightsActionMobileInlineLayout(action, card, hero, meta, details
 function enforceInsightsActionFluidWidth() {
   const action = document.querySelector("#page-insights .insights-action-card .insight-action");
   if (!(action instanceof HTMLElement)) return;
+  if (!isLayoutSafeForActivePage(action)) return;
 
   const card = action.closest(".insights-action-card");
   const hero = action.querySelector(".insight-action-hero");
@@ -63912,6 +63925,19 @@ if (globalThis.__RANKEDCOACH_TEST_HOOKS__ === true) {
     },
     openStatsSummaryTrend: metric => openStatsSummaryTrend(metric),
     getStatsSummaryTrendEntries: metric => getStatsSummaryTrendEntries(metric, getScopedStatsData().matches),
+    scheduleInsightListOverflowForTest: () => scheduleInsightListOverflowSync(document.getElementById("insightsList")),
+    getInsightsListOverflowState: () => {
+      const container = document.getElementById("insightsList");
+      return {
+        activePage: getActivePageElement()?.id || "",
+        cardCount: container?.querySelectorAll?.(".insight-card")?.length || 0,
+        isScrollable: Boolean(container?.classList?.contains("is-scrollable")),
+        height: container?.style?.height || "",
+        maxHeight: container?.style?.maxHeight || "",
+        minHeight: container?.style?.minHeight || "",
+        overflowY: container?.style?.overflowY || ""
+      };
+    },
     openStatsDetail: (kind, value) => openStatsDetailModal(kind, value),
     openStatsPeakLifetimeRankChart: () => openStatsPeakLifetimeRankChart(),
     activatePageForTest: pageName => {
