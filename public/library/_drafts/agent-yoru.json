@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89?language=en-US",
   "uuid": "7f94d92c-4234-0a36-9646-3a87eb8b5c89",
-  "lastReviewed": "2026-08-16",
+  "lastReviewed": "2026-08-17",
   "patchVersion": "13.02",
   "pickRate": 4.1134,
   "pickRateRank": 20,
@@ -232,7 +232,7 @@
     "entityName": "Yoru",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-17T01:59:40.260Z",
+    "generatedAt": "2026-08-17T07:29:09.042Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-17"

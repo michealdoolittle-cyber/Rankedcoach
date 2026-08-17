@@ -544,7 +544,7 @@
   "coordinates": "34°2'A'N,6°51'Z'W",
   "source": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-08-16",
+  "lastReviewed": "2026-08-17",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
@@ -1477,7 +1477,7 @@
     "entityName": "Bind",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-17T01:59:40.260Z",
+    "generatedAt": "2026-08-17T07:29:09.042Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-17"

@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
   "uuid": "df1cb487-4902-002e-5c17-d28e83e78588",
-  "lastReviewed": "2026-08-16",
+  "lastReviewed": "2026-08-17",
   "patchVersion": "13.02",
   "pickRate": 10.4245,
   "pickRateRank": 14,
@@ -232,7 +232,7 @@
     "entityName": "Waylay",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-17T01:59:40.260Z",
+    "generatedAt": "2026-08-17T07:29:09.042Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-17"
