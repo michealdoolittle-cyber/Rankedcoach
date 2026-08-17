@@ -1100,7 +1100,7 @@
     height: auto !important;
     overflow: visible !important;
     padding-top: calc(var(--mobile-top-ranks) + 4px + env(safe-area-inset-top)) !important;
-    padding-bottom: calc(var(--mobile-bottom-nav) + 20px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 20px !important;
     touch-action: pan-y;
   }
 
@@ -2699,7 +2699,7 @@
     min-height: auto !important;
     padding-inline: 7px !important;
     padding-top: 5px !important;
-    padding-bottom: calc(var(--mobile-bottom-nav, 86px) + 18px) !important;
+    padding-bottom: 18px !important;
     gap: 7px !important;
   }
 
@@ -4405,7 +4405,7 @@
   }
 
   html.is-mobile-layout body.is-mobile-layout .page.active {
-    padding-bottom: calc(var(--mobile-bottom-nav, 86px) + 28px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: 28px !important;
   }
 }
 
@@ -4619,7 +4619,7 @@
 
   html.is-mobile-layout body.is-mobile-layout .page.active {
     padding-top: calc(var(--mobile-top-ranks, 102px) + 6px + env(safe-area-inset-top)) !important;
-    padding-bottom: calc(var(--mobile-bottom-nav, 76px) + 12px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 12px !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout .mobile-rank-row {
