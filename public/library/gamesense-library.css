@@ -5333,15 +5333,32 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
   line-height:1 !important;
 }
 
-.gamesense-entry-grid-agents,
-.gamesense-tip-grid,
+.gamesense-entry-grid-agents .gamesense-entry-card,
+.gamesense-tip-grid > .gamesense-tip,
 .gamesense-comp-card details,
-.gamesense-weapon-suggestion-grid{
+.gamesense-weapon-suggestion-grid > :is(article,details,.gamesense-weapon-suggestion){
   border-radius:16px !important;
+  overflow:hidden;
+}
+
+.gamesense-tip-grid > .gamesense-tip,
+.gamesense-weapon-suggestion-grid > :is(article,details,.gamesense-weapon-suggestion){
+  border-color:rgba(148,163,184,.2);
+  background:
+    radial-gradient(circle at 50% 0%,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 8%,transparent),transparent 48%),
+    rgba(7,16,24,.72);
+}
+
+.gamesense-comp-card details{
+  border:1px solid rgba(148,163,184,.2);
+  background:linear-gradient(145deg,rgba(15,23,42,.7),rgba(2,6,23,.82));
+}
+
+.gamesense-comp-card details > summary{
+  border-radius:inherit;
 }
 
 #gamesenseLibraryView .gamesense-crosshair-toolbar,
-#gamesenseLibraryView > div > button,
 #gamesenseLibraryView .gamesense-weapon-grid,
 #gamesenseLibraryView .gamesense-collection-filters,
 #gamesenseLibraryView .gamesense-entry-grid-agents,
@@ -5350,8 +5367,23 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
 #gamesenseLibraryView .gamesense-comp-role-tabs,
 #gamesenseLibraryView .gamesense-map-view-tabs,
 #gamesenseLibraryView .gamesense-map-tools,
-#gamesenseLibraryView .gamesense-related-video > a,
 #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol{
+  transform:none !important;
+  animation:none !important;
+}
+
+#gamesenseLibraryView .gamesense-crosshair-toolbar :is(button,a),
+#gamesenseLibraryView > div > button,
+#gamesenseLibraryView .gamesense-weapon-grid button,
+#gamesenseLibraryView .gamesense-collection-filters button,
+#gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card,
+#gamesenseLibraryView .gamesense-agent-role-filter button,
+#gamesenseLibraryView .gamesense-tips-tabs button,
+#gamesenseLibraryView .gamesense-comp-role-tabs button,
+#gamesenseLibraryView .gamesense-map-view-tabs button,
+#gamesenseLibraryView .gamesense-map-tools button,
+#gamesenseLibraryView .gamesense-related-video > a,
+#gamesenseLibraryView .gamesense-dossier-sticky-notes :is(button,.gamesense-dossier-tree-label){
   transform-origin:center;
   transition:
     transform .2s cubic-bezier(.22,1,.36,1),
@@ -5384,17 +5416,18 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
       linear-gradient(145deg,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 13%,rgba(15,23,42,.92)),rgba(2,6,23,.95)) !important;
   }
 
-  #gamesenseLibraryView .gamesense-crosshair-toolbar:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-crosshair-toolbar :is(button,a):is(:hover,:focus-visible),
   #gamesenseLibraryView > div > button:is(:hover,:focus-visible),
-  #gamesenseLibraryView .gamesense-weapon-grid:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-collection-filters:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-entry-grid-agents:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-agent-role-filter:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-tips-tabs:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-comp-role-tabs:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-map-view-tabs:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-map-tools:is(:hover,:focus-within),
-  #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol:is(:hover,:focus-within){
+  #gamesenseLibraryView .gamesense-weapon-grid button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-collection-filters button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-agent-role-filter button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-tips-tabs button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-comp-role-tabs button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-map-view-tabs button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-map-tools button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes summary:is(:hover,:focus-visible) .gamesense-dossier-tree-label{
     transform:translateY(-2px) scale(1.006);
     animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both;
     border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 58%,rgba(148,163,184,.26));
@@ -5420,17 +5453,27 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
 
 @media (prefers-reduced-motion:reduce){
   #gamesenseLibraryView .gamesense-crosshair-toolbar,
+  #gamesenseLibraryView .gamesense-crosshair-toolbar :is(button,a),
   #gamesenseLibraryView > div > button,
   #gamesenseLibraryView .gamesense-weapon-grid,
+  #gamesenseLibraryView .gamesense-weapon-grid button,
   #gamesenseLibraryView .gamesense-collection-filters,
+  #gamesenseLibraryView .gamesense-collection-filters button,
   #gamesenseLibraryView .gamesense-entry-grid-agents,
+  #gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card,
   #gamesenseLibraryView .gamesense-agent-role-filter,
+  #gamesenseLibraryView .gamesense-agent-role-filter button,
   #gamesenseLibraryView .gamesense-tips-tabs,
+  #gamesenseLibraryView .gamesense-tips-tabs button,
   #gamesenseLibraryView .gamesense-comp-role-tabs,
+  #gamesenseLibraryView .gamesense-comp-role-tabs button,
   #gamesenseLibraryView .gamesense-map-view-tabs,
+  #gamesenseLibraryView .gamesense-map-view-tabs button,
   #gamesenseLibraryView .gamesense-map-tools,
+  #gamesenseLibraryView .gamesense-map-tools button,
   #gamesenseLibraryView .gamesense-related-video > a,
-  #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol{
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol,
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes :is(button,.gamesense-dossier-tree-label){
     transform:none !important;
     transition:none !important;
     animation:none !important;
