@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260817-lifetime-axis-skin-filters-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260817-mobile-rank-chart-scroll-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -63330,9 +63330,14 @@ function buildStatsLifetimeRankChartMarkup() {
     return `<li class="stats-lifetime-rank-empty">No retained rank snapshots are available for a lifetime chart yet.</li>`;
   }
 
-  const width = 1280;
-  const height = 430;
-  const pad = { left: 70, right: 42, top: 48, bottom: 92 };
+  const isMobileLifetimeRankChart = typeof isMobileLayoutViewport === "function" && isMobileLayoutViewport();
+  const width = isMobileLifetimeRankChart ? 920 : 1280;
+  const height = isMobileLifetimeRankChart ? 360 : 430;
+  const pad = isMobileLifetimeRankChart
+    ? { left: 70, right: 32, top: 42, bottom: 78 }
+    : { left: 70, right: 42, top: 48, bottom: 92 };
+  const wrapInset = 11;
+  const stickyAxisWidth = pad.left + 12;
   const bounds = getLifetimeRankBounds(lifetime.slice);
   const plotBottom = height - pad.bottom;
   const plotHeight = plotBottom - pad.top;
@@ -63430,9 +63435,9 @@ function buildStatsLifetimeRankChartMarkup() {
         <strong>Retained Lifetime Rank</strong>
         <span>${escapeHtml(caption || `${lifetime.entries.length} rank snapshots`)}</span>
       </div>
-      <div class="stats-lifetime-rank-chart-frame">
+      <div class="stats-lifetime-rank-chart-frame" style="--stats-lifetime-rank-axis-left:${wrapInset}px;--stats-lifetime-rank-axis-width:${stickyAxisWidth}px;--stats-lifetime-rank-chart-height:${height}px;" data-axis-left="${wrapInset}" data-axis-width="${stickyAxisWidth}" data-chart-width="${width}" data-chart-height="${height}" data-pad-left="${pad.left}" data-pad-top="${pad.top}" data-plot-bottom="${plotBottom}">
         <div class="stats-lifetime-rank-y-axis-sticky" aria-hidden="true">
-          <svg class="stats-lifetime-rank-y-axis-chart" width="${pad.left + 12}" height="${height}" viewBox="0 0 ${pad.left + 12} ${height}" focusable="false">
+          <svg class="stats-lifetime-rank-y-axis-chart" width="${stickyAxisWidth}" height="${height}" viewBox="0 0 ${stickyAxisWidth} ${height}" focusable="false">
             ${stickyYTicks}
             <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
           </svg>

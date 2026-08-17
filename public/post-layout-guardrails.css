@@ -1581,8 +1581,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerfor
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart .stats-trend-card .stats-trend-detail{
   display:-webkit-box !important;
   -webkit-box-orient:vertical !important;
-  -webkit-line-clamp:2 !important;
-  max-height:calc(2 * 1.1em) !important;
+  -webkit-line-clamp:4 !important;
+  max-height:calc(4 * 1.1em) !important;
   line-height:1.1 !important;
   overflow:hidden !important;
 }
@@ -3138,17 +3138,21 @@ html body #page-library#page-library #gamesenseLibraryView .gamesense-weapon-gri
   position:relative !important;
   width:100% !important;
   min-width:0 !important;
+  --stats-lifetime-rank-axis-left:11px;
+  --stats-lifetime-rank-axis-width:82px;
+  --stats-lifetime-rank-chart-height:430px;
 }
 
 .stats-lifetime-rank-y-axis-sticky{
   position:absolute !important;
-  top:11px !important;
-  bottom:11px !important;
-  left:11px !important;
-  width:82px !important;
+  top:var(--stats-lifetime-rank-axis-left,11px) !important;
+  bottom:auto !important;
+  left:var(--stats-lifetime-rank-axis-left,11px) !important;
+  width:var(--stats-lifetime-rank-axis-width,82px) !important;
+  height:var(--stats-lifetime-rank-chart-height,430px) !important;
   z-index:4 !important;
   pointer-events:none !important;
-  background:linear-gradient(90deg,rgba(15,23,42,.98) 0%,rgba(15,23,42,.92) 68%,rgba(15,23,42,0) 100%) !important;
+  background:linear-gradient(90deg,rgba(15,23,42,.995) 0%,rgba(15,23,42,.995) calc(100% - 10px),rgba(15,23,42,.88) calc(100% - 5px),rgba(15,23,42,0) 100%) !important;
 }
 
 .stats-lifetime-rank-y-axis-chart{
