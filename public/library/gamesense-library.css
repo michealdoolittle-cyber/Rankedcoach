@@ -689,6 +689,11 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{height:100%;object-fit:cover;}
 .gamesense-topic-card[data-gamesense-topic="agents"] .gamesense-topic-collage{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:0;opacity:.64;background:linear-gradient(135deg,#17253a,#070d18);}
 .gamesense-topic-role-agent{position:relative;display:grid;grid-template-rows:36px minmax(0,1fr);align-items:end;justify-items:center;min-width:0;height:100%;padding:14px 4px 0;}
+.gamesense-role-svg{width:24px;height:24px;color:currentColor;fill:color-mix(in srgb,currentColor 72%,#fff 18%);stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55));}
+.gamesense-topic-role-agent.role-duelist{color:#ff4655;}
+.gamesense-topic-role-agent.role-controller{color:#a78bfa;}
+.gamesense-topic-role-agent.role-initiator{color:#38bdf8;}
+.gamesense-topic-role-agent.role-sentinel{color:#34d399;}
 .gamesense-topic-role-icon{width:30px !important;height:30px !important;object-fit:contain !important;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55)) !important;}
 .gamesense-topic-agent-art{width:100% !important;height:100% !important;min-height:0;object-fit:contain !important;object-position:center bottom;filter:saturate(.9) contrast(1.08) drop-shadow(0 12px 16px rgba(0,0,0,.72)) !important;}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;gap:9px;padding:12px 16px 112px;opacity:.62;background:linear-gradient(135deg,#17253a,#070d18);}
@@ -2806,7 +2811,8 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-agent-role-filter button[data-role-tone="controller"]{--agent-role-color:#a78bfa;}
 .gamesense-agent-role-filter button[data-role-tone="initiator"]{--agent-role-color:#38bdf8;}
 .gamesense-agent-role-filter button[data-role-tone="sentinel"]{--agent-role-color:#34d399;}
-.gamesense-agent-role-filter button img{width:24px;height:24px;object-fit:contain;}
+.gamesense-agent-role-filter button img,
+.gamesense-agent-role-filter button .gamesense-agent-role-icon{width:24px;height:24px;object-fit:contain;color:var(--agent-role-color);}
 .gamesense-agent-role-filter button.active{
   border-color:var(--agent-role-color);
   background:linear-gradient(145deg,color-mix(in srgb,var(--agent-role-color) 72%,#0f172a),color-mix(in srgb,var(--agent-role-color) 42%,#020617));
@@ -3738,6 +3744,12 @@ html.is-mobile-layout .gamesense-tactical-scroll{
   background:linear-gradient(180deg,rgba(8,13,26,.88),rgba(15,23,42,.68));
   box-shadow:0 14px 30px rgba(0,0,0,.22);
 }
+
+.gamesense-comp-pick-role-icon{width:18px;height:18px;margin-left:6px;vertical-align:-3px;}
+.gamesense-comp-pick-agent:has(.gamesense-comp-pick-role-icon.role-duelist){color:#ff4655;}
+.gamesense-comp-pick-agent:has(.gamesense-comp-pick-role-icon.role-controller){color:#a78bfa;}
+.gamesense-comp-pick-agent:has(.gamesense-comp-pick-role-icon.role-initiator){color:#38bdf8;}
+.gamesense-comp-pick-agent:has(.gamesense-comp-pick-role-icon.role-sentinel){color:#34d399;}
 
 .gamesense-dossier-sticky-title{
   color:var(--gamesense-warm,#f6c453);
@@ -5363,6 +5375,7 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
 #gamesenseLibraryView .gamesense-collection-filters,
 #gamesenseLibraryView .gamesense-entry-grid-agents,
 #gamesenseLibraryView .gamesense-agent-role-filter,
+#gamesenseLibraryView .gamesense-role-options,
 #gamesenseLibraryView .gamesense-tips-tabs,
 #gamesenseLibraryView .gamesense-comp-role-tabs,
 #gamesenseLibraryView .gamesense-map-view-tabs,
@@ -5378,6 +5391,7 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
 #gamesenseLibraryView .gamesense-collection-filters button,
 #gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card,
 #gamesenseLibraryView .gamesense-agent-role-filter button,
+#gamesenseLibraryView .gamesense-role-options button,
 #gamesenseLibraryView .gamesense-tips-tabs button,
 #gamesenseLibraryView .gamesense-comp-role-tabs button,
 #gamesenseLibraryView .gamesense-map-view-tabs button,
@@ -5409,6 +5423,43 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 38%,transparent);
 }
 
+#gamesenseLibraryView .gamesense-dossier-tree[open] > summary .gamesense-dossier-tree-label,
+#gamesenseLibraryView .gamesense-dossier-tree summary:active .gamesense-dossier-tree-label,
+#gamesenseLibraryView .gamesense-dossier-sticky-notes button:active,
+#gamesenseLibraryView .gamesense-topic-card:active{
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,rgba(148,163,184,.22)) !important;
+  background:
+    linear-gradient(145deg,rgba(51,65,85,.96),color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 22%,rgba(15,23,42,.9))) !important;
+  color:#f8fafc !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 44%,transparent),0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent) !important;
+}
+
+#gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card{
+  grid-template-rows:auto minmax(78px,1fr) auto !important;
+  gap:4px !important;
+  padding:18px 18px 16px !important;
+}
+
+#gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-weapon-card-art{
+  min-height:78px !important;
+  margin:0 auto 2px !important;
+  align-self:center !important;
+}
+
+#gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy{
+  padding:2px 8px 0 !important;
+}
+
+#gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy small{
+  margin:0 0 4px !important;
+}
+
+#gamesenseLibraryView .gamesense-ability-grid button.active,
+#gamesenseLibraryView .gamesense-weapon-grid button.active{
+  transform:none !important;
+  animation:none !important;
+}
+
 @media (hover:hover){
   .gamesense-entry-card.gamesense-weapon-entry-card:is(:hover,:focus-visible){
     background:
@@ -5422,6 +5473,7 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
   #gamesenseLibraryView .gamesense-collection-filters button:is(:hover,:focus-visible),
   #gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card:is(:hover,:focus-visible),
   #gamesenseLibraryView .gamesense-agent-role-filter button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-role-options button:is(:hover,:focus-visible),
   #gamesenseLibraryView .gamesense-tips-tabs button:is(:hover,:focus-visible),
   #gamesenseLibraryView .gamesense-comp-role-tabs button:is(:hover,:focus-visible),
   #gamesenseLibraryView .gamesense-map-view-tabs button:is(:hover,:focus-visible),
@@ -5443,11 +5495,17 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
     box-shadow:0 12px 24px rgba(0,0,0,.24),0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent);
   }
 
-  #gamesenseLibraryView .gamesense-ability-grid button:is(:hover,:focus-visible){
-    transform:none !important;
-    animation:none !important;
+  #gamesenseLibraryView .gamesense-ability-grid button:not(.active):is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.006) !important;
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both !important;
     border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 68%,rgba(148,163,184,.24)) !important;
     box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 42%,transparent),0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent) !important;
+  }
+
+  #gamesenseLibraryView .gamesense-ability-grid button.active:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-weapon-grid button.active:is(:hover,:focus-visible){
+    transform:none !important;
+    animation:none !important;
   }
 }
 
@@ -5463,6 +5521,8 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
   #gamesenseLibraryView .gamesense-entry-grid-agents .gamesense-entry-card,
   #gamesenseLibraryView .gamesense-agent-role-filter,
   #gamesenseLibraryView .gamesense-agent-role-filter button,
+  #gamesenseLibraryView .gamesense-role-options,
+  #gamesenseLibraryView .gamesense-role-options button,
   #gamesenseLibraryView .gamesense-tips-tabs,
   #gamesenseLibraryView .gamesense-tips-tabs button,
   #gamesenseLibraryView .gamesense-comp-role-tabs,

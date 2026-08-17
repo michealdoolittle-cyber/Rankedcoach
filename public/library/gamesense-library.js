@@ -448,12 +448,7 @@
     lastCopiedId: ""
   };
   const CROSSHAIR_BACKEND_FLAG_KEY = "rankedcoach_crosshair_backend_enabled_v1";
-  const roleIconMap = Object.freeze({
-    controller: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/role_controller.png",
-    duelist: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/duelist_role.png",
-    initiator: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/initiator_role.png",
-    sentinel: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/sentinel_role.png"
-  });
+  const CROSSHAIR_LOCAL_RELATIONS_KEY = "rankedcoach_crosshair_local_relations_v1";
   const agentUuids = Object.freeze({
     astra: "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
     breach: "5f8d3a7f-467b-97f3-062c-13acf203c006",
@@ -1115,6 +1110,78 @@
       || localStorage.getItem(CROSSHAIR_BACKEND_FLAG_KEY) === "true";
   }
 
+  function getCrosshairLocalUserKey(user = null) {
+    const fallbackUser = user || getCrosshairAuthBridge()?.getUser?.() || null;
+    return String(fallbackUser?.id || fallbackUser?.email || "guest").trim() || "guest";
+  }
+
+  function normalizeCrosshairRelationId(row = {}) {
+    return String(row?.crosshair_id || row?.crosshairId || row?.crosshair?.id || row?.id || "").trim();
+  }
+
+  function readCrosshairLocalRelations(user = null) {
+    try {
+      const key = getCrosshairLocalUserKey(user);
+      const parsed = JSON.parse(localStorage.getItem(CROSSHAIR_LOCAL_RELATIONS_KEY) || "{}");
+      const bucket = parsed && typeof parsed === "object" ? parsed[key] || {} : {};
+      return {
+        liked: new Set((Array.isArray(bucket.liked) ? bucket.liked : []).map(String).filter(Boolean)),
+        favorites: new Set((Array.isArray(bucket.favorites) ? bucket.favorites : []).map(String).filter(Boolean))
+      };
+    } catch (_error) {
+      return { liked: new Set(), favorites: new Set() };
+    }
+  }
+
+  function writeCrosshairLocalRelations(user = null, relations = {}) {
+    try {
+      const key = getCrosshairLocalUserKey(user);
+      const parsed = JSON.parse(localStorage.getItem(CROSSHAIR_LOCAL_RELATIONS_KEY) || "{}");
+      const root = parsed && typeof parsed === "object" ? parsed : {};
+      root[key] = {
+        liked: [...(relations.liked || [])].filter(Boolean),
+        favorites: [...(relations.favorites || [])].filter(Boolean)
+      };
+      localStorage.setItem(CROSSHAIR_LOCAL_RELATIONS_KEY, JSON.stringify(root));
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function hydrateCrosshairLocalRelations(user = null) {
+    const local = readCrosshairLocalRelations(user);
+    crosshairBackendState.liked = new Set(local.liked);
+    crosshairBackendState.favorites = new Set(local.favorites);
+  }
+
+  function toggleCrosshairLocalRelation(table = "", id = "", user = null) {
+    const relations = readCrosshairLocalRelations(user);
+    const set = table === "crosshair_likes" ? relations.liked : relations.favorites;
+    const exists = set.has(id);
+    if (exists) set.delete(id);
+    else set.add(id);
+    writeCrosshairLocalRelations(user, relations);
+    crosshairBackendState.liked = new Set(relations.liked);
+    crosshairBackendState.favorites = new Set(relations.favorites);
+    return !exists;
+  }
+
+  function renderRoleIcon(role = "", className = "") {
+    const key = assetSlug(role);
+    const classes = ["gamesense-role-svg", className, `role-${key}`].filter(Boolean).join(" ");
+    const body = key === "duelist"
+      ? `<path d="M12 4 20 12 12 20 4 12Z"></path><path d="m7 7 10 10M17 7 7 17"></path>`
+      : key === "controller"
+        ? `<path d="M4.5 17.5 12 6l7.5 11.5H15l-3-4.7-3 4.7Z"></path><path d="M8 20h8"></path>`
+        : key === "initiator"
+          ? `<path d="M5 5h14l-6 7 6 7H5l6-7Z"></path><path d="M8 5 15 19"></path>`
+          : key === "sentinel"
+            ? `<path d="M12 4 20 7v5.2c0 4.2-3.1 7.2-8 8.8-4.9-1.6-8-4.6-8-8.8V7Z"></path><path d="M8 10h8M10 14h4"></path>`
+            : `<circle cx="12" cy="12" r="8"></circle>`;
+    return `<svg class="${escapeHtml(classes)}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
+  }
+
   function getCrosshairEntry(id = "") {
     return crosshairSeedEntries.find(entry => entry.id === id) || null;
   }
@@ -1277,6 +1344,9 @@
   }
 
   function getVisibleCrosshairEntries() {
+    if (!crosshairBackendState.loaded || crosshairBackendState.unavailable) {
+      hydrateCrosshairLocalRelations();
+    }
     const tab = normalizeCrosshairTab(state.crosshairTab);
     if (tab === "Favorites") {
       return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry => crosshairBackendState.favorites.has(entry.id)));
@@ -1383,12 +1453,18 @@
 
   async function hydrateCrosshairState(options = {}) {
     if (crosshairBackendState.loading || (crosshairBackendState.loaded && !options.force)) return;
+    hydrateCrosshairLocalRelations();
     const client = getCrosshairClient();
-    if (!client) return;
+    if (!client) {
+      crosshairBackendState.loaded = true;
+      return;
+    }
     if (!isCrosshairBackendEnabled()) {
       crosshairBackendState.unavailable = true;
       crosshairBackendState.loaded = true;
-      crosshairBackendState.status = "Live Likes and Favorites are waiting on the crosshair account-table migration.";
+      crosshairBackendState.status = crosshairBackendState.favorites.size
+        ? "Favorites loaded on this device. Shared crosshair storage is still waiting on the account-table migration."
+        : "Live Likes and Favorites are waiting on the crosshair account-table migration.";
       if (state.topic === "crosshairs" && !options.silent) render({ direction: "replace" });
       return;
     }
@@ -1419,9 +1495,12 @@
           crosshairBackendState.status = "Crosshair Likes and Favorites could not be loaded. Try again in a moment.";
           return;
         }
-        if (!ownLikes.error) liked = new Set((ownLikes.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
-        if (!ownFavorites.error) favorites = new Set((ownFavorites.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
+        if (!ownLikes.error) liked = new Set((ownLikes.data || []).map(normalizeCrosshairRelationId).filter(Boolean));
+        if (!ownFavorites.error) favorites = new Set((ownFavorites.data || []).map(normalizeCrosshairRelationId).filter(Boolean));
       }
+      const localRelations = readCrosshairLocalRelations(user);
+      localRelations.liked.forEach(id => liked.add(id));
+      localRelations.favorites.forEach(id => favorites.add(id));
       crosshairBackendState.likes = likeCounts;
       crosshairBackendState.liked = liked;
       crosshairBackendState.favorites = favorites;
@@ -1451,21 +1530,28 @@
     const entry = getCrosshairEntry(id);
     if (!entry || !table) return;
     if (!isCrosshairBackendEnabled()) {
+      const user = await getCrosshairUser().catch(() => null);
+      const saved = toggleCrosshairLocalRelation(table, id, user);
       crosshairBackendState.unavailable = true;
-      crosshairBackendState.status = "Live Likes and Favorites are waiting on the crosshair account-table migration.";
+      crosshairBackendState.loaded = true;
+      crosshairBackendState.status = saved
+        ? `${entry.player} ${table === "crosshair_likes" ? "Like" : "Favorite"} saved on this device.`
+        : `${entry.player} ${table === "crosshair_likes" ? "Like" : "Favorite"} removed.`;
       render({ direction: "replace" });
       return;
     }
     const user = await promptForCrosshairAuth(actionLabel);
     if (!user?.id) return;
+    const isLike = table === "crosshair_likes";
     const client = getCrosshairClient();
     if (!client) {
-      crosshairBackendState.unavailable = true;
-      crosshairBackendState.status = "RankedCoach account storage is still connecting. Try again in a moment.";
+      const saved = toggleCrosshairLocalRelation(table, id, user);
+      crosshairBackendState.status = saved
+        ? `${entry.player} ${isLike ? "Like" : "Favorite"} saved on this device.`
+        : `${entry.player} ${isLike ? "Like" : "Favorite"} removed.`;
       render({ direction: "replace" });
       return;
     }
-    const isLike = table === "crosshair_likes";
     const targetSet = isLike ? crosshairBackendState.liked : crosshairBackendState.favorites;
     const actionKey = `${table}:${id}`;
     if (crosshairBackendState.pending.has(actionKey)) return;
@@ -1480,6 +1566,11 @@
         crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
         return;
       }
+      const localRelations = readCrosshairLocalRelations(user);
+      const localSet = isLike ? localRelations.liked : localRelations.favorites;
+      if (exists) localSet.delete(id);
+      else localSet.add(id);
+      writeCrosshairLocalRelations(user, localRelations);
       await hydrateCrosshairState({ force: true, silent: true });
       crosshairBackendState.status = exists
         ? `${entry.player} ${isLike ? "Like" : "Favorite"} removed.`
@@ -1567,7 +1658,7 @@
         const fullPortrait = agent.portrait || getAgentFallbackIcon(agent.label || fallback);
         return `
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
-            <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="eager" decoding="async" fetchpriority="high">
+            ${renderRoleIcon(role, "gamesense-topic-role-icon")}
             ${getDeferredCollageImageMarkup(thumbnail || fullPortrait, "gamesense-topic-agent-art", {
               ...eagerCollageOptions,
               fallbackSrc: thumbnail ? fullPortrait : ""
@@ -1707,16 +1798,27 @@
       weapons.forEach(weapon => seenWeaponIds.add(weapon.id));
       return { ...group, weapons };
     });
-    const machineGunWeapons = ["ares", "odin"]
+    const machineGunIds = ["ares", "odin"];
+    const machineGunWeapons = machineGunIds
       .filter(id => !seenWeaponIds.has(id))
       .map(id => completeWeapon({ id }, id));
-    if (machineGunWeapons.length) {
+    const existingMachineGunGroup = groups.find(group => group.id === "machine-guns");
+    if (existingMachineGunGroup) {
+      const existingIds = new Set((existingMachineGunGroup.weapons || []).map(weapon => weapon.id).filter(Boolean));
+      machineGunWeapons.forEach(weapon => {
+        if (existingIds.has(weapon.id)) return;
+        existingMachineGunGroup.weapons = [...(existingMachineGunGroup.weapons || []), weapon];
+        existingMachineGunGroup.weaponIds = [...(existingMachineGunGroup.weaponIds || []), weapon.id];
+      });
+      existingMachineGunGroup.examples = existingMachineGunGroup.examples || "Ares, Odin";
+      existingMachineGunGroup.range = existingMachineGunGroup.range || "High-penetration pressure";
+    } else if (machineGunWeapons.length) {
       const insertAt = Math.max(0, groups.findIndex(group => group.id === "snipers"));
       groups.splice(insertAt + 1, 0, {
         id: "machine-guns",
         label: "Machine Guns",
         examples: "Ares, Odin",
-        range: "Sustained wall pressure",
+        range: "High-penetration pressure",
         weaponIds: machineGunWeapons.map(weapon => weapon.id),
         weapons: machineGunWeapons
       });
@@ -2635,7 +2737,7 @@
       const activeRole = roles.includes(state.agentRole) ? state.agentRole : "all";
       items = activeRole === "all" ? items : items.filter(item => assetSlug(item.role) === activeRole);
       controls = `<div class="gamesense-agent-role-filter" role="tablist" aria-label="Filter agents by role">
-        ${roles.map(role => `<button type="button" data-gamesense-agent-role-filter="${role}"${role === "all" ? "" : ` data-role-tone="${role}"`} class="${role === activeRole ? "active" : ""}" aria-selected="${role === activeRole}">${role === "all" ? `<span class="gamesense-agent-role-all-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : `<img src="${escapeHtml(roleIconMap[role])}" alt="">`}<span>${role === "all" ? "All Agents" : role}</span></button>`).join("")}
+        ${roles.map(role => `<button type="button" data-gamesense-agent-role-filter="${role}"${role === "all" ? "" : ` data-role-tone="${role}"`} class="${role === activeRole ? "active" : ""}" aria-selected="${role === activeRole}">${role === "all" ? `<span class="gamesense-agent-role-all-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : renderRoleIcon(role, "gamesense-agent-role-icon")}<span>${role === "all" ? "All Agents" : role}</span></button>`).join("")}
       </div>`;
     }
     return `
@@ -3175,7 +3277,7 @@
           return `<article class="gamesense-comp-pick-row">
             <div class="gamesense-comp-pick-identity">
               <img class="gamesense-comp-pick-art" src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
-              <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}<img src="${escapeHtml(roleIconMap[normalizedRole.toLowerCase()])}" alt="" loading="lazy"></strong>
+              <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}${renderRoleIcon(normalizedRole, "gamesense-comp-pick-role-icon")}</strong>
             </div>
             <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
             <div class="gamesense-comp-pick-rates">

@@ -944,15 +944,11 @@ async function run() {
     assert.notEqual(roleExplorerPresentation.activeColor, controllerRoleColor, JSON.stringify(roleExplorerPresentation));
     assert.ok(roleExplorerPresentation.agentFontSize >= 16 && roleExplorerPresentation.numberWeight <= 700 && roleExplorerPresentation.separator >= 1, JSON.stringify(roleExplorerPresentation));
     assert.equal(await roleExplorer.locator(".gamesense-comp-pick-agent").first().innerText(), "JETT");
-    assert.ok(await roleExplorer.locator(".gamesense-comp-pick-agent img").count() >= 5);
-    await roleExplorer.locator(".gamesense-comp-pick-agent img").first().scrollIntoViewIfNeeded();
-    await desktop.waitForFunction(() => {
-      const image = document.querySelector(".gamesense-comp-pick-agent img");
-      return Boolean(image?.complete && image.naturalWidth > 0);
-    });
-    assert.equal(await roleExplorer.locator(".gamesense-comp-pick-agent img").first().evaluate(image => {
-      const style = getComputedStyle(image);
-      const rect = image.getBoundingClientRect();
+    assert.ok(await roleExplorer.locator(".gamesense-comp-pick-agent .gamesense-comp-pick-role-icon").count() >= 5);
+    await roleExplorer.locator(".gamesense-comp-pick-agent .gamesense-comp-pick-role-icon").first().scrollIntoViewIfNeeded();
+    assert.equal(await roleExplorer.locator(".gamesense-comp-pick-agent .gamesense-comp-pick-role-icon").first().evaluate(icon => {
+      const style = getComputedStyle(icon);
+      const rect = icon.getBoundingClientRect();
       return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0 && rect.width >= 18 && rect.height >= 18;
     }), true);
     const desktopPickLayout = await roleExplorer.locator(".gamesense-comp-pick-row").first().evaluate(row => {

@@ -2520,6 +2520,7 @@ html body #page-library#page-library #gamesenseLibraryView :is(
   .gamesense-collection-filters,
   .gamesense-entry-grid-agents,
   .gamesense-agent-role-filter,
+  .gamesense-role-options,
   .gamesense-tips-tabs,
   .gamesense-comp-role-tabs,
   .gamesense-map-view-tabs,
@@ -2536,6 +2537,7 @@ html body #page-library#page-library #gamesenseLibraryView :is(
   .gamesense-collection-filters button,
   .gamesense-entry-grid-agents .gamesense-entry-card,
   .gamesense-agent-role-filter button,
+  .gamesense-role-options button,
   .gamesense-tips-tabs button,
   .gamesense-comp-role-tabs button,
   .gamesense-map-view-tabs button,
@@ -2558,6 +2560,7 @@ html body #page-library#page-library #gamesenseLibraryView :is(
     .gamesense-collection-filters button:is(:hover,:focus-visible),
     .gamesense-entry-grid-agents .gamesense-entry-card:is(:hover,:focus-visible),
     .gamesense-agent-role-filter button:is(:hover,:focus-visible),
+    .gamesense-role-options button:is(:hover,:focus-visible),
     .gamesense-tips-tabs button:is(:hover,:focus-visible),
     .gamesense-comp-role-tabs button:is(:hover,:focus-visible),
     .gamesense-map-view-tabs button:is(:hover,:focus-visible),
@@ -2573,8 +2576,57 @@ html body #page-library#page-library #gamesenseLibraryView :is(
       0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent) !important;
   }
 
-  html body #page-library#page-library #gamesenseLibraryView .gamesense-ability-grid button:is(:hover,:focus-visible){
+  html body #page-library#page-library #gamesenseLibraryView .gamesense-ability-grid button:not(.active):is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.006) !important;
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 68%,rgba(148,163,184,.24)) !important;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 42%,transparent),
+      0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent) !important;
+  }
+
+  html body #page-library#page-library #gamesenseLibraryView .gamesense-ability-grid button.active:is(:hover,:focus-visible),
+  html body #page-library#page-library #gamesenseLibraryView .gamesense-weapon-grid button.active:is(:hover,:focus-visible){
     transform:none !important;
     animation:none !important;
   }
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-dossier-tree[open] > summary .gamesense-dossier-tree-label,
+html body #page-library#page-library #gamesenseLibraryView .gamesense-dossier-tree summary:active .gamesense-dossier-tree-label,
+html body #page-library#page-library #gamesenseLibraryView .gamesense-dossier-sticky-notes button:active,
+html body #page-library#page-library #gamesenseLibraryView .gamesense-topic-card:active{
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,rgba(148,163,184,.22)) !important;
+  background:
+    linear-gradient(145deg,rgba(51,65,85,.96),color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 22%,rgba(15,23,42,.9))) !important;
+  color:#f8fafc !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 44%,transparent),
+    0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent) !important;
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card{
+  grid-template-rows:auto minmax(78px,1fr) auto !important;
+  gap:4px !important;
+  padding:18px 18px 16px !important;
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-weapon-card-art{
+  min-height:78px !important;
+  margin:0 auto 2px !important;
+  align-self:center !important;
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy{
+  padding:2px 8px 0 !important;
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy small{
+  margin:0 0 4px !important;
+}
+
+html body #page-library#page-library #gamesenseLibraryView .gamesense-ability-grid button.active,
+html body #page-library#page-library #gamesenseLibraryView .gamesense-weapon-grid button.active{
+  transform:none !important;
+  animation:none !important;
 }
