@@ -5314,3 +5314,125 @@ html.is-mobile-layout body.is-mobile-layout #page-library .gamesense-tactical-sc
     animation:none !important;
   }
 }
+
+/* 2026-08-17 Library polish round 2: targeted hover/highlight states without
+   letting pop transforms change the underlying hitbox. */
+.gamesense-entry-card.gamesense-weapon-entry-card{
+  padding:24px 18px 20px !important;
+  border-color:rgba(148,163,184,.24);
+  background:
+    radial-gradient(circle at 50% 20%,color-mix(in srgb,var(--gamesense-cool,#58d4c8) 9%,transparent),transparent 42%),
+    linear-gradient(145deg,rgba(15,23,42,.88),rgba(2,6,23,.94)) !important;
+}
+
+.gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy{
+  padding:8px 8px 4px !important;
+}
+
+.gamesense-entry-card.gamesense-weapon-entry-card .gamesense-entry-copy strong{
+  line-height:1 !important;
+}
+
+.gamesense-entry-grid-agents,
+.gamesense-tip-grid,
+.gamesense-comp-card details,
+.gamesense-weapon-suggestion-grid{
+  border-radius:16px !important;
+}
+
+#gamesenseLibraryView .gamesense-crosshair-toolbar,
+#gamesenseLibraryView > div > button,
+#gamesenseLibraryView .gamesense-weapon-grid,
+#gamesenseLibraryView .gamesense-collection-filters,
+#gamesenseLibraryView .gamesense-entry-grid-agents,
+#gamesenseLibraryView .gamesense-agent-role-filter,
+#gamesenseLibraryView .gamesense-tips-tabs,
+#gamesenseLibraryView .gamesense-comp-role-tabs,
+#gamesenseLibraryView .gamesense-map-view-tabs,
+#gamesenseLibraryView .gamesense-map-tools,
+#gamesenseLibraryView .gamesense-related-video > a,
+#gamesenseLibraryView .gamesense-dossier-sticky-notes > ol{
+  transform-origin:center;
+  transition:
+    transform .2s cubic-bezier(.22,1,.36,1),
+    border-color .2s ease,
+    background-color .2s ease,
+    box-shadow .2s ease;
+}
+
+#gamesenseLibraryView .gamesense-dossier-sticky-notes > ol{
+  padding:8px;
+  border:1px solid rgba(148,163,184,.18);
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.82));
+}
+
+#gamesenseLibraryView .gamesense-dossier-sticky-notes button.active,
+#gamesenseLibraryView .gamesense-dossier-sticky-notes button[aria-current="true"],
+#gamesenseLibraryView .gamesense-dossier-sticky-notes button.is-current-dossier{
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 70%,rgba(148,163,184,.22)) !important;
+  background:
+    linear-gradient(145deg,rgba(51,65,85,.94),color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,rgba(30,41,59,.88))) !important;
+  color:#f8fafc !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 38%,transparent);
+}
+
+@media (hover:hover){
+  .gamesense-entry-card.gamesense-weapon-entry-card:is(:hover,:focus-visible){
+    background:
+      radial-gradient(circle at 50% 20%,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent),transparent 46%),
+      linear-gradient(145deg,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 13%,rgba(15,23,42,.92)),rgba(2,6,23,.95)) !important;
+  }
+
+  #gamesenseLibraryView .gamesense-crosshair-toolbar:is(:hover,:focus-within),
+  #gamesenseLibraryView > div > button:is(:hover,:focus-visible),
+  #gamesenseLibraryView .gamesense-weapon-grid:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-collection-filters:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-entry-grid-agents:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-agent-role-filter:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-tips-tabs:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-comp-role-tabs:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-map-view-tabs:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-map-tools:is(:hover,:focus-within),
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol:is(:hover,:focus-within){
+    transform:translateY(-2px) scale(1.006);
+    animation:gamesense-control-pop .22s cubic-bezier(.22,1,.36,1) both;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 58%,rgba(148,163,184,.26));
+    box-shadow:
+      0 12px 24px rgba(0,0,0,.22),
+      0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent);
+  }
+
+  #gamesenseLibraryView .gamesense-related-video > a:is(:hover,:focus-visible){
+    transform:translateY(-2px) scale(1.01);
+    animation:gamesense-control-pop .2s cubic-bezier(.22,1,.36,1) both;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 64%,rgba(148,163,184,.24));
+    box-shadow:0 12px 24px rgba(0,0,0,.24),0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent);
+  }
+
+  #gamesenseLibraryView .gamesense-ability-grid button:is(:hover,:focus-visible){
+    transform:none !important;
+    animation:none !important;
+    border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 68%,rgba(148,163,184,.24)) !important;
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 42%,transparent),0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent) !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  #gamesenseLibraryView .gamesense-crosshair-toolbar,
+  #gamesenseLibraryView > div > button,
+  #gamesenseLibraryView .gamesense-weapon-grid,
+  #gamesenseLibraryView .gamesense-collection-filters,
+  #gamesenseLibraryView .gamesense-entry-grid-agents,
+  #gamesenseLibraryView .gamesense-agent-role-filter,
+  #gamesenseLibraryView .gamesense-tips-tabs,
+  #gamesenseLibraryView .gamesense-comp-role-tabs,
+  #gamesenseLibraryView .gamesense-map-view-tabs,
+  #gamesenseLibraryView .gamesense-map-tools,
+  #gamesenseLibraryView .gamesense-related-video > a,
+  #gamesenseLibraryView .gamesense-dossier-sticky-notes > ol{
+    transform:none !important;
+    transition:none !important;
+    animation:none !important;
+  }
+}

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home", crosshairTab: "All", crosshairTeam: "All teams", crosshairSort: "desc" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", compExplorerOpen: false, agentRole: "all", mapSeason: "in", playlistFilter: "Home", crosshairTab: "All", crosshairTeam: "All teams", crosshairSort: "desc" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -3193,7 +3193,7 @@
     const roles = ["Controller", "Duelist", "Initiator", "Sentinel"];
     const activeRole = roles.includes(state.compRole) ? state.compRole : "Controller";
     return `
-      <details class="gamesense-comp-pick-explorer">
+      <details class="gamesense-comp-pick-explorer"${state.compExplorerOpen ? " open" : ""}>
         <summary>WANT TO SEE ALL ${escapeHtml(map.label.toUpperCase())} AGENT PICKRATES?</summary>
         <div class="gamesense-comp-pick-explorer-body">
           <p>Ascendant-to-Radiant Competitive picks from Patch ${escapeHtml(map.compSample?.patchLabel || "current")}. Map share and global share use the same combined patch window.</p>
@@ -3471,7 +3471,7 @@
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
         <div class="gamesense-ability-stage">
           <div class="gamesense-ability-grid">${abilities.map(ability => `
-            <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}${ability.video ? " has-video" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small>${ability.video ? `<em>Demo</em>` : ""}</button>
+            <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}${ability.video ? " has-video" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small></button>
           `).join("")}</div>
           <span class="gamesense-ability-breaker" aria-hidden="true"></span>
           ${renderAbilityVideoSlot(selected)}
@@ -5128,6 +5128,12 @@
     skinPreviewTouchActivation = null;
   }, { capture: true, passive: true });
 
+  document.addEventListener("toggle", event => {
+    const explorer = event.target?.closest?.(".gamesense-comp-pick-explorer");
+    if (!explorer || event.target !== explorer || state.topic !== "maps") return;
+    state.compExplorerOpen = Boolean(explorer.open);
+  }, true);
+
   document.addEventListener("click", event => {
     const libraryNav = event.target.closest?.('.nav-btn[data-page="library"], .mobile-bottom-page-btn[data-mobile-page="library"]');
     const anyPageNav = event.target.closest?.(".nav-btn[data-page], .mobile-bottom-page-btn[data-mobile-page]");
@@ -5176,6 +5182,7 @@
       state.mapZoom = 1;
       state.compAgent = "";
       state.compRole = "Controller";
+      state.compExplorerOpen = false;
       state.crosshairTab = "All";
       state.crosshairSort = "desc";
       if (state.topic === "maps") state.mapSeason = "all";
@@ -5192,6 +5199,7 @@
       state.mapZoom = 1;
       state.compAgent = "";
       state.compRole = "Controller";
+      state.compExplorerOpen = false;
       if (state.topic === "maps") {
         prefetchMapHeatmap(getTopicItems("maps").find(entry => entry.id === state.itemId));
       }

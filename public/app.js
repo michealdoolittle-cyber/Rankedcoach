@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260816-library-animations-perf-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260817-library-polish-round2-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -11434,8 +11434,14 @@ const STATS_WEAPON_FAMILIES = [
   { key: "pistol", typeKey: "pistol", label: "Pistol", weapons: ["Classic", "Shorty", "Frenzy", "Ghost", "Sheriff"] },
   { key: "shotgun", typeKey: "shotgun", label: "Shotgun", weapons: ["Bucky", "Judge"] },
   { key: "smg", typeKey: "smg", label: "SMG", weapons: ["Stinger", "Spectre"] },
-  { key: "sniper", typeKey: "sniper", label: "Sniper", weapons: ["Marshal", "Outlaw", "Operator"] }
+  { key: "sniper", typeKey: "sniper", label: "Sniper", weapons: ["Marshal", "Outlaw", "Operator"] },
+  { key: "machine-gun", typeKey: "machine-gun", label: "Machine Gun", weapons: ["Ares", "Odin"] }
 ];
+
+const STATS_WEAPON_ASSET_OVERRIDES = Object.freeze({
+  ares: "https://media.valorant-api.com/weapons/55d8a0f4-4274-ca67-fe2c-06ab45efdf58/displayicon.png",
+  odin: "https://media.valorant-api.com/weapons/63e6c2b6-4a8e-869c-3d4c-e38355226584/displayicon.png"
+});
 
 function normalizeStatsWeaponKey(value = "") {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -11464,7 +11470,7 @@ function getStatsWeaponMeta(value = "") {
 
 function getStatsWeaponAssetPath(value = "") {
   const meta = getStatsWeaponMeta(value);
-  return meta ? `assets/weapons/${meta.key}.png` : "";
+  return meta ? (STATS_WEAPON_ASSET_OVERRIDES[meta.key] || `assets/weapons/${meta.key}.png`) : "";
 }
 
 function getStatsWeaponOrderIndex(value = "") {

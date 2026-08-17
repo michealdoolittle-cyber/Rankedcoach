@@ -62391,7 +62391,6 @@ body.rc-motion-relief .theme-builder-card-smoke-video{
 }
 
 @media (min-width:821px){
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home > #siteFooter,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats > .site-footer{
     display:none !important;
   }
@@ -62417,4 +62416,26 @@ body.rc-motion-relief .theme-builder-card-smoke-video{
     transition:none !important;
     animation:none !important;
   }
+}
+
+/* 2026-08-17 round-2 polish: keep the Home footer visible and align border
+   preview frames to the same center point as the avatar art. The Goal RR color
+   match lives in post-layout-guardrails.css, which loads after this file. */
+#page-home > #siteFooter{
+  display:block;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+  position:relative !important;
+  display:grid !important;
+  place-items:center !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview :is(.rc-mobile-avatar-frame,.rc-profile-effect-frame){
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  transform:translate(-50%,-50%) !important;
+  transform-origin:center !important;
 }
