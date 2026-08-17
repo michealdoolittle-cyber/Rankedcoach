@@ -2884,3 +2884,325 @@ html body #page-library#page-library #gamesenseLibraryView .gamesense-weapon-gri
     max-width:none !important;
   }
 }
+
+/* 2026-08-17 mobile boot/loadout polish:
+   Map and focus are now full-width rows on mobile, so center the copy and let
+   the result value use the available space instead of inheriting the older
+   compact left-label/right-value pill treatment. */
+@media (max-width:760px){
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .loadout-card :is(
+    #loadoutMapPicker.home-loadout-pill,
+    .home-loadout-focus-pill.home-loadout-pill
+  ){
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:4px !important;
+    min-height:62px !important;
+    padding:8px 14px !important;
+    text-align:center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .loadout-card :is(
+    #loadoutMapPicker.home-loadout-pill,
+    .home-loadout-focus-pill.home-loadout-pill
+  ) .pill-label{
+    width:100% !important;
+    max-width:100% !important;
+    font-size:clamp(12px, 3.65vw, 16px) !important;
+    line-height:1 !important;
+    letter-spacing:.02em !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .loadout-card :is(
+    #loadoutMapDisplay,
+    .home-loadout-focus-pill #focusDisplay
+  ){
+    width:100% !important;
+    max-width:100% !important;
+    font-size:clamp(20px, 6vw, 28px) !important;
+    line-height:1.02 !important;
+    letter-spacing:.01em !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card #loadoutMapPicker#loadoutMapPicker.home-loadout-pill #loadoutMapDisplay#loadoutMapDisplay,
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .home-layout.dashboard-grid .home-middle-row > .card.loadout-card.card .home-loadout-focus-pill.home-loadout-pill #focusDisplay#focusDisplay{
+    font-size:clamp(20px, 6vw, 28px) !important;
+    line-height:1.02 !important;
+    text-align:center !important;
+  }
+}
+
+/* 2026-08-17 mobile logging launcher/card polish. */
+@media (max-width:760px){
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-launch-tile-warmup strong{
+    white-space:normal !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+    hyphens:none !important;
+    max-width:min(68%, 240px) !important;
+    font-size:clamp(23px, 7vw, 30px) !important;
+    line-height:.9 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-launch-tile-postmatch strong{
+    white-space:normal !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+    hyphens:none !important;
+    max-width:100% !important;
+    font-size:clamp(18px, 5.1vw, 23px) !important;
+    line-height:.96 !important;
+    letter-spacing:.012em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-launch-trainer-region{
+    transform:translateY(10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-launch-trainer-logo{
+    transform:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-actions{
+    position:static !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    justify-content:flex-start !important;
+    gap:7px !important;
+    width:100% !important;
+    margin:12px 0 0 !important;
+    min-height:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-actions > :is(.log-report-btn,.log-edit-btn){
+    width:100% !important;
+    flex:0 0 auto !important;
+    min-height:34px !important;
+    height:34px !important;
+    justify-content:center !important;
+    white-space:nowrap !important;
+  }
+}
+
+/* 2026-08-17 modal/chart follow-up polish:
+   - keep the mobile warm-up launcher title on one line;
+   - align map WR/games as mirrored stats around the divider;
+   - make role-history rows read map left, agent/date/result right;
+   - keep the lifetime rank Y-axis pinned while the chart scrolls;
+   - lower the Edit Profile X into the header's visual center. */
+@media (max-width:760px){
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-launch-tile-warmup strong{
+    white-space:nowrap !important;
+    max-width:min(70%, 250px) !important;
+    font-size:clamp(21px, 6.25vw, 28px) !important;
+    line-height:.92 !important;
+  }
+}
+
+#page-stats .stats-map-card .stats-map-result-line{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr) !important;
+  align-items:center !important;
+  justify-content:stretch !important;
+  justify-self:center !important;
+  width:min(100%, 132px) !important;
+  max-width:100% !important;
+  column-gap:7px !important;
+  text-align:center !important;
+}
+
+#page-stats .stats-map-card .stats-map-result-line::before{
+  content:"" !important;
+  grid-column:2 !important;
+  grid-row:1 !important;
+  display:block !important;
+  width:1px !important;
+  height:13px !important;
+  background:rgba(226,232,240,.52) !important;
+  justify-self:center !important;
+}
+
+#page-stats .stats-map-card .stats-map-result-line .stats-sub-text{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  justify-self:end !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+#page-stats .stats-map-card .stats-map-result-line .stats-map-games{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  justify-self:start !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+}
+
+#page-stats .stats-map-card .stats-map-result-line .stats-map-no-data-tag{
+  grid-column:1 / -1 !important;
+  justify-self:center !important;
+  text-align:center !important;
+}
+
+.stats-role-history-row{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,max-content) !important;
+  align-items:center !important;
+  gap:10px !important;
+}
+
+.stats-role-history-left,
+.stats-role-history-right{
+  min-width:0 !important;
+}
+
+.stats-role-history-left{
+  display:grid !important;
+  gap:6px !important;
+  justify-items:start !important;
+}
+
+.stats-role-history-right{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:7px !important;
+  white-space:nowrap !important;
+}
+
+.stats-role-history-date{
+  color:#cbd5e1 !important;
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif) !important;
+  letter-spacing:.03em !important;
+  white-space:nowrap !important;
+}
+
+.stats-role-history-row .stats-role-history-agent{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  min-width:0 !important;
+}
+
+.stats-role-history-row .stats-role-history-agent span{
+  max-width:86px !important;
+}
+
+.stats-role-history-row em{
+  white-space:nowrap !important;
+}
+
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout .stats-role-history-row.stats-role-history-row{
+    grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr) !important;
+    grid-template-rows:auto !important;
+    gap:8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .stats-role-history-row .stats-role-history-left{
+    grid-column:1 !important;
+    grid-row:1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .stats-role-history-row .stats-role-history-right{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    justify-self:end !important;
+    justify-content:flex-end !important;
+    gap:5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .stats-role-history-row .stats-role-history-agent img{
+    width:21px !important;
+    height:21px !important;
+    flex-basis:21px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .stats-role-history-row .stats-role-history-agent span{
+    max-width:54px !important;
+  }
+}
+
+.stats-lifetime-rank-chart-frame{
+  position:relative !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+
+.stats-lifetime-rank-y-axis-sticky{
+  position:absolute !important;
+  top:11px !important;
+  bottom:11px !important;
+  left:11px !important;
+  width:82px !important;
+  z-index:4 !important;
+  pointer-events:none !important;
+  background:linear-gradient(90deg,rgba(15,23,42,.98) 0%,rgba(15,23,42,.92) 68%,rgba(15,23,42,0) 100%) !important;
+}
+
+.stats-lifetime-rank-y-axis-chart{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:visible !important;
+}
+
+.stats-lifetime-rank-y-grid line,
+.stats-lifetime-rank-y-tick line{
+  stroke:rgba(148,163,184,.18) !important;
+}
+
+.stats-lifetime-rank-y-axis-sticky .stats-lifetime-rank-axis{
+  stroke:#cbd5e1 !important;
+  stroke-width:2 !important;
+}
+
+#editProfileModal .lens-modal-header{
+  align-items:center !important;
+  overflow:visible !important;
+  padding-top:18px !important;
+  padding-bottom:14px !important;
+}
+
+html body #editProfileClose{
+  position:relative !important;
+  top:5px !important;
+  flex:0 0 44px !important;
+  margin-top:0 !important;
+  margin-bottom:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay #editProfileClose#editProfileClose.lens-modal-close{
+  position:absolute !important;
+  top:6px !important;
+  right:10px !important;
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  transform:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .page.active,
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active,
+html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active,
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active,
+html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active,
+html.is-mobile-layout body.is-mobile-layout #page-library#page-library#page-library.page.active{
+  padding-bottom:0 !important;
+  scroll-padding-bottom:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .app.app{
+  padding-bottom:0 !important;
+}

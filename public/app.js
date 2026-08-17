@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260817-collective-directive-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260817-mobile-modal-polish-03";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -2480,7 +2480,7 @@ const LOGGING_LAUNCHER_BACKGROUND_CONFIG = Object.freeze({
     { name: "All Gamers", colors: ["#ff0000"], logo: "/assets/library/teams/All-Gamers.png" },
     { name: "Bilibili Gaming", colors: ["#36d0f4", "#fa7198"], logo: "/assets/library/teams/BLG.png" },
     { name: "Cloud9", colors: ["#21aee3", "#ffffff"], logo: "/assets/library/teams/C9.png" },
-    { name: "Dragon Ranger Gaming", colors: ["#76f25c", "#325cfb"], logo: "/assets/library/teams/DRG.png" },
+    { name: "DRG", colors: ["#76f25c", "#325cfb"], logo: "/assets/library/teams/DRG.png" },
     { name: "EDward Gaming", colors: ["#ffffff", "#000000"], logo: "/assets/library/teams/EDG.png" },
     { name: "Envy", colors: ["#000000", "#ffffff"], logo: "/assets/library/teams/ENVY.png" },
     { name: "FNATIC", colors: ["#ff5900", "#000000"], logo: "/assets/library/teams/FNATIC.png" },
@@ -12621,17 +12621,21 @@ function openStatsDetailModal(kind, value) {
       const mapName = core.map || "Map unavailable";
       const mapIcon = core.map ? getMapIconUrl(core.map) : "";
       return `<li class="stats-role-history-row ${resultClass}">
-        <strong>Match ${Number.isFinite(Number(matchNumber)) ? Number(matchNumber) : "—"}</strong>
-        <span>${escapeHtml(formatStatsSummaryDate(match))}</span>
-        <span class="stats-role-history-map">
-          ${mapIcon ? `<img src="${escapeHtml(mapIcon)}" alt="" loading="lazy" decoding="async">` : ""}
-          <span>${escapeHtml(mapName)}</span>
-        </span>
-        <span class="stats-role-history-agent">
-          ${core.agent ? `<img src="${escapeHtml(getAgentIconUrl(core.agent))}" alt="" loading="lazy" decoding="async">` : ""}
-          <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
-        </span>
-        <em>${escapeHtml(result || "unverified")}</em>
+        <div class="stats-role-history-left">
+          <strong>Match ${Number.isFinite(Number(matchNumber)) ? Number(matchNumber) : "—"}</strong>
+          <span class="stats-role-history-map">
+            ${mapIcon ? `<img src="${escapeHtml(mapIcon)}" alt="" loading="lazy" decoding="async">` : ""}
+            <span>${escapeHtml(mapName)}</span>
+          </span>
+        </div>
+        <div class="stats-role-history-right">
+          <span class="stats-role-history-agent">
+            ${core.agent ? `<img src="${escapeHtml(getAgentIconUrl(core.agent))}" alt="" loading="lazy" decoding="async">` : ""}
+            <span>${escapeHtml(core.agent || "Agent unavailable")}</span>
+          </span>
+          <span class="stats-role-history-date">${escapeHtml(formatStatsSummaryDate(match))}</span>
+          <em>${escapeHtml(result || "unverified")}</em>
+        </div>
       </li>`;
     }).join("") : `<li class="stats-role-history-empty">No verified ${escapeHtml(roleLabel)} matches are in this selected season.</li>`;
     showModalById("lensModal");
@@ -27661,6 +27665,7 @@ function showModalById(id) {
     window.clearTimeout(modal._modalTransitionTimer);
     modal._modalTransitionTimer = 0;
   }
+  modal.dataset.modalOpenedAt = String(getModalInteractionTimestamp());
   modal.style.display = "flex";
   modal.hidden = false;
   modal.setAttribute("aria-hidden", "false");
@@ -27683,6 +27688,21 @@ function showModalById(id) {
       refreshActiveModalState();
     }, 320);
   });
+}
+
+const MODAL_FRESH_BACKDROP_GUARD_MS = 420;
+
+function getModalInteractionTimestamp() {
+  return typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+}
+
+function isFreshModalBackdropClick(modal) {
+  if (!(modal instanceof HTMLElement)) return false;
+  const openedAt = Number(modal.dataset.modalOpenedAt || 0);
+  if (!Number.isFinite(openedAt) || openedAt <= 0) return false;
+  return getModalInteractionTimestamp() - openedAt < MODAL_FRESH_BACKDROP_GUARD_MS;
 }
 
 function hideModalById(id) {
@@ -27764,6 +27784,7 @@ document.addEventListener("click", event => {
   const modal = event.target;
   if (!(modal instanceof HTMLElement) || !modal.matches(".lens-modal-overlay")) return;
   if (!modal.classList.contains("active") && !modal.classList.contains("is-opening")) return;
+  if (isFreshModalBackdropClick(modal)) return;
   dismissLensModal(modal);
 });
 
@@ -48608,6 +48629,7 @@ function bindEvents(){
 
   document.getElementById("editProfileModal")?.addEventListener("click", (e) => {
     if (e.target === document.getElementById("editProfileModal")) {
+      if (isFreshModalBackdropClick(e.target)) return;
       hideModalById("editProfileModal");
       updateProfileHeaderUI();
     }
@@ -59316,6 +59338,10 @@ function updateStatsSummaryTrendScroll(chart) {
   const bars = chart?.querySelector?.(".stats-summary-trend-bars");
   const barsClip = chart?.querySelector?.(".stats-summary-trend-bars-clip");
   if (!labels || !bars || !barsClip) return;
+  const desiredWidth = Math.max(labels.scrollWidth, barsClip.clientWidth);
+  if (desiredWidth > 0) {
+    bars.style.width = `${desiredWidth}px`;
+  }
   const labelScrollable = Math.max(0, labels.scrollWidth - labels.clientWidth);
   const barScrollable = Math.max(0, bars.scrollWidth - barsClip.clientWidth);
   const progress = labelScrollable > 0 ? labels.scrollLeft / labelScrollable : 0;
@@ -59331,11 +59357,14 @@ function bindStatsSummaryTrendTriggers() {
     trigger.addEventListener("pointerup", event => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       event.preventDefault();
+      event.stopPropagation();
       open();
     });
     trigger.addEventListener("click", event => {
       // Pointer activation opens on pointerup so feedback is immediate. Keep
       // keyboard/programmatic click activation working without opening twice.
+      event.preventDefault();
+      event.stopPropagation();
       if (event.detail > 0) return;
       open();
     });
@@ -59345,6 +59374,7 @@ function bindStatsSummaryTrendTriggers() {
     trigger.addEventListener("keydown", event => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
+        event.stopPropagation();
         open();
       }
     });
@@ -59576,6 +59606,7 @@ if (lensModalOverlay && lensModalClose) {
   // close by clicking outside modal
   lensModalOverlay.addEventListener("click", (e) => {
     if (e.target === lensModalOverlay) {
+      if (isFreshModalBackdropClick(lensModalOverlay)) return;
       hideModalById("lensModalOverlay");
     }
   });
@@ -60821,6 +60852,7 @@ if (lensModalSecondary && lensModalCloseSecondary) {
 
   lensModalSecondary.addEventListener("click", (e) => {
     if (e.target === lensModalSecondary) {
+      if (isFreshModalBackdropClick(lensModalSecondary)) return;
       hideModalById("lensModal");
     }
   });
@@ -63352,12 +63384,20 @@ function buildStatsLifetimeRankChartMarkup() {
   const tickStep = Math.max(1, Math.ceil(span / 5));
   for (let index = bounds.startIndex; index <= bounds.endIndex; index += tickStep) tickIndexes.push(index);
   if (tickIndexes[tickIndexes.length - 1] !== bounds.endIndex) tickIndexes.push(bounds.endIndex);
-  const yTicks = tickIndexes.map(index => {
+  const yGridlines = tickIndexes.map(index => {
+    const rank = RANK_THRESHOLDS[index] || RANK_THRESHOLDS[0];
+    const yy = y(rank.min);
+    return `
+      <g class="stats-lifetime-rank-y-grid">
+        <line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
+      </g>`;
+  }).join("");
+  const stickyYTicks = tickIndexes.map(index => {
     const rank = RANK_THRESHOLDS[index] || RANK_THRESHOLDS[0];
     const yy = y(rank.min);
     return `
       <g class="stats-lifetime-rank-y-tick">
-        <line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
+        <line x1="${pad.left - 7}" y1="${yy}" x2="${pad.left}" y2="${yy}"></line>
         <image href="${escapeHtml(rank.icon)}" x="${pad.left - 48}" y="${yy - 16}" width="32" height="32" preserveAspectRatio="xMidYMid meet"></image>
       </g>`;
   }).join("");
@@ -63390,23 +63430,30 @@ function buildStatsLifetimeRankChartMarkup() {
         <strong>Retained Lifetime Rank</strong>
         <span>${escapeHtml(caption || `${lifetime.entries.length} rank snapshots`)}</span>
       </div>
-      <div class="stats-lifetime-rank-chart-wrap">
-        <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime seasonal peak rank chart" data-data-points="${points.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
-          <defs>
-            <linearGradient id="statsLifetimeRankArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="var(--accent,#ff4655)" stop-opacity=".26"></stop>
-              <stop offset="100%" stop-color="var(--accent-2,#38bdf8)" stop-opacity=".04"></stop>
-            </linearGradient>
-          </defs>
-          ${yTicks}
-          <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${plotBottom}" x2="${width - pad.right}" y2="${plotBottom}"></line>
-          <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
-          ${seasonLabels}
-          <path class="stats-lifetime-rank-area" d="${areaPath}"></path>
-          <path class="stats-lifetime-rank-line" d="${path}"></path>
-          ${dots}
-          ${rankMarkers}
-        </svg>
+      <div class="stats-lifetime-rank-chart-frame">
+        <div class="stats-lifetime-rank-y-axis-sticky" aria-hidden="true">
+          <svg class="stats-lifetime-rank-y-axis-chart" width="${pad.left + 12}" height="${height}" viewBox="0 0 ${pad.left + 12} ${height}" focusable="false">
+            ${stickyYTicks}
+            <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
+          </svg>
+        </div>
+        <div class="stats-lifetime-rank-chart-wrap">
+          <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime seasonal peak rank chart" data-data-points="${points.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
+            <defs>
+              <linearGradient id="statsLifetimeRankArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--accent,#ff4655)" stop-opacity=".26"></stop>
+                <stop offset="100%" stop-color="var(--accent-2,#38bdf8)" stop-opacity=".04"></stop>
+              </linearGradient>
+            </defs>
+            ${yGridlines}
+            <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${plotBottom}" x2="${width - pad.right}" y2="${plotBottom}"></line>
+            ${seasonLabels}
+            <path class="stats-lifetime-rank-area" d="${areaPath}"></path>
+            <path class="stats-lifetime-rank-line" d="${path}"></path>
+            ${dots}
+            ${rankMarkers}
+          </svg>
+        </div>
       </div>
       <p class="stats-lifetime-rank-chart-note">Each point marks the highest retained rank snapshot captured for that season.</p>
     </li>`;

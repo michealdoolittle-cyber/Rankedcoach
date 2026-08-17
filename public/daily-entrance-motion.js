@@ -205,6 +205,13 @@
 
   function holdPendingPage(root) {
     if (!root || runtime.pendingPages.has(root)) return;
+    // Mobile startup has more async gates than desktop: auth restore, tutorial
+    // choice, warm-up prompt, and cached profile sync can all briefly race here.
+    // Holding the whole page at opacity:0 while those settle creates the blank
+    // "tap to continue" sheet the user was seeing.  Keep mobile's page visible
+    // and let the per-card entrance sequence handle its own child holds once it
+    // actually starts.
+    if (isMobileLayout()) return;
     runtime.pendingPages.set(root, {
       value: root.style.getPropertyValue("opacity"),
       priority: root.style.getPropertyPriority("opacity"),
