@@ -232,10 +232,10 @@
     "entityName": "Killjoy",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-16T18:52:00.124Z",
+    "generatedAt": "2026-08-17T01:59:40.260Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-16"
+    "lastReviewed": "2026-08-17"
   },
   "_fieldMeta": {
     "id": {
