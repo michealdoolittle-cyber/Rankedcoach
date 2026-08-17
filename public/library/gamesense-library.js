@@ -3819,6 +3819,37 @@
     schedule(appendBatch);
   }
 
+  function applyWeaponCollectionFilter(archive, filter = "all") {
+    if (!archive) return;
+    const normalizedFilter = String(filter || "all").trim() || "all";
+    archive.querySelectorAll("[data-gamesense-collection-filter]").forEach(button => {
+      const active = button.dataset.gamesenseCollectionFilter === normalizedFilter;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    const weapon = getSelectedWeapon();
+    const cachedCollections = weapon ? getWeaponCollectionProvider()?.getCached(weapon.label) : null;
+    const grid = archive.querySelector(".gamesense-collection-grid");
+    if (!grid || !Array.isArray(cachedCollections)) {
+      archive.querySelectorAll("[data-gamesense-collection-tier]").forEach(card => {
+        card.hidden = normalizedFilter !== "all" && card.dataset.gamesenseCollectionTier !== normalizedFilter;
+      });
+      return;
+    }
+
+    const filteredCollections = normalizedFilter === "all"
+      ? cachedCollections
+      : cachedCollections.filter(item => String(item?.editionKey || "") === normalizedFilter);
+    collectionArchiveRenderToken += 1;
+    const visibleCollections = filteredCollections.slice(0, COLLECTION_ARCHIVE_BATCH_SIZE);
+    grid.innerHTML = renderWeaponCollectionCards(visibleCollections);
+    grid.dataset.gamesenseCollectionRendered = String(visibleCollections.length);
+    grid.dataset.gamesenseCollectionTotal = String(filteredCollections.length);
+    grid.dataset.gamesenseCollectionFilter = normalizedFilter;
+    scheduleWeaponCollectionBatches(archive, weapon, filteredCollections);
+  }
+
   function renderWeaponDetail(group) {
     const weapons = group.weapons || [];
     const selected = weapons.find(weapon => weapon.id === state.detailId) || weapons[0];
@@ -5584,6 +5615,15 @@
       });
       return;
     }
+    const collectionFilter = event.target.closest?.("[data-gamesense-collection-filter]");
+    if (collectionFilter) {
+      const archive = collectionFilter.closest(".gamesense-collection-archive");
+      const filter = collectionFilter.dataset.gamesenseCollectionFilter || "all";
+      event.preventDefault();
+      event.stopPropagation();
+      applyWeaponCollectionFilter(archive, filter);
+      return;
+    }
     const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
     if (collectionOpen) {
       const collectionCard = collectionOpen.closest("[data-gamesense-collection-preview]");
@@ -5609,20 +5649,6 @@
     if (collectionRetry) {
       event.preventDefault();
       hydrateWeaponCollectionArchive(getSelectedWeapon(), { retry: true });
-      return;
-    }
-    const collectionFilter = event.target.closest?.("[data-gamesense-collection-filter]");
-    if (collectionFilter) {
-      const archive = collectionFilter.closest(".gamesense-collection-archive");
-      const filter = collectionFilter.dataset.gamesenseCollectionFilter || "all";
-      archive?.querySelectorAll("[data-gamesense-collection-filter]").forEach(button => {
-        const active = button.dataset.gamesenseCollectionFilter === filter;
-        button.classList.toggle("active", active);
-        button.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-      archive?.querySelectorAll("[data-gamesense-collection-tier]").forEach(card => {
-        card.hidden = filter !== "all" && card.dataset.gamesenseCollectionTier !== filter;
-      });
       return;
     }
     const weapon = event.target.closest?.("[data-gamesense-weapon]");
