@@ -104,7 +104,10 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       return handleApiRequest(request, env, executionContext);
     }
-    const response = await env.ASSETS.fetch(request);
+    const assetRequest = url.pathname === "/"
+      ? new Request(new URL("/index.html", url), request)
+      : request;
+    const response = await env.ASSETS.fetch(assetRequest);
     const contentType = response.headers.get("Content-Type") || "";
     const isHtml = contentType.includes("text/html") || url.pathname === "/" || url.pathname.endsWith(".html");
     if (!isHtml) return response;
