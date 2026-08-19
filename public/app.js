@@ -7945,6 +7945,64 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
   const recentWins = recentWindow.filter((match) => getMatchCore(match).result === "win").length;
   const recentLosses = recentWindow.filter((match) => getMatchCore(match).result === "loss").length;
+  const avgKast = firstFiniteNumber(
+    overview.overallKAST
+  );
+  const deathsPerMatch = overview.matchesPlayed
+    ? safeDivide(totalDeaths, overview.matchesPlayed)
+    : averageValue((importedAnalytics?.agents || []).map(agent => safeDivide(agent?.deaths, agent?.matchesPlayed)));
+  const assistsPerMatch = overview.matchesPlayed
+    ? safeDivide(totalAssists, overview.matchesPlayed)
+    : safeNumber(overview.assists);
+  const positiveMoodCount = logs.filter(entry => ["focused", "fun", "calm"].includes(String(entry?.mood || "").toLowerCase())).length;
+  const negativeMoodCount = logs.filter(entry => ["annoyed", "tilted"].includes(String(entry?.mood || "").toLowerCase())).length;
+  const averageRating = average(ratingValues);
+  const averageTeamComms = average(logs.map(entry => safeNumber(entry?.teamComms ?? entry?.team_comms, NaN)));
+  const averageSelfComms = average(logs.map(entry => safeNumber(entry?.selfComms ?? entry?.self_comms, NaN)));
+  const recentKills = recentMatches.reduce((sum, match) => sum + getMatchCore(match).kills, 0);
+  const recentDeaths = recentMatches.reduce((sum, match) => sum + getMatchCore(match).deaths, 0);
+  const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
+  const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
+  const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
+  const agentTrendBucket = agents.find(entry => String(entry?.agent || "").toLowerCase() === String(currentSignalAgent || "").toLowerCase()) || bestAgent || null;
+  const roleTrendBucket = roles.find(entry => String(entry?.role || "").toLowerCase() === String(currentSignalRole || "").toLowerCase()) || bestRole || null;
+  const mapTrendBucket = bestMap || null;
+  const fightKd = safeNumber(agentTrendBucket?.kd, safeNumber(overview.kd));
+  const fightKills = safeNumber(agentTrendBucket?.kills, totalKills);
+  const fightDeaths = safeNumber(agentTrendBucket?.deaths, totalDeaths);
+  const fightMatches = safeNumber(agentTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const fightSubject = agentTrendBucket?.agent || currentSignalAgent || "Recent Matches";
+  const matchWinrate = safeNumber(mapTrendBucket?.winrate, safeNumber(overview.winrate));
+  const matchWins = safeNumber(mapTrendBucket?.matchesWon, safeNumber(overview.matchesWon));
+  const matchLosses = safeNumber(mapTrendBucket?.matchesLost, safeNumber(overview.matchesLost));
+  const matchCount = safeNumber(mapTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const matchSubject = mapTrendBucket?.map || "Current Record";
+  const roleAcs = safeNumber(roleTrendBucket?.acs, averageAcs);
+  const roleAcsTotal = safeNumber(roleTrendBucket?.acsTotal, totalAcs);
+  const roleMatches = safeNumber(roleTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const roleSubject = roleTrendBucket?.role || currentSignalRole || "Current Role";
+  const agentHs = firstFiniteNumber(agentTrendBucket?.hs, overview.hs);
+  const agentHsTotal = safeNumber(agentTrendBucket?.hsTotal, totalHs);
+  const agentHsMatches = safeNumber(agentTrendBucket?.hsCount, safeNumber(overview.hsSampleCount));
+  const roleAssists = safeNumber(roleTrendBucket?.assists, totalAssists);
+  const roleAssistsPerMatch = roleMatches ? safeDivide(roleAssists, roleMatches) : assistsPerMatch;
+  const roleDeaths = safeNumber(roleTrendBucket?.deaths, totalDeaths);
+  const roleDeathsPerMatch = roleMatches ? safeDivide(roleDeaths, roleMatches) : deathsPerMatch;
+  const fightInterpretation = describeFightValueInterpretation({
+    agent: fightSubject,
+    role: roleSubject,
+    map: matchSubject,
+    sampleSize: fightMatches,
+    kd: fightKd
+  });
+  const bestAgentEvidence = bestAgent ? getCoachingEvidenceScore({ matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate }) : null;
+  const bestMapEvidence = bestMap ? getCoachingEvidenceScore({ matches: bestMap.matchesPlayed, winrate: bestMap.winrate }) : null;
+  const bestRoleEvidence = bestRole ? getCoachingEvidenceScore({ matches: bestRole.matchesPlayed, winrate: bestRole.winrate }) : null;
+  const rankWinRateRead = getRankBenchmarkInline("winRate", matchWinrate, rankComparison);
+  const rankKdRead = getRankBenchmarkInline("kd", fightKd, rankComparison);
+  const rankAcsRead = getRankBenchmarkInline("acs", roleAcs, rankComparison);
+  const rankHsRead = getRankBenchmarkInline("hsPercent", agentHs, rankComparison);
+
   const recentKd = (() => {
     const recentKills = recentMatches.reduce((sum, match) => sum + getMatchCore(match).kills, 0);
     const recentDeaths = recentMatches.reduce((sum, match) => sum + getMatchCore(match).deaths, 0);
@@ -8418,64 +8476,6 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       }
     }
   };
-
-  const avgKast = firstFiniteNumber(
-    overview.overallKAST
-  );
-  const deathsPerMatch = overview.matchesPlayed
-    ? safeDivide(totalDeaths, overview.matchesPlayed)
-    : averageValue((importedAnalytics?.agents || []).map(agent => safeDivide(agent?.deaths, agent?.matchesPlayed)));
-  const assistsPerMatch = overview.matchesPlayed
-    ? safeDivide(totalAssists, overview.matchesPlayed)
-    : safeNumber(overview.assists);
-  const positiveMoodCount = logs.filter(entry => ["focused", "fun", "calm"].includes(String(entry?.mood || "").toLowerCase())).length;
-  const negativeMoodCount = logs.filter(entry => ["annoyed", "tilted"].includes(String(entry?.mood || "").toLowerCase())).length;
-  const averageRating = average(ratingValues);
-  const averageTeamComms = average(logs.map(entry => safeNumber(entry?.teamComms ?? entry?.team_comms, NaN)));
-  const averageSelfComms = average(logs.map(entry => safeNumber(entry?.selfComms ?? entry?.self_comms, NaN)));
-  const recentKills = recentMatches.reduce((sum, match) => sum + getMatchCore(match).kills, 0);
-  const recentDeaths = recentMatches.reduce((sum, match) => sum + getMatchCore(match).deaths, 0);
-  const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
-  const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
-  const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
-  const agentTrendBucket = agents.find(entry => String(entry?.agent || "").toLowerCase() === String(currentSignalAgent || "").toLowerCase()) || bestAgent || null;
-  const roleTrendBucket = roles.find(entry => String(entry?.role || "").toLowerCase() === String(currentSignalRole || "").toLowerCase()) || bestRole || null;
-  const mapTrendBucket = bestMap || null;
-  const fightKd = safeNumber(agentTrendBucket?.kd, safeNumber(overview.kd));
-  const fightKills = safeNumber(agentTrendBucket?.kills, totalKills);
-  const fightDeaths = safeNumber(agentTrendBucket?.deaths, totalDeaths);
-  const fightMatches = safeNumber(agentTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
-  const fightSubject = agentTrendBucket?.agent || currentSignalAgent || "Recent Matches";
-  const matchWinrate = safeNumber(mapTrendBucket?.winrate, safeNumber(overview.winrate));
-  const matchWins = safeNumber(mapTrendBucket?.matchesWon, safeNumber(overview.matchesWon));
-  const matchLosses = safeNumber(mapTrendBucket?.matchesLost, safeNumber(overview.matchesLost));
-  const matchCount = safeNumber(mapTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
-  const matchSubject = mapTrendBucket?.map || "Current Record";
-  const roleAcs = safeNumber(roleTrendBucket?.acs, averageAcs);
-  const roleAcsTotal = safeNumber(roleTrendBucket?.acsTotal, totalAcs);
-  const roleMatches = safeNumber(roleTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
-  const roleSubject = roleTrendBucket?.role || currentSignalRole || "Current Role";
-  const agentHs = firstFiniteNumber(agentTrendBucket?.hs, overview.hs);
-  const agentHsTotal = safeNumber(agentTrendBucket?.hsTotal, totalHs);
-  const agentHsMatches = safeNumber(agentTrendBucket?.hsCount, safeNumber(overview.hsSampleCount));
-  const roleAssists = safeNumber(roleTrendBucket?.assists, totalAssists);
-  const roleAssistsPerMatch = roleMatches ? safeDivide(roleAssists, roleMatches) : assistsPerMatch;
-  const roleDeaths = safeNumber(roleTrendBucket?.deaths, totalDeaths);
-  const roleDeathsPerMatch = roleMatches ? safeDivide(roleDeaths, roleMatches) : deathsPerMatch;
-  const fightInterpretation = describeFightValueInterpretation({
-    agent: fightSubject,
-    role: roleSubject,
-    map: matchSubject,
-    sampleSize: fightMatches,
-    kd: fightKd
-  });
-  const bestAgentEvidence = bestAgent ? getCoachingEvidenceScore({ matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate }) : null;
-  const bestMapEvidence = bestMap ? getCoachingEvidenceScore({ matches: bestMap.matchesPlayed, winrate: bestMap.winrate }) : null;
-  const bestRoleEvidence = bestRole ? getCoachingEvidenceScore({ matches: bestRole.matchesPlayed, winrate: bestRole.winrate }) : null;
-  const rankWinRateRead = getRankBenchmarkInline("winRate", matchWinrate, rankComparison);
-  const rankKdRead = getRankBenchmarkInline("kd", fightKd, rankComparison);
-  const rankAcsRead = getRankBenchmarkInline("acs", roleAcs, rankComparison);
-  const rankHsRead = getRankBenchmarkInline("hsPercent", agentHs, rankComparison);
 
   const trends = [
     {
