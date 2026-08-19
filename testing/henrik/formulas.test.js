@@ -175,11 +175,14 @@ assert.equal(globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(situati
 const gold = globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Gold 2", {
   hsPercent: 22.7,
   acs: 213,
-  kd: 1.03
+  kd: 1.03,
+  winRate: 50
 });
 assert.equal(gold.rankKey, "gold");
 assert.equal(gold.metrics.hsPercent.direction, "near");
+assert.equal(gold.metrics.winRate.direction, "near");
 assert.equal(gold.source.provisional, true);
+assert.equal(gold.source.asOf, "2026-08-18");
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Radiant", {}), null);
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Immortal 3", {}), null);
 

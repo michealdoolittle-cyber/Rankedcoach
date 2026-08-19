@@ -7778,6 +7778,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const rankDisplayStatus = getRankDisplayStatus();
   const currentRankLabel = rankDisplayStatus.isRanked ? rankDisplayStatus.rankLabel : "";
   const rankComparison = currentRankLabel ? globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(currentRankLabel, {
+    winRate: overview.winrate,
     hsPercent: overview.hs,
     acs: averageAcs,
     kd: overview.kd
@@ -7986,24 +7987,62 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   if (rankComparison && orderedMatches.length >= 3) {
     const metrics = Object.values(rankComparison.metrics).filter(Boolean);
     const weakest = metrics.slice().sort((a, b) => a.relativeDelta - b.relativeDelta)[0];
+    const strongest = metrics.slice().sort((a, b) => b.relativeDelta - a.relativeDelta)[0];
     const belowCount = metrics.filter(metric => metric.direction === "below").length;
+    const rankBenchmarkSource = getRankBenchmarkSourceLabel(rankComparison.source);
+    const rankMetricSummary = metrics
+      .map(metric => `${metric.shortLabel}: ${formatRankMetricValue(metric)} (${formatRankComparisonDelta(metric, { includeMetricLabel: false })})`)
+      .join(", ");
+    const rankBenchmarkSummary = metrics
+      .map(metric => `${metric.shortLabel}: ${formatRankBenchmarkValue(metric)}`)
+      .join(", ");
+    const rankBenchmarkWhy = (() => {
+      if (!weakest) return "";
+      if (weakest.direction === "below") {
+        if (weakest.shortLabel === "WR") {
+          const economyReads = [
+            Number.isFinite(Number(overview.fullBuyWinRate)) ? `full-buy rounds are ${formatPercent(overview.fullBuyWinRate)}` : "",
+            Number.isFinite(Number(overview.lightBuyWinRate)) ? `light-buy rounds are ${formatPercent(overview.lightBuyWinRate)}` : "",
+            Number.isFinite(Number(overview.ecoWinRate)) ? `eco rounds are ${formatPercent(overview.ecoWinRate)}` : ""
+          ].filter(Boolean);
+          if (economyReads.length) return `Round conversion is the closest supporting signal: ${economyReads.join(", ")} in this window.`;
+          if (weakestMap?.matchesPlayed >= 2) return `${weakestMap.map} is the lowest repeated map result at ${formatPercent(weakestMap.winrate)} over ${weakestMap.matchesPlayed} matches.`;
+          return "";
+        }
+        if (weakest.shortLabel === "HS%") {
+          if (mechanicsAdjustment?.hasAdjustment) return `Weapon mix matters here: ${mechanicsAdjustment.readableReason}`;
+          return agentHsMatches ? `${fightSubject} is the active mechanics sample at ${formatPercent(agentHs)} across ${agentHsMatches} matches.` : "";
+        }
+        if (weakest.shortLabel === "ACS") {
+          return roleMatches ? `${roleSubject} is carrying the damage-output sample at ${Math.round(roleAcs)} ACS across ${roleMatches} matches.` : "";
+        }
+        if (weakest.shortLabel === "K/D") {
+          return fightMatches ? `${fightSubject} is the fight sample at ${fightKd.toFixed(2)} K/D across ${fightMatches} matches.` : "";
+        }
+      }
+      if (strongest?.direction === "above") {
+        return `${strongest.label} is the strongest support signal at ${formatRankMetricValue(strongest)}, ${formatRankComparisonDelta(strongest, { includeMetricLabel: false })}.`;
+      }
+      return "The available rank-baseline stats are close enough together that no single number is driving this card.";
+    })();
     const actionByMetric = {
+      "WR": "Pick one controllable round habit to log next: the opening plan, the trade path, or the retake pace before the first fight starts.",
       "HS%": "Keep crosshair placement as the focus, but judge it alongside fight selection instead of chasing headshots alone.",
       ACS: "Look for earlier useful damage, cleaner utility-to-fight timing, and more impact before rounds are already decided.",
       "K/D": "Trim low-percentage peeks and stay close enough to teammates for trades before taking the next duel."
     };
     insights.push({
       type: belowCount >= 2 ? "warn" : "good",
-      title: `${rankComparison.rankLabel} Benchmark Check`,
-      preview: `Provisional ${rankComparison.rankLabel} reference: ${overview.hs.toFixed(1)}% HS, ${Math.round(averageAcs)} ACS, ${overview.kd.toFixed(2)} K/D.`,
+      title: "Rank Benchmark Check",
+      preview: rankMetricSummary || `Current window compared with your rank's available averages.`,
       what: weakest?.direction === "below"
-        ? `The coach sees ${weakest.label.toLowerCase()} as the clearest rank-relative gap in this match window.`
-        : `The coach sees this match window holding near or above the available ${rankComparison.rankLabel} references.`,
-      why: `This compares your recent matches with a provisional ${rankComparison.rankLabel} community sample. Your existing agent, map, and trend reads still compare you with your own history.`,
+        ? `${weakest.label} is ${formatRankComparisonDelta(weakest, { includeMetricLabel: false })}, making it the clearest rank-baseline gap in this window.`
+        : `This window is near or above your rank's available averages: ${rankBenchmarkSummary}.`,
+      why: rankBenchmarkWhy,
       action: weakest?.direction === "below"
         ? actionByMetric[weakest.shortLabel]
-        : "Keep the same approach for the next match window and watch which number stays repeatable.",
-      sources: ["Recent Competitive Matches", `UpForge ${rankComparison.rankLabel} sample (July 2026)`],
+        : "Keep logging confidence, comms, and round notes so RankedCoach can separate repeatable strengths from one-window spikes.",
+      sources: ["Recent Competitive Matches", rankBenchmarkSource],
       focus: weakest?.shortLabel || "Rank Context",
       category: "performance",
       priority: belowCount >= 2 ? 89 : 73,
@@ -8018,7 +8057,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       preview: `${bestAgent.agent} is your strongest current comfort pick at ${Math.round(bestAgent.winrate)}% win rate.`,
       what: `${bestAgent.agent} is currently your most reliable pick based on match history from ${importedAnalytics?.currentAct || "Current Window"}.`,
       why: "This usually means your decisions, utility, and comfort are more consistent on that agent.",
-      action: `Use ${bestAgent.agent} as your main ranked pick for now, and only swap when the map or team comp clearly needs it.`,
+      action: "When this agent comes up, log what made the round feel stable: first contact timing, utility before entry, or whether trades stayed close enough to matter.",
       sources: ["Henrik Match History"],
       focus: "Discipline",
       category: "role",
@@ -8433,6 +8472,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const bestAgentEvidence = bestAgent ? getCoachingEvidenceScore({ matches: bestAgent.matchesPlayed, winrate: bestAgent.winrate }) : null;
   const bestMapEvidence = bestMap ? getCoachingEvidenceScore({ matches: bestMap.matchesPlayed, winrate: bestMap.winrate }) : null;
   const bestRoleEvidence = bestRole ? getCoachingEvidenceScore({ matches: bestRole.matchesPlayed, winrate: bestRole.winrate }) : null;
+  const rankWinRateRead = getRankBenchmarkInline("winRate", matchWinrate, rankComparison);
+  const rankKdRead = getRankBenchmarkInline("kd", fightKd, rankComparison);
+  const rankAcsRead = getRankBenchmarkInline("acs", roleAcs, rankComparison);
+  const rankHsRead = getRankBenchmarkInline("hsPercent", agentHs, rankComparison);
 
   const trends = [
     {
@@ -8446,7 +8489,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       read: fightMatches ? fightInterpretation.read : "No data",
       sourceLabel: `Based on ${fightMatches || 0} ${fightSubject} matches from ${seasonLabel}.`,
       formula: `${fightSubject} kills / deaths = ${Math.round(fightKills)} / ${Math.max(1, Math.round(fightDeaths))} = ${fightMatches ? fightKd.toFixed(2) : "--"}`,
-      benchmark: "Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.",
+      benchmark: rankKdRead
+        ? `Against your rank's average K/D: ${rankKdRead}. Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.`
+        : "Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.",
       mediaType: "agent",
       mediaValue: fightSubject,
       proofItems: [
@@ -8469,7 +8514,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         : `${matchSubject} is below a winning pace, so the app treats it as a map conversion issue.`,
       sourceLabel: `Based on ${matchWins} wins and ${matchLosses} losses on ${matchSubject} from ${seasonLabel}.`,
       formula: `${matchSubject} wins / matches played = ${matchWins} / ${Math.max(1, matchCount)} = ${Math.round(matchWinrate || 0)}%`,
-      benchmark: "Positive above 52%, watch at 45-51%, regression below 45%.",
+      benchmark: rankWinRateRead
+        ? `Against your rank's average win rate: ${rankWinRateRead}. Positive above 52%, watch at 45-51%, regression below 45%.`
+        : "Positive above 52%, watch at 45-51%, regression below 45%.",
       mediaType: "map",
       mediaValue: mapTrendBucket?.map,
       proofItems: [
@@ -8518,7 +8565,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         : `${roleSubject} combat impact is lower than expected, so this stays visible in the coaching plan.`,
       sourceLabel: `Based on ${roleMatches || 0} ${roleSubject} matches from ${seasonLabel} using Riot score-per-round data.`,
       formula: `${roleSubject} score per round total / matches played = ${Math.round(roleAcsTotal)} / ${Math.max(1, roleMatches)} = ${roleMatches ? Math.round(roleAcs || 0) : "--"} ACS`,
-      benchmark: "Positive above 215 ACS, watch at 185-214, regression below 185.",
+      benchmark: rankAcsRead
+        ? `Against your rank's average ACS: ${rankAcsRead}. Positive above 215 ACS, watch at 185-214, regression below 185.`
+        : "Positive above 215 ACS, watch at 185-214, regression below 185.",
       mediaType: "role",
       mediaValue: roleSubject,
       proofItems: [
@@ -8552,8 +8601,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       sourceLabel: `Based on ${agentHsMatches || 0} ${fightSubject} matches from ${seasonLabel} using Riot headshot percentage.`,
       formula: `${fightSubject} headshot percent total / matches = ${Math.round(agentHsTotal)} / ${Math.max(1, agentHsMatches)} = ${agentHsMatches ? formatPercent(agentHs) : "--"}`,
       benchmark: mechanicsAdjustment.hasAdjustment
-        ? `Adjusted for agent and weapon context: positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch at ${Math.round(mechanicsAdjustment.adjustedWatchHs)}-${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.`
-        : "Positive above 22% HS, watch at 18-21%, regression below 18%.",
+        ? `Adjusted for agent and weapon context: positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch at ${Math.round(mechanicsAdjustment.adjustedWatchHs)}-${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.${rankHsRead ? ` Against your rank's average HS%: ${rankHsRead}.` : ""}`
+        : rankHsRead
+          ? `Against your rank's average HS%: ${rankHsRead}. Positive above 22% HS, watch at 18-21%, regression below 18%.`
+          : "Positive above 22% HS, watch at 18-21%, regression below 18%.",
       mediaType: "agent",
       mediaValue: fightSubject,
       proofItems: [
@@ -10917,6 +10968,57 @@ function formatPercent(value, digits = 1) {
   return `${n.toFixed(digits).replace(/\.0$/, "")}%`;
 }
 
+function getActiveRankBenchmarkComparison(values = {}) {
+  const status = typeof getRankDisplayStatus === "function" ? getRankDisplayStatus() : null;
+  if (!status?.isRanked || !status.rankLabel) return null;
+  return globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(status.rankLabel, values) || null;
+}
+
+function getActiveRankMetricComparison(metricKey = "", value = null, rankComparison = null) {
+  const key = String(metricKey || "").trim();
+  if (!key) return null;
+  const comparison = rankComparison || getActiveRankBenchmarkComparison({ [key]: value });
+  const metric = comparison?.metrics?.[key] || null;
+  return metric && Number.isFinite(Number(metric.value)) && Number.isFinite(Number(metric.benchmark)) ? metric : null;
+}
+
+function formatRankMetricValue(metric = {}) {
+  const value = Number(metric?.value);
+  if (!Number.isFinite(value)) return "--";
+  if (metric.format === "percent") return formatPercent(value);
+  if (metric.format === "ratio") return value.toFixed(2);
+  return `${Math.round(value)}`;
+}
+
+function formatRankBenchmarkValue(metric = {}) {
+  const value = Number(metric?.benchmark);
+  if (!Number.isFinite(value)) return "--";
+  if (metric.format === "percent") return formatPercent(value);
+  if (metric.format === "ratio") return value.toFixed(2);
+  return `${Math.round(value)}`;
+}
+
+function formatRankComparisonDelta(metric = {}, options = {}) {
+  if (!metric || !Number.isFinite(Number(metric.relativeDelta))) return "";
+  if (metric.direction === "near") return "near your rank's average";
+  const rounded = Math.max(1, Math.round(Math.abs(Number(metric.relativeDelta)) * 100));
+  const direction = metric.relativeDelta > 0 ? "above" : "below";
+  const prefix = options?.includeMetricLabel === false ? "" : `${metric.shortLabel || metric.label || "This stat"} is `;
+  return `${prefix}${rounded}% ${direction} your rank's average`;
+}
+
+function getRankBenchmarkSourceLabel(source = {}) {
+  const name = String(source?.name || "Rank benchmark").trim();
+  const date = String(source?.asOf || "").trim();
+  const status = source?.provisional ? "provisional" : "verified";
+  return [name, date ? `captured ${date}` : "", status].filter(Boolean).join(" | ");
+}
+
+function getRankBenchmarkInline(metricKey = "", value = null, rankComparison = null) {
+  const metric = getActiveRankMetricComparison(metricKey, value, rankComparison);
+  return metric ? formatRankComparisonDelta(metric, { includeMetricLabel: false }) : "";
+}
+
 function averageValue(values = []) {
   const clean = values.map(Number).filter(Number.isFinite);
   if (!clean.length) return 0;
@@ -11667,6 +11769,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
   const topMaps = (weapon?.maps || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
   const topBuyTypes = (weapon?.buyTypes || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
   const hasSample = Boolean(weapon?.rounds);
+  const rankWinrateRead = hasSample ? getRankBenchmarkInline("winRate", weapon.winrate) : "";
 
   return [
     {
@@ -11676,6 +11779,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
         statItem("Weapon", meta?.name || "Weapon", "Exact weapon selected from the local Valorant weapon roster."),
         statItem("Weapon Category", meta?.familyLabel || "Weapon", "Weapon category row on the Stats page."),
         statItem("Round Win Rate", hasSample ? formatPercent(weapon.winrate) : "--", hasSample ? `round wins / rounds reported = ${Math.round(weapon.wins)} / ${Math.round(weapon.rounds)}` : "No imported rounds are tagged with this weapon yet."),
+        ...(rankWinrateRead ? [statItem("Rank Win Rate Read", rankWinrateRead, "This compares this weapon's round conversion with your rank's average win rate while keeping your own weapon history as the primary read.")] : []),
         statItem("Rounds Reported", hasSample ? `${Math.round(weapon.rounds)}` : "0", "Imported round-by-round weapon usage for this exact weapon."),
         statItem("Matches Reported", hasSample ? `${Math.round(weapon.matches)}` : "0", "Imported matches where this exact weapon was reported at least once."),
         statItem("Estimated Kills", hasSample ? `${Math.round(weapon.kills)}` : "--", "Match combat totals are allocated according to this weapon's share of reported rounds."),
@@ -11838,6 +11942,7 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
     full: rounds.filter(round => String(round?.buyType || "").toLowerCase().includes("full"))
   };
   const topUsage = (weapon?.usage || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
+  const rankWinrateRead = weapon ? getRankBenchmarkInline("winRate", weapon.winrate) : "";
 
   return [
     {
@@ -11847,6 +11952,7 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
         statItem("Weapon Category", weapon?.label || "Weapon", "Grouped from imported round-by-round weapon usage."),
         statItem("Primary Weapon", weapon?.primaryWeapon || "--", "Most-used weapon inside this weapon category."),
         statItem("Round Win Rate", formatPercent(weapon?.winrate), `rounds won with ${weapon?.label || "this weapon category"} / total rounds on that weapon category = ${Math.round(safeNumber(weapon?.winrate) * safeNumber(weapon?.rounds) / 100)} / ${Math.round(safeNumber(weapon?.rounds))}`),
+        ...(rankWinrateRead ? [statItem("Rank Win Rate Read", rankWinrateRead, "This compares this weapon category's round conversion with your rank's average win rate while keeping your own weapon history as the primary read.")] : []),
         statItem("Estimated Kills", weapon ? `${Math.round(weapon.kills)}` : "--", "Match combat totals are allocated according to this weapon category's share of reported rounds."),
         statItem("Estimated Deaths", weapon ? `${Math.round(weapon.deaths)}` : "--", "Match death totals are allocated according to this weapon category's share of reported rounds."),
         statItem("Estimated ADR", weapon ? `${Math.round(weapon.adr)}` : "--", "Calculated from imported match damage per round across rounds using this weapon category."),
@@ -11968,6 +12074,13 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
       totalSideRounds
     )
     : NaN;
+  const agentWinRate = agent ? safeDivide(safeNumber(agent.matchesWon), safeNumber(agent.matchesPlayed)) * 100 : NaN;
+  const agentHsForRank = Number(agent?.hs);
+  const rankWinrateRead = Number.isFinite(Number(agentWinRate))
+    ? getRankBenchmarkInline("winRate", agentWinRate, analytics?.rankComparison)
+    : "";
+  const rankKdRead = agent ? getRankBenchmarkInline("kd", safeNumber(agent.kd), analytics?.rankComparison) : "";
+  const rankHsRead = agent && Number.isFinite(agentHsForRank) ? getRankBenchmarkInline("hsPercent", agentHsForRank, analytics?.rankComparison) : "";
 
   return [
     {
@@ -11986,9 +12099,13 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
       label: "General",
       items: [
         statItem("Role", roleName, "Agent role mapping from the current roster table."),
+        statItem("Win Rate", agent ? formatPercent(agentWinRate) : "--", agent ? `matchesWon / matchesPlayed = ${safeNumber(agent.matchesWon)} / ${safeNumber(agent.matchesPlayed)}` : "No imported agent segment."),
+        ...(rankWinrateRead ? [statItem("Rank Win Rate Read", rankWinrateRead, "This compares the selected agent result with your rank's average win rate while keeping your own agent history as the primary read.")] : []),
         statItem("K/D", agent ? Number(agent.kd || 0).toFixed(2) : "--", `kills / deaths = ${safeNumber(agent?.kills)} / ${Math.max(1, safeNumber(agent?.deaths))}`),
+        ...(rankKdRead ? [statItem("Rank K/D Read", rankKdRead, "This compares the selected agent K/D with your rank's average K/D.")] : []),
         statItem("Overall KAST", formatPercent(overallKast), `weighted side KAST = ((ATK KAST Ã— ATK rounds) + (DEF KAST Ã— DEF rounds)) / total rounds`),
         statItem("Average ADR", agent ? `${Math.round(agent.adr || 0)}` : "--", `damagePerRound from imported agent segment = ${safeNumber(agent?.adr).toFixed(1)}`),
+        ...(rankHsRead ? [statItem("Rank HS% Read", rankHsRead, "This compares the selected agent headshot percentage with your rank's average HS%.")] : []),
         statItem("Average Loadout Value", Number.isFinite(Number(agent?.averageLoadoutValue)) ? `${Math.round(agent.averageLoadoutValue)} credits` : "--", Number.isFinite(Number(agent?.averageLoadoutValue)) ? `sum of tracked round loadout values / tracked rounds = ${Math.round(safeNumber(agent?.loadoutValueTotal))} / ${Math.round(safeNumber(agent?.loadoutValueRounds))}` : "No verified per-round loadout value is available for this agent sample."),
         statItem("Best Map Win Rate", bestMap ? `${bestMap.map} | ${formatPercent(safeDivide(safeNumber(bestMap.matchesWon), safeNumber(bestMap.matchesPlayed)) * 100)}` : "--", bestMap ? `matchesWon / matchesPlayed on ${bestMap.map} = ${safeNumber(bestMap.matchesWon)} / ${safeNumber(bestMap.matchesPlayed)}` : "No imported map segment."),
         statItem("Worst Map Win Rate", worstMap ? `${worstMap.map} | ${formatPercent(safeDivide(safeNumber(worstMap.matchesWon), safeNumber(worstMap.matchesPlayed)) * 100)}` : "--", worstMap ? `matchesWon / matchesPlayed on ${worstMap.map} = ${safeNumber(worstMap.matchesWon)} / ${safeNumber(worstMap.matchesPlayed)}` : "No imported map segment."),
@@ -12536,11 +12653,18 @@ function openStatsDetailModal(kind, value) {
   if (kind === "map") {
     const map = (analytics?.maps || []).find(item => String(item.map || "").toLowerCase() === String(value || "").toLowerCase());
     const coach = buildCoachRecommendation("map", map, analytics);
+    const mapWinRate = map ? safeDivide(safeNumber(map.matchesWon), safeNumber(map.matchesPlayed)) * 100 : NaN;
+    const rankWinrateRead = Number.isFinite(Number(mapWinRate))
+      ? getRankBenchmarkInline("winRate", mapWinRate, analytics?.rankComparison)
+      : "";
     title.textContent = `${value} Map Pattern`;
     items.push(statItem("Diagnosis", coach.diagnosis, "Coaching read built from map performance and sample size."));
     items.push(statItem("Priority", analytics?.priorityLabel || "Watch", "Shared coaching priority based on current top issue severity."));
     items.push(statItem("Recommendation", coach.recommendation, "Next-step recommendation translated from the current map trend."));
-    items.push(statItem("Win Rate", map ? formatPercent(safeDivide(safeNumber(map.matchesWon), safeNumber(map.matchesPlayed)) * 100) : "--", map ? `matchesWon / matchesPlayed on ${value} = ${safeNumber(map.matchesWon)} / ${safeNumber(map.matchesPlayed)}` : "No imported map segment."));
+    items.push(statItem("Win Rate", map ? formatPercent(mapWinRate) : "--", map ? `matchesWon / matchesPlayed on ${value} = ${safeNumber(map.matchesWon)} / ${safeNumber(map.matchesPlayed)}` : "No imported map segment."));
+    if (rankWinrateRead) {
+      items.push(statItem("Rank Win Rate Read", rankWinrateRead, "This compares the selected map result with your rank's average win rate while keeping your own map history as the primary read."));
+    }
     items.push(statItem("Agent", map?.agent || "--", "Highest-usage agent tied to this imported map segment."));
     items.push(statItem("Role", agentRoles?.[map?.agent] || "--", "Role derived from the roster mapping for the listed agent."));
     items.push(...getMapEconomyStatItems(value, scopedStats.matches));
@@ -62897,6 +63021,8 @@ function renderStatsAgentsModel() {
         const hasData = Boolean(agent.hasData);
         const winrateValue = safeNumber(agent.winrate);
         const kdValue = safeNumber(agent.kd);
+        const rankWinrateRead = hasData ? getRankBenchmarkInline("winRate", winrateValue) : "";
+        const rankKdRead = hasData ? getRankBenchmarkInline("kd", kdValue) : "";
         const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
         const kdTone = hasData ? (kdValue >= 1 ? "stats-value-positive" : "stats-value-negative") : "";
         const toneClass = hasData
@@ -62905,6 +63031,10 @@ function renderStatsAgentsModel() {
         const row = document.createElement("div");
         row.className = `stats-agent-row ${hasData ? "stats-select-card" : ""} ${toneClass}`;
         row.setAttribute("aria-disabled", hasData ? "false" : "true");
+        if (hasData && (rankWinrateRead || rankKdRead)) {
+          row.dataset.rankBaseline = [rankWinrateRead ? `WR ${rankWinrateRead}` : "", rankKdRead ? `K/D ${rankKdRead}` : ""].filter(Boolean).join(" | ");
+          row.title = row.dataset.rankBaseline;
+        }
         row.innerHTML = `
           <div class="stats-primary-cell">
             <img src="${getAgentIconUrl(agent.agent)}" class="stats-cell-icon stats-agent-tile-icon" loading="lazy" decoding="async" />
@@ -62964,6 +63094,7 @@ function renderStatsMapsModel() {
     const isActivePool = poolSet.has(String(mapName || "").toLowerCase());
     const canOpen = hasData && isActivePool;
     const winrateValue = safeNumber(map?.winrate);
+    const rankWinrateRead = hasData ? getRankBenchmarkInline("winRate", winrateValue) : "";
     const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
     const matchCount = safeNumber(map?.matchesPlayed || map?.matches);
     const matchCopy = `${matchCount} ${matchCount === 1 ? "game" : "games"}`;
@@ -62974,6 +63105,10 @@ function renderStatsMapsModel() {
     card.dataset.hasData = hasData ? "true" : "false";
     card.dataset.excluded = isActivePool ? "false" : "true";
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"} ${isActivePool ? "is-active-pool" : "is-out-of-season is-excluded"}${isActivePool && !hasData ? " is-no-data" : ""}`;
+    if (rankWinrateRead) {
+      card.dataset.rankBaseline = `WR ${rankWinrateRead}`;
+      card.title = card.dataset.rankBaseline;
+    }
     card.innerHTML = `
       <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork" loading="lazy" decoding="async">
       <div class="stats-map-meta">
@@ -63017,12 +63152,17 @@ function renderStatsWeaponsModel() {
     STATS_WEAPON_FAMILIES.forEach((family) => {
       const familySummary = getWeaponFamilySummary(family, summaryMap);
       const hasFamilyData = safeNumber(familySummary.rounds) > 0;
+      const familyRankWinrateRead = hasFamilyData ? getRankBenchmarkInline("winRate", safeNumber(familySummary.winrate)) : "";
       const familyToneClass = hasFamilyData
         ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
         : "is-empty is-locked";
       const row = document.createElement("section");
       row.className = `stats-desktop-weapon-family-row ${familyToneClass}`;
       row.dataset.weaponFamily = family.key;
+      if (familyRankWinrateRead) {
+        row.dataset.rankBaseline = `WR ${familyRankWinrateRead}`;
+        row.title = row.dataset.rankBaseline;
+      }
       row.style.setProperty("--weapon-count", String(family.weapons.length));
       row.innerHTML = `
         <div class="stats-desktop-weapon-family-head">
@@ -63051,6 +63191,7 @@ function renderStatsWeaponsModel() {
         const weapon = summaryMap.get(weaponKey);
         const hasWeaponData = safeNumber(weapon?.rounds) > 0;
         const weaponWinrate = safeNumber(weapon?.winrate);
+        const weaponRankWinrateRead = hasWeaponData ? getRankBenchmarkInline("winRate", weaponWinrate) : "";
         const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
         const toneClass = hasWeaponData
           ? (weaponWinrate >= 50 ? "is-positive" : "is-negative")
@@ -63060,6 +63201,10 @@ function renderStatsWeaponsModel() {
         button.disabled = !hasWeaponData;
         button.className = `stats-desktop-weapon-tile ${toneClass}`;
         button.dataset.weaponKey = weaponKey;
+        if (weaponRankWinrateRead) {
+          button.dataset.rankBaseline = `WR ${weaponRankWinrateRead}`;
+          button.title = button.dataset.rankBaseline;
+        }
         button.setAttribute("aria-label", hasWeaponData ? `Open ${weaponName} weapon insights` : `${weaponName} has no data`);
         button.innerHTML = `
           <span class="stats-desktop-weapon-art-wrap">
@@ -63093,6 +63238,7 @@ function renderStatsWeaponsModel() {
   container.innerHTML = `${mobileFilterMarkup}${familiesToRender.map((family) => {
     const familySummary = getWeaponFamilySummary(family, summaryMap);
     const hasFamilyData = safeNumber(familySummary.rounds) > 0;
+    const familyRankWinrateRead = hasFamilyData ? getRankBenchmarkInline("winRate", safeNumber(familySummary.winrate)) : "";
     const toneClass = hasFamilyData
       ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
       : "is-empty is-locked";
@@ -63116,6 +63262,7 @@ function renderStatsWeaponsModel() {
       const hasWeaponData = safeNumber(weapon?.rounds) > 0;
       const assetPath = getStatsWeaponAssetPath(weaponName);
       const weaponWinrate = safeNumber(weapon?.winrate);
+      const weaponRankWinrateRead = hasWeaponData ? getRankBenchmarkInline("winRate", weaponWinrate) : "";
       const winrateLabel = hasWeaponData ? `${Math.round(weaponWinrate)}% WR` : "No Data";
       const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
       const tileTone = hasWeaponData
@@ -63123,7 +63270,7 @@ function renderStatsWeaponsModel() {
         : "is-empty is-locked";
 
       return `
-        <button type="button" class="stats-weapon-tile ${hasWeaponData ? "has-data" : "is-empty"} ${tileTone}" data-weapon-key="${escapeHtml(weaponKey)}" aria-label="Open ${escapeHtml(weaponName)} weapon insights" ${hasWeaponData ? "" : "disabled aria-disabled=\"true\""}>
+        <button type="button" class="stats-weapon-tile ${hasWeaponData ? "has-data" : "is-empty"} ${tileTone}" data-weapon-key="${escapeHtml(weaponKey)}" ${weaponRankWinrateRead ? `data-rank-baseline="WR ${escapeHtml(weaponRankWinrateRead)}" title="WR ${escapeHtml(weaponRankWinrateRead)}"` : ""} aria-label="Open ${escapeHtml(weaponName)} weapon insights" ${hasWeaponData ? "" : "disabled aria-disabled=\"true\""}>
           <span class="stats-weapon-art-wrap">
             <img class="stats-weapon-art" src="${escapeHtml(assetPath)}" alt="${escapeHtml(weaponName)} weapon">
           </span>
@@ -63136,7 +63283,7 @@ function renderStatsWeaponsModel() {
     }).join("");
 
     return `
-      <section class="stats-weapon-family-row ${hasFamilyData ? "has-data" : "is-empty"} ${toneClass}" style="--weapon-count:${family.weapons.length}">
+      <section class="stats-weapon-family-row ${hasFamilyData ? "has-data" : "is-empty"} ${toneClass}" ${familyRankWinrateRead ? `data-rank-baseline="WR ${escapeHtml(familyRankWinrateRead)}" title="WR ${escapeHtml(familyRankWinrateRead)}"` : ""} style="--weapon-count:${family.weapons.length}">
         <div class="stats-weapon-family-head" ${isMobile ? "hidden aria-hidden=\"true\"" : ""}>
           <span class="stats-weapon-family-title">${escapeHtml(family.label)}</span>
         </div>
