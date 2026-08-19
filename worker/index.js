@@ -91,6 +91,11 @@ const API_ROUTES = new Map([
   ["OPTIONS /api/henrik/raw", optionsHenrikRaw]
 ]);
 
+const STATIC_ASSET_PATH_ALIASES = new Map([
+  ["/assets/library/teams/Sentinels.png", "/assets/library/teams/sentinels.png"],
+  ["/assets/library/teams/T1.png", "/assets/library/teams/t1.png"]
+]);
+
 async function runPlaylistKnowledgeAutomation(env, options = {}) {
   try {
     await handlePlaylistRequest(env);
@@ -227,7 +232,11 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       return handleApiRequest(request, env, executionContext);
     }
-    const response = await env.ASSETS.fetch(request);
+    const assetAlias = STATIC_ASSET_PATH_ALIASES.get(url.pathname);
+    const assetRequest = assetAlias
+      ? new Request(new URL(`${assetAlias}${url.search}`, url.origin), request)
+      : request;
+    const response = await env.ASSETS.fetch(assetRequest);
     const contentType = response.headers.get("Content-Type") || "";
     const isHtml = contentType.includes("text/html") || url.pathname === "/" || url.pathname.endsWith(".html");
     if (!isHtml) return response;
