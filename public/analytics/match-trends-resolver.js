@@ -74,9 +74,10 @@
     const metric = METRICS[metricKey] || {};
     const numeric = Math.abs(number(delta, 0));
     if (metric.format === "percent") return `${Math.round(numeric)}%`;
-    if (metric.format === "ratio") return numeric.toFixed(2);
-    if (metric.format === "decimal") return numeric.toFixed(1);
-    return `${Math.round(numeric)}`;
+    const unit = metric.shortLabel || metric.label || "";
+    if (metric.format === "ratio") return `${numeric.toFixed(2)} ${unit}`.trim();
+    if (metric.format === "decimal") return `${numeric.toFixed(1)} ${unit}`.trim();
+    return `${Math.round(numeric)} ${unit}`.trim();
   }
 
   function summarizeMatches(matchEntries = []) {

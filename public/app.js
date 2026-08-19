@@ -7935,6 +7935,13 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     .map(entry => Number(entry?.selfComms ?? entry?.self_comms))
     .filter(Number.isFinite);
   const weeklySelfCommsAverage = weeklySelfCommsValues.length ? average(weeklySelfCommsValues) : null;
+  const weeklyRatingValues = weeklyLogs
+    .map(entry => safeNumber(entry?.rating))
+    .filter(value => value > 0);
+  const weeklyRatingAverage = weeklyRatingValues.length ? average(weeklyRatingValues) : null;
+  const weeklySelfCommsWeakEligible = weeklySelfCommsValues.length >= 2
+    && weeklySelfCommsAverage !== null
+    && weeklySelfCommsAverage < 3;
   const weeklyMapBuckets = {};
   const weeklyRoleBuckets = {};
   weeklyOrderedMatches.forEach((match) => {
@@ -9551,54 +9558,73 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     teamplay: `assist output at ${assistsPerMatch.toFixed(1)} assists per match`,
     discipline: `survivability at ${deathsPerMatch.toFixed(1)} deaths per match`
   };
+  const compassRankAnchorByLens = {
+    aim: rankHsRead || rankKdRead || rankAcsRead,
+    gamesense: rankWinRateRead,
+    teamplay: rankWinRateRead,
+    discipline: rankKdRead || rankWinRateRead
+  };
   const contextWeakestScore = safeNumber(contextCompassScores[contextWeakestLens]);
-  const contextWeakestLensAvailable = hasMatchData && contextWeakestScore < 55;
+  const contextWeakestRankAnchor = compassRankAnchorByLens[contextWeakestLens] || "";
+  const contextWeakestLensAvailable = hasMatchData && contextWeakestScore < 55 && Boolean(contextWeakestRankAnchor);
+  const weeklyMapLossWinRate = weeklyMapLossStreak
+    ? safeDivide(
+      weeklyMapLossStreak.entries.filter(entry => String(entry?.result || "").toLowerCase() === "win").length * 100,
+      weeklyMapLossStreak.entries.length
+    )
+    : NaN;
+  const weeklyMapLossRankAnchor = weeklyMapLossStreak
+    ? getRankBenchmarkInline("winRate", weeklyMapLossWinRate, rankComparison)
+    : "";
+  const weeklyMapLossRankAnchored = Boolean(weeklyMapLossStreak && weeklyMapLossRankAnchor);
 
   const weeklyCandidates = [
     {
-      key: weeklyMoodPatternEligible ? "tilt" : (weeklySelfCommsValues.length ? "self_comms" : "performance"),
-      available: Boolean(weeklyMoodPatternEligible || weeklySelfCommsValues.length >= 2 || weeklyOrderedMatches.length >= 3),
+      key: weeklyMoodPatternEligible ? "tilt" : "self_comms",
+      available: Boolean(weeklyMoodPatternEligible || weeklySelfCommsWeakEligible),
       label: weeklyMoodPatternEligible
         ? `Mood pattern: ${weeklyTopMoodEntry?.[0] || "unfavorable sessions"}`
-        : weeklySelfCommsValues.length
+        : weeklySelfCommsWeakEligible
           ? "Self comms check"
-          : "Weekly performance check",
+          : "Self comms check",
       summary: weeklyMoodPatternEligible
         ? `${weeklyNegativeMoodCount} of ${weeklyLogs.length} reflections (${Math.round(weeklyNegativeMoodRate)}%) recorded an unfavorable mood this week.`
-        : weeklySelfCommsValues.length
+        : weeklySelfCommsWeakEligible
           ? `Your self comms averaged ${weeklySelfCommsAverage.toFixed(1)}/5 across ${weeklySelfCommsValues.length} reflections; unfavorable moods did not meet the 20% pattern rule.`
-          : `${weeklyOrderedMatches.length} matches were played this week; unfavorable moods did not meet the 20% pattern rule.`,
+          : "Self comms are not below the 3.0/5 Weekly Focus threshold.",
       score: weeklyMoodPatternEligible
         ? (weeklyNegativeMoodCount * 12) + (weeklyLowRatedLogs.length * 7)
-        : weeklySelfCommsValues.length
+        : weeklySelfCommsWeakEligible
           ? Math.max(0, 75 - (weeklySelfCommsAverage * 15))
-          : Math.min(60, weeklyOrderedMatches.length * 8),
+          : 0,
       confidence: weeklyLogs.length >= 4 ? "High" : weeklyLogs.length >= 2 ? "Medium" : "Low",
       sourceLabel: `Weekly window ${weeklyScopeLabel}: ${weeklyOrderedMatches.length} matches and ${weeklyLogs.length} reflection logs.`,
       formula: weeklyMoodPatternEligible
         ? `Unfavorable mood rate = ${weeklyNegativeMoodCount} / ${weeklyLogs.length} = ${Math.round(weeklyNegativeMoodRate)}%. A mood read requires at least 5 logs and 20%.`
-        : weeklySelfCommsValues.length
+        : weeklySelfCommsWeakEligible
           ? `Average self comms = ${weeklySelfCommsValues.map(value => value.toFixed(0)).join(" + ")} / ${weeklySelfCommsValues.length} = ${weeklySelfCommsAverage.toFixed(1)}/5.`
-          : "No mood claim is made below five logs or below a 20% unfavorable-mood rate.",
+          : "Unavailable: self comms must average below 3.0/5 to become a Weekly Focus target.",
       scopeLabel: `Weekly window ${weeklyScopeLabel}: ${weeklyOrderedMatches.length} matches and ${weeklyLogs.length} reflection logs.`,
       gamesUsed: [...weeklyGamesUsed, ...weeklyLogsUsed],
       read: weeklyMoodPatternEligible
         ? "Unfavorable moods repeat often enough to treat your between-game reset as a weekly coaching target."
-        : weeklySelfCommsValues.length && weeklySelfCommsAverage < 3
+        : weeklySelfCommsWeakEligible
           ? "Lower self comms can reduce your own awareness and leave teammates without useful timing information. Make one short plan call before contact."
-          : "There is no eligible unfavorable-mood pattern this week, so this read stays on performance rather than guessing at tilt."
+          : "Self comms are not low enough to become this week's coaching target."
     },
     {
       key: "ratings",
-      available: Boolean(weeklyLowRatedLogs.length >= 2),
+      available: Boolean(weeklyRatingValues.length >= 2 && weeklyRatingAverage !== null && weeklyRatingAverage < 3 && weeklyLowRatedLogs.length >= 1),
       label: `Weakest self ratings${weeklyLowRatedLogs[0]?.focus ? `: ${weeklyLowRatedLogs[0].focus}` : ""}`,
       summary: weeklyLowRatedLogs[0]?.focus
-        ? `${weeklyLowRatedLogs[0].focus} focus category is reported most often in low mood-rated sessions this week.`
+        ? `${weeklyLowRatedLogs[0].focus} focus category is tied to your lowest self-rated sessions this week.`
         : "No low-rated focus category pattern is stored yet.",
-      score: weeklyLowRatedLogs.length * 14,
-      confidence: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
-      sourceLabel: `This week's logs with rating 2 or below: ${weeklyLowRatedLogs.length}. Focus category tags are pulled directly from saved Logging entries.`,
-      formula: `low-rated logs (rating <= 2) x 14 = ${weeklyLowRatedLogs.length} x 14`,
+      score: weeklyRatingAverage !== null ? Math.max(0, Math.round((3 - weeklyRatingAverage) * 28) + (weeklyLowRatedLogs.length * 10)) : 0,
+      confidence: weeklyRatingValues.length >= 4 ? "High" : weeklyRatingValues.length >= 2 ? "Medium" : "Low",
+      sourceLabel: `This week's self-rating average: ${weeklyRatingAverage !== null ? `${weeklyRatingAverage.toFixed(1)}/5` : "--"} across ${weeklyRatingValues.length} logs. Focus category tags are pulled directly from saved Logging entries.`,
+      formula: weeklyRatingAverage !== null
+        ? `Eligible only when average self-rating < 3.0/5. Current average = ${weeklyRatingAverage.toFixed(1)}/5.`
+        : "Unavailable: no self-rating average is available.",
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyLogs.length} logs reviewed).`,
       gamesUsed: weeklyLogsUsed,
       read: weeklyLowRatedLogs[0]?.focus
@@ -9607,18 +9633,18 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       key: "losses",
-      available: Boolean(weeklyMapLossStreak),
+      available: weeklyMapLossRankAnchored,
       label: weeklyMapLossStreak ? `${weeklyMapLossStreak.map}: ${weeklyMapLossStreak.streak}-loss streak` : "No active map loss streak",
       summary: weeklyMapLossStreak
-        ? `You had ${weeklyMapLossStreak.streak} consecutive losses on ${weeklyMapLossStreak.map} this week.`
+        ? `You had ${weeklyMapLossStreak.streak} consecutive losses on ${weeklyMapLossStreak.map} this week; that map window is ${weeklyMapLossRankAnchor}.`
         : "No map has reached the two-loss weekly streak required for this read.",
       score: weeklyMapLossStreak ? Math.min(100, 45 + (weeklyMapLossStreak.streak * 15)) : 0,
       confidence: weeklyMapLossStreak?.streak >= 3 ? "High" : weeklyMapLossStreak ? "Medium" : "Low",
       sourceLabel: weeklyMapLossStreak
-        ? `Weekly match history includes ${weeklyMapLossStreak.entries.length} ${weeklyMapLossStreak.map} matches and a longest loss run of ${weeklyMapLossStreak.streak}.`
+        ? `Weekly match history includes ${weeklyMapLossStreak.entries.length} ${weeklyMapLossStreak.map} matches, a longest loss run of ${weeklyMapLossStreak.streak}, and a rank win-rate anchor: ${weeklyMapLossRankAnchor}.`
         : `Weekly match history has no two-loss map streak (${weeklyScopeLabel}).`,
       formula: weeklyMapLossStreak
-        ? `Eligible when consecutive losses on one map >= 2. ${weeklyMapLossStreak.map} reached ${weeklyMapLossStreak.streak}.`
+        ? `Eligible when consecutive losses on one map >= 2 and a rank benchmark exists. ${weeklyMapLossStreak.map} reached ${weeklyMapLossStreak.streak}; map window win rate = ${formatPercent(weeklyMapLossWinRate)} (${weeklyMapLossRankAnchor}).`
         : "Unavailable: no map reached two consecutive losses in the weekly window.",
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyOrderedMatches.length} matches reviewed).`,
       gamesUsed: weeklyMapLossStreak ? weeklyMapLossStreak.entries.map((entry, index) => formatWeeklyGame(entry.match, index)) : [],
@@ -9630,14 +9656,14 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       key: "impactful",
       available: contextWeakestLensAvailable,
       label: hasMatchData ? `Biggest coaching category gap: ${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"}` : "Biggest coaching category gap: No data",
-      summary: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"} is at ${contextWeakestScore}/100; ${compassDriverByLens[contextWeakestLens] || "one underlying stat"} is the first driver to review.` : "No Compass pillar is below the active review floor this week.",
+      summary: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"} is at ${contextWeakestScore}/100; ${compassDriverByLens[contextWeakestLens] || "one underlying stat"} is the first driver to review, and it is ${contextWeakestRankAnchor}.` : "No Compass pillar is below the active review floor with a rank benchmark this week.",
       score: hasMatchData ? 100 - safeNumber(contextCompassScores[contextWeakestLens]) : 0,
       confidence: hasMatchData ? (orderedMatches.length >= 8 ? "High" : orderedMatches.length >= 4 ? "Medium" : "Low") : "Low",
-      sourceLabel: hasMatchData ? `This aggregates Aim, Game Sense, Teamwork, and Discipline from ${orderedMatches.length} imported matches and ${logs.length} reflection logs.` : "No imported match history available yet.",
-      formula: hasMatchData ? `Eligible only below 55/100. Current ${COMPASS_LENS_META[contextWeakestLens]?.label || "category"} = ${contextWeakestScore}/100; driver = ${compassDriverByLens[contextWeakestLens] || "current lowest input"}.` : "No formula until match history is imported.",
+      sourceLabel: hasMatchData ? `This aggregates Aim, Game Sense, Teamwork, and Discipline from ${orderedMatches.length} imported matches and ${logs.length} reflection logs. Rank anchor: ${contextWeakestRankAnchor || "unavailable"}.` : "No imported match history available yet.",
+      formula: hasMatchData ? `Eligible only below 55/100 with a rank benchmark. Current ${COMPASS_LENS_META[contextWeakestLens]?.label || "category"} = ${contextWeakestScore}/100; driver = ${compassDriverByLens[contextWeakestLens] || "current lowest input"} (${contextWeakestRankAnchor || "no rank anchor"}).` : "No formula until match history is imported.",
       scopeLabel: `Imported history through ${orderedMatches.length ? new Date(getMatchCore(orderedMatches[orderedMatches.length - 1]).createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "today"}: ${orderedMatches.length} matches and ${logs.length} reflection logs.`,
       gamesUsed: [...orderedMatches.map(formatWeeklyGame), ...logs.map((entry, index) => ({ label: `Reflection ${index + 1}`, date: new Date(entry?.createdAt || "").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }), context: [entry?.focus, entry?.mood].filter(Boolean).join(" | ") || "Saved reflection" }))],
-      read: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "This category"} is low enough to review this week because ${compassDriverByLens[contextWeakestLens] || "one input is dragging the category down"}.` : "No impact read is available until a Compass pillar drops below the weekly review floor."
+      read: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "This category"} is low enough to review this week because ${compassDriverByLens[contextWeakestLens] || "one input is dragging the category down"} and the rank comparison says it is ${contextWeakestRankAnchor}.` : "No impact read is available until a Compass pillar drops below the weekly review floor with a rank benchmark."
     }
   ].sort((a, b) => b.score - a.score);
 
@@ -9649,7 +9675,16 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const resolvedMatchTrends = statsOnlyTrendContext
     ? (globalThis.RankedCoachMatchTrendsResolver?.resolveMatchTrends?.(statsOnlyTrendContext) || [])
     : [];
-  resolvedMatchTrends.slice(0, 4).forEach((trend, index) => {
+  const weakRankAnchoredMatchTrends = resolvedMatchTrends.filter(trend => {
+    const trendTone = normalizeSignalTone(trend?.tone || trend?.type);
+    const trendType = String(trend?.type || "").trim().toLowerCase();
+    return trend?.value
+      && trendTone !== "up"
+      && trendType !== "good"
+      && trendType !== "strength"
+      && String(trend?.anchorType || "").toLowerCase() === "rank";
+  });
+  weakRankAnchoredMatchTrends.slice(0, 4).forEach((trend, index) => {
     weeklyCandidates.push({
       key: `trend_${trend?.id || index}`,
       available: Boolean(trend?.value && trend?.tone),
@@ -9678,6 +9713,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   let uniqueRecentImprovements = dedupeRecentImprovementItems(recentImprovements);
   let uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"])
     .filter(candidate => candidate?.available !== false)
+    .filter(isWeeklyFocusCandidateWeak)
     .slice(0, 4);
 
   const coachingCopyContext = buildCoachingCopyContext({
@@ -11372,7 +11408,7 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
 
 function getAgentMapInsights(agentName, analytics) {
   return (analytics?.maps || [])
-    .filter(item => String(item.agent || "").toLowerCase() === String(agentName || "").toLowerCase())
+    .filter(item => normalizeAgentLookupKey(item.agent) === normalizeAgentLookupKey(agentName))
     .sort((a, b) => {
       const wrA = safeNumber(a.matchesWon) / Math.max(1, safeNumber(a.matchesPlayed));
       const wrB = safeNumber(b.matchesWon) / Math.max(1, safeNumber(b.matchesPlayed));
@@ -11383,7 +11419,7 @@ function getAgentMapInsights(agentName, analytics) {
 function getEntityRounds({ agentName = "", roleName = "", side = "", matchEntries = matches } = {}) {
   return (matchEntries || []).flatMap(match => {
     const core = getMatchCore(match);
-    const agentMatch = !agentName || String(core.agent || "").toLowerCase() === String(agentName || "").toLowerCase();
+    const agentMatch = !agentName || normalizeAgentLookupKey(core.agent) === normalizeAgentLookupKey(agentName);
     const roleMatch = !roleName || String(core.role || agentRoles?.[core.agent] || "").toLowerCase() === String(roleName || "").toLowerCase();
     if (!agentMatch || !roleMatch) return [];
 
@@ -12254,16 +12290,75 @@ function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "a
   ];
 }
 
+function normalizeAgentLookupKey(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function getCanonicalAgentName(value = "") {
+  const lookup = normalizeAgentLookupKey(value);
+  if (!lookup) return String(value || "").trim();
+  const roster = Object.keys(agentRoles || {});
+  return roster.find(agent => normalizeAgentLookupKey(agent) === lookup) || String(value || "").trim();
+}
+
+function summarizeAgentFromMatches(agentName = "", matchEntries = []) {
+  const canonicalAgent = getCanonicalAgentName(agentName);
+  const lookup = normalizeAgentLookupKey(canonicalAgent || agentName);
+  if (!lookup) return null;
+
+  const bucket = createPerformanceBucket(canonicalAgent || agentName);
+  bucket.agent = canonicalAgent || agentName;
+  bucket.role = agentRoles?.[canonicalAgent] || agentRoles?.[agentName] || "Unknown";
+
+  (Array.isArray(matchEntries) ? matchEntries : []).forEach(match => {
+    const core = getMatchCore(match);
+    if (normalizeAgentLookupKey(core.agent) !== lookup) return;
+    bucket.matchesPlayed += 1;
+    if (String(core.result || "").toLowerCase() === "win") bucket.matchesWon += 1;
+    if (String(core.result || "").toLowerCase() === "loss") bucket.matchesLost += 1;
+    bucket.kills += safeNumber(core.kills);
+    bucket.deaths += safeNumber(core.deaths);
+    bucket.assists += safeNumber(core.assists);
+    bucket.acsTotal += safeNumber(core.acs);
+    bucket.adrTotal += safeNumber(core.adr);
+    const hs = Number(core.hs);
+    if (Number.isFinite(hs)) {
+      bucket.hsTotal += hs;
+      bucket.hsCount += 1;
+    }
+  });
+
+  return bucket.matchesPlayed ? finalizePerformanceBucket(bucket) : null;
+}
+
+function findAgentAnalyticsEntry(agentName = "", analytics = {}, matchEntries = []) {
+  const canonicalAgent = getCanonicalAgentName(agentName);
+  const lookup = normalizeAgentLookupKey(canonicalAgent || agentName);
+  const direct = (analytics?.agents || []).find(item => normalizeAgentLookupKey(item?.agent || item?.label) === lookup);
+  if (direct) {
+    return {
+      ...direct,
+      agent: direct.agent || canonicalAgent || agentName,
+      role: direct.role || agentRoles?.[direct.agent] || agentRoles?.[canonicalAgent] || "Unknown"
+    };
+  }
+  return summarizeAgentFromMatches(canonicalAgent || agentName, matchEntries);
+}
+
 function buildCalculatedAgentDetailTabs(agentName, analytics) {
-  const agent = (analytics?.agents || []).find(item => String(item.agent || "").toLowerCase() === String(agentName || "").toLowerCase());
-  const roleName = agentRoles?.[agentName] || "--";
   const scoped = getScopedStatsData();
+  const displayAgentName = getCanonicalAgentName(agentName);
+  const agent = findAgentAnalyticsEntry(displayAgentName || agentName, analytics, scoped.matches);
+  const roleName = agentRoles?.[displayAgentName] || agent?.role || agentRoles?.[agentName] || "--";
   const coach = buildCoachRecommendation("agent", agent, analytics);
-  const agentMaps = getAgentMapInsights(agentName, analytics);
+  const agentMaps = getAgentMapInsights(displayAgentName || agentName, analytics);
   const bestMap = agentMaps[0];
   const worstMap = agentMaps[agentMaps.length - 1];
-  const attackRounds = getEntityRounds({ agentName, side: "attack", matchEntries: scoped.matches });
-  const defenseRounds = getEntityRounds({ agentName, side: "defense", matchEntries: scoped.matches });
+  const attackRounds = getEntityRounds({ agentName: displayAgentName || agentName, side: "attack", matchEntries: scoped.matches });
+  const defenseRounds = getEntityRounds({ agentName: displayAgentName || agentName, side: "defense", matchEntries: scoped.matches });
   const attackMetrics = getSideMetricsFromRounds(attackRounds);
   const defenseMetrics = getSideMetricsFromRounds(defenseRounds);
   const weaponRates = getWeaponRoundRates([...attackRounds, ...defenseRounds]);
@@ -12328,7 +12423,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
         statItem("Attack Win Rate", formatPercent(attackMetrics.winPct), `attackRoundsWon / attackRoundsPlayed = ${safeNumber(attackMetrics.roundsWon)} / ${Math.max(1, safeNumber(attackMetrics.roundsPlayed))}`),
         statItem("Attack KAST", formatPercent(attackMetrics.kast), `KAST-qualified attack rounds / attack rounds = ${Math.round((Number(attackMetrics.kast) || 0) * safeNumber(attackMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(attackMetrics.roundsPlayed))}`),
         statItem("Attack ADR", Number.isFinite(Number(attackMetrics.damagePerRound)) ? `${Math.round(attackMetrics.damagePerRound)}` : "--", `damage dealt on attack rounds / attack rounds = ${Math.round(safeNumber(attackMetrics.damagePerRound) * safeNumber(attackMetrics.roundsPlayed))} / ${Math.round(safeNumber(attackMetrics.roundsPlayed))}`),
-        statItem("Attack Kills", attackMetrics.roundsPlayed ? `${Math.round(attackMetrics.kills)}` : "--", `sum of imported attack kills for ${agentName} = ${Math.round(safeNumber(attackMetrics.kills))}`),
+        statItem("Attack Kills", attackMetrics.roundsPlayed ? `${Math.round(attackMetrics.kills)}` : "--", `sum of imported attack kills for ${displayAgentName || agentName} = ${Math.round(safeNumber(attackMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, attackMetrics, attackRounds, "attack")
       ]
     },
@@ -12339,7 +12434,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
         statItem("Defense Win Rate", formatPercent(defenseMetrics.winPct), `defenseRoundsWon / defenseRoundsPlayed = ${safeNumber(defenseMetrics.roundsWon)} / ${Math.max(1, safeNumber(defenseMetrics.roundsPlayed))}`),
         statItem("Defense KAST", formatPercent(defenseMetrics.kast), `KAST-qualified defense rounds / defense rounds = ${Math.round((Number(defenseMetrics.kast) || 0) * safeNumber(defenseMetrics.roundsPlayed) / 100)} / ${Math.round(safeNumber(defenseMetrics.roundsPlayed))}`),
         statItem("Defense ADR", Number.isFinite(Number(defenseMetrics.damagePerRound)) ? `${Math.round(defenseMetrics.damagePerRound)}` : "--", `damage dealt on defense rounds / defense rounds = ${Math.round(safeNumber(defenseMetrics.damagePerRound) * safeNumber(defenseMetrics.roundsPlayed))} / ${Math.round(safeNumber(defenseMetrics.roundsPlayed))}`),
-        statItem("Defense Kills", defenseMetrics.roundsPlayed ? `${Math.round(defenseMetrics.kills)}` : "--", `sum of imported defense kills for ${agentName} = ${Math.round(safeNumber(defenseMetrics.kills))}`),
+        statItem("Defense Kills", defenseMetrics.roundsPlayed ? `${Math.round(defenseMetrics.kills)}` : "--", `sum of imported defense kills for ${displayAgentName || agentName} = ${Math.round(safeNumber(defenseMetrics.kills))}`),
         ...buildRoleSideMetrics(roleName, defenseMetrics, defenseRounds, "defense")
       ]
     }
@@ -12466,6 +12561,22 @@ function normalizeSignalTone(tone = "") {
   if (["warn", "watch", "steady"].includes(normalized)) return "warn";
   if (["down", "bad", "negative"].includes(normalized)) return "down";
   return "neutral";
+}
+
+function isWeeklyFocusCandidateWeak(candidate = {}) {
+  if (!candidate || typeof candidate !== "object") return false;
+  const type = String(candidate?.type || "").trim().toLowerCase();
+  const tone = normalizeSignalTone(candidate?.trendTone || candidate?.tone || type);
+  if (type === "good" || type === "strength" || type === "strengths" || tone === "up") return false;
+
+  const combined = [
+    candidate?.label,
+    candidate?.summary,
+    candidate?.read,
+    candidate?.sourceLabel
+  ].map(value => String(value || "").toLowerCase()).join(" ");
+  if (combined.includes("strength") || combined.includes("already doing well") || combined.includes("already winning")) return false;
+  return true;
 }
 
 function getSignalToneMeta(tone = "") {
@@ -12848,6 +12959,75 @@ function buildPerformanceTrendDetailTabs(trend = {}, model = {}) {
   ];
 }
 
+function normalizeLensStatItem(item = {}) {
+  const normalized = Array.isArray(item)
+    ? { label: item[0], stat: item[1], formula: item[2] || "" }
+    : { label: item?.label, stat: item?.stat, formula: item?.formula || "" };
+  return {
+    label: normalizeRankedCoachCopy(normalized.label || ""),
+    stat: normalizeRankedCoachCopy(normalized.stat || ""),
+    formula: normalizeRankedCoachCopy(normalized.formula || "")
+  };
+}
+
+function renderTrendDetailStatRow(item = {}) {
+  const normalized = normalizeLensStatItem(item);
+  return `
+    <div class="stats-trend-modal-stat-row${normalized.formula ? " has-formula" : ""}">
+      <span>${escapeHtml(normalized.label)}</span>
+      <strong>${escapeHtml(normalized.stat || "--")}</strong>
+      ${normalized.formula ? `<small>${escapeHtml(normalized.formula)}</small>` : ""}
+    </div>
+  `;
+}
+
+function renderPerformanceTrendDetailModal(list, trend = {}, model = {}) {
+  if (!list) return;
+  const proofItems = Array.isArray(trend?.proofItems) && trend.proofItems.length
+    ? trend.proofItems
+    : [statItem("Proof", "No proof items yet", "This read needs more imported context before it can show proof items.")];
+  const normalizedProofItems = proofItems
+    .map(item => {
+      const normalized = normalizeLensStatItem(item);
+      return {
+        ...normalized,
+        label: /^anchor$/i.test(String(normalized.label || "")) ? "Recorded Matches" : normalized.label
+      };
+    })
+    .filter(item => !/^recorded matches$/i.test(String(item.label || "")));
+  const recordedCopy = trend?.sourceLabel || `${safeNumber(model?.overview?.matchesPlayed)} imported matches`;
+  const outcomeRead = trend?.detail || trend?.read || trend?.preview || "Current displayed performance outcome.";
+  const additionalItems = [
+    ...normalizedProofItems,
+    statItem("Formula", trend?.formula || "No formula available yet.", trend?.formula || "No formula available yet."),
+    statItem("Benchmark", trend?.benchmark || "No benchmark available yet.", trend?.benchmark || "No benchmark available yet."),
+    statItem("Tone", getSignalToneMeta(trend?.tone).label, "Card tone is assigned from the current benchmark and imported profile values.")
+  ];
+
+  list.className = "lens-stats-list stats-performance-trend-modal-list";
+  list.innerHTML = `
+    <li class="lens-stat stats-trend-modal-outcome">
+      <span>Outcome</span>
+      <strong>${escapeHtml(normalizeRankedCoachCopy(trend?.value || "--"))}</strong>
+      <small>${escapeHtml(normalizeRankedCoachCopy(outcomeRead))}</small>
+      <details class="stats-trend-additional-details">
+        <summary>
+          <span>Additional Details</span>
+          <b aria-hidden="true">+</b>
+        </summary>
+        <div class="stats-trend-additional-detail-grid">
+          ${additionalItems.map(renderTrendDetailStatRow).join("")}
+        </div>
+      </details>
+    </li>
+    <li class="lens-stat stats-trend-modal-recorded">
+      <span class="stats-trend-recorded-title">Recorded Matches</span>
+      <strong>${escapeHtml(normalizeRankedCoachCopy(recordedCopy))}</strong>
+      <small>${escapeHtml(normalizeRankedCoachCopy(trend?.sourceDetail || recordedCopy || "Current imported profile window."))}</small>
+    </li>
+  `;
+}
+
 function openStatsDetailModal(kind, value) {
   const modal = document.getElementById("lensModal");
   const title = document.getElementById("lensModalTitleSecondary");
@@ -12860,6 +13040,7 @@ function openStatsDetailModal(kind, value) {
   const items = [];
   tabsHost.innerHTML = "";
   tabsHost.style.display = "none";
+  list.className = "lens-stats-list";
 
   if (kind === "map") {
     const map = (analytics?.maps || []).find(item => String(item.map || "").toLowerCase() === String(value || "").toLowerCase());
@@ -12914,7 +13095,9 @@ function openStatsDetailModal(kind, value) {
   } else if (kind === "trend") {
     const trend = (analytics?.trends || []).find(item => String(item?.id || "").toLowerCase() === String(value || "").toLowerCase()) || null;
     title.textContent = `${trend?.label || "Performance Read"} Breakdown`;
-    renderSecondaryLensTabs(tabsHost, list, buildPerformanceTrendDetailTabs(trend || {}, analytics));
+    tabsHost.innerHTML = "";
+    tabsHost.style.display = "none";
+    renderPerformanceTrendDetailModal(list, trend || {}, analytics);
     showModalById("lensModal");
     return;
   } else if (kind === "weapon") {
@@ -13118,10 +13301,12 @@ function getLockedWeeklyFocus() {
     const normalizedSavedFocus = normalizeFocusCategoryValue(savedFocus, "");
     if (!normalizedSavedFocus) return null;
     const snapshot = getStoredWeeklyFocusSnapshot();
+    const snapshotCandidate = snapshot?.weekKey === currentWeek ? snapshot?.candidate || null : null;
+    if (snapshotCandidate && !isWeeklyFocusCandidateWeak(snapshotCandidate)) return null;
     return {
       label: normalizedSavedFocus,
       confidence: savedConfidence || snapshot?.confidence || "Low",
-      candidate: snapshot?.weekKey === currentWeek ? snapshot?.candidate || null : null
+      candidate: snapshotCandidate
     };
   }
 
@@ -20754,7 +20939,9 @@ function getLoadoutPreferences(profile = getActiveProfile?.()) {
 }
 
 function selectWeeklyFocusCandidate(candidates = []) {
-  const available = (Array.isArray(candidates) ? candidates : []).filter(candidate => candidate?.available !== false && candidate?.label);
+  const available = (Array.isArray(candidates) ? candidates : [])
+    .filter(candidate => candidate?.available !== false && candidate?.label)
+    .filter(isWeeklyFocusCandidateWeak);
   if (!available.length) return null;
   const rank = { High: 3, Medium: 2, Low: 1 };
   return available.slice().sort((left, right) => {
@@ -24700,30 +24887,11 @@ function getLoadoutRollOdds(selectedMap = getLoadoutPreferences().map) {
 }
 
 function renderLoadoutRollOdds() {
-  const panel = document.getElementById("loadoutRollOddsPanel");
-  const summary = document.getElementById("loadoutRollOddsSummary");
-  if (!panel || !summary) return;
-  const odds = getLoadoutRollOdds();
-  panel.classList.toggle("is-empty", !odds.entries.length);
-  if (!odds.entries.length) {
-    summary.textContent = "No eligible agents";
-    panel.title = "No eligible agent remains after your current role, map, one-trick, and exclusion settings.";
-    return;
-  }
-  const top = odds.entries
-    .slice(0, 4)
-    .map(entry => `${entry.agent} ${Math.round(entry.odds)}%`)
-    .join(" · ");
-  const poolHint = odds.isFocusedMapPool ? "top map fits" : `${odds.entries.length} eligible`;
-  summary.textContent = `${odds.modeLabel}: ${top}`;
-  panel.title = [
-    `${odds.modeLabel} (${poolHint})`,
-    odds.omittedPreviousAgent ? "Current agent is skipped for the next roll when another eligible pick exists." : "",
-    ...odds.entries.map(entry => {
-      const mapFit = entry.winRate !== null ? `, ${Math.round(entry.winRate)}% map WR` : "";
-      return `${entry.agent}: ${entry.odds.toFixed(1)}%${mapFit}`;
-    })
-  ].filter(Boolean).join("\n");
+  // Weighting/odds stay available through RankedCoachLoadoutRoll.getOdds for
+  // development verification, but the Round 2 directive explicitly removes the
+  // player-facing odds panel. Keep this call site as a harmless no-op so older
+  // event paths do not need to know the panel is gone.
+  return null;
 }
 
 function renderLoadoutMapControl() {
@@ -63146,10 +63314,10 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
     const renderedCandidates = weeklyCandidates.length
       ? weeklyCandidates.slice(0, 4)
       : [
-          { key: "tilt", label: weekly.topMood || "No mood trend yet", confidence: weeklyCards.primary?.label || "Low", detail: weeklyCards.primary?.detail || "Waiting for confidence data." },
-          { key: "ratings", label: weekly.weakestTheme || "No low-rating pattern yet", confidence: weeklyCards.secondary?.label || "Low", detail: weeklyCards.secondary?.detail || "Waiting for confidence data." },
-          { key: "losses", label: "No repeated loss context yet", confidence: "Low", detail: "Waiting for confidence data." },
-          { key: "impactful", label: weekly.mostPracticed || activeInsightFocus || "No repeated focus category yet", confidence: weeklyCards.tertiary?.label || "Low", detail: weeklyCards.tertiary?.detail || "Waiting for confidence data." }
+          { key: "tilt", label: "No weak mood pattern yet", summary: "No unfavorable mood pattern meets the Weekly Focus threshold.", confidence: "Low", detail: "Waiting for enough weak evidence.", available: false },
+          { key: "ratings", label: "No low self-rating pattern yet", summary: "Self ratings must average below 3.0/5 before they become a Weekly Focus target.", confidence: "Low", detail: "Waiting for enough weak evidence.", available: false },
+          { key: "losses", label: "No repeated loss context yet", summary: "No map has reached the weak loss-streak threshold.", confidence: "Low", detail: "Waiting for enough weak evidence.", available: false },
+          { key: "impactful", label: "No rank-anchored focus gap yet", summary: "No Compass pillar is both below the review floor and backed by a rank benchmark.", confidence: "Low", detail: "Waiting for enough weak evidence.", available: false }
         ];
 
     summaryEl.innerHTML = renderedCandidates.map((candidate, index) => {
@@ -63856,8 +64024,6 @@ function buildStatsLifetimeRankChartMarkup() {
   const pad = isMobileLifetimeRankChart
     ? { left: 70, right: 32, top: 42, bottom: 78 }
     : { left: 70, right: 42, top: 48, bottom: 92 };
-  const wrapInset = 11;
-  const stickyAxisWidth = pad.left + 12;
   const bounds = getLifetimeRankBounds(lifetime.slice);
   const plotBottom = height - pad.bottom;
   const plotHeight = plotBottom - pad.top;
@@ -63917,7 +64083,7 @@ function buildStatsLifetimeRankChartMarkup() {
         <line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
       </g>`;
   }).join("");
-  const stickyYTicks = tickIndexes.map(index => {
+  const yTicks = tickIndexes.map(index => {
     const rank = RANK_THRESHOLDS[index] || RANK_THRESHOLDS[0];
     const yy = y(rank.min);
     return `
@@ -63955,13 +64121,7 @@ function buildStatsLifetimeRankChartMarkup() {
         <strong>Retained Lifetime Rank</strong>
         <span>${escapeHtml(caption || `${lifetime.entries.length} rank snapshots`)}</span>
       </div>
-      <div class="stats-lifetime-rank-chart-frame" style="--stats-lifetime-rank-axis-left:${wrapInset}px;--stats-lifetime-rank-axis-width:${stickyAxisWidth}px;--stats-lifetime-rank-chart-height:${height}px;" data-axis-left="${wrapInset}" data-axis-width="${stickyAxisWidth}" data-chart-width="${width}" data-chart-height="${height}" data-pad-left="${pad.left}" data-pad-top="${pad.top}" data-plot-bottom="${plotBottom}">
-        <div class="stats-lifetime-rank-y-axis-sticky" aria-hidden="true">
-          <svg class="stats-lifetime-rank-y-axis-chart" width="${stickyAxisWidth}" height="${height}" viewBox="0 0 ${stickyAxisWidth} ${height}" focusable="false">
-            ${stickyYTicks}
-            <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
-          </svg>
-        </div>
+      <div class="stats-lifetime-rank-chart-frame" style="--stats-lifetime-rank-chart-height:${height}px;" data-chart-width="${width}" data-chart-height="${height}" data-pad-left="${pad.left}" data-pad-top="${pad.top}" data-plot-bottom="${plotBottom}">
         <div class="stats-lifetime-rank-chart-wrap">
           <svg class="stats-lifetime-rank-chart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Lifetime seasonal peak rank chart" data-data-points="${points.length}" data-rank-markers="${(rankMarkers.match(/stats-lifetime-rank-marker/g) || []).length}">
             <defs>
@@ -63971,6 +64131,8 @@ function buildStatsLifetimeRankChartMarkup() {
               </linearGradient>
             </defs>
             ${yGridlines}
+            ${yTicks}
+            <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${plotBottom}"></line>
             <line class="stats-lifetime-rank-axis" x1="${pad.left}" y1="${plotBottom}" x2="${width - pad.right}" y2="${plotBottom}"></line>
             ${seasonLabels}
             <path class="stats-lifetime-rank-area" d="${areaPath}"></path>
