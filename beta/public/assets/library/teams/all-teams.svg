@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">All teams</title>
+  <circle cx="32" cy="32" r="29" fill="#172033" stroke="#facc15" stroke-width="3"/>
+  <path fill="#58d4c8" d="m32 12 5.1 10.4 11.5 1.7-8.3 8.1 2 11.4L32 38.2l-10.3 5.4 2-11.4-8.3-8.1 11.5-1.7L32 12Z"/>
+  <path fill="#f8fafc" d="m32 25 2.1 4.2 4.6.7-3.3 3.2.8 4.6-4.2-2.2-4.2 2.2.8-4.6-3.3-3.2 4.6-.7L32 25Z"/>
+</svg>

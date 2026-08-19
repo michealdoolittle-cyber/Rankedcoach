@@ -1,0 +1,4 @@
+Asset: target-dummy.svg
+Source: Custom RankedCoach SVG based on user-provided visual reference.
+License: Project-owned app UI asset.
+Updated: 2026-07-20

@@ -1,0 +1,141 @@
+.learn-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.learn-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem;
+}
+
+.learn-hero h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.8rem);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+}
+
+.learn-search {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.learn-search input {
+  min-height: 3.2rem;
+  border: 1px solid rgba(53, 242, 255, 0.35);
+  border-radius: 16px;
+  padding: 0 1rem;
+  color: var(--text);
+  background: rgba(4, 9, 20, 0.75);
+}
+
+.category-grid,
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.category-tile,
+.topic-card {
+  position: relative;
+  min-height: 10rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 20px;
+  padding: 1rem;
+  overflow: hidden;
+  color: var(--text);
+  background: rgba(9, 16, 32, 0.84);
+  text-align: left;
+}
+
+.category-tile,
+.topic-card,
+.secondary-btn,
+.primary-btn,
+.nav-tab {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.category-tile:hover,
+.category-tile:focus-visible,
+.topic-card:hover,
+.topic-card:focus-visible,
+.secondary-btn:hover,
+.secondary-btn:focus-visible,
+.primary-btn:hover,
+.primary-btn:focus-visible,
+.nav-tab:hover,
+.nav-tab:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(53, 242, 255, 0.7);
+  box-shadow: 0 12px 36px rgba(53, 242, 255, 0.12);
+}
+
+.category-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tile-bg, linear-gradient(135deg, rgba(53, 242, 255, 0.12), transparent));
+  opacity: 0.85;
+}
+
+.category-tile > *,
+.topic-card > * {
+  position: relative;
+}
+
+.category-tile strong {
+  display: block;
+  margin-top: 4rem;
+  color: var(--yellow);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.category-tile.is-active {
+  border-color: rgba(255, 211, 77, 0.78);
+  box-shadow: 0 0 32px rgba(255, 211, 77, 0.18);
+}
+
+.topic-card {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 13rem;
+}
+
+.topic-card strong {
+  font-size: 1.2rem;
+}
+
+.topic-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.learn-section {
+  padding: 1rem;
+}
+
+.learn-section h3 {
+  margin: 0 0 0.75rem;
+}
+
+.recent-list {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .learn-hero,
+  .category-grid,
+  .topic-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,24 @@
+name = "rankedcoach-beta"
+compatibility_date = "2026-07-18"
+main = "./beta/worker/index.js"
+
+[observability]
+enabled = true
+
+# Deliberately no [triggers] crons here — the content-automation/knowledge
+# pipeline scheduled jobs already run on the production worker (wrangler.toml)
+# against the shared CONTENT_AUTOMATION KV below. Running them a second time
+# from this worker would risk duplicate writes against that same store.
+
+[[kv_namespaces]]
+binding = "CONTENT_AUTOMATION"
+id = "ae66a938fffc4177a899337ba55165eb"
+
+[assets]
+directory = "./beta/public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Custom domain route for beta.rankedcoach.gg is set in the Cloudflare
+# dashboard (Workers & Pages > rankedcoach-beta > Domains & Routes) —
+# not required here. See beta/README.md for the full manual setup checklist.

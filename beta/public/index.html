@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankedCoach Beta · Review + Learn</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/shell.css">
+  <link rel="stylesheet" href="css/review.css">
+  <link rel="stylesheet" href="css/learn.css">
+  <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="beta-topbar">
+      <div>
+        <p class="eyebrow">RankedCoach Beta</p>
+        <h1>Review + Learn</h1>
+      </div>
+      <nav class="top-nav" aria-label="Beta sections">
+        <button class="nav-tab is-active" type="button" data-page="review">Review</button>
+        <button class="nav-tab" type="button" data-page="history">Match History</button>
+        <button class="nav-tab" type="button" data-page="learn">Learn</button>
+      </nav>
+    </header>
+
+    <section class="sync-card" aria-labelledby="syncTitle">
+      <div>
+        <p class="eyebrow">Real account sync</p>
+        <h2 id="syncTitle">Pull retained Riot match data into beta.</h2>
+        <p class="muted">Phase 1 uses the same Henrik routes as production, then builds its own smaller Review model inside beta.</p>
+      </div>
+      <form id="syncForm" class="sync-form">
+        <label>
+          Riot ID
+          <input id="riotIdInput" name="riotId" autocomplete="off" placeholder="Name#Tag" required>
+        </label>
+        <label>
+          Region
+          <select id="regionInput" name="region">
+            <option value="na">NA</option>
+            <option value="eu">EU</option>
+            <option value="ap">AP</option>
+            <option value="kr">KR</option>
+            <option value="br">BR</option>
+            <option value="latam">LATAM</option>
+          </select>
+        </label>
+        <button id="syncSubmit" class="primary-btn" type="submit">Sync Review</button>
+      </form>
+      <div id="syncStatus" class="sync-status" role="status" aria-live="polite">No beta account loaded yet.</div>
+    </section>
+
+    <main>
+      <section id="page-review" class="page is-active" data-page-panel="review" aria-label="Review dashboard">
+        <div id="reviewRoot"></div>
+      </section>
+      <section id="page-history" class="page" data-page-panel="history" aria-label="Match history">
+        <div id="historyRoot"></div>
+      </section>
+      <section id="page-learn" class="page" data-page-panel="learn" aria-label="Learn library">
+        <div id="learnRoot"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalRoot" class="modal-root" aria-live="polite"></div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

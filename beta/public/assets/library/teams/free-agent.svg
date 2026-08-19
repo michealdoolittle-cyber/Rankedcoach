@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Free agent</title>
+  <circle cx="32" cy="32" r="29" fill="#172033" stroke="#58d4c8" stroke-width="3"/>
+  <circle cx="32" cy="23" r="9" fill="#a8b3c7"/>
+  <path fill="#a8b3c7" d="M14 53c1.7-11.1 8.3-17 18-17s16.3 5.9 18 17H14Z"/>
+  <path fill="none" stroke="#facc15" stroke-linecap="round" stroke-width="3" d="M24 12h16"/>
+</svg>
