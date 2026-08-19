@@ -125,6 +125,11 @@ function palettePreview(appState = {}) {
 
 function renderVisual(model = {}, appState = {}) {
   const density = appState.density || "balanced";
+  const previewCards = `
+    ${card({ eyebrow: "Focus", title: "Cleaner next cue", body: "<p>Preview of coaching copy.</p>" })}
+    ${card({ eyebrow: "RR", title: `${whole(model.overview?.rrTotal || 0)} RR`, body: "<p>Semantic colors remain fixed.</p>" })}
+    ${card({ eyebrow: "Compass", title: `${whole(model.pillars?.[0]?.score || 0)}/100`, body: "<p>Token-driven preview.</p>" })}
+  `;
   return `
     <section class="visual-layout">
       <nav class="visual-sticky" aria-label="Visual customization sections">
@@ -138,8 +143,12 @@ function renderVisual(model = {}, appState = {}) {
         <section id="visual-4" class="settings-panel rc-card">${cardHeader("Layout Density", "Always free.")}<div class="choice-row">${["comfortable", "balanced", "compact"].map(item => button({ label: item, variant: density === item ? "primary" : "secondary", attrs: `data-density-choice="${escapeHtml(item)}"` })).join("")}</div></section>
         <section id="visual-5" class="settings-panel rc-card">${cardHeader("Motion & Effects", "Accessibility remains free.")}<label class="toggle-row"><input type="checkbox" data-motion-reduce ${appState.reduceMotion ? "checked" : ""}> Reduce Motion</label><label class="toggle-row"><input type="checkbox" data-motion-effects ${appState.motionEffects === false ? "" : "checked"}> Motion Effects</label></section>
         <section id="visual-6" class="settings-panel rc-card">${cardHeader("Backgrounds", "Dark Gradient, Subtle Pattern, Matrix Grid, or Custom Image.")}<div class="choice-row">${["Dark Gradient", "Subtle Pattern", "Matrix Grid", "Custom Image"].map(item => button({ label: item, variant: "secondary", attrs: `data-background-choice="${escapeHtml(item)}"` })).join("")}</div></section>
-        <section id="visual-7" class="settings-panel rc-card">${cardHeader("Preview & Apply", "Today's Focus / RR / Compass mini-preview.")}<div class="preview-strip">${card({ eyebrow: "Focus", title: "Cleaner next cue", body: "<p>Preview of coaching copy.</p>" })}${card({ eyebrow: "RR", title: `${whole(model.overview?.rrTotal || 0)} RR`, body: "<p>Semantic colors remain fixed.</p>" })}${card({ eyebrow: "Compass", title: `${whole(model.pillars?.[0]?.score || 0)}/100`, body: "<p>Token-driven preview.</p>" })}</div></section>
+        <section id="visual-7" class="settings-panel rc-card">${cardHeader("Preview & Apply", "Save after the preview matches the feel you want.")}<p class="muted">The preview rail stays visible while you move through the sections.</p></section>
       </div>
+      <aside class="visual-preview-rail rc-card">
+        ${cardHeader("Live Visual Preview", "Focus / RR / Compass")}
+        <div class="preview-strip">${previewCards}</div>
+      </aside>
       <div class="settings-savebar">
         <span class="pill warn">Unsaved beta preview</span>
         ${button({ label: "Reset", variant: "tertiary", action: "visual-reset" })}

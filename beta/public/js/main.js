@@ -54,6 +54,8 @@ const els = {
   settingsRoot: document.getElementById("settingsRoot"),
   helpRoot: document.getElementById("helpRoot"),
   modalRoot: document.getElementById("modalRoot"),
+  syncCard: document.querySelector(".sync-card"),
+  syncChipLabel: document.querySelector("[data-action='open-sync'] span"),
   syncForm: document.getElementById("syncForm"),
   syncStatus: document.getElementById("syncStatus"),
   riotIdInput: document.getElementById("riotIdInput"),
@@ -68,7 +70,7 @@ function setSidebarAccount(riotId, meta) {
   if (!els.sidebarAccountName) return;
   const name = String(riotId || "").trim();
   els.sidebarAccountName.textContent = name || "No account synced";
-  els.sidebarAccountMeta.textContent = meta || "Sync below to begin";
+  els.sidebarAccountMeta.textContent = meta || "Open sync to begin";
   els.sidebarAvatar.textContent = name ? name.slice(0, 2).toUpperCase() : "--";
 }
 
@@ -113,6 +115,7 @@ function setStatus(message, tone = "") {
   if (!els.syncStatus) return;
   els.syncStatus.textContent = message;
   els.syncStatus.dataset.tone = tone;
+  if (els.syncChipLabel && tone === "good") els.syncChipLabel.textContent = "Synced";
 }
 
 function persistAppState() {
@@ -309,6 +312,7 @@ els.syncForm?.addEventListener("submit", async event => {
     });
     setStatus(`Synced ${app.model.records.length} competitive matches for ${snapshot.riotId}.`, "good");
     setSidebarAccount(snapshot.riotId, `${app.model.records.length} matches · ${snapshot.region.toUpperCase()}`);
+    els.syncCard?.classList.remove("is-open");
     render();
   } catch (error) {
     setStatus(error?.message || "Sync failed.", "bad");
@@ -381,6 +385,9 @@ document.addEventListener("click", event => {
   const action = actionTarget.dataset.action;
   if (action === "open-insight-detail") {
     openInsightDetail(els.modalRoot, app.model || {});
+  } else if (action === "open-sync") {
+    els.syncCard?.classList.toggle("is-open");
+    if (els.syncCard?.classList.contains("is-open")) els.riotIdInput?.focus();
   } else if (action === "open-history") {
     navigate("review", { reviewTab: "all-matches" });
   } else if (action === "spin-loadout") {

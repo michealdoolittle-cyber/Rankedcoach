@@ -25,9 +25,18 @@ const mime = new Map([
 const routes = [
   ["play", "#/play", "#playRoot .play-grid"],
   ["loadout", "#/loadout", "#loadoutRoot .loadout-card"],
+  ["review-performance", "#/review/performance", "#reviewRoot .section-subnav"],
   ["review-insights", "#/review/insights", "#reviewRoot .section-subnav"],
+  ["learn", "#/learn", "#learnRoot .learn-layout"],
+  ["library-home", "#/library/home", "#libraryRoot .library-layout"],
   ["library-lineups", "#/library/lineups", "#libraryRoot .library-layout"],
+  ["settings-pipeline", "#/settings/pipeline", "#settingsRoot .settings-layout"],
   ["settings-visual", "#/settings/visual", "#settingsRoot .settings-layout"]
+];
+
+const viewports = [
+  ["1920x1080", 1920, 1080],
+  ["1440x900", 1440, 900]
 ];
 
 function findChrome() {
@@ -186,7 +195,7 @@ function collectErrors(events) {
   });
 }
 
-async function captureRoute(client, baseUrl, name, hash, selector) {
+async function captureRoute(client, baseUrl, viewportName, name, hash, selector) {
   client.events.length = 0;
   await client.send("Page.navigate", { url: `${baseUrl}${hash}` });
   await waitFor(
@@ -201,8 +210,8 @@ async function captureRoute(client, baseUrl, name, hash, selector) {
     captureBeyondViewport: true,
     format: "png"
   });
-  fs.writeFileSync(path.join(outputDir, `beta-master-${name}.png`), Buffer.from(screenshot.data, "base64"));
-  console.log(`OK ${name}`);
+  fs.writeFileSync(path.join(outputDir, `beta-master-${viewportName}-${name}.png`), Buffer.from(screenshot.data, "base64"));
+  console.log(`OK ${viewportName} ${name}`);
 }
 
 async function runInteractionSmoke(client, baseUrl) {
@@ -229,8 +238,11 @@ async function runInteractionSmoke(client, baseUrl) {
 
 async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
-  const server = staticServer();
-  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const externalBaseUrl = (process.env.BETA_SMOKE_BASE_URL || "").trim();
+  const server = externalBaseUrl ? null : staticServer();
+  if (server) {
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  }
   const debugPort = 10400 + Math.floor(Math.random() * 300);
   const profileDir = path.join(process.env.TEMP || ".", `rc-beta-smoke-${Date.now()}`);
   fs.mkdirSync(profileDir, { recursive: true });
@@ -251,22 +263,30 @@ async function main() {
     await client.send("Runtime.enable");
     await client.send("Log.enable");
     await client.send("Page.enable");
+    const baseUrl = externalBaseUrl || `http://127.0.0.1:${server.address().port}/index.html`;
+    for (const [viewportName, width, height] of viewports) {
+      await client.send("Emulation.setDeviceMetricsOverride", {
+        deviceScaleFactor: 1,
+        height,
+        mobile: false,
+        width
+      });
+      for (const [name, hash, selector] of routes) {
+        await captureRoute(client, baseUrl, viewportName, name, hash, selector);
+      }
+    }
     await client.send("Emulation.setDeviceMetricsOverride", {
       deviceScaleFactor: 1,
       height: 1000,
       mobile: false,
       width: 1440
     });
-    const baseUrl = `http://127.0.0.1:${server.address().port}/index.html`;
-    for (const [name, hash, selector] of routes) {
-      await captureRoute(client, baseUrl, name, hash, selector);
-    }
     await runInteractionSmoke(client, baseUrl);
     client.ws.close();
     await closeTarget(debugPort, target.id);
   } finally {
     browser.kill("SIGKILL");
-    server.close();
+    if (server) server.close();
   }
 }
 

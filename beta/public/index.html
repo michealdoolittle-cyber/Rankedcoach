@@ -17,10 +17,10 @@
 </head>
 <body>
   <svg class="rc-icon-sprite" aria-hidden="true" focusable="false">
-    <symbol id="outline-play" viewBox="0 0 24 24"><path d="M6 4.5v15L19 12 6 4.5Z"/></symbol>
-    <symbol id="outline-review" viewBox="0 0 24 24"><path d="M4 19v-5M10 19V10M16 19V6M3 9l5-4 4 3 8-5"/></symbol>
-    <symbol id="outline-learn" viewBox="0 0 24 24"><path d="M4 5.5c3-1.4 5-.9 8 1.2v12c-3-2.1-5-2.6-8-1.2v-12Z"/><path d="M20 5.5c-3-1.4-5-.9-8 1.2v12c3-2.1 5-2.6 8-1.2v-12Z"/></symbol>
-    <symbol id="outline-library" viewBox="0 0 24 24"><path d="M3.5 7.5h7l2-2h8v13h-17v-11Z"/><path d="M3.5 9.5h17"/></symbol>
+    <symbol id="outline-play" viewBox="0 0 24 24"><path class="duotone" d="M4 3.5 20 12 4 20.5Z" fill="currentColor" opacity=".18" stroke="none"/><path d="M5.5 4.8 18.7 12 5.5 19.2Z"/><path d="M9 6.8v10.4"/></symbol>
+    <symbol id="outline-review" viewBox="0 0 24 24"><path d="M4 19v-5M10 19V10M16 19V6M3.5 9.5l5-4 4 3 8-5"/><circle cx="8.5" cy="5.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="20.5" cy="3.5" r="1.3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="outline-learn" viewBox="0 0 24 24"><path class="duotone" d="M4 6.2c3-1.35 5-.9 8 1.15 3-2.05 5-2.5 8-1.15v11.4c-3-1.35-5-.9-8 1.15-3-2.05-5-2.5-8-1.15Z" fill="currentColor" opacity=".16" stroke="none"/><path d="M4 5.5c3-1.4 5-.9 8 1.2v12c-3-2.1-5-2.6-8-1.2v-12Z"/><path d="M20 5.5c-3-1.4-5-.9-8 1.2v12c3-2.1 5-2.6 8-1.2v-12Z"/></symbol>
+    <symbol id="outline-library" viewBox="0 0 24 24"><path class="duotone" d="M3.5 7.5h7l2-2h8v13h-17Z" fill="currentColor" opacity=".15" stroke="none"/><path d="M3.5 7.5h7l2-2h8v13h-17v-11Z"/><path d="M3.5 9.5h17"/></symbol>
     <symbol id="outline-log-match" viewBox="0 0 24 24"><path d="M8 5h8M9 3.5h6v3H9zM6 5.5h12v15H6z"/><path d="m9 13 2 2 4-5"/></symbol>
     <symbol id="outline-loadout" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
     <symbol id="outline-focus-queue" viewBox="0 0 24 24"><path d="M5 6h14v12H5zM8 3h8M8 21h8"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -33,53 +33,34 @@
     <symbol id="outline-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
     <symbol id="outline-notification" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
     <symbol id="outline-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-4 4.3-6 8-6s6.4 2 8 6"/></symbol>
+    <symbol id="outline-sync" viewBox="0 0 24 24"><path d="M20 7h-7.8A5.5 5.5 0 0 0 3 10.2"/><path d="m17 4 3 3-3 3"/><path d="M4 17h7.8A5.5 5.5 0 0 0 21 13.8"/><path d="m7 20-3-3 3-3"/></symbol>
+    <symbol id="outline-role-controller" viewBox="0 0 24 24"><path class="duotone" d="M12 2.8 21.2 12 12 21.2 2.8 12Z" fill="currentColor" opacity=".18" stroke="none"/><path d="m12 4.2 4.8 7.8L12 19.8 7.2 12Z"/><path d="m4.4 12 4.2-2.2M19.6 12l-4.2-2.2"/></symbol>
+    <symbol id="outline-role-duelist" viewBox="0 0 24 24"><path class="duotone" d="M12 3 21 12 12 21 3 12Z" fill="currentColor" opacity=".16" stroke="none"/><path d="M5 19 19 5M5 5l14 14"/><path d="M12 4.5v15"/></symbol>
+    <symbol id="outline-role-initiator" viewBox="0 0 24 24"><path class="duotone" d="M5 4h14v16H5Z" fill="currentColor" opacity=".14" stroke="none"/><path d="m5 19 14-7L5 5v6l7 1-7 1Z"/><path d="M13 12h7"/></symbol>
+    <symbol id="outline-role-sentinel" viewBox="0 0 24 24"><path class="duotone" d="M12 3 21 8v6c0 4-3.2 6.2-9 7-5.8-.8-9-3-9-7V8Z" fill="currentColor" opacity=".16" stroke="none"/><path d="M12 4.2 20 8.5v5.3c0 3.2-2.8 5.3-8 6-5.2-.7-8-2.8-8-6V8.5Z"/><path d="M8 10.5h8M9.5 14h5"/></symbol>
   </svg>
 
   <div class="app-shell">
     <aside class="app-sidebar" aria-label="Primary navigation">
       <div class="sidebar-brand">
-        <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg>
-        <span>RANKEDCOACH</span>
+        <span class="brand-mark"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg></span>
+        <span class="brand-copy">Ranked<span>Coach</span><small>.gg beta</small></span>
       </div>
 
       <nav class="sidebar-group" aria-label="Main">
         <p class="sidebar-group-label">Main</p>
-        <button class="sidebar-item is-active" type="button" data-page="play">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-play"></use></svg>
-          Play
-        </button>
-        <button class="sidebar-item" type="button" data-page="review">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-review"></use></svg>
-          Review
-        </button>
-        <button class="sidebar-item" type="button" data-page="learn">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-learn"></use></svg>
-          Learn
-        </button>
-        <button class="sidebar-item" type="button" data-page="library">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-library"></use></svg>
-          Library
-        </button>
+        <button class="sidebar-item is-active" type="button" data-page="play"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-play"></use></svg><span>Play</span></button>
+        <button class="sidebar-item" type="button" data-page="review"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-review"></use></svg><span>Review</span></button>
+        <button class="sidebar-item" type="button" data-page="learn"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-learn"></use></svg><span>Learn</span></button>
+        <button class="sidebar-item" type="button" data-page="library"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-library"></use></svg><span>Library</span></button>
       </nav>
 
       <nav class="sidebar-group" aria-label="Tools">
         <p class="sidebar-group-label">Tools</p>
-        <button class="sidebar-item" type="button" data-page="log-match">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-log-match"></use></svg>
-          Log Match
-        </button>
-        <button class="sidebar-item" type="button" data-page="loadout">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg>
-          Loadout
-        </button>
-        <button class="sidebar-item" type="button" data-page="focus-queue">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-focus-queue"></use></svg>
-          Focus Queue
-        </button>
-        <button class="sidebar-item" type="button" data-page="in-game">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-in-game"></use></svg>
-          In-Game
-        </button>
+        <button class="sidebar-item" type="button" data-page="log-match"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-log-match"></use></svg><span>Log Match</span></button>
+        <button class="sidebar-item" type="button" data-page="loadout"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg><span>Loadout</span></button>
+        <button class="sidebar-item" type="button" data-page="focus-queue"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-focus-queue"></use></svg><span>Focus Queue</span></button>
+        <button class="sidebar-item" type="button" data-page="in-game"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-in-game"></use></svg><span>In-Game</span></button>
       </nav>
 
       <div class="sidebar-spacer"></div>
@@ -88,19 +69,13 @@
         <span class="sidebar-account-avatar" id="sidebarAvatar">--</span>
         <div>
           <strong id="sidebarAccountName">No account synced</strong>
-          <small id="sidebarAccountMeta">Sync below to begin</small>
+          <small id="sidebarAccountMeta">Open sync to begin</small>
         </div>
       </div>
 
       <div class="sidebar-footer">
-        <button class="sidebar-item" type="button" data-page="settings">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-settings"></use></svg>
-          Settings
-        </button>
-        <button class="sidebar-item" type="button" data-page="help">
-          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-help"></use></svg>
-          Help
-        </button>
+        <button class="sidebar-item" type="button" data-page="settings"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-settings"></use></svg><span>Settings</span></button>
+        <button class="sidebar-item" type="button" data-page="help"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-help"></use></svg><span>Help</span></button>
       </div>
     </aside>
 
@@ -111,12 +86,9 @@
           <h1 id="pageTitle">Play</h1>
         </div>
         <div class="topbar-actions">
-          <button class="rc-button rc-button--icon" type="button" data-action="open-search" aria-label="Open search">
-            <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-search"></use></svg>
-          </button>
-          <button class="rc-button rc-button--icon" type="button" data-action="open-notifications" aria-label="Open notifications">
-            <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-notification"></use></svg>
-          </button>
+          <button class="rc-button rc-button--icon" type="button" data-action="open-search" aria-label="Open search"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-search"></use></svg></button>
+          <button class="rc-button rc-button--icon" type="button" data-action="open-notifications" aria-label="Open notifications"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-notification"></use></svg></button>
+          <button class="rc-button rc-button--secondary topbar-sync-chip" type="button" data-action="open-sync"><svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-sync"></use></svg><span>Sync Account</span></button>
           <button class="rc-button rc-button--secondary" type="button" data-page-jump="settings" data-settings-tab="pipeline">Pipeline</button>
         </div>
       </div>
@@ -126,7 +98,7 @@
           <div>
             <p class="eyebrow">Real account sync</p>
             <h2 id="syncTitle">Pull retained Riot match data into beta.</h2>
-            <p class="muted">Beta uses the same Henrik routes as production, then builds its own smaller model for Play, Review, Learn, and Library.</p>
+            <p class="muted">Use this only when you need to refresh beta data. The dashboard stays product-first after the account is linked.</p>
           </div>
           <form id="syncForm" class="sync-form">
             <label>
@@ -149,49 +121,17 @@
           <div id="syncStatus" class="sync-status" role="status" aria-live="polite">No beta account loaded yet.</div>
         </section>
 
-        <section id="page-play" class="page is-active" data-page-panel="play" aria-label="Play">
-          <div id="playRoot"></div>
-        </section>
-
-        <section id="page-loadout" class="page" data-page-panel="loadout" aria-label="Loadout">
-          <div id="loadoutRoot"></div>
-        </section>
-
-        <section id="page-focus-queue" class="page" data-page-panel="focus-queue" aria-label="Focus Queue">
-          <div id="focusQueueRoot"></div>
-        </section>
-
-        <section id="page-log-match" class="page" data-page-panel="log-match" aria-label="Log Match">
-          <div id="logMatchRoot"></div>
-        </section>
-
-        <section id="page-in-game" class="page" data-page-panel="in-game" aria-label="In-Game">
-          <div id="inGameRoot"></div>
-        </section>
-
-        <section id="page-review" class="page" data-page-panel="review" aria-label="Review dashboard">
-          <div id="reviewRoot"></div>
-        </section>
-
-        <section id="page-history" class="page" data-page-panel="history" aria-label="Match history">
-          <div id="historyRoot"></div>
-        </section>
-
-        <section id="page-learn" class="page" data-page-panel="learn" aria-label="Learn library">
-          <div id="learnRoot"></div>
-        </section>
-
-        <section id="page-library" class="page" data-page-panel="library" aria-label="Library">
-          <div id="libraryRoot"></div>
-        </section>
-
-        <section id="page-settings" class="page" data-page-panel="settings" aria-label="Settings">
-          <div id="settingsRoot"></div>
-        </section>
-
-        <section id="page-help" class="page" data-page-panel="help" aria-label="Help and Support">
-          <div id="helpRoot"></div>
-        </section>
+        <section id="page-play" class="page is-active" data-page-panel="play" aria-label="Play"><div id="playRoot"></div></section>
+        <section id="page-loadout" class="page" data-page-panel="loadout" aria-label="Loadout"><div id="loadoutRoot"></div></section>
+        <section id="page-focus-queue" class="page" data-page-panel="focus-queue" aria-label="Focus Queue"><div id="focusQueueRoot"></div></section>
+        <section id="page-log-match" class="page" data-page-panel="log-match" aria-label="Log Match"><div id="logMatchRoot"></div></section>
+        <section id="page-in-game" class="page" data-page-panel="in-game" aria-label="In-Game"><div id="inGameRoot"></div></section>
+        <section id="page-review" class="page" data-page-panel="review" aria-label="Review dashboard"><div id="reviewRoot"></div></section>
+        <section id="page-history" class="page" data-page-panel="history" aria-label="Match history"><div id="historyRoot"></div></section>
+        <section id="page-learn" class="page" data-page-panel="learn" aria-label="Learn library"><div id="learnRoot"></div></section>
+        <section id="page-library" class="page" data-page-panel="library" aria-label="Library"><div id="libraryRoot"></div></section>
+        <section id="page-settings" class="page" data-page-panel="settings" aria-label="Settings"><div id="settingsRoot"></div></section>
+        <section id="page-help" class="page" data-page-panel="help" aria-label="Help and Support"><div id="helpRoot"></div></section>
       </div>
     </main>
   </div>

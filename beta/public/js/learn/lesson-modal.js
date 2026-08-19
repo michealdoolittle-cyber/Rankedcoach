@@ -14,7 +14,7 @@ export function openLessonModal(modalRoot, lesson) {
             <p class="eyebrow">${escapeHtml(lesson.category)} · ${escapeHtml(lesson.type)}</p>
             <h2 id="lessonModalTitle">${escapeHtml(lesson.title)}</h2>
           </div>
-          <button class="secondary-btn modal-close" type="button" data-modal-close>Close</button>
+          <button class="rc-button rc-button--secondary modal-close" type="button" data-modal-close>Close</button>
         </header>
         <div class="modal-body">
           <section class="detail-block">
@@ -29,7 +29,7 @@ export function openLessonModal(modalRoot, lesson) {
             <h3>Common mistakes</h3>
             <ul>${mistakes || "<li>Forcing the idea without map control, teammate timing, or utility support.</li>"}</ul>
           </section>
-          <button class="secondary-btn" type="button" disabled title="Play phase is not part of beta Phase 1 yet.">Add to Focus · coming with Play</button>
+          <button class="rc-button rc-button--secondary" type="button" disabled title="Play phase is not part of beta Phase 1 yet.">Add to Focus · coming with Play</button>
         </div>
       </section>
     </div>

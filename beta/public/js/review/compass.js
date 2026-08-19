@@ -35,16 +35,16 @@ export function renderCompassBreakdown(model = {}) {
     </article>
   `).join("");
   return `
-    <section class="card review-section" aria-labelledby="compassTitle">
+    <section class="rc-card review-section compass-card" aria-labelledby="compassTitle">
       <p class="eyebrow">Compass breakdown</p>
       <h3 id="compassTitle">Aim · Game Sense · Teamwork · Discipline</h3>
-      <p class="muted">Note: the beta directive’s mockup named different axes. This build intentionally uses the production four-pillar Compass until you decide otherwise.</p>
+      <p class="muted">This build keeps the production four-pillar Compass while using the beta visual shell.</p>
       <div class="compass-layout">
         <div class="compass-chart">
           <svg role="img" aria-label="Compass pillar radar" viewBox="0 0 ${size} ${size}">
             <polygon points="${center},${center - radius} ${center + radius},${center} ${center},${center + radius} ${center - radius},${center}" fill="rgba(53,242,255,.08)" stroke="rgba(148,163,184,.32)" />
             ${axes}
-            <polygon points="${polygon}" fill="rgba(53,242,255,.22)" stroke="var(--cyan)" stroke-width="4" />
+            <polygon points="${polygon}" fill="rgba(53,242,255,.22)" stroke="var(--rc-review)" stroke-width="4" />
           </svg>
         </div>
         <div class="compass-details">${details}</div>

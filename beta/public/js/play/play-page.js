@@ -1,6 +1,6 @@
 import { button, card, cardHeader, icon, stateBlock } from "../components/ui.js";
 import { getPriorityInsight } from "../model/insights.js";
-import { escapeHtml, finite, formatDate, normalizeKey, percent, ratio, whole } from "../model/utils.js";
+import { escapeHtml, finite, normalizeKey, percent, ratio, whole } from "../model/utils.js";
 import { getAgentAsset, getMapAsset } from "../model/player-model.js";
 
 export const LOADOUT_DEFAULTS = Object.freeze({
@@ -37,13 +37,13 @@ function roleClass(role = "") {
   return `role-${normalizeKey(role || "unknown")}`;
 }
 
-function roleGlyph(role = "") {
+function roleIcon(role = "", size = 48) {
   const key = normalizeKey(role);
-  if (key === "controller") return "▲";
-  if (key === "duelist") return "✕";
-  if (key === "initiator") return "◒";
-  if (key === "sentinel") return "▽";
-  return "◆";
+  if (key === "controller") return icon("role-controller", { size });
+  if (key === "duelist") return icon("role-duelist", { size });
+  if (key === "initiator") return icon("role-initiator", { size });
+  if (key === "sentinel") return icon("role-sentinel", { size });
+  return icon("focus-queue", { size });
 }
 
 function optionList(values = [], selected = "") {
@@ -53,11 +53,6 @@ function optionList(values = [], selected = "") {
 function getMapByLabel(label = "") {
   const key = normalizeKey(label);
   return maps().find(map => normalizeKey(map.label || map.id) === key) || null;
-}
-
-function getAgentByLabel(label = "") {
-  const key = normalizeKey(label);
-  return agents().find(agent => normalizeKey(agent.label || agent.name || agent.id) === key) || null;
 }
 
 function firstUsefulMap(model = {}) {
@@ -98,7 +93,7 @@ function focusFromModel(model = {}) {
     priority: weakest?.score < 50 ? "High" : weakest?.score < 70 ? "Medium" : "Low",
     source: weakest?.reference || "current window",
     behaviors: [
-      insight.action || "Take one cleaner first decision before you chase the next duel.",
+      insight.action || "Take one cleaner first decision before chasing the next duel.",
       "Say the cue out loud before the round starts.",
       "Review the next imported match against this one focus only."
     ],
@@ -173,24 +168,42 @@ function renderLoadoutControls(model = {}, appState = {}) {
   `;
 }
 
+function renderLoadoutIdle(spinning = false) {
+  if (spinning) {
+    return `
+      <div class="loadout-idle-stage is-spinning" aria-live="polite">
+        ${["map", "role", "agent"].map(label => `
+          <span class="loadout-slot">
+            ${icon(label === "role" ? "role-controller" : label === "agent" ? "review" : "library", { size: 32 })}
+            <small>${escapeHtml(label)}</small>
+          </span>
+        `).join("")}
+      </div>
+    `;
+  }
+  return `
+    <div class="loadout-idle-stage">
+      <span class="loadout-slot">${icon("library", { size: 32 })}<small>Map</small></span>
+      <span class="loadout-slot">${icon("role-controller", { size: 32 })}<small>Role</small></span>
+      <span class="loadout-slot">${icon("review", { size: 32 })}<small>Agent</small></span>
+      <p>Spin when you know enough about the queue. The generator resolves map, role, agent, then focus.</p>
+    </div>
+  `;
+}
+
 function renderGeneratedPanel(loadout = {}, compact = false) {
   const assignment = loadout.assignment;
   const spinning = loadout.state === "spinning";
   const step = loadout.spinStep || "";
-  if (!assignment && !spinning) {
-    return `
-      <div class="loadout-idle-panel">
-        ${stateBlock({ kind: "empty", title: "Ready to build your next round plan.", message: "Pick any known queue details, then spin for a map-aware role, agent, and focus." })}
-      </div>
-    `;
-  }
+  if (!assignment && !spinning) return renderLoadoutIdle(false);
+  if (!assignment && spinning) return renderLoadoutIdle(true);
   const values = assignment || { role: "Rolling…", agent: "Rolling…", map: "Rolling…", focusText: "Resolving the cleanest short-term focus.", mapReminder: "Map reminder appears after the spin." };
   const agentImage = assignment ? getAgentAsset(values.agent) : "";
   const mapImage = assignment ? getMapAsset(values.map) : "";
   const col = (kind, value, label, image = "") => `
     <div class="loadout-result-col ${spinning && step === kind ? "is-resolving" : ""}">
       <div class="loadout-result-art ${kind === "role" ? roleClass(value) : ""}">
-        ${kind === "role" ? `<span>${roleGlyph(value)}</span>` : image ? `<img src="${escapeHtml(image)}" alt="">` : icon(kind === "agent" ? "review" : "library", { size: 48 })}
+        ${kind === "role" ? roleIcon(value) : image ? `<img src="${escapeHtml(image)}" alt="">` : icon(kind === "agent" ? "review" : "library", { size: 48 })}
       </div>
       <strong>${escapeHtml(value)}</strong>
       <small>${escapeHtml(label)}</small>
@@ -203,11 +216,11 @@ function renderGeneratedPanel(loadout = {}, compact = false) {
         ${button({ label: "Spin Again", variant: "tertiary", action: "spin-loadout", disabled: spinning })}
       </div>
       <div class="loadout-result-values" aria-live="polite">
+        ${col("map", values.map, "Map", mapImage)}
+        <span class="loadout-chevron">${icon("chevron")}</span>
         ${col("role", values.role, "Role")}
         <span class="loadout-chevron">${icon("chevron")}</span>
         ${col("agent", values.agent, "Agent", agentImage)}
-        <span class="loadout-chevron">${icon("chevron")}</span>
-        ${col("map", values.map, "Map", mapImage)}
       </div>
       <div class="loadout-generated-copy">
         <div>
@@ -245,13 +258,20 @@ function renderLoadoutCard(model = {}, appState = {}, { full = false } = {}) {
 
 function renderTodayFocus(model = {}, appState = {}) {
   const focus = getFocusQueue(appState, model)[0] || focusFromModel(model);
+  const featuredAgent = normalizeLoadout(appState.loadout).assignment?.agent || model.agents?.[0]?.agent || "Jett";
+  const agentImage = getAgentAsset(featuredAgent);
   return card({
     eyebrow: "Today’s Focus",
     title: focus.title,
     className: "play-card today-focus-card",
     body: `
-      <p>${escapeHtml(focus.evidence || "Your active focus will appear here after sync.")}</p>
-      <div class="focus-art ${roleClass(focus.category)}">${icon("focus-queue", { size: 72 })}</div>
+      <div class="today-focus-copy">
+        <p>${escapeHtml(focus.evidence || "Your active focus will appear here after sync.")}</p>
+        <span class="pill warn">${escapeHtml(focus.priority || "Medium")} priority</span>
+      </div>
+      <div class="focus-art ${roleClass(focus.category)}">
+        ${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 72 })}
+      </div>
     `,
     footer: `
       ${button({ label: "View Focus Details", variant: "secondary", action: "open-focus-detail" })}
@@ -265,11 +285,17 @@ function sparkline(pillar = {}) {
   const delta = Number(pillar.delta || 0);
   const start = Math.max(8, Math.min(88, base - delta));
   const mid = Math.max(8, Math.min(88, (base + start) / 2 + (delta >= 0 ? 8 : -8)));
-  return `<svg class="mini-spark" viewBox="0 0 100 36" aria-hidden="true"><polyline points="4,${36 - start * .32} 50,${36 - mid * .32} 96,${36 - base * .32}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg>`;
+  return `<svg class="mini-spark" viewBox="0 0 100 36" aria-hidden="true"><polyline points="4,${36 - start * 0.32} 50,${36 - mid * 0.32} 96,${36 - base * 0.32}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg>`;
 }
 
 function renderImprovementTimeline(model = {}) {
-  const pillars = model.pillars?.length ? model.pillars : focusFromModel(model).related.map(label => ({ label, score: 0, trend: "Pending" }));
+  const fallback = [
+    { label: "Mechanics", key: "aim", score: 0, trend: "Pending", reference: "sync needed" },
+    { label: "Game Sense", key: "game-sense", score: 0, trend: "Pending", reference: "sync needed" },
+    { label: "Communication", key: "teamwork", score: 0, trend: "Pending", reference: "sync needed" },
+    { label: "Discipline", key: "discipline", score: 0, trend: "Pending", reference: "sync needed" }
+  ];
+  const pillars = model.pillars?.length ? model.pillars : fallback;
   const tiles = pillars.slice(0, 4).map(pillar => `
     <button class="timeline-mini ${Number(pillar.delta || 0) < -3 ? "is-down" : Number(pillar.delta || 0) > 3 ? "is-up" : ""}" type="button" data-review-tab="timeline" data-review-category="${escapeHtml(pillar.key || pillar.label)}">
       <span>${escapeHtml(pillar.label)}</span>
@@ -287,11 +313,66 @@ function renderImprovementTimeline(model = {}) {
   });
 }
 
+function radarPoint(cx, cy, radius, angle, value) {
+  const scaled = radius * Math.max(0, Math.min(100, Number(value) || 0)) / 100;
+  return {
+    x: cx + Math.cos(angle) * scaled,
+    y: cy + Math.sin(angle) * scaled
+  };
+}
+
+function renderCompassRadar(pillars = []) {
+  const defaults = [
+    { key: "aim", label: "Aim", score: 0 },
+    { key: "game-sense", label: "Game Sense", score: 0 },
+    { key: "teamwork", label: "Communication", score: 0 },
+    { key: "discipline", label: "Discipline", score: 0 }
+  ];
+  const data = defaults.map((base, index) => ({ ...base, ...(pillars[index] || {}) }));
+  const size = 260;
+  const center = size / 2;
+  const radius = 86;
+  const angles = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
+  const rings = [25, 50, 75, 100].map(value => {
+    const points = angles.map(angle => radarPoint(center, center, radius, angle, value)).map(point => `${point.x},${point.y}`).join(" ");
+    return `<polygon points="${points}" fill="none" stroke="rgba(170,181,200,.18)" stroke-width="1" />`;
+  }).join("");
+  const axes = data.map((pillar, index) => {
+    const angle = angles[index];
+    const end = radarPoint(center, center, radius, angle, 100);
+    const label = radarPoint(center, center, radius + 26, angle, 100);
+    return `
+      <line x1="${center}" y1="${center}" x2="${end.x}" y2="${end.y}" stroke="rgba(170,181,200,.24)" />
+      <text x="${label.x}" y="${label.y}" text-anchor="middle" dominant-baseline="middle">${escapeHtml(pillar.label)}</text>
+    `;
+  }).join("");
+  const polygon = data.map((pillar, index) => {
+    const point = radarPoint(center, center, radius, angles[index], pillar.score);
+    return `${point.x},${point.y}`;
+  }).join(" ");
+  const dots = data.map((pillar, index) => {
+    const point = radarPoint(center, center, radius, angles[index], pillar.score);
+    return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="var(--pillar-color-${index})"><title>${escapeHtml(pillar.label)} ${whole(pillar.score)}/100</title></circle>`;
+  }).join("");
+  return `
+    <svg class="compass-radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="Compass radar with Aim, Game Sense, Communication, and Discipline">
+      <g class="compass-grid">${rings}${axes}</g>
+      <polygon class="compass-fill" points="${polygon}" />
+      ${dots}
+    </svg>
+  `;
+}
+
 function renderCompassMini(model = {}) {
   const pillars = model.pillars || [];
   const scores = pillars.map(item => Number(item.score || 0));
   const avg = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
-  const legend = pillars.map(pillar => `
+  const legend = (pillars.length ? pillars : [
+    { key: "aim", label: "Aim", score: 0 },
+    { key: "game-sense", label: "Game Sense", score: 0 },
+    { key: "teamwork", label: "Communication", score: 0 },
+    { key: "discipline", label: "Discipline", score: 0 }
+  ]).map(pillar => `
     <button class="compass-legend" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
       <span>${escapeHtml(pillar.label)}</span>
       <strong>${whole(pillar.score)}/100</strong>
@@ -302,8 +383,9 @@ function renderCompassMini(model = {}) {
     title: `${whole(avg)}/100 overall`,
     className: "play-card compass-mini-card",
     body: `
-      <div class="compass-mini-shape" style="--aim:${scores[0] || 0};--sense:${scores[1] || 0};--team:${scores[2] || 0};--disc:${scores[3] || 0};">
-        <span>${whole(avg)}</span>
+      <div class="compass-radar-wrap">
+        ${renderCompassRadar(pillars)}
+        <span class="compass-total">${whole(avg)}</span>
       </div>
       <div class="compass-mini-legend">${legend}</div>
     `
@@ -318,6 +400,12 @@ function renderRRCard(model = {}) {
     title: `${whole(rrTotal)} RR in window`,
     className: "play-card rr-mini-card",
     body: `
+      <div class="rr-scoreboard">
+        <div><span>Wins</span><strong class="semantic-win">${whole(overview.wins || 0)}</strong></div>
+        <div><span>Losses</span><strong class="semantic-loss">${whole(overview.losses || 0)}</strong></div>
+        <div><span>Draws</span><strong>${whole(overview.draws || 0)}</strong></div>
+        <div><span>Games</span><strong>${whole(overview.matchesPlayed || 0)}</strong></div>
+      </div>
       <div class="rr-actions" role="group" aria-label="Manual RR result controls">
         ${button({ label: "Win", variant: "secondary", action: "rr-manual-win", className: "semantic-win" })}
         ${button({ label: "Loss", variant: "secondary", action: "rr-manual-loss", className: "semantic-loss" })}
@@ -342,9 +430,9 @@ function compactRrChart(model = {}) {
   });
   return `
     <svg class="compact-line-chart" viewBox="0 0 100 82" preserveAspectRatio="none" role="img" aria-label="Compact RR trend">
-      <line x1="0" x2="100" y1="50" y2="50" stroke="rgba(74,222,128,.55)" />
-      <polyline points="${points.map(point => `${point.x},${point.y}`).join(" ")}" fill="none" stroke="var(--warning)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-      ${points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="2.4" fill="var(--warning)" />`).join("")}
+      <line x1="0" x2="100" y1="50" y2="50" stroke="rgba(76,217,138,.55)" />
+      <polyline points="${points.map(point => `${point.x},${point.y}`).join(" ")}" fill="none" stroke="var(--rc-warning)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      ${points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="2.4" fill="var(--rc-warning)" />`).join("")}
     </svg>
   `;
 }
@@ -393,7 +481,7 @@ export function renderLoadoutPage(root, model, appState = {}) {
       ${card({
         eyebrow: "How it rolls",
         title: "Map first, then role, then agent.",
-        body: "<p>The beta generator weighs your selected map, high-rank map pick references, and your recent role comfort. It stays honest: if no map is selected, it starts from your most played/current competitive maps.</p>",
+        body: "<p>The beta generator weighs your selected map, high-rank map pick references, and your recent role comfort. It stays honest: if no map is selected, it starts from your most played or current competitive maps.</p>",
         className: "side-explain-card"
       })}
     </div>

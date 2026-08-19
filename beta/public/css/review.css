@@ -1,24 +1,32 @@
 .review-grid {
-  --section-accent: var(--review-accent);
+  --section-accent: var(--rc-review);
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--rc-grid-gap);
+  align-items: stretch;
+}
+
+.review-section,
+.review-route-section {
+  --section-accent: var(--rc-review);
+  padding: var(--rc-space-4);
 }
 
 .review-section {
-  --section-accent: var(--review-accent);
-  padding: 1rem;
+  grid-column: span 6;
 }
+
+.overview-card { grid-column: span 7; }
+.coach-summary { grid-column: span 5; }
+.rr-chart { grid-column: span 7; }
+.compass-card,
+.last-match-card { grid-column: span 5; }
+.breakdown-card { grid-column: span 12; }
 
 .review-section .eyebrow,
 .review-route-section .eyebrow,
 .review-route-section .rc-eyebrow {
-  color: var(--review-accent);
-}
-
-.review-route-section {
-  --section-accent: var(--review-accent);
-  padding: var(--rc-space-4);
+  color: var(--rc-review);
 }
 
 .review-section h2,
@@ -31,20 +39,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--rc-space-3);
 }
 
-.review-section-head .secondary-btn {
-  min-height: 2.25rem;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.68rem;
-  white-space: nowrap;
-}
-
-.overview-card {
+.overview-card .rc-card__body {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 1rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--rc-space-4);
   align-items: center;
 }
 
@@ -54,11 +55,11 @@
   display: grid;
   place-items: center;
   border: 1px solid rgba(53, 242, 255, 0.38);
-  border-radius: 24px;
-  background: radial-gradient(circle, rgba(53, 242, 255, 0.2), rgba(15, 23, 42, 0.85));
-  color: var(--yellow);
+  border-radius: var(--rc-radius-lg);
+  color: var(--rc-warning);
   font-size: 2.1rem;
   font-weight: 950;
+  background: radial-gradient(circle, rgba(53, 242, 255, 0.2), rgba(15, 23, 42, 0.85));
 }
 
 .overview-stats,
@@ -66,7 +67,7 @@
 .breakdown-list,
 .last-match-grid {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--rc-space-3);
 }
 
 .overview-stats {
@@ -78,17 +79,17 @@
 .entity-row,
 .match-mini,
 .insight-card {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 16px;
-  padding: 0.8rem;
-  background: rgba(6, 12, 25, 0.62);
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-md);
+  padding: var(--rc-space-3);
+  background: var(--rc-surface-2);
 }
 
 .stat-tile span,
 .trend-tile span,
 .entity-row span {
   display: block;
-  color: var(--muted);
+  color: var(--rc-text-3);
   font-size: 0.74rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -117,9 +118,8 @@
   border-color: rgba(255, 78, 104, 0.48);
 }
 
-.rr-chart {
-  width: 100%;
-  min-height: 230px;
+.rr-chart .rc-card__body {
+  min-height: 280px;
 }
 
 .rr-chart svg {
@@ -130,7 +130,7 @@
 
 .coach-summary {
   display: grid;
-  gap: 1rem;
+  gap: var(--rc-space-3);
 }
 
 .coach-summary h2 {
@@ -140,14 +140,14 @@
 
 .coach-actions {
   display: flex;
-  gap: 0.7rem;
+  gap: var(--rc-space-2);
   flex-wrap: wrap;
 }
 
 .compass-layout {
   display: grid;
   grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
-  gap: 1rem;
+  gap: var(--rc-space-4);
   align-items: center;
 }
 
@@ -161,15 +161,22 @@
   height: 320px;
 }
 
+.compass-chart text {
+  fill: var(--rc-text-2);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
 .compass-details {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--rc-space-3);
 }
 
 .pillar-detail {
-  border-left: 3px solid var(--cyan);
+  border-left: 3px solid var(--rc-review);
+  border-radius: 0 var(--rc-radius-sm) var(--rc-radius-sm) 0;
   padding: 0.6rem 0.8rem;
-  background: rgba(53, 242, 255, 0.08);
+  background: color-mix(in srgb, var(--rc-review) 10%, transparent);
 }
 
 .last-match-grid {
@@ -197,26 +204,26 @@
 .breakdown-columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--rc-space-4);
 }
 
 .entity-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--rc-space-3);
   align-items: center;
 }
 
 .history-tools {
   display: flex;
-  gap: 0.7rem;
+  gap: var(--rc-space-2);
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: var(--rc-space-4);
 }
 
 .history-list {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--rc-space-3);
   max-height: min(68vh, 880px);
   overflow: auto;
   padding-right: 0.25rem;
@@ -224,12 +231,12 @@
 
 .history-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.8rem;
   align-items: center;
   padding: 0.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 16px;
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-md);
   background: rgba(8, 14, 28, 0.76);
 }
 
@@ -239,7 +246,7 @@
 }
 
 .review-tabs {
-  --section-accent: var(--review-accent);
+  --section-accent: var(--rc-review);
 }
 
 .timeline-route-grid,
@@ -254,10 +261,10 @@
 .timeline-marker,
 .insight-row,
 .stat-route-tile {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--rc-border);
   border-radius: var(--rc-radius-md);
   padding: var(--rc-space-3);
-  color: var(--text-primary);
+  color: var(--rc-text-1);
   background: rgba(6, 12, 25, 0.72);
 }
 
@@ -270,7 +277,7 @@
 .timeline-category.is-active,
 .stat-route-tile:hover,
 .stat-route-tile:focus-visible {
-  border-color: var(--review-accent);
+  border-color: var(--rc-review);
 }
 
 .timeline-marker-list,
@@ -296,7 +303,7 @@
 .timeline-marker span,
 .timeline-category span,
 .insight-row small {
-  color: var(--text-muted);
+  color: var(--rc-text-3);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.1em;
@@ -306,7 +313,7 @@
 .timeline-marker small,
 .timeline-category small,
 .insight-row p {
-  color: var(--text-secondary);
+  color: var(--rc-text-2);
 }
 
 .insight-row {
@@ -330,8 +337,8 @@
 }
 
 .insight-row-meta strong {
+  color: var(--rc-warning);
   font-size: 1.2rem;
-  color: var(--warning);
 }
 
 .stat-route-tile {
@@ -341,15 +348,24 @@
 }
 
 .stat-route-tile span {
-  color: var(--text-muted);
+  color: var(--rc-text-3);
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-@media (max-width: 1100px) {
-  .review-grid,
+@media (max-width: 1200px) {
+  .review-section,
+  .overview-card,
+  .coach-summary,
+  .rr-chart,
+  .compass-card,
+  .last-match-card,
+  .breakdown-card {
+    grid-column: 1 / -1;
+  }
+
   .breakdown-columns,
   .compass-layout {
     grid-template-columns: 1fr;
@@ -360,7 +376,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .overview-card,
+  .overview-card .rc-card__body,
   .overview-stats,
   .history-row,
   .insight-row {
@@ -375,7 +391,9 @@
 
 @media (max-width: 620px) {
   .timeline-route-grid,
-  .stats-route-grid {
+  .stats-route-grid,
+  .trend-tile-grid,
+  .last-match-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,6 @@
 import { button, card, cardHeader, stateBlock } from "../components/ui.js";
 import { getLearnLibrary, renderLessonCard, searchLessons } from "../learn/library-data.js";
-import { escapeHtml, normalizeKey, plural } from "../model/utils.js";
+import { escapeHtml, normalizeKey, plural, whole } from "../model/utils.js";
 import { getAgentAsset, getMapAsset } from "../model/player-model.js";
 
 const LIBRARY_VIEWS = [
@@ -68,25 +68,40 @@ function renderLibraryNav(view = "home") {
 
 function renderHome(model = {}, appState = {}) {
   const counts = getCounts(model, appState);
-  const cards = [
-    ["lineups", "Lineups", counts.lineups, "Map utility and plant plans saved for fast lookup."],
-    ["routines", "Routines", counts.routines, "Warm-up and post-match training templates."],
-    ["notes", "Notes", counts.notes, "Personal notes and dossier edits."],
-    ["collections", "Custom Collections", counts.collections, "Grouped concepts, lineups, and reminders."],
-    ["saved", "Watch Later", counts.saved, "Lessons saved from Review and Learn."]
-  ].map(([key, title, count, body]) => card({
-    eyebrow: plural(count, "item"),
-    title,
-    body: `<p>${escapeHtml(body)}</p>`,
-    footer: button({ label: "Open", variant: "tertiary", attrs: `data-library-view="${escapeHtml(key)}"` }),
-    className: "library-summary-card"
-  })).join("");
+  const metrics = [
+    ["Lineups", counts.lineups],
+    ["Lessons", counts.lessons],
+    ["Saved", counts.saved],
+    ["Notes", counts.notes]
+  ].map(([label, value]) => `
+    <div class="library-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${whole(value)}</strong>
+    </div>
+  `).join("");
+  const resourceColumns = [
+    ["lineups", "Lineups", counts.lineups, "Map utility, plant plans, and fast pre-round reminders."],
+    ["routines", "Routines", counts.routines, "Warm-up and post-match training templates for repeatable work."],
+    ["collections", "Collections", counts.collections, "Grouped concepts and saved reads that belong together."],
+    ["saved", "Watch Later", counts.saved, "Lessons and references you marked for another session."]
+  ].map(([key, title, count, body]) => `
+    <article class="library-resource-card">
+      <p class="rc-eyebrow">${escapeHtml(plural(count, "item"))}</p>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(body)}</p>
+      ${button({ label: "Open", variant: "tertiary", attrs: `data-library-view="${escapeHtml(key)}"` })}
+    </article>
+  `).join("");
   return `
     <section class="library-hero rc-card">
       ${cardHeader("Library", "Your saved coaching shelf.", `<span class="pill">${counts.lessons} learnable references</span>`)}
       <p class="muted">Lineups, routines, saved lessons, notes, and custom collections live here. The beta starts with local data and a small durable schema for user-saved items.</p>
+      <div class="library-metric-strip">${metrics}</div>
     </section>
-    <div class="library-summary-grid">${cards}</div>
+    <section class="rc-card library-section library-resource-section">
+      ${cardHeader("Resource Map", "Jump to the shelf you need.")}
+      <div class="library-resource-grid">${resourceColumns}</div>
+    </section>
   `;
 }
 

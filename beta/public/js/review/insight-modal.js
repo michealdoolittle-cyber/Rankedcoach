@@ -18,7 +18,7 @@ export function openInsightDetail(modalRoot, model = {}, insight = getPriorityIn
             <p class="eyebrow">${escapeHtml(insight.focus || "Insight Detail")}</p>
             <h2 id="insightDetailTitle">${escapeHtml(insight.title || "Insight Detail")}</h2>
           </div>
-          <button class="secondary-btn modal-close" type="button" data-modal-close>Close</button>
+          <button class="rc-button rc-button--secondary modal-close" type="button" data-modal-close>Close</button>
         </header>
         <div class="modal-body">
           <section class="detail-block">
