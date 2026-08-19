@@ -1,57 +1,207 @@
+/* Global app shell — spec Section 5.1/5.2 (notes/beta-ui-implementation-spec-2026-08-19.md).
+   Replaces the earlier centered-column/top-nav layout with the persistent left sidebar. */
+
 .app-shell {
-  width: min(1480px, calc(100% - 28px));
-  margin: 0 auto;
-  padding: 18px 0 48px;
-}
-
-.beta-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
-  border: 1px solid rgba(255, 78, 104, 0.38);
-  border-radius: 24px;
-  background: rgba(7, 11, 20, 0.86);
-  backdrop-filter: blur(18px);
+  grid-template-columns: var(--rc-sidebar-w) minmax(0, 1fr);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
-.beta-topbar h1 {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 3.4rem);
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-}
-
-.top-nav {
+.app-sidebar {
+  position: sticky;
+  inset-block-start: 0;
+  height: 100dvh;
   display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: var(--rc-space-4);
+  padding: 12px 8px;
+  border-inline-end: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, var(--bg-sidebar), #070b12 72%);
 }
 
-.nav-tab,
-.primary-btn,
-.secondary-btn {
-  min-height: 2.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.36);
-  border-radius: 13px;
-  padding: 0.65rem 1rem;
-  color: var(--text);
-  background: linear-gradient(180deg, rgba(42, 55, 78, 0.95), rgba(20, 29, 48, 0.95));
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 6px 8px;
+}
+
+.sidebar-brand img,
+.sidebar-brand svg {
+  width: 22px;
+  height: 22px;
+}
+
+.sidebar-brand span {
+  font-size: 0.68rem;
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-group-label {
+  margin: 6px 8px 2px;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.nav-tab.is-active,
-.primary-btn {
-  border-color: rgba(255, 78, 104, 0.8);
-  background: linear-gradient(135deg, var(--red), #ff7a3d);
-  box-shadow: 0 0 28px rgba(255, 78, 104, 0.28);
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--rc-radius-sm);
+  color: var(--text-secondary);
+  background: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--rc-motion-base) var(--rc-ease-out),
+    background-color var(--rc-motion-base) var(--rc-ease-out),
+    color var(--rc-motion-base) var(--rc-ease-out);
+}
+
+.sidebar-item svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--text-muted);
+  transition: color var(--rc-motion-base) var(--rc-ease-out);
+}
+
+.sidebar-item:hover {
+  border-color: var(--border-subtle);
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.sidebar-item.is-active {
+  background: var(--bg-surface-2);
+  border-color: var(--sidebar-item-accent, var(--brand));
+  color: var(--text-primary);
+}
+
+.sidebar-item.is-active svg {
+  color: var(--sidebar-item-accent, var(--brand));
+}
+
+.sidebar-item[data-page="play"] { --sidebar-item-accent: var(--brand); }
+.sidebar-item[data-page="review"] { --sidebar-item-accent: var(--review-accent); }
+.sidebar-item[data-page="learn"] { --sidebar-item-accent: var(--learn-accent); }
+.sidebar-item[data-page="library"] { --sidebar-item-accent: var(--library-accent); }
+
+.sidebar-item.is-disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sidebar-item.is-disabled:hover {
+  border-color: transparent;
+  background: none;
+  color: var(--text-secondary);
+}
+
+.sidebar-spacer {
+  flex: 1 1 auto;
+}
+
+.sidebar-account {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--rc-radius-sm);
+  background: var(--bg-surface-1);
+  font-size: 0.68rem;
+}
+
+.sidebar-account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  font-weight: 800;
+  flex: none;
+}
+
+.sidebar-account div {
+  min-width: 0;
+}
+
+.sidebar-account strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-account small {
+  color: var(--text-muted);
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+
+.app-main {
+  min-width: 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--rc-topbar-h);
+  padding: 0 var(--rc-page-pad);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.page-header .eyebrow {
+  margin: 0 0 2px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--rc-space-2);
+}
+
+.page-content {
+  padding: var(--rc-page-pad);
 }
 
 .sync-card {
@@ -59,7 +209,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: end;
-  margin: 1rem 0;
+  margin: 0 0 1rem;
   padding: 1rem;
   border: 1px solid rgba(53, 242, 255, 0.34);
   border-radius: 24px;
@@ -110,6 +260,32 @@
   font-weight: 800;
 }
 
+.primary-btn,
+.secondary-btn {
+  min-height: 2.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  border-radius: 13px;
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(42, 55, 78, 0.95), rgba(20, 29, 48, 0.95));
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.primary-btn {
+  border-color: var(--brand-strong);
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  box-shadow: 0 0 28px rgba(139, 92, 246, 0.28);
+}
+
+.sidebar-item[data-page="log-match"] { --sidebar-item-accent: var(--brand-strong); }
+.sidebar-item[data-page="loadout"] { --sidebar-item-accent: var(--warning); }
+.sidebar-item[data-page="focus-queue"] { --sidebar-item-accent: var(--info); }
+.sidebar-item[data-page="in-game"] { --sidebar-item-accent: var(--success); }
+.sidebar-item[data-page="settings"] { --sidebar-item-accent: var(--brand-strong); }
+.sidebar-item[data-page="help"] { --sidebar-item-accent: var(--text-secondary); }
+
 .page {
   display: none;
 }
@@ -118,30 +294,75 @@
   display: block;
 }
 
+.placeholder-page {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+  padding: var(--rc-space-8);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.placeholder-page h2 {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.placeholder-page p {
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
 @media (max-width: 900px) {
   .app-shell {
-    width: min(100% - 18px, 720px);
-    padding-top: 10px;
+    grid-template-columns: 1fr;
   }
 
-  .beta-topbar,
+  .app-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .sidebar-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-spacer {
+    flex: 0;
+  }
+
   .sync-card {
     grid-template-columns: 1fr;
   }
 
-  .top-nav,
   .sync-form {
     grid-template-columns: 1fr;
     justify-content: stretch;
   }
 
-  .sync-form {
-    display: grid;
+  .primary-btn,
+  .secondary-btn,
+  .topbar-actions .rc-button--secondary {
+    width: 100%;
   }
 
-  .nav-tab,
-  .primary-btn,
-  .secondary-btn {
+  .topbar-actions {
     width: 100%;
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-block: var(--rc-space-3);
+  }
+
+  .route-shell {
+    grid-template-columns: 1fr;
   }
 }

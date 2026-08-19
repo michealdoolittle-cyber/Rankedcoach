@@ -3,65 +3,196 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankedCoach Beta · Review + Learn</title>
+  <title>RankedCoach Beta · Play</title>
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/shell.css">
   <link rel="stylesheet" href="css/review.css">
+  <link rel="stylesheet" href="css/play.css">
   <link rel="stylesheet" href="css/learn.css">
+  <link rel="stylesheet" href="css/library.css">
+  <link rel="stylesheet" href="css/settings.css">
   <link rel="stylesheet" href="css/modal.css">
 </head>
 <body>
+  <svg class="rc-icon-sprite" aria-hidden="true" focusable="false">
+    <symbol id="outline-play" viewBox="0 0 24 24"><path d="M6 4.5v15L19 12 6 4.5Z"/></symbol>
+    <symbol id="outline-review" viewBox="0 0 24 24"><path d="M4 19v-5M10 19V10M16 19V6M3 9l5-4 4 3 8-5"/></symbol>
+    <symbol id="outline-learn" viewBox="0 0 24 24"><path d="M4 5.5c3-1.4 5-.9 8 1.2v12c-3-2.1-5-2.6-8-1.2v-12Z"/><path d="M20 5.5c-3-1.4-5-.9-8 1.2v12c3-2.1 5-2.6 8-1.2v-12Z"/></symbol>
+    <symbol id="outline-library" viewBox="0 0 24 24"><path d="M3.5 7.5h7l2-2h8v13h-17v-11Z"/><path d="M3.5 9.5h17"/></symbol>
+    <symbol id="outline-log-match" viewBox="0 0 24 24"><path d="M8 5h8M9 3.5h6v3H9zM6 5.5h12v15H6z"/><path d="m9 13 2 2 4-5"/></symbol>
+    <symbol id="outline-loadout" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="outline-focus-queue" viewBox="0 0 24 24"><path d="M5 6h14v12H5zM8 3h8M8 21h8"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="outline-in-game" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="6"/></symbol>
+    <symbol id="outline-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 4v2m0 12v2m8-8h-2M6 12H4m12.95-6.95-1.4 1.4M7.45 16.55l-1.4 1.4m0-11.9 1.4 1.4m9.1 9.1 1.4 1.4"/></symbol>
+    <symbol id="outline-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.8-2 3.5M12 17h.01"/></symbol>
+    <symbol id="outline-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="outline-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="outline-grip" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></symbol>
+    <symbol id="outline-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="outline-notification" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
+    <symbol id="outline-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-4 4.3-6 8-6s6.4 2 8 6"/></symbol>
+  </svg>
+
   <div class="app-shell">
-    <header class="beta-topbar">
-      <div>
-        <p class="eyebrow">RankedCoach Beta</p>
-        <h1>Review + Learn</h1>
+    <aside class="app-sidebar" aria-label="Primary navigation">
+      <div class="sidebar-brand">
+        <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg>
+        <span>RANKEDCOACH</span>
       </div>
-      <nav class="top-nav" aria-label="Beta sections">
-        <button class="nav-tab is-active" type="button" data-page="review">Review</button>
-        <button class="nav-tab" type="button" data-page="history">Match History</button>
-        <button class="nav-tab" type="button" data-page="learn">Learn</button>
+
+      <nav class="sidebar-group" aria-label="Main">
+        <p class="sidebar-group-label">Main</p>
+        <button class="sidebar-item is-active" type="button" data-page="play">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-play"></use></svg>
+          Play
+        </button>
+        <button class="sidebar-item" type="button" data-page="review">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-review"></use></svg>
+          Review
+        </button>
+        <button class="sidebar-item" type="button" data-page="learn">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-learn"></use></svg>
+          Learn
+        </button>
+        <button class="sidebar-item" type="button" data-page="library">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-library"></use></svg>
+          Library
+        </button>
       </nav>
-    </header>
 
-    <section class="sync-card" aria-labelledby="syncTitle">
-      <div>
-        <p class="eyebrow">Real account sync</p>
-        <h2 id="syncTitle">Pull retained Riot match data into beta.</h2>
-        <p class="muted">Phase 1 uses the same Henrik routes as production, then builds its own smaller Review model inside beta.</p>
+      <nav class="sidebar-group" aria-label="Tools">
+        <p class="sidebar-group-label">Tools</p>
+        <button class="sidebar-item" type="button" data-page="log-match">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-log-match"></use></svg>
+          Log Match
+        </button>
+        <button class="sidebar-item" type="button" data-page="loadout">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-loadout"></use></svg>
+          Loadout
+        </button>
+        <button class="sidebar-item" type="button" data-page="focus-queue">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-focus-queue"></use></svg>
+          Focus Queue
+        </button>
+        <button class="sidebar-item" type="button" data-page="in-game">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-in-game"></use></svg>
+          In-Game
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-account">
+        <span class="sidebar-account-avatar" id="sidebarAvatar">--</span>
+        <div>
+          <strong id="sidebarAccountName">No account synced</strong>
+          <small id="sidebarAccountMeta">Sync below to begin</small>
+        </div>
       </div>
-      <form id="syncForm" class="sync-form">
-        <label>
-          Riot ID
-          <input id="riotIdInput" name="riotId" autocomplete="off" placeholder="Name#Tag" required>
-        </label>
-        <label>
-          Region
-          <select id="regionInput" name="region">
-            <option value="na">NA</option>
-            <option value="eu">EU</option>
-            <option value="ap">AP</option>
-            <option value="kr">KR</option>
-            <option value="br">BR</option>
-            <option value="latam">LATAM</option>
-          </select>
-        </label>
-        <button id="syncSubmit" class="primary-btn" type="submit">Sync Review</button>
-      </form>
-      <div id="syncStatus" class="sync-status" role="status" aria-live="polite">No beta account loaded yet.</div>
-    </section>
 
-    <main>
-      <section id="page-review" class="page is-active" data-page-panel="review" aria-label="Review dashboard">
-        <div id="reviewRoot"></div>
-      </section>
-      <section id="page-history" class="page" data-page-panel="history" aria-label="Match history">
-        <div id="historyRoot"></div>
-      </section>
-      <section id="page-learn" class="page" data-page-panel="learn" aria-label="Learn library">
-        <div id="learnRoot"></div>
-      </section>
+      <div class="sidebar-footer">
+        <button class="sidebar-item" type="button" data-page="settings">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-settings"></use></svg>
+          Settings
+        </button>
+        <button class="sidebar-item" type="button" data-page="help">
+          <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-help"></use></svg>
+          Help
+        </button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="page-header">
+        <div>
+          <p class="eyebrow">RankedCoach Beta</p>
+          <h1 id="pageTitle">Play</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="rc-button rc-button--icon" type="button" data-action="open-search" aria-label="Open search">
+            <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-search"></use></svg>
+          </button>
+          <button class="rc-button rc-button--icon" type="button" data-action="open-notifications" aria-label="Open notifications">
+            <svg class="rc-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#outline-notification"></use></svg>
+          </button>
+          <button class="rc-button rc-button--secondary" type="button" data-page-jump="settings" data-settings-tab="pipeline">Pipeline</button>
+        </div>
+      </div>
+
+      <div class="page-content">
+        <section class="sync-card" aria-labelledby="syncTitle">
+          <div>
+            <p class="eyebrow">Real account sync</p>
+            <h2 id="syncTitle">Pull retained Riot match data into beta.</h2>
+            <p class="muted">Beta uses the same Henrik routes as production, then builds its own smaller model for Play, Review, Learn, and Library.</p>
+          </div>
+          <form id="syncForm" class="sync-form">
+            <label>
+              Riot ID
+              <input id="riotIdInput" name="riotId" autocomplete="off" placeholder="Name#Tag" required>
+            </label>
+            <label>
+              Region
+              <select id="regionInput" name="region">
+                <option value="na">NA</option>
+                <option value="eu">EU</option>
+                <option value="ap">AP</option>
+                <option value="kr">KR</option>
+                <option value="br">BR</option>
+                <option value="latam">LATAM</option>
+              </select>
+            </label>
+            <button id="syncSubmit" class="rc-button rc-button--primary" type="submit">Sync Beta</button>
+          </form>
+          <div id="syncStatus" class="sync-status" role="status" aria-live="polite">No beta account loaded yet.</div>
+        </section>
+
+        <section id="page-play" class="page is-active" data-page-panel="play" aria-label="Play">
+          <div id="playRoot"></div>
+        </section>
+
+        <section id="page-loadout" class="page" data-page-panel="loadout" aria-label="Loadout">
+          <div id="loadoutRoot"></div>
+        </section>
+
+        <section id="page-focus-queue" class="page" data-page-panel="focus-queue" aria-label="Focus Queue">
+          <div id="focusQueueRoot"></div>
+        </section>
+
+        <section id="page-log-match" class="page" data-page-panel="log-match" aria-label="Log Match">
+          <div id="logMatchRoot"></div>
+        </section>
+
+        <section id="page-in-game" class="page" data-page-panel="in-game" aria-label="In-Game">
+          <div id="inGameRoot"></div>
+        </section>
+
+        <section id="page-review" class="page" data-page-panel="review" aria-label="Review dashboard">
+          <div id="reviewRoot"></div>
+        </section>
+
+        <section id="page-history" class="page" data-page-panel="history" aria-label="Match history">
+          <div id="historyRoot"></div>
+        </section>
+
+        <section id="page-learn" class="page" data-page-panel="learn" aria-label="Learn library">
+          <div id="learnRoot"></div>
+        </section>
+
+        <section id="page-library" class="page" data-page-panel="library" aria-label="Library">
+          <div id="libraryRoot"></div>
+        </section>
+
+        <section id="page-settings" class="page" data-page-panel="settings" aria-label="Settings">
+          <div id="settingsRoot"></div>
+        </section>
+
+        <section id="page-help" class="page" data-page-panel="help" aria-label="Help and Support">
+          <div id="helpRoot"></div>
+        </section>
+      </div>
     </main>
   </div>
 

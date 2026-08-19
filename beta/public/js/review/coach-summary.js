@@ -1,5 +1,6 @@
 import { escapeHtml } from "../model/utils.js";
 import { getPriorityInsight } from "../model/insights.js";
+import { button } from "../components/ui.js";
 
 export function renderCoachSummary(model = {}) {
   const insight = getPriorityInsight(model);
@@ -12,7 +13,7 @@ export function renderCoachSummary(model = {}) {
       </div>
       <div class="coach-actions">
         <span class="pill ${escapeHtml(insight.tone || "warn")}">${escapeHtml(insight.focus || "Priority")}</span>
-        <button class="secondary-btn" type="button" data-action="open-insight-detail">Open Insight Detail</button>
+        ${button({ label: "Open Insight Detail", variant: "secondary", action: "open-insight-detail" })}
       </div>
     </section>
   `;

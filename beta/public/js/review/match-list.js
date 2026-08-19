@@ -1,5 +1,6 @@
 import { escapeHtml, formatDate, percent, ratio, whole } from "../model/utils.js";
 import { getAgentAsset, getMapAsset } from "../model/player-model.js";
+import { button } from "../components/ui.js";
 
 export function renderLastFive(model = {}) {
   const cards = (model.records || []).slice(0, 5).map(record => `
@@ -17,8 +18,13 @@ export function renderLastFive(model = {}) {
   `).join("");
   return `
     <section class="card review-section" aria-labelledby="lastFiveTitle">
-      <p class="eyebrow">Last 5 matches</p>
-      <h3 id="lastFiveTitle">Recent imported games</h3>
+      <div class="review-section-head">
+        <div>
+          <p class="eyebrow">Last 5 matches</p>
+          <h3 id="lastFiveTitle">Recent imported games</h3>
+        </div>
+        ${button({ label: "View All Matches", variant: "secondary", action: "open-history" })}
+      </div>
       <div class="last-match-grid">${cards || "<p class=\"muted\">No matches loaded yet.</p>"}</div>
     </section>
   `;

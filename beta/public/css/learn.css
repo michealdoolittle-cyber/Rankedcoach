@@ -1,4 +1,5 @@
 .learn-layout {
+  --section-accent: var(--learn-accent);
   display: grid;
   gap: 1rem;
 }
@@ -25,7 +26,7 @@
 
 .learn-search input {
   min-height: 3.2rem;
-  border: 1px solid rgba(53, 242, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--learn-accent) 45%, var(--border-strong));
   border-radius: 16px;
   padding: 0 1rem;
   color: var(--text);
@@ -71,8 +72,8 @@
 .nav-tab:hover,
 .nav-tab:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(53, 242, 255, 0.7);
-  box-shadow: 0 12px 36px rgba(53, 242, 255, 0.12);
+  border-color: color-mix(in srgb, var(--learn-accent) 70%, white 6%);
+  box-shadow: 0 12px 36px rgba(245, 196, 81, 0.12);
 }
 
 .category-tile::before {
@@ -91,7 +92,7 @@
 .category-tile strong {
   display: block;
   margin-top: 4rem;
-  color: var(--yellow);
+  color: var(--learn-accent);
   font-size: clamp(1.8rem, 4vw, 3rem);
   line-height: 0.9;
   text-transform: uppercase;
@@ -119,7 +120,13 @@
 }
 
 .learn-section {
+  --section-accent: var(--learn-accent);
   padding: 1rem;
+}
+
+.learn-section .eyebrow,
+.learn-hero .eyebrow {
+  color: var(--learn-accent);
 }
 
 .learn-section h3 {
