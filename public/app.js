@@ -9483,7 +9483,15 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     }
   ].sort((a, b) => b.score - a.score);
 
-  let uniqueTrends = selectReadCandidatePool(trends, 6, ["id", "label", "value"]);
+  const statsOnlyTrendContext = (() => {
+    if (!coachingRuleContext || !globalThis.RankedCoachMatchTrendsResolver?.resolveMatchTrends) return null;
+    const { logs: _reflectionContextExcluded, ...statsContext } = coachingRuleContext;
+    return statsContext;
+  })();
+  const resolvedMatchTrends = statsOnlyTrendContext
+    ? (globalThis.RankedCoachMatchTrendsResolver?.resolveMatchTrends?.(statsOnlyTrendContext) || [])
+    : [];
+  let uniqueTrends = selectReadCandidatePool(resolvedMatchTrends.length ? resolvedMatchTrends : trends, 6, ["id", "label", "value"]);
   let uniqueBreakdown = selectReadCandidatePool(breakdown, 5, ["label", "value"]);
   let uniqueTrendBreakdown = Object.fromEntries(
     Object.entries(trendBreakdown).map(([key, items]) => [
