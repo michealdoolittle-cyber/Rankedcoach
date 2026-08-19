@@ -27159,10 +27159,10 @@ body[data-theme="reaver"] .agent-modal-inner{
 }
 
 .stats-trend-card .stats-sub-text{
-  color:#e2e8f0;
-  font-size:24px;
-  line-height:1.08;
-  font-weight:800;
+  color:#a8b3c7;
+  font-size:20px;
+  line-height:1.12;
+  font-weight:650;
   white-space:normal;
 }
 
@@ -28664,7 +28664,7 @@ to{ stroke-dashoffset: 0; }
   grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
   grid-template-rows:minmax(0, 1fr) minmax(0, 1fr) !important;
   grid-template-areas:
-    "performance performance breakdown"
+    "performance performance performance"
     "maps agents weapons" !important;
   gap:12px !important;
 }
@@ -55975,35 +55975,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   gap:5px !important;
 }
 
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-head{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
-  gap:6px !important;
-  min-height:24px !important;
-  width:100% !important;
-}
-
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-tone{
-  order:1 !important;
-  margin-right:2px !important;
-}
-
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-context{
-  order:2 !important;
-  flex:0 1 auto !important;
-  justify-content:flex-end !important;
-  gap:6px !important;
-}
-
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-context .trend-signal-media{
-  order:1 !important;
-}
-
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-kicker{
-  order:2 !important;
-}
-
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-copy{
   display:grid !important;
   align-content:space-evenly !important;
@@ -62438,4 +62409,99 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   left:50% !important;
   transform:translate(-50%,-50%) !important;
   transform-origin:center !important;
+}
+
+/* 2026-08-19 live review: keep stat trend text readable and weapon art contained. */
+#page-home .loadout-card .home-loadout-odds-pill{
+  cursor:help;
+  border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 32%,rgba(148,163,184,.45)) !important;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb,var(--theme-accent,var(--accent,#22d3ee)) 14%, transparent), transparent 34%),
+    #020617 !important;
+}
+
+#page-home .loadout-card .home-loadout-odds-pill .loadout-odds-summary{
+  color:#f6c453 !important;
+}
+
+#page-home .loadout-card .home-loadout-odds-pill.is-empty .loadout-odds-summary{
+  color:#fb7185 !important;
+}
+
+.weekly-focus-trend{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:max-content;
+  padding:2px 7px;
+  border-radius:999px;
+  border:1px solid rgba(246,196,83,.45);
+  color:#f6c453;
+  background:rgba(246,196,83,.12);
+  font:850 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.05em;
+  white-space:nowrap;
+}
+
+.weekly-focus-trend.is-up{
+  color:#31f084;
+  border-color:rgba(49,240,132,.45);
+  background:rgba(49,240,132,.12);
+}
+
+.weekly-focus-trend.is-down{
+  color:#fb7185;
+  border-color:rgba(251,113,133,.45);
+  background:rgba(251,113,133,.12);
+}
+
+body.is-mobile-layout #page-home .loadout-card .home-loadout-info{
+  grid-template-columns:1fr !important;
+  grid-template-rows:repeat(3, minmax(50px, auto)) !important;
+  height:auto !important;
+  max-height:none !important;
+}
+
+body.is-mobile-layout #page-home .loadout-card .home-loadout-odds-pill{
+  min-height:50px !important;
+}
+
+#page-stats .stats-performance-card #statsPerformanceChart .stats-trend-card .stats-main-text{
+  color:#f8fafc !important;
+  font-weight:850 !important;
+}
+
+#page-stats .stats-performance-card #statsPerformanceChart .stats-trend-card .stats-sub-text{
+  color:#a8b3c7 !important;
+  font-weight:650 !important;
+  font-size:clamp(13px, .92vw, 16px) !important;
+  line-height:1.12 !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-tile{
+  grid-template-rows:minmax(24px,1fr) auto !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art-wrap{
+  height:100% !important;
+  max-height:none !important;
+  padding:1px 0 !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art{
+  width:100% !important;
+  height:100% !important;
+  max-height:min(38px, 100%) !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+  grid-template-areas:
+    "performance performance performance"
+    "maps agents weapons" !important;
+}
+
+#page-stats .stats-breakdown-card{
+  display:none !important;
 }

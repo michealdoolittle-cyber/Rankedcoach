@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260817-insights-layout-perf-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260819-live-review-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -188,6 +188,7 @@ function scheduleWeeklyFocusRollover() {
 
   weeklyFocusRolloverTimer = window.setTimeout(() => {
     updateWeeklyFocusDateLabel();
+    maybeShowWeeklyFocusRolloverReview();
     renderInsights();
     scheduleWeeklyFocusRollover();
   }, Math.max(1000, nextWeekStart.getTime() - now.getTime()));
@@ -5065,6 +5066,8 @@ function createPerformanceBucket(label) {
     adrTotal: 0,
     hsTotal: 0,
     hsCount: 0,
+    roundsPlayed: 0,
+    roundsWon: 0,
     loadoutValueTotal: 0,
     loadoutValueRounds: 0
   };
@@ -5146,12 +5149,16 @@ function finalizePerformanceBucket(bucket = {}) {
   const matchesWon = safeNumber(bucket.matchesWon);
   const matchesLost = safeNumber(bucket.matchesLost);
   const deaths = safeNumber(bucket.deaths);
+  const roundsPlayed = safeNumber(bucket.roundsPlayed);
+  const roundsWon = safeNumber(bucket.roundsWon);
 
   return {
     ...bucket,
     matchesPlayed,
     matchesWon,
     matchesLost,
+    roundsPlayed,
+    roundsWon,
     winrate: matchesPlayed ? (matchesWon / matchesPlayed) * 100 : 0,
     kd: deaths ? safeNumber(bucket.kills) / deaths : safeNumber(bucket.kills),
     acs: matchesPlayed ? safeNumber(bucket.acsTotal) / matchesPlayed : 0,
@@ -5237,6 +5244,103 @@ function getPriorityLabel(score) {
   if (score >= 75) return "High";
   if (score >= 55) return "Moderate";
   return "Watch";
+}
+
+function getPriorityTierMeaning(label = "Watch") {
+  const normalized = String(label || "Watch").trim().toLowerCase();
+  if (normalized === "immediate") return "review it before the next ranked block";
+  if (normalized === "high") return "put it near the top of the next review block";
+  if (normalized === "moderate") return "track it, but do not let it replace a clearer problem";
+  return "keep it visible without forcing the whole session around it";
+}
+
+function getEntityPriorityRead(kind = "", entity = {}) {
+  if (!entity || typeof entity !== "object") return null;
+  const entityKind = String(kind || "").trim().toLowerCase();
+  const sample = Math.round(safeNumber(
+    entity.matchesPlayed
+      ?? entity.matches
+      ?? entity.rounds
+      ?? entity.roundsPlayed
+      ?? 0
+  ));
+  if (sample <= 0) return null;
+
+  const winrate = Number.isFinite(Number(entity.winrate))
+    ? Number(entity.winrate)
+    : Number.isFinite(Number(entity.matchesWon)) && sample
+      ? safeDivide(safeNumber(entity.matchesWon) * 100, sample)
+      : Number.isFinite(Number(entity.conversionPct))
+        ? Number(entity.conversionPct)
+        : NaN;
+  const kd = Number(entity.kd);
+  const acs = Number(entity.acs);
+  const hs = Number(entity.hs);
+  let score = 48;
+  const factors = [];
+
+  if (Number.isFinite(winrate)) {
+    if (winrate < 35) score = 94;
+    else if (winrate < 45) score = 82;
+    else if (winrate < 50) score = 68;
+    else if (winrate < 55) score = 54;
+    else score = 38;
+    factors.push(`${formatPercent(winrate)} ${entityKind === "weapon" ? "round conversion" : "win rate"}`);
+  }
+
+  if (Number.isFinite(kd)) {
+    if (kd < 0.85) score += 8;
+    else if (kd >= 1.1) score -= 6;
+    factors.push(`${kd.toFixed(2)} K/D`);
+  }
+
+  if (Number.isFinite(acs) && acs > 0) {
+    if (acs < 175) score += 6;
+    else if (acs >= 230) score -= 5;
+    factors.push(`${Math.round(acs)} ACS`);
+  }
+
+  if (Number.isFinite(hs) && hs > 0) {
+    if (hs < 18) score += 3;
+    else if (hs >= 28) score -= 3;
+  }
+
+  const minimumSample = entityKind === "agent" ? 3 : entityKind === "weapon" ? 8 : 2;
+  const sampleLabel = entityKind === "weapon"
+    ? `${sample} tracked rounds`
+    : `${sample} ${sample === 1 ? "match" : "matches"}`;
+  if (sample < minimumSample) {
+    score = Math.min(score, 64);
+    factors.push(`${sampleLabel} only`);
+  }
+
+  const clampedScore = clampScore(score);
+  const label = getPriorityLabel(clampedScore);
+  const basis = factors.length ? factors.join(", ") : sampleLabel;
+  return {
+    label,
+    score: clampedScore,
+    explanation: `${label} is based on this ${entityKind || "read"} only: ${basis}. It means ${getPriorityTierMeaning(label)}.`
+  };
+}
+
+function getEntityPriorityStatItem(kind = "", entity = {}) {
+  const priorityRead = getEntityPriorityRead(kind, entity);
+  return priorityRead
+    ? statItem("Priority", priorityRead.label, priorityRead.explanation)
+    : null;
+}
+
+function getReadPriorityStatItem(card = {}) {
+  const score = firstFiniteNumber(card?.priority, card?.selectionScore, card?.score);
+  if (!Number.isFinite(score)) return null;
+  const clampedScore = clampScore(score);
+  const label = getPriorityLabel(clampedScore);
+  return statItem(
+    "Priority",
+    label,
+    `${label} belongs to this read only. It uses this card's ${Math.round(clampedScore)}/100 severity and usefulness score, so it means ${getPriorityTierMeaning(label)}.`
+  );
 }
 
 const COACHING_EVIDENCE_SOURCES = Object.freeze([
@@ -6315,7 +6419,7 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (mapWr >= 45) {
       return {
-        diagnosis: `${mapName} is close, but still not winning enough yet.`,
+        diagnosis: `${mapName} is at ${mapWr}% — close to a winning record, not there yet.`,
         emphasis: sideGap >= 12 && weakerSide ? `${weakerSide} rounds are the first thing to review.` : "The map needs a simpler plan.",
         recommendation: sideGap >= 12 && weakerSide
           ? `Go in with one ${weakerSide} plan and one backup call.`
@@ -6339,9 +6443,9 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 3) {
       return {
-        diagnosis: `${agentName} needs a few more games before this is a fair agent read.`,
+        diagnosis: `Not enough ${agentName} games played to make a fair assessment.`,
         emphasis: "Do not overreact to a tiny sample.",
-        recommendation: `Play ${agentName} when the map fits, then check whether the next few games repeat the same pattern.`
+        recommendation: `Winrate is low now, but you haven't played enough games to get an accurate assessment.`
       };
     }
 
@@ -7525,11 +7629,12 @@ function buildCoachingRuleContext({
   currentRole = "",
   totalKills = 0
 } = {}) {
-  const matchSummaries = orderedMatches.map(match => {
+  const matchSummaries = orderedMatches.map((match, index) => {
     const core = getMatchCore(match);
     const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
     return {
       ...core,
+      matchIndex: index + 1,
       utilityCastCount: rounds.reduce((sum, round) => sum + safeNumber(round?.utilityCastCount), 0),
       utilityKnownRounds: rounds.filter(round => safeNumber(round?.utilityCastCount) > 0).length
     };
@@ -7690,7 +7795,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       roleBuckets[roleKey].role = roleKey;
     }
 
-    const roundLoadoutValues = (match?.advanced?.rounds || [])
+    const matchRoundEntries = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    const matchRoundsPlayed = matchRoundEntries.length;
+    const matchRoundsWon = matchRoundEntries.filter(round => round?.roundWon === true || round?.won === true).length;
+    const roundLoadoutValues = matchRoundEntries
       .map(round => Number(round?.loadoutValue ?? round?.playerEconomy?.loadoutValue))
       .filter(Number.isFinite);
 
@@ -7708,6 +7816,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       }
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
+      bucket.roundsPlayed += matchRoundsPlayed;
+      bucket.roundsWon += matchRoundsWon;
 
       if (roundLoadoutValues.length) {
         bucket.loadoutValueTotal += roundLoadoutValues.reduce((sum, value) => sum + value, 0);
@@ -7896,11 +8006,14 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     };
   });
   const bestAgent = agents[0] || null;
-  const weakestAgent = agents.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
+  const weakestAgent = (agents.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0]
+    || (agents.length === 1 ? agents[0] : null));
   const bestMap = maps[0] || null;
-  const weakestMap = maps.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
+  const weakestMap = (maps.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0]
+    || (maps.length === 1 ? maps[0] : null));
   const bestRole = roles[0] || null;
-  const weakestRole = roles.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
+  const weakestRole = (roles.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0]
+    || (roles.length === 1 ? roles[0] : null));
   const multiKillPressure = overview.kills2K + (overview.kills3K * 1.5) + (overview.kills4K * 2) + (overview.kills5K * 3);
   const multiKillRoundCount = overview.kills2K + overview.kills3K + overview.kills4K + overview.kills5K;
   const estimatedRoundWins = Math.max(0, overview.roundsWon || (wins * 13));
@@ -8900,11 +9013,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         symbol: "â—Ž"
       },
       {
+        selectionScore: !hasMatchData ? 18 : overview.adr < 185 ? 88 : overview.adr >= 215 ? 64 : 55,
+        kicker: "Combat Output",
+        title: "Average ADR",
+        value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ADR` : "No Data",
+        detail: overview.matchesPlayed ? "Damage per round from your current imported match window." : "Import matches to unlock ADR.",
+        tone: overview.adr >= 185 ? "up" : overview.adr >= 150 ? "warn" : "down",
+        mediaText: "ADR",
+        symbol: "â—ˆ"
+      },
+      {
         kicker: "Best Agent",
         selectionScore: bestAgentEvidence?.score ?? 50,
         title: bestAgent?.agent || "No Stable Agent",
         value: bestAgent ? `${Math.round(bestAgent.winrate)}% WR` : "Build sample",
-        detail: bestAgent ? "Your best repeated agent in the current imported window." : "Play more repeated games on the same agents before calling one your best pick.",
+        detail: bestAgent ? `Your best repeated agent in the current imported window.${getRankBenchmarkInline("winRate", bestAgent.winrate, rankComparison) ? ` ${getRankBenchmarkInline("winRate", bestAgent.winrate, rankComparison)}.` : ""}` : "Play more repeated games on the same agents before calling one your best pick.",
         tone: bestAgentEvidence?.label === "established" && bestAgentEvidence.winrate >= 52 ? "up" : "warn",
         mediaType: "agent",
         mediaValue: bestAgent?.agent
@@ -8914,7 +9037,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         selectionScore: bestMapEvidence?.score ?? 44,
         title: bestMap?.map || "No Map Strength",
         value: bestMap ? `${Math.round(bestMap.winrate)}% WR` : "Build sample",
-        detail: bestMap ? "Strongest current map environment from imported results." : "A stable map strength is reported once more repeated map volume is imported.",
+        detail: bestMap ? `Strongest current map environment from imported results.${getRankBenchmarkInline("winRate", bestMap.winrate, rankComparison) ? ` ${getRankBenchmarkInline("winRate", bestMap.winrate, rankComparison)}.` : ""}` : "A stable map strength is reported once more repeated map volume is imported.",
         tone: ["developing", "established"].includes(bestMapEvidence?.label) && bestMapEvidence?.winrate >= 52 ? "up" : "warn",
         mediaType: "map",
         mediaValue: bestMap?.map
@@ -8958,7 +9081,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         selectionScore: bestRoleEvidence?.score ?? 42,
         title: bestRole ? `${bestRole.role.charAt(0).toUpperCase()}${bestRole.role.slice(1)}` : "No Role Strength",
         value: bestRole ? `${Math.round(bestRole.winrate)}% WR` : "Build sample",
-        detail: bestRole ? "Highest-performing repeated role in the current profile window." : "Role strengths need more repeated matches before they become trustworthy.",
+        detail: bestRole ? `Highest-performing repeated role in the current profile window.${getRankBenchmarkInline("winRate", bestRole.winrate, rankComparison) ? ` ${getRankBenchmarkInline("winRate", bestRole.winrate, rankComparison)}.` : ""}` : "Role strengths need more repeated matches before they become trustworthy.",
         tone: ["developing", "established"].includes(bestRoleEvidence?.label) && bestRoleEvidence?.winrate >= 52 ? "up" : "warn",
         mediaType: "role",
         mediaValue: bestRole?.role
@@ -8968,10 +9091,30 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         kicker: "Awareness Check",
         title: weakestRole ? `${weakestRole.role.charAt(0).toUpperCase()}${weakestRole.role.slice(1)}` : "Role Contrast Pending",
         value: weakestRole ? `${Math.round(weakestRole.winrate)}% WR` : "Build sample",
-        detail: weakestRole ? `Current gap to the strongest role is ${roleGap} percentage points.` : "The weaker role read will sharpen once multiple roles have enough volume.",
+        detail: weakestRole ? `Current gap to the strongest role is ${roleGap} percentage points.${getRankBenchmarkInline("winRate", weakestRole.winrate, rankComparison) ? ` ${getRankBenchmarkInline("winRate", weakestRole.winrate, rankComparison)}.` : ""}` : "The weaker role read will sharpen once multiple roles have enough volume.",
         tone: weakestRole ? (roleGap >= 18 ? "down" : "warn") : "warn",
         mediaType: "role",
         mediaValue: weakestRole?.role
+      },
+      {
+        selectionScore: assistsPerMatch < 3.5 ? 86 : assistsPerMatch >= 5 ? 62 : 54,
+        kicker: "Support Value",
+        title: "Assists / Match",
+        value: overview.matchesPlayed ? `${assistsPerMatch.toFixed(1)} Assists` : "No Data",
+        detail: overview.matchesPlayed ? "Shows how often your play creates teammate value, trades, or follow-up pressure." : "Import matches to unlock support value.",
+        tone: assistsPerMatch >= 4 ? "up" : assistsPerMatch >= 3 ? "warn" : "down",
+        mediaType: "role",
+        mediaValue: currentSignalRole
+      },
+      {
+        selectionScore: deathsPerMatch >= 16 ? 90 : deathsPerMatch <= 12 ? 60 : 54,
+        kicker: "Round Survivability",
+        title: "Deaths / Match",
+        value: overview.matchesPlayed ? `${deathsPerMatch.toFixed(1)} Deaths` : "No Data",
+        detail: overview.matchesPlayed ? "Shows how often rounds stay playable because you are still alive or traded late." : "Import matches to unlock survivability.",
+        tone: deathsPerMatch <= 12 ? "up" : deathsPerMatch <= 16 ? "warn" : "down",
+        mediaType: "role",
+        mediaValue: currentSignalRole
       },
       {
         kicker: "Stable Agent",
@@ -9398,10 +9541,23 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const weeklyWeakestMapLabel = weeklyWeakestMap?.map ? formatReadableLabel(weeklyWeakestMap.map) : "";
   const weeklyWeakestRoleLabel = weeklyWeakestRole?.role ? formatReadableLabel(weeklyWeakestRole.role) : "";
   const weeklyWeakestContextLabel = weeklyWeakestMapLabel || weeklyWeakestRoleLabel || "This Context";
+  const compassDriverByLens = {
+    aim: Number.isFinite(Number(overview.hs)) && safeNumber(overview.hs) < 22
+      ? `headshot rate at ${formatPercent(overview.hs)}`
+      : `fight value at ${safeNumber(overview.kd).toFixed(2)} K/D`,
+    gamesense: avgKast
+      ? `round impact at ${Math.round(avgKast)}% KAST`
+      : `match win rate at ${formatPercent(overview.winrate)}`,
+    teamplay: `assist output at ${assistsPerMatch.toFixed(1)} assists per match`,
+    discipline: `survivability at ${deathsPerMatch.toFixed(1)} deaths per match`
+  };
+  const contextWeakestScore = safeNumber(contextCompassScores[contextWeakestLens]);
+  const contextWeakestLensAvailable = hasMatchData && contextWeakestScore < 55;
 
   const weeklyCandidates = [
     {
       key: weeklyMoodPatternEligible ? "tilt" : (weeklySelfCommsValues.length ? "self_comms" : "performance"),
+      available: Boolean(weeklyMoodPatternEligible || weeklySelfCommsValues.length >= 2 || weeklyOrderedMatches.length >= 3),
       label: weeklyMoodPatternEligible
         ? `Mood pattern: ${weeklyTopMoodEntry?.[0] || "unfavorable sessions"}`
         : weeklySelfCommsValues.length
@@ -9434,6 +9590,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       key: "ratings",
+      available: Boolean(weeklyLowRatedLogs.length >= 2),
       label: `Weakest self ratings${weeklyLowRatedLogs[0]?.focus ? `: ${weeklyLowRatedLogs[0].focus}` : ""}`,
       summary: weeklyLowRatedLogs[0]?.focus
         ? `${weeklyLowRatedLogs[0].focus} focus category is reported most often in low mood-rated sessions this week.`
@@ -9471,15 +9628,16 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       key: "impactful",
+      available: contextWeakestLensAvailable,
       label: hasMatchData ? `Biggest coaching category gap: ${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"}` : "Biggest coaching category gap: No data",
-      summary: hasMatchData ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"} is the lowest of the four current Compass pillars at ${contextCompassScores[contextWeakestLens]}/100.` : "Import match history before RankedCoach calls out an impact shift.",
+      summary: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "Core category"} is at ${contextWeakestScore}/100; ${compassDriverByLens[contextWeakestLens] || "one underlying stat"} is the first driver to review.` : "No Compass pillar is below the active review floor this week.",
       score: hasMatchData ? 100 - safeNumber(contextCompassScores[contextWeakestLens]) : 0,
       confidence: hasMatchData ? (orderedMatches.length >= 8 ? "High" : orderedMatches.length >= 4 ? "Medium" : "Low") : "Low",
       sourceLabel: hasMatchData ? `This aggregates Aim, Game Sense, Teamwork, and Discipline from ${orderedMatches.length} imported matches and ${logs.length} reflection logs.` : "No imported match history available yet.",
-      formula: hasMatchData ? `A score of 100 means every input in that pillar met the top of its coaching scale. Gap = 100 - ${contextCompassScores[contextWeakestLens]} = ${100 - contextCompassScores[contextWeakestLens]}.` : "No formula until match history is imported.",
+      formula: hasMatchData ? `Eligible only below 55/100. Current ${COMPASS_LENS_META[contextWeakestLens]?.label || "category"} = ${contextWeakestScore}/100; driver = ${compassDriverByLens[contextWeakestLens] || "current lowest input"}.` : "No formula until match history is imported.",
       scopeLabel: `Imported history through ${orderedMatches.length ? new Date(getMatchCore(orderedMatches[orderedMatches.length - 1]).createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "today"}: ${orderedMatches.length} matches and ${logs.length} reflection logs.`,
       gamesUsed: [...orderedMatches.map(formatWeeklyGame), ...logs.map((entry, index) => ({ label: `Reflection ${index + 1}`, date: new Date(entry?.createdAt || "").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }), context: [entry?.focus, entry?.mood].filter(Boolean).join(" | ") || "Saved reflection" }))],
-      read: hasMatchData ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "This category"} is your lowest current Compass pillar, so it is the clearest long-term development target.` : "No impact read is available until match history is imported."
+      read: contextWeakestLensAvailable ? `${COMPASS_LENS_META[contextWeakestLens]?.label || "This category"} is low enough to review this week because ${compassDriverByLens[contextWeakestLens] || "one input is dragging the category down"}.` : "No impact read is available until a Compass pillar drops below the weekly review floor."
     }
   ].sort((a, b) => b.score - a.score);
 
@@ -9491,6 +9649,24 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const resolvedMatchTrends = statsOnlyTrendContext
     ? (globalThis.RankedCoachMatchTrendsResolver?.resolveMatchTrends?.(statsOnlyTrendContext) || [])
     : [];
+  resolvedMatchTrends.slice(0, 4).forEach((trend, index) => {
+    weeklyCandidates.push({
+      key: `trend_${trend?.id || index}`,
+      available: Boolean(trend?.value && trend?.tone),
+      label: trend?.label || trend?.title || `Match trend ${index + 1}`,
+      summary: trend?.read || trend?.detail || trend?.preview || "Recent match trend available.",
+      score: safeNumber(trend?.selectionScore ?? trend?.priority, 50),
+      confidence: overview.matchesPlayed >= 8 ? "High" : overview.matchesPlayed >= 4 ? "Medium" : "Low",
+      trendTone: trend?.tone || "",
+      trendLabel: trend?.deltaLabel ? `${trend?.tone === "up" ? "↑" : "↓"} ${trend.deltaLabel}` : "",
+      sourceLabel: trend?.sourceLabel || trend?.detail || "Recent imported match trend.",
+      formula: trend?.formula || trend?.benchmark || "Trend generated from imported match data.",
+      scopeLabel: trend?.sourceLabel || `Weekly window ${weeklyScopeLabel}.`,
+      gamesUsed: Array.isArray(trend?.proofItems) ? trend.proofItems : [],
+      read: trend?.action || trend?.read || trend?.detail || "Use this trend as the next short-term review target."
+    });
+  });
+  weeklyCandidates.sort((a, b) => b.score - a.score);
   let uniqueTrends = selectReadCandidatePool(resolvedMatchTrends.length ? resolvedMatchTrends : trends, 6, ["id", "label", "value"]);
   let uniqueBreakdown = selectReadCandidatePool(breakdown, 5, ["label", "value"]);
   let uniqueTrendBreakdown = Object.fromEntries(
@@ -9500,7 +9676,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     ])
   );
   let uniqueRecentImprovements = dedupeRecentImprovementItems(recentImprovements);
-  let uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"]);
+  let uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"])
+    .filter(candidate => candidate?.available !== false)
+    .slice(0, 4);
 
   const coachingCopyContext = buildCoachingCopyContext({
     overview,
@@ -10985,8 +11163,29 @@ function getActiveRankBenchmarkComparison(values = {}) {
 function getActiveRankMetricComparison(metricKey = "", value = null, rankComparison = null) {
   const key = String(metricKey || "").trim();
   if (!key) return null;
-  const comparison = rankComparison || getActiveRankBenchmarkComparison({ [key]: value });
-  const metric = comparison?.metrics?.[key] || null;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return null;
+  const comparison = rankComparison || getActiveRankBenchmarkComparison({ [key]: numericValue });
+  const benchmark = Number(comparison?.benchmark?.[key]);
+  if (!Number.isFinite(benchmark)) return null;
+  const compareValue = globalThis.RankedCoachRankBenchmarks?.compareValue;
+  if (typeof compareValue === "function") {
+    const meta = globalThis.RankedCoachRankBenchmarks?.METRIC_META?.[key]
+      || comparison?.metrics?.[key]
+      || {};
+    const metric = compareValue(numericValue, benchmark, meta);
+    return metric && Number.isFinite(Number(metric.value)) && Number.isFinite(Number(metric.benchmark)) ? metric : null;
+  }
+  const referenceMetric = comparison?.metrics?.[key] || {};
+  const relativeDelta = benchmark ? (numericValue - benchmark) / benchmark : 0;
+  const metric = {
+    ...referenceMetric,
+    value: numericValue,
+    benchmark,
+    delta: numericValue - benchmark,
+    relativeDelta,
+    direction: relativeDelta >= 0.05 ? "above" : relativeDelta <= -0.05 ? "below" : "near"
+  };
   return metric && Number.isFinite(Number(metric.value)) && Number.isFinite(Number(metric.benchmark)) ? metric : null;
 }
 
@@ -11136,6 +11335,7 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
       ? logCountLabel(logEntries.length)
       : "No player data yet";
 
+  const readPriorityItem = getReadPriorityStatItem(card);
   const readItems = [
     behaviorRole ? statItem("Role Context", behaviorRole, "This is the role most tied to low-rated or frustrated saved logs in the current profile.") : null,
     statItem("Read", label, "Selected match pattern card."),
@@ -11156,8 +11356,8 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
       items: [
         statItem("Data Source", sourceLabel, "This combines imported matches, saved logs, and the active profile."),
         statItem("Data Confidence", analytics?.confidenceLabel || "Low Confidence", "Shows how much data supports this read."),
-        statItem("Priority", analytics?.priorityLabel || "Watch", "Priority describes how soon this read should affect the next review block.")
-      ]
+        readPriorityItem
+      ].filter(Boolean)
     },
     {
       key: "formula",
@@ -12007,54 +12207,51 @@ function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "a
   const sideRounds = Math.max(1, safeNumber(sideMetrics.roundsPlayed) || rounds.length || 1);
   const firstDeathRate = safeDivide(sideMetrics.firstDeaths, sideRounds) * 100;
   const firstBloodRate = safeDivide(sideMetrics.firstBloods, sideRounds) * 100;
+  const firstDeathAvoidance = 100 - firstDeathRate;
   const survivalRate = sideMetrics.hasSurvivalData ? safeDivide(sideMetrics.survived, sideRounds) * 100 : NaN;
   const sideLabel = side === "attack" ? "ATK" : "DEF";
   const survivalFormula = sideMetrics.hasSurvivalData
     ? `survived rounds / ${sideLabel} rounds = ${safeNumber(sideMetrics.survived)} / ${sideRounds}`
     : "Survival is unavailable for the imported round sample.";
+  const roundConversionItem = statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`);
+  const survivalItem = statItem("Survival Rate", formatPercent(survivalRate), survivalFormula);
+  const firstBloodItem = statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`);
+  const firstDeathItem = statItem("First Death Rate", formatPercent(firstDeathRate), `firstDeaths / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds}`);
+  const firstDeathAvoidanceItem = statItem(`${sideLabel} First-Death Avoidance`, formatPercent(firstDeathAvoidance), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`);
 
   if (roleKey === "controller") {
-    return side === "attack"
-      ? [
-          statItem("First Death Rate", formatPercent(firstDeathRate), `firstDeaths / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds}`)
-        ]
-      : [
-          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula),
-          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`)
-        ];
+    return [
+      firstDeathItem,
+      firstDeathAvoidanceItem,
+      survivalItem,
+      roundConversionItem
+    ];
   }
 
   if (roleKey === "sentinel") {
-    return side === "attack"
-      ? [
-          statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula)
-        ]
-      : [
-          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula),
-          statItem("Round Conversion", formatPercent(sideMetrics.winPct), `roundsWon / ${sideLabel} rounds = ${safeNumber(sideMetrics.roundsWon)} / ${sideRounds}`)
-        ];
+    return [
+      firstBloodItem,
+      firstDeathAvoidanceItem,
+      survivalItem,
+      roundConversionItem
+    ];
   }
 
   if (roleKey === "initiator") {
-    return side === "attack"
-      ? [
-          statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`)
-        ]
-      : [
-          statItem("Survival Rate", formatPercent(survivalRate), survivalFormula)
-        ];
+    return [
+      firstBloodItem,
+      firstDeathAvoidanceItem,
+      survivalItem,
+      roundConversionItem
+    ];
   }
 
-  return side === "attack"
-    ? [
-        statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Attack First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`)
-      ]
-    : [
-        statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Defense First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`)
-      ];
+  return [
+    firstBloodItem,
+    firstDeathAvoidanceItem,
+    survivalItem,
+    roundConversionItem
+  ];
 }
 
 function buildCalculatedAgentDetailTabs(agentName, analytics) {
@@ -12089,6 +12286,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
     : "";
   const rankKdRead = agent ? getRankBenchmarkInline("kd", safeNumber(agent.kd), analytics?.rankComparison) : "";
   const rankHsRead = agent && Number.isFinite(agentHsForRank) ? getRankBenchmarkInline("hsPercent", agentHsForRank, analytics?.rankComparison) : "";
+  const agentPriorityItem = getEntityPriorityStatItem("agent", agent);
 
   return [
     {
@@ -12099,8 +12297,8 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
         statItem("Emphasis", coach.emphasis, "What should matter most when you queue this agent next."),
         statItem("Recommendation", coach.recommendation, "Next-step plan translated from the current agent sample."),
         statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence reflects how many imported matches and reflections support this read."),
-        statItem("Priority", analytics?.priorityLabel || "Watch", "Current coaching priority tier.")
-      ]
+        agentPriorityItem
+      ].filter(Boolean)
     },
     {
       key: "general",
@@ -12160,6 +12358,7 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
   const defenseRounds = getEntityRounds({ roleName, side: "defense", matchEntries: scoped.matches });
   const roleAttackMetrics = getSideMetricsFromRounds(attackRounds);
   const roleDefenseMetrics = getSideMetricsFromRounds(defenseRounds);
+  const rolePriorityItem = getEntityPriorityStatItem("role", role);
 
   return [
     {
@@ -12170,8 +12369,8 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
         statItem("Emphasis", coach.emphasis, "What should matter most when you queue this role family next."),
         statItem("Recommendation", coach.recommendation, "Next-step plan for your current role and match history."),
         statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence reflects how many imported matches and reflections support this read."),
-        statItem("Priority", analytics?.priorityLabel || "Watch", "Current coaching priority tier.")
-      ]
+        rolePriorityItem
+      ].filter(Boolean)
     },
     {
       key: "general",
@@ -12617,26 +12816,30 @@ function buildPerformanceTrendDetailTabs(trend = {}, model = {}) {
   const proofItems = Array.isArray(trend?.proofItems) && trend.proofItems.length
     ? trend.proofItems
     : [statItem("Proof", "No proof items yet", "This read needs more imported context before it can show proof items.")];
+  const normalizedProofItems = proofItems.map(item => {
+    const normalized = Array.isArray(item)
+      ? { label: item[0], stat: item[1], formula: item[2] || "" }
+      : { label: item?.label, stat: item?.stat, formula: item?.formula || "" };
+    return {
+      ...normalized,
+      label: /^anchor$/i.test(String(normalized.label || "")) ? "Recorded Matches" : normalized.label
+    };
+  });
 
   return [
     {
-      key: "summary",
-      label: "Summary",
+      key: "recorded",
+      label: "Recorded Matches",
       items: [
-        statItem("Outcome", trend?.value || "--", trend?.detail || "Current displayed performance outcome."),
-        statItem("Read", trend?.read || trend?.detail || "No coaching read available yet.", trend?.read || trend?.detail || "No coaching read available yet."),
-        statItem("Source Window", trend?.sourceLabel || `${safeNumber(model?.overview?.matchesPlayed)} imported matches`, trend?.sourceLabel || "Current imported profile window.")
+        statItem("Recorded Matches", trend?.sourceLabel || `${safeNumber(model?.overview?.matchesPlayed)} imported matches`, trend?.sourceLabel || "Current imported profile window."),
+        statItem("Outcome", trend?.value || "--", trend?.detail || "Current displayed performance outcome.")
       ]
     },
     {
-      key: "proof",
-      label: "Proof",
-      items: proofItems
-    },
-    {
-      key: "formula",
-      label: "Formula",
+      key: "details",
+      label: "+ Additional Details",
       items: [
+        ...normalizedProofItems,
         statItem("Formula", trend?.formula || "No formula available yet.", trend?.formula || "No formula available yet."),
         statItem("Benchmark", trend?.benchmark || "No benchmark available yet.", trend?.benchmark || "No benchmark available yet."),
         statItem("Tone", getSignalToneMeta(trend?.tone).label, "Card tone is assigned from the current benchmark and imported profile values.")
@@ -12667,7 +12870,8 @@ function openStatsDetailModal(kind, value) {
       : "";
     title.textContent = `${value} Map Pattern`;
     items.push(statItem("Diagnosis", coach.diagnosis, "Coaching read built from map performance and sample size."));
-    items.push(statItem("Priority", analytics?.priorityLabel || "Watch", "Shared coaching priority based on current top issue severity."));
+    const mapPriorityItem = getEntityPriorityStatItem("map", map);
+    if (mapPriorityItem) items.push(mapPriorityItem);
     items.push(statItem("Recommendation", coach.recommendation, "Next-step recommendation translated from the current map trend."));
     items.push(statItem("Win Rate", map ? formatPercent(mapWinRate) : "--", map ? `matchesWon / matchesPlayed on ${value} = ${safeNumber(map.matchesWon)} / ${safeNumber(map.matchesPlayed)}` : "No imported map segment."));
     if (rankWinrateRead) {
@@ -12884,6 +13088,8 @@ function getNextFocusFromInsight(ins) {
 const WEEKLY_FOCUS_KEY = "valtracker_weekly_focus_v1";
 const WEEKLY_FOCUS_WEEK_KEY = "valtracker_weekly_focus_week_v1";
 const WEEKLY_FOCUS_CONFIDENCE_KEY = "valtracker_weekly_focus_confidence_v1";
+const WEEKLY_FOCUS_SNAPSHOT_KEY = "valtracker_weekly_focus_snapshot_v1";
+const WEEKLY_FOCUS_REVIEW_SEEN_KEY = "valtracker_weekly_focus_review_seen_v1";
 const APP_ENTRY_CHOICE_KEY = "valtracker_entry_choice_v1";
 const RIOT_PROFILE_PROMPT_DISMISS_KEY = "rankedcoach_riot_profile_prompt_dismissed_v1";
 let loginInitializationInFlight = false;
@@ -12891,6 +13097,15 @@ let securityTotpEnrollment = null;
 
 function getCurrentWeekKey() {
   return `week-${formatLocalDateKey(getWeekStart())}`;
+}
+
+function getStoredWeeklyFocusSnapshot() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(WEEKLY_FOCUS_SNAPSHOT_KEY) || "null");
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (_error) {
+    return null;
+  }
 }
 
 function getLockedWeeklyFocus() {
@@ -12902,22 +13117,79 @@ function getLockedWeeklyFocus() {
   if (savedFocus && savedWeek === currentWeek) {
     const normalizedSavedFocus = normalizeFocusCategoryValue(savedFocus, "");
     if (!normalizedSavedFocus) return null;
+    const snapshot = getStoredWeeklyFocusSnapshot();
     return {
       label: normalizedSavedFocus,
-      confidence: savedConfidence || "Low"
+      confidence: savedConfidence || snapshot?.confidence || "Low",
+      candidate: snapshot?.weekKey === currentWeek ? snapshot?.candidate || null : null
     };
   }
 
   return null;
 }
 
-function setLockedWeeklyFocus(focus, confidence = "Low") {
+function setLockedWeeklyFocus(focus, confidence = "Low", candidate = null) {
   const normalizedFocus = normalizeFocusCategoryValue(focus, "");
   if (!normalizedFocus || isManualLogFocusOption(normalizedFocus)) return;
 
   localStorage.setItem(WEEKLY_FOCUS_KEY, normalizedFocus);
   localStorage.setItem(WEEKLY_FOCUS_WEEK_KEY, getCurrentWeekKey());
   localStorage.setItem(WEEKLY_FOCUS_CONFIDENCE_KEY, confidence || "Low");
+  if (candidate && typeof candidate === "object") {
+    try {
+      localStorage.setItem(WEEKLY_FOCUS_SNAPSHOT_KEY, JSON.stringify({
+        weekKey: getCurrentWeekKey(),
+        candidate: {
+          key: candidate.key || normalizedFocus,
+          label: candidate.label || normalizedFocus,
+          summary: candidate.summary || "",
+          confidence: candidate.confidence || confidence || "Low",
+          sourceLabel: candidate.sourceLabel || "",
+          formula: candidate.formula || "",
+          scopeLabel: candidate.scopeLabel || "",
+          read: candidate.read || "",
+          gamesUsed: Array.isArray(candidate.gamesUsed) ? candidate.gamesUsed.slice(0, 12) : []
+        }
+      }));
+    } catch (_error) {
+      localStorage.removeItem(WEEKLY_FOCUS_SNAPSHOT_KEY);
+    }
+  }
+}
+
+function maybeShowWeeklyFocusRolloverReview() {
+  const snapshot = getStoredWeeklyFocusSnapshot();
+  const currentWeek = getCurrentWeekKey();
+  const previousWeek = snapshot?.weekKey || localStorage.getItem(WEEKLY_FOCUS_WEEK_KEY) || "";
+  if (!snapshot?.candidate || !previousWeek || previousWeek === currentWeek) return false;
+  const reviewKey = `${previousWeek}->${currentWeek}`;
+  if (localStorage.getItem(WEEKLY_FOCUS_REVIEW_SEEN_KEY) === reviewKey) return false;
+  const modal = document.getElementById("weeklyFocusModal");
+  const content = document.getElementById("weeklyFocusModalContent");
+  if (!modal || !content) return false;
+  localStorage.setItem(WEEKLY_FOCUS_REVIEW_SEEN_KEY, reviewKey);
+  const candidate = snapshot.candidate;
+  const title = modal.querySelector(".lens-modal-title");
+  if (title) title.textContent = "Week in Review";
+  const gamesUsed = Array.isArray(candidate.gamesUsed) ? candidate.gamesUsed.slice(0, 5) : [];
+  content.innerHTML = `
+    <div class="stats-proof-kicker">Locked weekly read</div>
+    <h3>${escapeHtml(candidate.label || "Weekly Focus")}</h3>
+    <p>${escapeHtml(normalizeRankedCoachCopy(candidate.summary || candidate.read || "Your previous weekly read is ready to review before this week's focus updates."))}</p>
+    <div class="timeline-proof-grid">
+      ${statItemHtml("Read Confidence", candidate.confidence || "Low", "Confidence saved with last week's locked focus.")}
+      ${statItemHtml("Recorded Matches", candidate.sourceLabel || candidate.scopeLabel || "Last week's saved focus window.", "The window that produced the locked read.")}
+      ${statItemHtml("How it was scored", candidate.formula || "Stored weekly focus formula.", "This explains why the read was shown.")}
+    </div>
+    ${gamesUsed.length ? `<div class="timeline-proof-list">${gamesUsed.map(item => `
+      <div class="timeline-proof-row">
+        <span>${escapeHtml(item?.label || "Recorded item")}</span>
+        <strong>${escapeHtml([item?.date, item?.context].filter(Boolean).join(" | ") || "Weekly evidence")}</strong>
+      </div>
+    `).join("")}</div>` : ""}
+  `;
+  showModalById("weeklyFocusModal");
+  return true;
 }
 
 // ========================
@@ -19257,12 +19529,6 @@ const GUEST_TUTORIAL_STEPS = [
   },
   {
     page: "stats",
-    selector: ".stats-breakdown-card",
-    title: "Match Patterns",
-    copy: "These cards explain what the stats may mean, not just what the number is."
-  },
-  {
-    page: "stats",
     selector: ".stats-maps-card",
     title: "Map Stats",
     copy: "Map cards show repeated map performance. Opening a map gives quick economy-round reads such as pistol, bonus, save, and full-buy outcomes when that data is available."
@@ -24398,10 +24664,75 @@ function pickLoadoutAgent(agents = getLoadoutAgentPool(), selectedMap = getLoado
   return weighted[weighted.length - 1].agent;
 }
 
+function getLoadoutRollOdds(selectedMap = getLoadoutPreferences().map) {
+  const basePool = getLoadoutAgentPool();
+  const previousAgent = String(activeAgent || agentName?.textContent || "").trim();
+  const eligibleForThisRoll = basePool.length > 1
+    ? basePool.filter(agent => agent !== previousAgent)
+    : basePool;
+  const weighted = getMapWeightedLoadoutAgents(eligibleForThisRoll, selectedMap);
+  const totalWeight = weighted.reduce((sum, entry) => sum + safeNumber(entry?.weight), 0);
+  const entries = totalWeight > 0
+    ? weighted.map(entry => ({
+      agent: entry.agent,
+      role: agentRoles?.[entry.agent] || "",
+      winRate: Number.isFinite(Number(entry.winRate)) ? Number(entry.winRate) : null,
+      odds: (safeNumber(entry.weight) / totalWeight) * 100
+    })).sort((left, right) => right.odds - left.odds || String(left.agent).localeCompare(String(right.agent)))
+    : [];
+  const map = normalizeLoadoutMap(selectedMap);
+  const role = activeRoleFilter && activeRoleFilter !== "any" ? activeRoleFilter : "";
+  const preferences = getLoadoutPreferences();
+  const modeLabel = preferences.oneTrick
+    ? "One-trick"
+    : map
+      ? `${map}${role ? ` ${role}` : ""} pool`
+      : role
+        ? `${role.charAt(0).toUpperCase() + role.slice(1)} pool`
+        : "Any role pool";
+  const isFocusedMapPool = Boolean(map && entries.length && entries.length <= 4);
+  return {
+    entries,
+    modeLabel,
+    isFocusedMapPool,
+    omittedPreviousAgent: Boolean(previousAgent && basePool.length > 1 && !eligibleForThisRoll.includes(previousAgent))
+  };
+}
+
+function renderLoadoutRollOdds() {
+  const panel = document.getElementById("loadoutRollOddsPanel");
+  const summary = document.getElementById("loadoutRollOddsSummary");
+  if (!panel || !summary) return;
+  const odds = getLoadoutRollOdds();
+  panel.classList.toggle("is-empty", !odds.entries.length);
+  if (!odds.entries.length) {
+    summary.textContent = "No eligible agents";
+    panel.title = "No eligible agent remains after your current role, map, one-trick, and exclusion settings.";
+    return;
+  }
+  const top = odds.entries
+    .slice(0, 4)
+    .map(entry => `${entry.agent} ${Math.round(entry.odds)}%`)
+    .join(" · ");
+  const poolHint = odds.isFocusedMapPool ? "top map fits" : `${odds.entries.length} eligible`;
+  summary.textContent = `${odds.modeLabel}: ${top}`;
+  panel.title = [
+    `${odds.modeLabel} (${poolHint})`,
+    odds.omittedPreviousAgent ? "Current agent is skipped for the next roll when another eligible pick exists." : "",
+    ...odds.entries.map(entry => {
+      const mapFit = entry.winRate !== null ? `, ${Math.round(entry.winRate)}% map WR` : "";
+      return `${entry.agent}: ${entry.odds.toFixed(1)}%${mapFit}`;
+    })
+  ].filter(Boolean).join("\n");
+}
+
 function renderLoadoutMapControl() {
   const trigger = document.getElementById("loadoutMapPicker");
   const value = document.getElementById("loadoutMapDisplay");
-  if (!trigger || !value) return;
+  if (!trigger || !value) {
+    renderLoadoutRollOdds();
+    return;
+  }
   const preferences = getLoadoutPreferences();
   const selectedMap = preferences.map;
   value.textContent = selectedMap || "Any map";
@@ -24415,6 +24746,7 @@ function renderLoadoutMapControl() {
   trigger.setAttribute("aria-label", selectedMap
     ? `Selected map: ${selectedMap}. Change map weighting, or choose ${selectedMap} again to clear it.`
     : "Choose a map to weight the next loadout roll.");
+  renderLoadoutRollOdds();
 }
 
 function renderLoadoutMapPicker() {
@@ -24466,6 +24798,7 @@ window.RankedCoachLoadoutRoll = Object.freeze({
   getMapReference: getLoadoutMapReference,
   getTopMapAgents: getTopHighRankLoadoutAgentsForMap,
   getWeightedAgents: getMapWeightedLoadoutAgents,
+  getOdds: getLoadoutRollOdds,
   pickAgent: pickLoadoutAgent
 });
 
@@ -28319,6 +28652,7 @@ function renderRoleSelector(){
           btn.dataset.role?.toLowerCase() === role
         );
       });
+      renderLoadoutRollOdds();
     };
 
     container.appendChild(btn);
@@ -41663,6 +41997,7 @@ function initApp(){
   renderStatsAgents();
   renderStatsMaps();
   renderStatsWeapons();
+  maybeShowWeeklyFocusRolloverReview();
   renderInsights();
   renderLogFeed();
   syncLoggingQuickChipStates();
@@ -48473,6 +48808,7 @@ function bindEvents(){
         (btn.dataset.role || "").toLowerCase() === role
       );
     });
+    renderLoadoutRollOdds();
   });
 
   document.getElementById("profileAddBtn")?.addEventListener("click", (e) => {
@@ -48499,6 +48835,7 @@ function bindEvents(){
       if(agentRoleDropdown){
         agentRoleDropdown.value = activeRole;
       }
+      renderLoadoutRollOdds();
     });
   });
 
@@ -49482,6 +49819,7 @@ function selectAgentFromModal(agent){
           btn.dataset.role?.toLowerCase() === role
         );
       });
+      renderLoadoutRollOdds();
       updateImpactRolePill({ agent }, null);
     }
 
@@ -49810,8 +50148,8 @@ function syncImprovementCardSub(scope = getTimelineContext()) {
     ? `Game ${selectedIndex + 1}${selectedDate ? ` - ${selectedDate}` : ""}`
     : scope.scopeDetail;
   sub.textContent = roleAgentLabel
-    ? `Recent Improvement | ${scopeLabel} | ${roleAgentLabel}`
-    : `Recent Improvement | ${scopeLabel}`;
+    ? `Recent Match Improvement | ${scopeLabel} | ${roleAgentLabel}`
+    : `Recent Match Improvement | ${scopeLabel}`;
 }
 
 function formatImprovementGameDate(value) {
@@ -50233,10 +50571,15 @@ function openWeeklyFocusModal(itemKey = "") {
   const modal = document.getElementById("weeklyFocusModal");
   const content = document.getElementById("weeklyFocusModalContent");
   if (!modal || !content) return;
+  const title = modal.querySelector(".lens-modal-title");
+  if (title) title.textContent = "This Week's Focus";
 
   const model = getPlayerModel();
-  const weeklyCandidates = model?.scoring?.weeklyCandidates || [];
-  const target = weeklyCandidates.find(item => item.key === itemKey) || weeklyCandidates[0] || null;
+  const lockedCandidate = getLockedWeeklyFocus()?.candidate || null;
+  const weeklyCandidates = lockedCandidate
+    ? [lockedCandidate, ...(model?.scoring?.weeklyCandidates || []).filter(item => String(item?.key || "") !== String(lockedCandidate.key || ""))]
+    : (model?.scoring?.weeklyCandidates || []);
+  const target = weeklyCandidates.find(item => item.key === itemKey) || lockedCandidate || weeklyCandidates[0] || null;
   if (!target || target.available === false) return;
 
   const confidenceValue = escapeHtml(target.confidence || "Low");
@@ -62479,14 +62822,14 @@ function renderInsightsModel() {
       && weeklyFocusConfidenceRank(freshConfidence) > weeklyFocusConfidenceRank(lockedConfidence);
     if (shouldUpgradeLock) {
       activeInsightFocus = normalizeFocusCategoryValue(topWeeklyCandidate.label, "Discipline");
-      setLockedWeeklyFocus(activeInsightFocus, freshConfidence);
+      setLockedWeeklyFocus(activeInsightFocus, freshConfidence, topWeeklyCandidate);
     } else {
       activeInsightFocus = normalizeFocusCategoryValue(lockedFocus.label, "Discipline");
     }
   } else {
     activeInsightFocus = normalizeFocusCategoryValue(topWeeklyCandidate?.label || model?.focus || topInsights[0]?.focus || "", "");
     if (activeInsightFocus) {
-      setLockedWeeklyFocus(activeInsightFocus, topWeeklyCandidate?.confidence || "Low");
+      setLockedWeeklyFocus(activeInsightFocus, topWeeklyCandidate?.confidence || "Low", topWeeklyCandidate);
     }
   }
 
@@ -62771,8 +63114,12 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
   const model = getPlayerModel();
   const weekly = model?.weekly || {};
   const weeklyCards = weekly.cards || {};
-  const weeklyCandidates = model?.scoring?.weeklyCandidates || [];
-  const primaryCandidate = weeklyCandidates[0] || null;
+  const lockedFocus = getLockedWeeklyFocus();
+  const lockedCandidate = lockedFocus?.candidate || null;
+  const weeklyCandidates = lockedCandidate
+    ? [lockedCandidate, ...(model?.scoring?.weeklyCandidates || []).filter(candidate => String(candidate?.key || "") !== String(lockedCandidate.key || ""))]
+    : (model?.scoring?.weeklyCandidates || []);
+  const primaryCandidate = lockedCandidate || weeklyCandidates[0] || null;
   const leadInsight = topInsights[0] || cachedInsights[0] || null;
 
   const applyConfidencePillClass = (el, confidence = {}) => {
@@ -62818,11 +63165,16 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
           : "confidence-low";
       const pillBody = normalizeRankedCoachCopy(candidate?.summary || candidate?.label || meta.fallback);
       const isAvailable = candidate?.available !== false;
+      const trendClass = candidate?.trendTone === "up" ? "is-up" : candidate?.trendTone === "down" ? "is-down" : "";
+      const trendMarkup = candidate?.trendLabel
+        ? `<span class="weekly-focus-trend ${trendClass}">${escapeHtml(candidate.trendLabel)}</span>`
+        : "";
 
       return `
         <button class="weekly-focus-pill${isAvailable ? "" : " is-disabled"}" type="button" data-weekly-key="${escapeHtml(candidate?.key || "")}" title="${escapeHtml(candidate?.sourceLabel || confidenceConfig.detail)}" ${isAvailable ? "" : "disabled aria-disabled=\"true\""}>
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
+            ${trendMarkup}
             <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">${escapeHtml(getInsightConfidenceDisplay(confidenceConfig.label))}</span>
           </div>
           <span class="weekly-focus-text">${escapeHtml(pillBody)}</span>

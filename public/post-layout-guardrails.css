@@ -3210,3 +3210,15 @@ html.is-mobile-layout body.is-mobile-layout #page-library#page-library#page-libr
 html.is-mobile-layout body.is-mobile-layout .app.app{
   padding-bottom:0 !important;
 }
+
+/* 2026-08-19 live review: Match Patterns was removed, so the Stats grid must
+   not reserve the old breakdown column in later mobile/desktop lock files. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats .stats-main-grid.stats-main-grid{
+  grid-template-areas:
+    "performance performance performance"
+    "maps agents weapons" !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats .stats-breakdown-card.stats-breakdown-card{
+  display:none !important;
+}

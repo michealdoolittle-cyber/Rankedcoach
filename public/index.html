@@ -76,7 +76,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260817-collective-directive-01">
+  <link rel="stylesheet" href="app.css?v=20260819-live-review-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260811-session-prep-layout-03">
@@ -87,7 +87,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
   <link rel="stylesheet" href="library/gamesense-library.css?v=20260817-collective-directive-01">
   <link rel="stylesheet" href="layout-styles.css?v=20260817-library-polish-round2-01">
-  <link rel="stylesheet" href="post-layout-guardrails.css?v=20260817-insights-layout-perf-01">
+  <link rel="stylesheet" href="post-layout-guardrails.css?v=20260819-live-review-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1469,10 +1469,6 @@ STATS PAGE
             <div id="statsPerformanceChart" class="stats-chart-wrap"></div>
           </div>
 
-          <div class="card stats-breakdown-card">
-            <div class="card-sub">Match Patterns</div>
-            <div id="statsBreakdown" class="stats-breakdown"></div>
-          </div>
 
           <div class="card stats-maps-card">
             <div class="stats-library-head"><div class="card-sub">Map Stats</div><button type="button" data-gamesense-open="maps">Learn Maps</button></div>
@@ -1530,6 +1526,7 @@ STATS PAGE
           <div class="lens-modal">
             <div class="lens-modal-header">
               <div class="lens-modal-title">This Week's Focus</div>
+              <button id="weeklyFocusClose" class="lens-modal-close" type="button" aria-label="Close weekly focus modal">×</button>
             </div>
             <div class="lens-modal-body">
               <div id="weeklyFocusModalContent" class="timeline-insight-panel"></div>
@@ -1546,7 +1543,7 @@ STATS PAGE
                 <span>Improvement Timeline</span>
                 <button id="timelineCycleBtn" class="timeline-cycle-btn">Refresh</button>
               </div>
-              <div class="card-sub" id="improvementCardSub">What Improved Recently | Latest</div>
+              <div class="card-sub" id="improvementCardSub">Recent Match Improvement | Latest</div>
 
 
             </div>
@@ -1712,6 +1709,11 @@ stroke-linejoin="round"/>
                 <div class="home-loadout-pill home-loadout-focus-pill">
                   <span class="pill-label">Focus Category</span>
                   <span id="focusDisplay" class="pill-value focus-neutral">-</span>
+                </div>
+
+                <div id="loadoutRollOddsPanel" class="home-loadout-pill home-loadout-odds-pill" title="Roll odds update after you choose a role or map.">
+                  <span class="pill-label">Roll Odds</span>
+                  <span id="loadoutRollOddsSummary" class="pill-value loadout-odds-summary">Any role pool</span>
                 </div>
               </div>
 
@@ -2292,9 +2294,9 @@ stroke-linejoin="round"/>
   <script src="analytics/round-metrics.js?v=20260811-consolidated-insights-02"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
   <script src="analytics/coaching-rules.js?v=20260730-broadcast-focus-final-01"></script>
-  <script src="analytics/match-trends-resolver.js?v=20260818-rank-baseline-02"></script>
+  <script src="analytics/match-trends-resolver.js?v=20260819-live-review-01"></script>
   <script src="language/valorant-vocabulary.js?v=20260730-melee-desktop-score-01"></script>
-  <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
+  <script src="data/rank-benchmarks.js?v=20260819-live-review-01"></script>
   <script src="data/log-policy.js?v=20260805-logging-single-entry-01"></script>
   <script src="data/persistence-policy.js?v=20260805-post-update-ux-01"></script>
   <script src="library/gamesense-maps.js?v=20260731-plant-map-editor-01"></script>
@@ -2311,7 +2313,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260817-lifetime-axis-skin-filters-01"></script>
   <script src="integrations/riot-sync.js?v=20260806-theme-launcher-01"></script>
   <script src="daily-entrance-motion.js?v=20260817-mobile-modal-polish-03"></script>
-  <script type="module" src="app.js?v=20260817-insights-layout-perf-01"></script>
+  <script type="module" src="app.js?v=20260819-live-review-01"></script>
   <script type="module" src="knowledge-review.js?v=20260803-auth-abort-fallback-01"></script>
 </body>
 </html>

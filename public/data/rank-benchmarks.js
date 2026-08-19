@@ -65,7 +65,9 @@
   globalThis.RankedCoachRankBenchmarks = Object.freeze({
     SOURCE,
     RANK_BENCHMARKS,
+    METRIC_META,
     getRankKey,
+    compareValue,
     compareRankMetrics
   });
 })();

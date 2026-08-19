@@ -143,8 +143,29 @@
     if (recentMatches.length < 2 || earlierMatches.length < 2) return null;
     return {
       recent: summarizeMatches(recentMatches),
-      earlier: summarizeMatches(earlierMatches)
+      earlier: summarizeMatches(earlierMatches),
+      recentMatches,
+      earlierMatches
     };
+  }
+
+  function formatMatchReference(match = {}) {
+    const pieces = [];
+    const index = Number(match?.matchIndex);
+    if (Number.isFinite(index) && index > 0) pieces.push(`Match ${index}`);
+    const agent = String(match?.agent || "").trim();
+    const map = String(match?.map || "").trim();
+    if (agent) pieces.push(agent);
+    if (map) pieces.push(map);
+    return pieces.filter(Boolean).join(", ") || "tracked match";
+  }
+
+  function formatMatchRange(matches = []) {
+    const usable = (Array.isArray(matches) ? matches : []).filter(Boolean);
+    if (!usable.length) return "No recorded matches.";
+    const refs = usable.slice(-3).map(formatMatchReference).filter(Boolean);
+    const extra = usable.length > refs.length ? ` + ${usable.length - refs.length} earlier` : "";
+    return `${refs.join(" | ")}${extra}`;
   }
 
   function entityMatches(context = {}, sliceType = "", entityName = "") {
@@ -191,7 +212,7 @@
     return "Use the next match to test one repeatable round habit, then compare it against the next imported result.";
   }
 
-  function makeSelfHistoryCard({ sliceType, entityLabel, metricKey, current, baseline, recentMatches, earlierMatches, mediaValue }) {
+  function makeSelfHistoryCard({ sliceType, entityLabel, metricKey, current, baseline, recentMatches, earlierMatches, recentMatchRefs = [], mediaValue }) {
     const metric = METRICS[metricKey];
     const meta = SLICE_META[sliceType] || SLICE_META.overall;
     if (!metric || !Number.isFinite(current) || !Number.isFinite(baseline)) return null;
@@ -208,7 +229,7 @@
     const subject = entityLabel || readable(sliceType);
     const sliceLabel = meta.label;
     const reference = `your earlier ${subject} ${sliceLabel} baseline`;
-    const detail = `${subject} is ${deltaLabel} ${direction} ${reference}.`;
+    const detail = `Recorded matches: ${formatMatchRange(recentMatchRefs)}.`;
     const read = improvement
       ? `${subject} is moving in the right direction against its own earlier ${sliceLabel} games.`
       : `${subject} is slipping against its own earlier ${sliceLabel} games, so this stays visible.`;
@@ -230,6 +251,8 @@
       metricKey,
       anchorType: "self-history",
       tone,
+      deltaLabel,
+      direction,
       label: `${subject} ${metric.label}`,
       kicker: meta.display,
       value: `${currentLabel} vs ${baselineLabel} earlier`,
@@ -265,14 +288,25 @@
     const deltaLabel = formatDelta(metricKey, rawDelta);
     const direction = directionCopy(metricKey, improvement);
     const subject = label || meta.display;
-    const detail = `${subject} is ${deltaLabel} ${direction} your rank's average.`;
+    const subjectLower = String(subject || "").toLowerCase();
+    const metricLabelLower = String(metric.label || "").toLowerCase();
+    const metricShortLower = String(metric.shortLabel || "").toLowerCase();
+    const alreadyNamed = Boolean(
+      metricLabelLower && subjectLower.includes(metricLabelLower)
+    ) || Boolean(
+      metricShortLower && subjectLower.includes(metricShortLower)
+    );
+    const displayTitle = alreadyNamed ? subject : `${subject} ${metric.label}`;
+    const detail = sampleLabel
+      ? `Recorded matches: ${sampleLabel}`
+      : `${displayTitle} is ${deltaLabel} ${direction} your rank's average.`;
 
     return {
       id: `match-trend-${sliceType}-${metricKey}-${normalizeKey(subject).replace(/[^a-z0-9]+/g, "-")}`,
       type: improvement ? "good" : "bad",
-      title: `${subject} ${metric.label}`,
+      title: displayTitle,
       preview: `${currentLabel} vs ${benchmarkLabel} for your rank's average.`,
-      what: `${subject} ${metric.label} is at ${currentLabel}.`,
+      what: `${displayTitle} is at ${currentLabel}.`,
       why: sampleLabel || `This stat is far enough from your rank's average to be useful in the current match window.`,
       action: actionFor(sliceType, subject, metricKey, improvement),
       sources: ["Henrik match history", "Rank baseline"],
@@ -284,13 +318,19 @@
       metricKey,
       anchorType: "rank",
       tone,
-      label: `${subject} ${metric.label}`,
+      deltaLabel,
+      direction,
+      label: displayTitle,
       kicker: meta.display,
       value: `${currentLabel} vs ${benchmarkLabel} rank average`,
       detail,
       read: improvement
-        ? `${subject} is beating the rank reference; protect the repeatable part of the round plan.`
-        : `${subject} is behind the rank reference; fix one controllable habit before broad changes.`,
+        ? (metricKey === "postPistolWinRate"
+          ? "Continue what you're doing — it's working in your favor."
+          : `${displayTitle} is beating the rank reference; keep the repeatable part of the round plan.`)
+        : (metricKey === "postPistolWinRate"
+          ? "The round after pistol is slipping; keep the second-round plan simpler."
+          : `${displayTitle} is behind the rank reference; fix one controllable habit before broad changes.`),
       sourceLabel: sampleLabel || "Current imported match window compared with your rank's average.",
       formula: `${metric.shortLabel}: ${currentLabel} current vs ${benchmarkLabel} rank average = ${deltaLabel} ${direction}.`,
       benchmark: "Anchored to your rank's average.",
@@ -334,6 +374,7 @@
             baseline: metricFromSummary(windows.earlier, metricKey),
             recentMatches: windows.recent.matchesPlayed,
             earlierMatches: windows.earlier.matchesPlayed,
+            recentMatchRefs: windows.recentMatches,
             mediaValue: entity
           });
           if (card) cards.push(card);
@@ -372,6 +413,17 @@
       if (card) {
         card.id = `match-trend-economy-${bucket.key}`;
         card.mediaValue = "rifle";
+        if (bucket.key === "postPistolWinRate") {
+          const improvement = card.tone === "up";
+          card.title = "Round After Pistol";
+          card.label = "Round After Pistol";
+          card.read = improvement
+            ? "Continue what you're doing — it's working in your favor."
+            : "The round after pistol is slipping; keep the second-round plan simpler.";
+          card.action = improvement
+            ? "Keep the same second-round buy discipline and avoid giving back the first advantage."
+            : "After pistol, call the buy quickly and protect the weapon advantage instead of forcing solo fights.";
+        }
         cards.push(card);
       }
     });
