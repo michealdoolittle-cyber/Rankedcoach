@@ -3222,3 +3222,15 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats .
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats#page-stats .stats-breakdown-card.stats-breakdown-card{
   display:none !important;
 }
+
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats .stats-main-grid.stats-main-grid{
+  grid-template-areas:
+    "performance"
+    "maps"
+    "agents"
+    "weapons" !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats .stats-breakdown-card.stats-breakdown-card{
+  display:none !important;
+}
