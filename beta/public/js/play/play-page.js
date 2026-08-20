@@ -51,6 +51,13 @@ const RANK_ICON_FILES = Object.freeze({
   radiantplus: "radiant_rank.png"
 });
 
+const ROLE_ICON_FILES = Object.freeze({
+  controller: "role_controller.png",
+  duelist: "duelist_role.png",
+  initiator: "initiator_role.png",
+  sentinel: "sentinel_role.png"
+});
+
 const RANK_ORDER = [
   "iron1", "iron2", "iron3",
   "bronze1", "bronze2", "bronze3",
@@ -96,6 +103,24 @@ function roleIcon(role = "", size = 48) {
   if (key === "initiator") return icon("role-initiator", { size });
   if (key === "sentinel") return icon("role-sentinel", { size });
   return icon("focus-queue", { size });
+}
+
+function getRoleIconUrl(role = "") {
+  const file = ROLE_ICON_FILES[normalizeKey(role)];
+  return file ? `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${file}` : "";
+}
+
+function roleIconAsset(role = "", size = 28) {
+  const safeRole = escapeHtml(role || "Role");
+  const key = normalizeKey(role);
+  const url = getRoleIconUrl(role);
+  if (!url) return `<span class="role-icon-asset role-${escapeHtml(key || "unknown")}">${roleIcon(role, size)}</span>`;
+  return `
+    <span class="role-icon-asset role-${escapeHtml(key || "unknown")}" style="--role-size:${Number(size) || 28}px" title="${safeRole}">
+      <img src="${escapeHtml(url)}" alt="${safeRole} role" loading="lazy" onerror="this.closest('.role-icon-asset')?.classList.add('is-fallback');this.remove();">
+      <span class="role-icon-fallback">${roleIcon(role, size)}</span>
+    </span>
+  `;
 }
 
 function hasMatchData(model = {}) {
@@ -450,11 +475,44 @@ function renderTodayFocus(model = {}, appState = {}) {
   `;
 }
 
+function renderOrbitIcon() {
+  return `
+    <svg class="lp-orbit" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="gemGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="var(--rc-brand-strong, var(--rc-brand-hi))"/>
+          <stop offset="100%" stop-color="var(--rc-brand-deep)"/>
+        </linearGradient>
+      </defs>
+      <g transform="rotate(-15 32 32)">
+        <ellipse class="orbit-ring" cx="32" cy="32" rx="27" ry="11"/>
+        <circle class="orbit-star" r="1.6">
+          <animateMotion dur="7s" repeatCount="indefinite" path="M 5,32 A 27,11 0 1,1 59,32 A 27,11 0 1,1 5,32"/>
+        </circle>
+        <circle class="orbit-star" r="1.1" opacity=".75">
+          <animateMotion dur="7s" begin="-4.6s" repeatCount="indefinite" path="M 5,32 A 27,11 0 1,1 59,32 A 27,11 0 1,1 5,32"/>
+        </circle>
+      </g>
+      <g transform="rotate(20 32 32)">
+        <ellipse class="orbit-ring" cx="32" cy="32" rx="22" ry="9"/>
+        <circle class="orbit-star" r="1.3">
+          <animateMotion dur="5.2s" begin="-1.8s" repeatCount="indefinite" path="M 10,32 A 22,9 0 1,1 54,32 A 22,9 0 1,1 10,32"/>
+        </circle>
+      </g>
+      <path d="M32 20 43 32 32 44 21 32Z" fill="url(#gemGrad)" stroke="var(--rc-brand-strong, var(--rc-brand-hi))" stroke-width=".6"/>
+      <path d="M32 20 37 27 32 32 27 27Z" fill="rgba(255,255,255,.35)"/>
+    </svg>
+  `;
+}
+
 function renderLoadoutMini() {
   return card({
-    className: "play-card loadout-mini-card",
+    eyebrow: "Loadout",
+    title: "Start a Match",
+    className: "play-card loadout-mini-card play-loadout-card",
     body: `
-      <div class="lp-icon fancy" aria-hidden="true"><div class="ring"></div><div class="ring2"></div><div class="core"></div></div>
+      <div class="loadout-orbit-wrap">${renderOrbitIcon()}</div>
+      <p>Open the queue prep flow, roll a focused plan, and carry it into the match.</p>
     `,
     footer: button({ label: "Start A Match", variant: "primary", action: "open-loadout-flow" })
   });
@@ -493,6 +551,8 @@ function renderCompassRadar(pillars = [], size = 260) {
 function renderCompassMini(model = {}) {
   const pillars = modelPillars(model);
   const avg = pillars.reduce((sum, item) => sum + Number(item.score || 0), 0) / Math.max(1, pillars.length);
+  const strongest = pillars.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0))[0];
+  const weakest = pillars.slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
   const tiles = pillars.map((pillar, index) => `
     <button class="compass-pillar-tile compact pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
       ${pillarIcon(pillar.key)}
@@ -504,28 +564,78 @@ function renderCompassMini(model = {}) {
     eyebrow: "Compass",
     title: `${whole(avg)}/100 overall`,
     className: "play-card compass-mini-card",
-    body: `<div class="compass-shell">${renderCompassRadar(pillars)}<div class="compass-pillar-grid">${tiles}</div></div>`
+    body: `
+      <div class="compass-shell">
+        <div class="compass-pillar-grid">${tiles}</div>
+        <div class="compass-radar-wrap">${renderCompassRadar(pillars)}</div>
+      </div>
+      <p class="compass-summary-copy">Strongest: <strong>${escapeHtml(strongest?.short || "—")}</strong>. Needs work: <strong>${escapeHtml(weakest?.short || "—")}</strong>.</p>
+    `
   });
 }
 
-function renderRRCard(model = {}) {
+function renderImprovementTimeline(model = {}) {
+  const pillars = modelPillars(model);
+  const ordered = pillars
+    .slice()
+    .sort((a, b) => Number(b.delta || 0) - Number(a.delta || 0))
+    .slice(0, 5);
+  return card({
+    eyebrow: "Improvement Timeline",
+    title: "Recent movement by pillar",
+    className: "play-card improvement-timeline-card",
+    body: `
+      <div class="improvement-timeline-grid">
+        ${ordered.map((pillar, index) => `
+          <button class="improvement-timeline-step pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
+            ${pillarIcon(pillar.key)}
+            <span>${escapeHtml(pillar.short)}</span>
+            <strong>${whole(pillar.score)}<small>/100</small></strong>
+            <em class="${Number(pillar.delta || 0) >= 0 ? "semantic-win" : "semantic-loss"}">${formatDelta(pillar.delta || 0)}</em>
+          </button>
+        `).join("")}
+      </div>
+    `
+  });
+}
+
+function renderCurrentRankCard(model = {}) {
   const overview = model.overview || {};
   const rank = currentRank(model);
   const today = todayRecords(model);
   const todayRr = today.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
   const currentRr = finite(rank.rr) ? Number(rank.rr) : 0;
+  const latest = (model.records || [])[0] || {};
+  const role = latest.role || model.currentRole || model.roles?.[0]?.role || "Unknown";
+  const wins = whole(overview.wins || 0);
+  const losses = whole(overview.losses || 0);
+  const draws = whole(overview.draws || 0);
   return card({
-    eyebrow: "RR Card",
-    title: "Rank movement",
-    className: "play-card rr-mini-card",
+    eyebrow: "Current Rank",
+    title: rank.rank || "Unranked",
+    className: "play-card rr-mini-card current-rank-card",
     body: `
-      <div class="rr-rank-pair">${rankBadge(rank.rank, rank.rr, "lg")}<div><span>${escapeHtml(rank.rank)}</span><strong>${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Sync ranked history"}</strong></div></div>
-      <div class="rr-progress" aria-label="Progress to next rank"><span style="--fill:${clamp(currentRr)}%"></span></div>
-      <div class="rr-today-total"><span>Today</span><strong>${rankBadge(rank.rank, rank.rr, "sm")}${formatDelta(todayRr, " RR")}</strong></div>
-      <div class="rr-readonly-counters">
-        <span>Wins <strong class="semantic-win">${whole(overview.wins || 0)}</strong></span>
-        <span>Losses <strong class="semantic-loss">${whole(overview.losses || 0)}</strong></span>
-        <span>Draws <strong>${whole(overview.draws || 0)}</strong></span>
+      <div class="current-rank-layout">
+        <div class="current-rank-main">
+          ${rankBadge(rank.rank, rank.rr, "lg")}
+          <div>
+            <span>${escapeHtml(rank.rank || "Unranked")}</span>
+            <strong>${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Sync ranked history"}</strong>
+          </div>
+        </div>
+        <div class="rr-progress" aria-label="Progress to next rank"><span style="--fill:${clamp(currentRr)}%"></span></div>
+        <div class="current-rank-record">
+          <span>Wins <strong class="semantic-win">${wins}</strong></span>
+          <span>Losses <strong class="semantic-loss">${losses}</strong></span>
+          <span>Draws <strong>${draws}</strong></span>
+        </div>
+        <div class="current-role-card ${roleClass(role)}">
+          <div>${roleIconAsset(role, 24)}<span>Current Role</span><strong>${escapeHtml(role)}</strong></div>
+          <div class="current-role-metrics">
+            <span>Today <strong>${formatDelta(todayRr, " RR")}</strong></span>
+            <span>Last ACS <strong>${finite(latest.stats?.acs) ? whole(latest.stats.acs) : "—"}</strong></span>
+          </div>
+        </div>
       </div>
     `
   });
@@ -546,7 +656,7 @@ function renderRRTrendMini(model = {}) {
   const maxValue = rawValues.length ? Math.max(...rawValues) : 100;
   const yMin = Math.max(0, Math.floor(minValue / 100) * 100);
   const yMax = Math.max(yMin + 100, Math.ceil(maxValue / 100) * 100);
-  const plot = { left: 34, right: 252, top: 12, bottom: 72 };
+  const plot = { left: 48, right: 252, top: 12, bottom: 72 };
   const x = index => values.length <= 1 ? plot.right : plot.left + (index / (values.length - 1)) * (plot.right - plot.left);
   const y = value => plot.bottom - ((value - yMin) / Math.max(1, yMax - yMin)) * (plot.bottom - plot.top);
   const points = values.map((item, index) => ({ x: x(index), y: y(item.value), value: item.value, date: item.date }));
@@ -559,18 +669,16 @@ function renderRRTrendMini(model = {}) {
   const valley = points.reduce((best, point) => point.y > best.y ? point : best, points[0] || { x: 0, y: 0 });
   const latest = points[points.length - 1];
   const rank = currentRank(model);
-  const first = records[0]?.rank?.rr;
-  const diff = finite(first) && finite(rank.rr) ? ((Number(rank.rr) - Number(first)) / Math.max(1, Number(first))) * 100 : 0;
   const rawDelta = records.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
   return card({
     eyebrow: "RR Trend",
     title: "Rank line (Last 20 Matches)",
     className: "play-card rr-trend-mini-card",
     body: `
-      <div class="rr-trend-titlebar"><span>${rankBadge(rank.rank, rank.rr, "sm")}${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Unranked"} <small>${formatDelta(diff, "%")}</small></span><strong>${formatDelta(rawDelta)}</strong></div>
+      <div class="rr-trend-titlebar"><span>${rankBadge(rank.rank, rank.rr, "sm")}${finite(latest?.value) ? `${whole(latest.value)} RR` : finite(rank.rr) ? `${whole(rank.rr)} RR` : "Unranked"}</span><strong>${formatDelta(rawDelta, " RR")}</strong></div>
       <svg class="rr-trend-chart" viewBox="0 0 260 96" role="img" aria-label="Last 20 match RR trend">
         <defs><linearGradient id="rrTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--rc-success)" stop-opacity=".48"/><stop offset="100%" stop-color="var(--rc-success)" stop-opacity="0"/></linearGradient></defs>
-        ${ticks.map(value => `<g class="rr-grid-line"><text x="4" y="${y(value).toFixed(1)}" dominant-baseline="middle">${whole(value)}</text><line x1="${plot.left}" x2="${plot.right}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}"></line></g>`).join("")}
+        ${ticks.map(value => `<g class="rr-grid-line"><text x="4" y="${y(value).toFixed(1)}" dominant-baseline="middle">${whole(value)} RR</text><line x1="${plot.left}" x2="${plot.right}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}"></line></g>`).join("")}
         ${areaPoints ? `<polygon class="rr-trend-fill" points="${areaPoints}"></polygon><polyline class="rr-trend-line" points="${pointString}"></polyline>` : ""}
         ${[peak, valley, latest].filter(Boolean).map(point => `<circle class="rr-trend-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.1"></circle>`).join("")}
         ${dateIndexes.map(index => {
@@ -640,14 +748,12 @@ function renderLastMatchBanner(model = {}, appState = {}) {
 
 function renderReferenceRow() {
   const cards = [
-    ["All Reflections", "Every saved read", "all-reflections", `data-review-tab="reflections"`],
-    ["Map Notes", "Quick map reminders", "map-notes", `data-page-jump="library" data-library-view="maps"`],
-    ["Agent Tips", "Role and ability cues", "agent-tips", `data-page-jump="library" data-library-view="agents"`],
-    ["Lineups", "Searchable setups", "lineups", `data-page-jump="library" data-library-view="lineups"`],
-    ["Economy", "Buy-round reference", "economy", `data-page-jump="learn" data-learn-query="economy"`],
-    ["Weapons", "Damage and fit notes", "weapons", `data-page-jump="library" data-library-view="weapons"`]
+    ["Review", "Open match history", "all-reflections", `data-review-tab="all-matches"`],
+    ["Library", "Maps, agents, weapons", "map-notes", `data-page-jump="library"`],
+    ["Learn", "Training references", "agent-tips", `data-page-jump="learn"`],
+    ["Settings", "Customize beta", "settings", `data-page-jump="settings"`]
   ];
-  return `<section class="play-reference-row" aria-label="Reference shortcuts">${cards.map(([title, sub, iconName, attrs]) => `<button type="button" ${attrs}>${icon(iconName)}<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span></button>`).join("")}</section>`;
+  return `<section class="play-reference-row" aria-label="Quick Actions"><header><p class="rc-eyebrow">Quick Actions</p></header>${cards.map(([title, sub, iconName, attrs]) => `<button type="button" ${attrs}>${icon(iconName)}<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span></button>`).join("")}</section>`;
 }
 
 export function renderPlayPage(root, model, appState = {}) {
@@ -655,12 +761,16 @@ export function renderPlayPage(root, model, appState = {}) {
   ensureDailyFocus(appState, model || {});
   root.innerHTML = `
     <div class="play-dashboard">
-      ${renderTodayFocus(model || {}, appState)}
-      ${renderStatsStrip(model || {}, appState)}
-      <div class="play-row play-row-three">${renderLoadoutMini()}${renderCompassMini(model || {})}${renderRRCard(model || {})}</div>
-      <div class="play-row play-row-three">${renderRRTrendMini(model || {})}${renderTopInsight(model || {})}${renderFocusQueueMini(model || {}, appState)}</div>
-      ${renderLastMatchBanner(model || {}, appState)}
-      ${renderReferenceRow()}
+      <div class="play-raster-grid">
+        <div class="play-grid-area play-grid-focus">${renderTodayFocus(model || {}, appState)}</div>
+        <div class="play-grid-area play-grid-improvements">${renderImprovementTimeline(model || {})}</div>
+        <div class="play-grid-area play-grid-loadout">${renderLoadoutMini()}</div>
+        <div class="play-grid-area play-grid-compass">${renderCompassMini(model || {})}</div>
+        <div class="play-grid-area play-grid-rank">${renderCurrentRankCard(model || {})}</div>
+        <div class="play-grid-area play-grid-rr">${renderRRTrendMini(model || {})}</div>
+        <div class="play-grid-area play-grid-insight">${renderTopInsight(model || {})}</div>
+        <div class="play-grid-area play-grid-actions">${renderReferenceRow()}</div>
+      </div>
     </div>
   `;
 }
@@ -812,7 +922,16 @@ export function openFocusDetailsModal(modalRoot, model, appState = {}, focusId =
   const focus = queue.find(item => item.id === focusId) || getDailyFocus(appState, model || {});
   const behaviors = (focus.behaviors || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
   const related = (focus.related || []).map(item => `<button class="pill" type="button" data-page-jump="learn" data-learn-query="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join("");
-  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-modal" role="dialog" aria-modal="true" aria-labelledby="focusModalTitle"><header class="modal-head"><div><p class="eyebrow">${escapeHtml(focus.category || "Focus")} / ${escapeHtml(focus.impact || focus.priority || "Medium")} Impact</p><h2 id="focusModalTitle">${escapeHtml(focus.title)}</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><section class="detail-block"><h3>Why this focus?</h3><p>${escapeHtml(focus.why || focus.evidence || "")}</p></section><section class="detail-block"><h3>What to do</h3><ul>${behaviors || "<li>Pick one repeatable habit and check it after the next import.</li>"}</ul></section><section class="detail-block"><h3>Success looks like</h3><p>${escapeHtml(focus.how || "The next match shows one cleaner repeated decision tied to this focus.")}</p></section><section class="detail-block"><h3>Related concepts</h3><div class="recent-list">${related || "<span class=\"muted\">No related concepts yet.</span>"}</div></section></div></section></div>`;
+  const queueHtml = queue.length
+    ? queue.slice(0, 5).map((item, index) => `
+        <button class="${item.id === focus.id ? "is-active" : ""}" type="button" data-action="open-focus-detail" data-focus-id="${escapeHtml(item.id)}">
+          <span>${index + 1}</span>
+          <strong>${escapeHtml(item.title)}</strong>
+          <small>${escapeHtml(item.category || "Focus")}</small>
+        </button>
+      `).join("")
+    : `<p class="empty-copy">Sync retained competitive matches to populate the queue.</p>`;
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-modal focus-modal--with-queue" role="dialog" aria-modal="true" aria-labelledby="focusModalTitle"><header class="modal-head"><div><p class="eyebrow">${escapeHtml(focus.category || "Focus")} / ${escapeHtml(focus.impact || focus.priority || "Medium")} Impact</p><h2 id="focusModalTitle">${escapeHtml(focus.title)}</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body focus-detail-layout"><div class="focus-detail-main"><section class="detail-block"><h3>Why this focus?</h3><p>${escapeHtml(focus.why || focus.evidence || "")}</p></section><section class="detail-block"><h3>What to do</h3><ul>${behaviors || "<li>Pick one repeatable habit and check it after the next import.</li>"}</ul></section><section class="detail-block"><h3>Success looks like</h3><p>${escapeHtml(focus.how || "The next match shows one cleaner repeated decision tied to this focus.")}</p></section><section class="detail-block"><h3>Related concepts</h3><div class="recent-list">${related || "<span class=\"muted\">No related concepts yet.</span>"}</div></section></div><aside class="focus-detail-queue"><p class="rc-eyebrow">Focus Queue</p><h3>Next jobs</h3><div>${queueHtml}</div><footer>${button({ label: "Manage Queue", variant: "secondary", attrs: `data-page-jump="focus-queue"` })}</footer></aside></div></section></div>`;
 }
 
 export function openAddFocusModal(modalRoot, model) {
