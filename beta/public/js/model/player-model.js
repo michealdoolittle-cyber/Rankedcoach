@@ -7,6 +7,39 @@ const ROLE_BY_AGENT = {
   iso: "Duelist", jett: "Duelist", neon: "Duelist", phoenix: "Duelist", raze: "Duelist", reyna: "Duelist", waylay: "Duelist", yoru: "Duelist"
 };
 
+const AGENT_PORTRAITS = {
+  miks: "/assets/agents-src/01-Miks.png",
+  waylay: "/assets/agents-src/02-Waylay.png",
+  tejo: "/assets/agents-src/03-Tejo.png",
+  veto: "/assets/agents-src/04-Veto.png",
+  vyse: "/assets/agents-src/05-Vyse.png",
+  deadlock: "/assets/agents-src/06-Deadlock.png",
+  killjoy: "/assets/agents-src/07-Killjoy.png",
+  raze: "/assets/agents-src/08-Raze.png",
+  sage: "/assets/agents-src/09-Sage.png",
+  jett: "/assets/agents-src/10-Jett.png",
+  viper: "/assets/agents-src/11-Viper.png",
+  chamber: "/assets/agents-src/12-Chamber.png",
+  clove: "/assets/agents-src/13-Clove.png",
+  iso: "/assets/agents-src/14-Iso.png",
+  gekko: "/assets/agents-src/15-Gekko.png",
+  neon: "/assets/agents-src/16-Neon.png",
+  reyna: "/assets/agents-src/17-Reyna.png",
+  fade: "/assets/agents-src/18-Fade.png",
+  harbor: "/assets/agents-src/19-Harbor.png",
+  astra: "/assets/agents-src/20-Astra.png",
+  omen: "/assets/agents-src/21-Omen.png",
+  cypher: "/assets/agents-src/22-Cypher.png",
+  phoenix: "/assets/agents-src/23-Phoenix.png",
+  yoru: "/assets/agents-src/24-Yoru.png",
+  sova: "/assets/agents-src/25-Sova.png",
+  breach: "/assets/agents-src/26-Breach.png",
+  skye: "/assets/agents-src/27-Skye.png",
+  "kay-o": "/assets/agents-src/28-KAYO.png",
+  kayo: "/assets/agents-src/28-KAYO.png",
+  brimstone: "/assets/agents-src/29-Brimstone.png"
+};
+
 function getRawData(payload = {}) {
   return payload?.data?.metadata?.match_id ? payload.data : payload;
 }
@@ -278,6 +311,7 @@ export function buildPlayerModel(snapshot = {}) {
     matchesPlayed: records.length,
     wins: records.filter(record => record.result === "win").length,
     losses: records.filter(record => record.result === "loss").length,
+    draws: records.filter(record => record.result === "draw").length,
     winRate: winrate(records),
     winrate: winrate(records),
     kills: records.reduce((sum, record) => sum + number(record.stats?.kills, 0), 0),
@@ -348,4 +382,10 @@ export function getAgentAsset(agentName = "") {
   const key = normalizeKey(agentName);
   const agent = (globalThis.RankedCoachGamesenseReference?.agents || []).find(item => normalizeKey(item.label || item.name || item.id) === key);
   return agent?.icon || agent?.image || `/assets/library/agents/${key}/icon.png`;
+}
+
+export function getAgentPortraitAsset(agentName = "") {
+  const key = normalizeKey(agentName);
+  const agent = (globalThis.RankedCoachGamesenseReference?.agents || []).find(item => normalizeKey(item.label || item.name || item.id) === key);
+  return AGENT_PORTRAITS[key] || agent?.image || agent?.portrait || getAgentAsset(agentName);
 }

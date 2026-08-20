@@ -1,7 +1,7 @@
 import { button, card, cardHeader, icon } from "../components/ui.js";
 import { getPriorityInsight } from "../model/insights.js";
-import { escapeHtml, finite, normalizeKey, percent, whole } from "../model/utils.js";
-import { getAgentAsset, getMapAsset } from "../model/player-model.js";
+import { clamp, escapeHtml, finite, normalizeKey, percent, ratio, whole } from "../model/utils.js";
+import { getAgentPortraitAsset } from "../model/player-model.js";
 
 export const LOADOUT_DEFAULTS = Object.freeze({
   state: "idle",
@@ -15,13 +15,12 @@ export const LOADOUT_DEFAULTS = Object.freeze({
 
 const ROLE_ORDER = ["Controller", "Duelist", "Initiator", "Sentinel"];
 const PILLARS = [
-  { key: "mechanics", label: "Mechanics", compactLabel: "Aim" },
-  { key: "mental", label: "Mental", compactLabel: "Mental" },
-  { key: "game-sense", label: "Game Sense", compactLabel: "Game Sense" },
-  { key: "teamwork", label: "Teamwork", compactLabel: "Teamwork" },
-  { key: "discipline", label: "Discipline", compactLabel: "Discipline" }
+  { key: "mechanics", label: "Aim / Mechanics", short: "Aim", cue: "Win the first honest fight" },
+  { key: "game-sense", label: "Game Sense", short: "Game Sense", cue: "Read the map before you rotate" },
+  { key: "teamwork", label: "Teamwork", short: "Teamwork", cue: "Trade the next contact" },
+  { key: "discipline", label: "Discipline", short: "Discipline", cue: "Keep the round clean after first blood" },
+  { key: "mental", label: "Mental", short: "Mental", cue: "Reset before the next decision" }
 ];
-const PILLAR_TO_CATEGORY = Object.fromEntries(PILLARS.map(item => [item.key, item.label]));
 
 function maps() {
   return Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : [];
@@ -33,6 +32,16 @@ function agents() {
 
 function normalizeLoadout(loadout = {}) {
   return { ...LOADOUT_DEFAULTS, ...(loadout || {}) };
+}
+
+function localDayKey(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function dayOrdinal(key = localDayKey()) {
+  const [year, month, day] = key.split("-").map(Number);
+  return Math.floor(Date.UTC(year || 2026, (month || 1) - 1, day || 1) / 86400000);
 }
 
 function roleClass(role = "") {
@@ -54,13 +63,110 @@ function optionList(values = [], selected = "") {
 
 function getMapByLabel(label = "") {
   const key = normalizeKey(label);
-  return maps().find(map => normalizeKey(map.label || map.id) === key) || null;
+  return maps().find(map => normalizeKey(map.label || map.name || map.id) === key) || null;
+}
+
+function cleanPillar(pillar = {}) {
+  const meta = PILLARS.find(item => item.key === pillar.key || item.short === pillar.label || item.label === pillar.label)
+    || PILLARS.find(item => item.key === normalizeKey(pillar.label))
+    || PILLARS[0];
+  return {
+    ...meta,
+    ...pillar,
+    label: meta.label,
+    short: meta.short,
+    score: clamp(Number(pillar.score ?? 0)),
+    delta: finite(pillar.delta) ? Number(pillar.delta) : 0
+  };
+}
+
+function modelPillars(model = {}) {
+  const byKey = new Map((model.pillars || []).map(pillar => [pillar.key, pillar]));
+  return PILLARS.map(base => cleanPillar({ ...base, ...(byKey.get(base.key) || {}) }));
+}
+
+function focusPool(model = {}) {
+  return modelPillars(model)
+    .slice()
+    .sort((a, b) => Number(a.score || 0) - Number(b.score || 0))
+    .map((pillar, index) => {
+      const confidence = clamp(Math.round(92 - index * 6 - Math.max(0, pillar.score - 65) * 0.15), 58, 96);
+      const impact = pillar.score < 58 ? "High" : pillar.score < 74 ? "Medium" : "Watch";
+      return {
+        id: `daily-${pillar.key}`,
+        pillarKey: pillar.key,
+        category: pillar.label,
+        title: pillar.cue,
+        evidence: pillar.driver || `${pillar.short} is tracking at ${whole(pillar.score)}/100 in the active window.`,
+        why: "This is the cleanest short-term read from the available match data and reflections.",
+        how: `${pillar.cue}. Keep that single job visible for the next queue block.`,
+        priority: impact,
+        impact,
+        confidence,
+        score: pillar.score,
+        source: pillar.reference || "active match window",
+        behaviors: [
+          pillar.cue,
+          "Say the cue before the barrier drops.",
+          "Review the imported match against this one focus only."
+        ],
+        related: [pillar.short, pillar.statKey, pillar.reference].filter(Boolean)
+      };
+    });
+}
+
+function getDailyFocus(appState = {}, model = {}) {
+  if (appState.focusMode === "self" && appState.selfChosenFocus?.title) {
+    return {
+      id: "self-chosen-focus",
+      category: appState.selfChosenFocus.category || "Self-Chosen",
+      title: appState.selfChosenFocus.title,
+      evidence: appState.selfChosenFocus.evidence || "Self-chosen focus for the current queue block.",
+      why: "You chose this manually, so RankedCoach keeps it pinned until you return to Auto-Rotate.",
+      how: appState.selfChosenFocus.how || "Keep it small enough to verify after the next match.",
+      priority: appState.selfChosenFocus.impact || "Medium",
+      impact: appState.selfChosenFocus.impact || "Medium",
+      confidence: Number(appState.selfChosenFocus.confidence || 80),
+      behaviors: [appState.selfChosenFocus.how || "Play the next match around this cue."]
+    };
+  }
+  const pool = focusPool(model);
+  const key = localDayKey();
+  const stored = appState.dailyFocus || {};
+  const index = stored.key === key && finite(stored.index)
+    ? clamp(Number(stored.index), 0, Math.max(0, pool.length - 1))
+    : dayOrdinal(key) % Math.max(1, pool.length);
+  return pool[index] || pool[0] || {
+    id: "daily-empty",
+    category: "Setup",
+    title: "Sync a real account to build a focus.",
+    evidence: "No retained competitive match data is loaded yet.",
+    why: "RankedCoach needs match data before it can coach honestly.",
+    how: "Sync an account or use demo mode to preview the Play flow.",
+    priority: "Medium",
+    impact: "Medium",
+    confidence: 65,
+    behaviors: ["Sync an account.", "Review the first generated focus.", "Play one queue block."]
+  };
+}
+
+export function ensureDailyFocus(appState = {}, model = {}) {
+  const key = localDayKey();
+  const pool = focusPool(model);
+  if (!appState.dailyFocus || appState.dailyFocus.key !== key || appState.dailyFocus.mode !== (appState.focusMode || "auto")) {
+    appState.dailyFocus = {
+      key,
+      mode: appState.focusMode || "auto",
+      index: dayOrdinal(key) % Math.max(1, pool.length)
+    };
+  }
+  return getDailyFocus(appState, model);
 }
 
 function firstUsefulMap(model = {}) {
   const fromModel = (model.maps || []).find(item => item.map)?.map;
   const fromPool = maps().find(map => map.inCompetitivePool !== false)?.label;
-  return fromModel || fromPool || maps()[0]?.label || "Any Map";
+  return fromModel || fromPool || maps()[0]?.label || "Ascent";
 }
 
 function firstUsefulRole(model = {}, mapLabel = "") {
@@ -79,48 +185,19 @@ function firstUsefulAgent(role = "", mapLabel = "", model = {}) {
   const fromMap = ranked[0]?.agent;
   const fromModel = (model.agents || []).find(item => !role || item.role === role)?.agent;
   const fromReference = agents().find(agent => !role || agent.role === role)?.label;
-  return fromMap || fromModel || fromReference || "Any Agent";
-}
-
-function focusFromModel(model = {}) {
-  const insight = getPriorityInsight(model);
-  const weakest = (model.pillars || []).slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
-  return {
-    id: "model-priority-focus",
-    category: PILLAR_TO_CATEGORY[weakest?.key] || insight.focus || "Game Sense",
-    title: insight.title || `${weakest?.label || "Focus"} check`,
-    evidence: insight.preview || weakest?.driver || "Sync an account to generate a stronger read.",
-    why: insight.why || "This is the clearest current read from your available match data.",
-    how: insight.action || "Pick one repeatable behavior and compare the next match import against it.",
-    priority: weakest?.score < 50 ? "High" : weakest?.score < 70 ? "Medium" : "Low",
-    source: weakest?.reference || "current window",
-    behaviors: [
-      insight.action || "Take one cleaner first decision before chasing the next duel.",
-      "Say the cue out loud before the round starts.",
-      "Review the next imported match against this one focus only."
-    ],
-    related: [weakest?.label, insight.focus, weakest?.statKey].filter(Boolean)
-  };
+  return fromMap || fromModel || fromReference || "Jett";
 }
 
 export function getFocusQueue(appState = {}, model = {}) {
   const queue = Array.isArray(appState.focusQueue) ? appState.focusQueue : [];
-  if (queue.length) return queue.slice(0, 5);
-  const base = focusFromModel(model);
-  const pillars = (model.pillars || []).slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0));
-  const generated = pillars.slice(1, 5).map((pillar, index) => ({
-    id: `pillar-${pillar.key}`,
-    category: PILLAR_TO_CATEGORY[pillar.key] || pillar.label,
-    title: `${pillar.label} cleanup`,
-    evidence: pillar.driver || `${pillar.label} is tracking at ${whole(pillar.score)}/100.`,
-    why: "The queue keeps short-term practice visible before you queue.",
-    how: `Choose one ${pillar.label.toLowerCase()} habit and repeat it for the next block.`,
-    priority: index === 0 ? "Medium" : "Low",
-    source: pillar.reference || "current window",
-    behaviors: [pillar.driver || "Keep this tied to the next match import."],
-    related: [pillar.label, pillar.statKey].filter(Boolean)
-  }));
-  return [base, ...generated].slice(0, 5);
+  if (queue.length) {
+    return queue.slice(0, 5).map((item, index) => ({
+      confidence: clamp(Number(item.confidence ?? (88 - index * 7)), 45, 98),
+      impact: item.impact || item.priority || (index === 0 ? "High" : "Medium"),
+      ...item
+    }));
+  }
+  return focusPool(model).slice(0, 5);
 }
 
 export function buildLoadoutAssignment(model = {}, appState = {}) {
@@ -128,11 +205,10 @@ export function buildLoadoutAssignment(model = {}, appState = {}) {
   const map = loadout.map && loadout.map !== "Any Map" ? loadout.map : firstUsefulMap(model);
   const role = loadout.role && loadout.role !== "Any Role" ? loadout.role : firstUsefulRole(model, map);
   const agent = loadout.agent && loadout.agent !== "Any Agent" ? loadout.agent : firstUsefulAgent(role, map, model);
-  const queue = getFocusQueue(appState, model);
-  const focus = queue[0] || focusFromModel(model);
+  const focus = ensureDailyFocus(appState, model);
   const mapData = getMapByLabel(map);
   const roleNote = (mapData?.roleNotes?.[role] || [])[0]?.text;
-  const mapReminder = roleNote || mapData?.teamplayTips?.[0]?.text || mapData?.siteTips?.[0]?.text || "Keep the plan simple: win space, trade cleanly, and reset before the next fight.";
+  const mapReminder = roleNote || mapData?.teamplayTips?.[0]?.text || mapData?.siteTips?.[0]?.text || "Win space with one teammate, trade the first real contact, then reset the round plan.";
   return {
     map,
     role,
@@ -140,202 +216,156 @@ export function buildLoadoutAssignment(model = {}, appState = {}) {
     focusTitle: focus.title,
     focusCategory: focus.category,
     focusText: focus.how || focus.evidence,
+    confidence: focus.confidence,
+    impact: focus.impact || focus.priority || "Medium",
     mapReminder,
     generatedAt: new Date().toISOString()
   };
 }
 
-function renderSelect(label, key, selected, options, leadingIcon = "loadout") {
-  return `
-    <label class="loadout-select">
-      <span>${icon(leadingIcon)} ${escapeHtml(label)}</span>
-      <select data-loadout-select="${escapeHtml(key)}">
-        ${optionList(options, selected)}
-      </select>
-    </label>
-  `;
+function rankBadge(rank = "Unranked", rr = null, size = "md") {
+  const safeRank = escapeHtml(rank || "Unranked");
+  const text = normalizeKey(rank).includes("unranked") ? "?" : safeRank.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
+  return `<span class="rank-badge rank-badge--${escapeHtml(size)}" title="${safeRank}">${escapeHtml(text || "?")}${finite(rr) ? `<small>${whole(rr)}</small>` : ""}</span>`;
 }
 
-function renderLoadoutControls(appState = {}) {
-  const loadout = normalizeLoadout(appState.loadout);
-  const roleOptions = ["Any Role", ...ROLE_ORDER];
-  const agentOptions = ["Any Agent", ...agents().map(agent => agent.label || agent.name || agent.id).filter(Boolean).sort()];
-  const mapOptions = ["Any Map", ...maps().map(map => map.label || map.id).filter(Boolean).sort()];
-  return `
-    <div class="loadout-select-row">
-      ${renderSelect("Role", "role", loadout.role, roleOptions, "focus-queue")}
-      ${renderSelect("Agent", "agent", loadout.agent, agentOptions, "review")}
-      ${renderSelect("Map", "map", loadout.map, mapOptions, "library")}
-    </div>
-  `;
-}
-
-function renderLoadoutIdle(spinning = false) {
-  if (spinning) {
-    return `
-      <div class="loadout-spin-stage" aria-live="polite">
-        <div class="loadout-spinner">${icon("loadout", { size: 50 })}</div>
-        <strong>Spinning your loadout...</strong>
-        <p>Selecting focus, finding best agent, picking optimal map, and analyzing your recent stats.</p>
-      </div>
-    `;
-  }
-  return `
-    <div class="loadout-idle-stage">
-      <span class="loadout-spin-mark">${icon("loadout", { size: 54 })}</span>
-      <p>Spin your loadout to get your next match plan.</p>
-    </div>
-  `;
-}
-
-function renderGeneratedPanel(loadout = {}, compact = false) {
-  const assignment = loadout.assignment;
-  const spinning = loadout.state === "spinning";
-  const step = loadout.spinStep || "";
-  if (!assignment && !spinning) return renderLoadoutIdle(false);
-  if (!assignment && spinning) return renderLoadoutIdle(true);
-  const values = assignment || {
-    role: "Rolling...",
-    agent: "Rolling...",
-    map: "Rolling...",
-    focusTitle: "Resolving focus",
-    focusText: "Resolving the cleanest short-term focus.",
-    mapReminder: "Map reminder appears after the spin."
+function currentRank(model = {}) {
+  const latest = (model.records || []).find(record => record.rank?.rank);
+  return {
+    rank: latest?.rank?.rank || model.currentRank || "Unranked",
+    rr: finite(latest?.rank?.rr) ? Number(latest.rank.rr) : null,
+    delta: finite(latest?.rank?.rrDelta) ? Number(latest.rank.rrDelta) : 0
   };
-  const agentImage = assignment ? getAgentAsset(values.agent) : "";
-  const mapImage = assignment ? getMapAsset(values.map) : "";
-  const row = (kind, value, label, image = "") => `
-    <div class="loadout-result-row ${spinning && step === kind ? "is-resolving" : ""}">
-      <span class="loadout-result-art ${kind === "role" ? roleClass(value) : ""}">
-        ${kind === "role" ? roleIcon(value, 36) : image ? `<img src="${escapeHtml(image)}" alt="">` : icon(kind === "agent" ? "review" : "library", { size: 36 })}
-      </span>
-      <span>
-        <small>${escapeHtml(label)}</small>
-        <strong>${escapeHtml(value)}</strong>
-      </span>
-    </div>
-  `;
-  return `
-    <div class="loadout-generated-panel ${spinning ? "is-spinning" : ""} ${compact ? "is-compact" : ""}">
-      <div class="loadout-result-head">
-        <span>Generated</span>
-        ${button({ label: "Spin Again", variant: "tertiary", action: "spin-loadout", disabled: spinning })}
-      </div>
-      <div class="loadout-result-values is-stacked" aria-live="polite">
-        ${row("role", values.role, "Role")}
-        ${row("agent", values.agent, "Agent", agentImage)}
-        ${row("map", values.map, "Map", mapImage)}
-      </div>
-      <div class="loadout-generated-copy">
-        <div>
-          <p class="rc-eyebrow">Focus</p>
-          <strong>${escapeHtml(values.focusTitle || values.focusCategory || "Short-term focus")}</strong>
-          <p>${escapeHtml(values.focusText || "Keep this tied to the next match import.")}</p>
-        </div>
-        <div>
-          <p class="rc-eyebrow">Map Reminder</p>
-          <p>${escapeHtml(values.mapReminder || "Win space with a teammate and trade the first real contact.")}</p>
-        </div>
-      </div>
-    </div>
-  `;
 }
 
-function renderLoadoutCard(model = {}, appState = {}, { full = false } = {}) {
-  const loadout = normalizeLoadout(appState.loadout);
-  const spinning = loadout.state === "spinning";
-  const started = loadout.state === "started";
-  return card({
-    eyebrow: "Loadout",
-    title: spinning ? "Spinning..." : loadout.assignment ? "Generated" : full ? "Generate your next ranked assignment." : "Your next match setup.",
-    className: "play-card loadout-card",
-    body: `
-      ${renderLoadoutControls(appState)}
-      ${renderGeneratedPanel(loadout, !full)}
-    `,
-    footer: `
-      ${button({ label: loadout.assignment ? "View Details" : "Spin Loadout", variant: loadout.assignment ? "secondary" : "primary", action: loadout.assignment ? "open-focus-detail" : "spin-loadout", disabled: spinning })}
-      ${button({ label: spinning ? "Cancel" : started ? "Open In-Game" : "Start Match", variant: spinning ? "secondary" : "primary", action: spinning ? "cancel-loadout" : started ? "open-in-game" : "start-match", disabled: !spinning && (!loadout.assignment || spinning) })}
-    `
-  });
+function todayRecords(model = {}) {
+  const key = localDayKey();
+  return (model.records || []).filter(record => localDayKey(new Date(record.playedAt || Date.now())) === key);
+}
+
+function formatDelta(value = 0, suffix = "") {
+  if (!finite(value)) return "--";
+  const numeric = Number(value);
+  return `${numeric >= 0 ? "+" : ""}${whole(numeric)}${suffix}`;
+}
+
+function spark(values = [], maxValue = 100) {
+  const usable = values.slice(-8).map(Number).filter(Number.isFinite);
+  if (!usable.length) return `<svg class="play-spark" viewBox="0 0 100 34" aria-hidden="true"></svg>`;
+  const max = Math.max(maxValue, ...usable, 1);
+  const points = usable.map((value, index) => {
+    const x = usable.length === 1 ? 50 : (index / (usable.length - 1)) * 96 + 2;
+    const y = 30 - (clamp(value, 0, max) / max) * 24;
+    return `${x},${y}`;
+  }).join(" ");
+  return `<svg class="play-spark" viewBox="0 0 100 34" aria-hidden="true"><polyline points="${points}" /></svg>`;
+}
+
+function statItems(model = {}) {
+  const records = (model.records || []).slice().reverse();
+  const overview = model.overview || {};
+  const valueSeries = key => records.map(record => Number(record.stats?.[key])).filter(Number.isFinite);
+  const latestRank = currentRank(model);
+  return [
+    { label: "K/D", value: ratio(overview.kd), delta: formatDelta((overview.kd || 0) - 1, ""), series: records.map(record => (record.stats?.kills || 0) / Math.max(1, record.stats?.deaths || 1)), max: 2 },
+    { label: "Win Rate", value: percent(overview.winRate), delta: `${whole(overview.wins || 0)}-${whole(overview.losses || 0)}`, series: records.map(record => record.result === "win" ? 100 : 0), max: 100 },
+    { label: "ACS", value: whole(overview.acs), delta: "current", series: valueSeries("acs"), max: 340 },
+    { label: "KAST", value: percent(overview.overallKAST), delta: "round data", series: records.map(record => record.stats?.kast).filter(Number.isFinite), max: 100 },
+    { label: "HS %", value: percent(overview.hs), delta: "shots", series: valueSeries("hsPercent"), max: 55 },
+    { label: "ADR", value: whole(overview.adr), delta: "damage", series: valueSeries("adr"), max: 220 },
+    { label: "RR", value: finite(latestRank.rr) ? `${whole(latestRank.rr)} RR` : "Unranked", delta: `${latestRank.rank}`, series: records.map(record => record.rank?.rr).filter(Number.isFinite), max: 100 },
+    { label: "Matches", value: whole(overview.matchesPlayed || 0), delta: model.currentAct || "Current act", series: records.map((_record, index) => index + 1), max: Math.max(10, records.length) }
+  ];
+}
+
+function renderStatsStrip(model = {}, appState = {}) {
+  const stats = statItems(model);
+  const page = clamp(Number(appState.playStatsPage || 0), 0, Math.max(0, stats.length - 5));
+  const visible = stats.slice(page, page + 5);
+  return `
+    <section class="play-stats-strip" aria-label="Game Stats">
+      <header>
+        <div><p class="rc-eyebrow">Game Stats</p><h2>Active window snapshot</h2></div>
+        <div class="play-strip-controls">
+          <span>${page + 1}-${Math.min(page + 5, stats.length)} of ${stats.length}</span>
+          ${button({ label: "Prev", variant: "icon", action: "stats-page-prev", disabled: page === 0 })}
+          ${button({ label: "Next", variant: "icon", action: "stats-page-next", disabled: page + 5 >= stats.length })}
+        </div>
+      </header>
+      <div class="play-stat-row">
+        ${visible.map(item => `
+          <button class="play-stat-tile" type="button" data-review-tab="stats" data-review-category="${escapeHtml(item.label)}">
+            <span>${escapeHtml(item.label)}</span>
+            <strong>${escapeHtml(item.value)}</strong>
+            <small>${escapeHtml(item.delta)}</small>
+            ${spark(item.series, item.max)}
+          </button>
+        `).join("")}
+      </div>
+    </section>
+  `;
 }
 
 function renderTodayFocus(model = {}, appState = {}) {
-  const focus = getFocusQueue(appState, model)[0] || focusFromModel(model);
+  const focus = ensureDailyFocus(appState, model);
   const featuredAgent = normalizeLoadout(appState.loadout).assignment?.agent || model.agents?.[0]?.agent || "Jett";
-  const agentImage = getAgentAsset(featuredAgent);
+  const agentImage = getAgentPortraitAsset(featuredAgent);
+  return `
+    <section class="today-focus-panel">
+      <div class="today-focus-main">
+        <p class="rc-eyebrow">Today's Focus</p>
+        <span class="one-job-label">One Job</span>
+        <h2>${escapeHtml(focus.title)}</h2>
+        <h3>Why this matters</h3>
+        <p>${escapeHtml(focus.evidence || "Your focus will sharpen after sync.")}</p>
+        ${button({ label: "View Focus Details", variant: "primary", action: "open-focus-detail", attrs: `data-focus-id="${escapeHtml(focus.id || "")}"` })}
+      </div>
+      <div class="today-focus-art">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 98 })}</div>
+      <aside class="today-focus-stack" aria-label="Focus confidence and impact">
+        <span>Confidence</span><strong>${whole(focus.confidence || 78)}%</strong><hr>
+        <span>Impact</span><strong class="impact-word">${escapeHtml(focus.impact || focus.priority || "Medium")}</strong>
+      </aside>
+    </section>
+  `;
+}
+
+function renderLoadoutMini() {
   return card({
-    eyebrow: "Today's Focus",
-    title: focus.title,
-    className: "play-card today-focus-card",
+    eyebrow: "Loadout Generator",
+    title: "Spin when you are ready.",
+    className: "play-card loadout-mini-card",
     body: `
-      <div class="today-focus-copy">
-        <p>${escapeHtml(focus.evidence || "Your active focus will appear here after sync.")}</p>
-        <span class="pill warn">${escapeHtml(focus.priority || "Medium")} Impact</span>
+      <div class="loadout-mini-symbol" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="42"></circle>
+          <path d="M60 18v16M60 86v16M18 60h16M86 60h16M32 32l11 11M77 77l11 11M88 32 77 43M43 77 32 88"></path>
+          <path class="loadout-mini-arrow" d="M60 35 78 60 60 85 42 60Z"></path>
+        </svg>
       </div>
-      <div class="focus-art ${roleClass(focus.category)}">
-        ${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 72 })}
-      </div>
+      <p>Click start for the spin loadout modal to appear,</p>
     `,
-    footer: `
-      ${button({ label: "View Focus Details", variant: "secondary", action: "open-focus-detail" })}
-      ${button({ label: "Change Focus", variant: "tertiary", action: "open-focus-chooser" })}
-    `
-  });
-}
-
-function sparkline(pillar = {}) {
-  const base = Math.max(18, Math.min(82, Number(pillar.score || 0)));
-  const delta = Number(pillar.delta || 0);
-  const start = Math.max(8, Math.min(88, base - delta));
-  const mid = Math.max(8, Math.min(88, (base + start) / 2 + (delta >= 0 ? 8 : -8)));
-  return `<svg class="mini-spark" viewBox="0 0 100 36" aria-hidden="true"><polyline points="4,${36 - start * 0.32} 50,${36 - mid * 0.32} 96,${36 - base * 0.32}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg>`;
-}
-
-function renderImprovementTimeline(model = {}) {
-  const pillars = model.pillars?.length ? model.pillars : PILLARS.map(item => ({ ...item, score: 0, trend: "Pending", reference: "sync needed" }));
-  const tiles = pillars.map(pillar => `
-    <button class="timeline-mini ${Number(pillar.delta || 0) < -3 ? "is-down" : Number(pillar.delta || 0) > 3 ? "is-up" : ""}" type="button" data-review-tab="timeline" data-review-category="${escapeHtml(pillar.key || pillar.label)}">
-      <span>${escapeHtml(pillar.label)}</span>
-      <strong>${escapeHtml(pillar.trend || "Stable")}</strong>
-      <small>${whole(pillar.score)}/100 · ${escapeHtml(pillar.reference || "current window")}</small>
-      ${sparkline(pillar)}
-    </button>
-  `).join("");
-  return card({
-    eyebrow: "Improvement Timeline",
-    title: "What is moving right now.",
-    className: "play-card improvement-card",
-    body: `<div class="timeline-mini-grid">${tiles}</div>`,
-    footer: button({ label: "View Timeline", variant: "tertiary", attrs: `data-review-tab="timeline"` })
+    footer: button({ label: "Start A Match", variant: "primary", action: "open-loadout-flow" })
   });
 }
 
 function radarPoint(cx, cy, radius, angle, value) {
-  const scaled = radius * Math.max(0, Math.min(100, Number(value) || 0)) / 100;
-  return {
-    x: cx + Math.cos(angle) * scaled,
-    y: cy + Math.sin(angle) * scaled
-  };
+  const scaled = radius * clamp(Number(value) || 0) / 100;
+  return { x: cx + Math.cos(angle) * scaled, y: cy + Math.sin(angle) * scaled };
 }
 
-function renderCompassRadar(pillars = [], { compact = false, size = 260 } = {}) {
-  const data = PILLARS.map((base, index) => ({ ...base, ...(pillars[index] || {}) }));
+function renderCompassRadar(pillars = [], size = 260) {
+  const data = modelPillars({ pillars });
   const center = size / 2;
-  const radius = size * 0.33;
+  const radius = size * 0.34;
   const angles = data.map((_pillar, index) => -Math.PI / 2 + (Math.PI * 2 * index / data.length));
   const rings = [25, 50, 75, 100].map(value => {
     const points = angles.map(angle => radarPoint(center, center, radius, angle, value)).map(point => `${point.x},${point.y}`).join(" ");
-    return `<polygon points="${points}" fill="none" stroke="rgba(170,181,200,.18)" stroke-width="1" />`;
+    return `<polygon points="${points}" fill="none" />`;
   }).join("");
   const axes = data.map((pillar, index) => {
-    const angle = angles[index];
-    const end = radarPoint(center, center, radius, angle, 100);
-    const label = radarPoint(center, center, radius + 28, angle, 100);
-    return `
-      <line x1="${center}" y1="${center}" x2="${end.x}" y2="${end.y}" stroke="rgba(170,181,200,.24)" />
-      <text x="${label.x}" y="${label.y}" text-anchor="middle" dominant-baseline="middle">${escapeHtml(compact ? (pillar.compactLabel || pillar.label) : pillar.label)}</text>
-    `;
+    const end = radarPoint(center, center, radius, angles[index], 100);
+    const label = radarPoint(center, center, radius + 30, angles[index], 100);
+    return `<line x1="${center}" y1="${center}" x2="${end.x}" y2="${end.y}" /><text x="${label.x}" y="${label.y}" text-anchor="middle" dominant-baseline="middle">${escapeHtml(pillar.short)}</text>`;
   }).join("");
   const polygon = data.map((pillar, index) => {
     const point = radarPoint(center, center, radius, angles[index], pillar.score);
@@ -343,98 +373,69 @@ function renderCompassRadar(pillars = [], { compact = false, size = 260 } = {}) 
   }).join(" ");
   const dots = data.map((pillar, index) => {
     const point = radarPoint(center, center, radius, angles[index], pillar.score);
-    return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="var(--pillar-color-${index})"><title>${escapeHtml(pillar.label)} ${whole(pillar.score)}/100</title></circle>`;
+    return `<circle cx="${point.x}" cy="${point.y}" r="5" class="compass-dot-${index}"><title>${escapeHtml(pillar.label)} ${whole(pillar.score)}/100</title></circle>`;
   }).join("");
-  return `
-    <svg class="compass-radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="Compass radar with Mechanics, Mental, Game Sense, Teamwork, and Discipline">
-      <g class="compass-grid">${rings}${axes}</g>
-      <polygon class="compass-fill" points="${polygon}" />
-      ${dots}
-    </svg>
-  `;
+  return `<svg class="compass-radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="Five-pillar Compass radar"><g class="compass-grid">${rings}${axes}</g><polygon class="compass-fill" points="${polygon}" />${dots}</svg>`;
 }
 
 function renderCompassMini(model = {}) {
-  const pillars = model.pillars?.length ? model.pillars : PILLARS.map(item => ({ ...item, score: 0 }));
-  const scores = pillars.map(item => Number(item.score || 0));
-  const avg = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
-  const legend = pillars.map(pillar => `
-    <button class="compass-legend" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
-      <span>${escapeHtml(PILLARS.find(item => item.key === pillar.key)?.compactLabel || pillar.label)}</span>
-      <strong>${whole(pillar.score)}/100</strong>
+  const pillars = modelPillars(model);
+  const avg = pillars.reduce((sum, item) => sum + Number(item.score || 0), 0) / Math.max(1, pillars.length);
+  const tiles = pillars.map((pillar, index) => `
+    <button class="compass-pillar-tile pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
+      <span>${escapeHtml(pillar.short)}</span><strong>${whole(pillar.score)}<small>/100</small></strong>
     </button>
   `).join("");
   return card({
     eyebrow: "Compass",
     title: `${whole(avg)}/100 overall`,
     className: "play-card compass-mini-card",
-    body: `
-      <div class="compass-radar-wrap">
-        ${renderCompassRadar(pillars, { compact: true })}
-        <span class="compass-total">${whole(avg)}</span>
-      </div>
-      <div class="compass-mini-legend">${legend}</div>
-    `
+    body: `<div class="compass-shell">${renderCompassRadar(pillars)}<div class="compass-pillar-grid">${tiles}</div></div>`
   });
 }
 
 function renderRRCard(model = {}) {
   const overview = model.overview || {};
-  const rrTotal = Number(overview.rrTotal || 0);
+  const rank = currentRank(model);
+  const today = todayRecords(model);
+  const todayRr = today.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
+  const currentRr = finite(rank.rr) ? Number(rank.rr) : 0;
   return card({
     eyebrow: "RR Card",
-    title: `${whole(rrTotal)} RR in window`,
+    title: "Rank movement",
     className: "play-card rr-mini-card",
     body: `
-      <div class="rr-scoreboard">
-        <div><span>Wins</span><strong class="semantic-win">${whole(overview.wins || 0)}</strong></div>
-        <div><span>Losses</span><strong class="semantic-loss">${whole(overview.losses || 0)}</strong></div>
-        <div><span>Draws</span><strong>${whole(overview.draws || 0)}</strong></div>
-        <div><span>Games</span><strong>${whole(overview.matchesPlayed || 0)}</strong></div>
+      <div class="rr-rank-pair">${rankBadge(rank.rank, rank.rr, "lg")}<div><span>${escapeHtml(rank.rank)}</span><strong>${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Sync ranked history"}</strong></div></div>
+      <div class="rr-progress" aria-label="Progress to next rank"><span style="--fill:${clamp(currentRr)}%"></span></div>
+      <div class="rr-today-total"><span>Today</span><strong>${rankBadge(rank.rank, rank.rr, "sm")}${formatDelta(todayRr, " RR")}</strong></div>
+      <div class="rr-readonly-counters">
+        <span>Wins <strong class="semantic-win">${whole(overview.wins || 0)}</strong></span>
+        <span>Losses <strong class="semantic-loss">${whole(overview.losses || 0)}</strong></span>
+        <span>Draws <strong>${whole(overview.draws || 0)}</strong></span>
       </div>
-      <div class="rr-actions" role="group" aria-label="Manual RR result controls">
-        ${button({ label: "Win", variant: "secondary", action: "rr-manual-win", className: "semantic-win" })}
-        ${button({ label: "Loss", variant: "secondary", action: "rr-manual-loss", className: "semantic-loss" })}
-        ${button({ label: "Draw", variant: "secondary", action: "rr-manual-draw" })}
-        ${button({ label: "Undo", variant: "tertiary", action: "rr-manual-undo" })}
-      </div>
-      <div class="impact-meter" aria-label="Current win rate">
-        <span style="--fill:${Math.max(0, Math.min(100, Number(overview.winRate || 0)))}%"></span>
-        <strong>${percent(overview.winRate)}</strong>
-      </div>
-    `,
-    footer: button({ label: "View Full", variant: "tertiary", attrs: `data-review-tab="all-matches"` })
+    `
   });
-}
-
-function compactRrChart(model = {}) {
-  const records = (model.records || []).slice().reverse();
-  let total = 0;
-  const points = records.map((record, index) => {
-    total += Number(record.rank?.rrDelta || 0);
-    return { x: records.length <= 1 ? 50 : (index / (records.length - 1)) * 100, y: 50 - Math.max(-40, Math.min(40, total)) };
-  });
-  const labels = records.slice(0, 6).map(record => escapeHtml(new Date(record.playedAt || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric" }))).join(" · ");
-  return `
-    <svg class="compact-line-chart" viewBox="0 0 100 82" preserveAspectRatio="none" role="img" aria-label="Compact RR trend">
-      <line x1="0" x2="100" y1="50" y2="50" stroke="rgba(76,217,138,.55)" />
-      <polyline points="${points.map(point => `${point.x},${point.y}`).join(" ")}" fill="none" stroke="var(--rc-warning)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-      ${points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="2.4" fill="var(--rc-warning)" />`).join("")}
-    </svg>
-    <small>${labels || "No date labels until sync"}</small>
-  `;
 }
 
 function renderRRTrendMini(model = {}) {
-  const overview = model.overview || {};
+  const records = (model.records || []).slice(0, 30).reverse();
+  let total = 0;
+  const points = records.map((record, index) => {
+    total += Number(record.rank?.rrDelta || 0);
+    return { x: records.length <= 1 ? 98 : (index / (records.length - 1)) * 96 + 2, y: 54 - clamp(total, -65, 65) * 0.36 };
+  });
+  const rank = currentRank(model);
+  const first = records[0]?.rank?.rr;
+  const diff = finite(first) && finite(rank.rr) ? ((Number(rank.rr) - Number(first)) / Math.max(1, Number(first))) * 100 : 0;
+  const rawDelta = records.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
   return card({
     eyebrow: "RR Trend",
-    title: "Last 30 matches",
+    title: "30-day rank line",
     className: "play-card rr-trend-mini-card",
     body: `
-      <div class="rr-trend-headline"><strong>${whole(overview.rrTotal || 0)} RR</strong><span>${Number(overview.rrTotal || 0) >= 0 ? "+" : ""}${whole(overview.rrTotal || 0)}</span></div>
-      ${compactRrChart(model)}
-      <div class="rr-footer-stats"><span>Wins ${whole(overview.wins || 0)}</span><span>Losses ${whole(overview.losses || 0)}</span><span>Draws ${whole(overview.draws || 0)}</span></div>
+      <div class="rr-trend-titlebar"><span>${rankBadge(rank.rank, rank.rr, "sm")}${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Unranked"} <small>${formatDelta(diff, "%")}</small></span><strong>${formatDelta(rawDelta)}</strong></div>
+      <svg class="rr-trend-chart" viewBox="0 0 100 70" preserveAspectRatio="none" role="img" aria-label="30 day RR trend"><line x1="0" x2="100" y1="54" y2="54"></line><polyline points="${points.map(point => `${point.x},${point.y}`).join(" ")}"></polyline>${points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="1.9"></circle>`).join("")}</svg>
+      <div class="rr-trend-labels"><span>30d ago</span><span>20d ago</span><span>10d ago</span><span>Today</span></div>
     `,
     attrs: `data-review-tab="timeline"`
   });
@@ -444,84 +445,163 @@ function renderTopInsight(model = {}) {
   const insight = getPriorityInsight(model);
   return card({
     eyebrow: "Top Insight",
-    title: insight.title,
+    title: insight.title || "No insight yet",
     className: "play-card top-insight-card",
-    body: `<p>${escapeHtml(insight.preview || insight.action || "")}</p><span class="pill ${escapeHtml(insight.tone || "warn")}">High Impact · ${whole(insight.confidence || 89)}% Confidence</span>`,
+    body: `<p>${escapeHtml(insight.preview || insight.action || "Sync an account to generate the strongest impact read.")}</p><div class="insight-confidence-row"><span>Impact ${escapeHtml(insight.tone === "good" ? "Positive" : "High")}</span><strong>${whole(insight.confidence || 88)}% confidence</strong></div>`,
     footer: button({ label: "View Insight", variant: "secondary", action: "open-insight-detail" })
   });
 }
 
+function renderFocusQueueMini(model = {}, appState = {}) {
+  const queue = getFocusQueue(appState, model).slice(0, 3);
+  return card({
+    eyebrow: "Focus Queue",
+    title: "Next jobs",
+    className: "play-card focus-queue-mini-card",
+    body: `<div class="focus-mini-list">${queue.map((item, index) => `<button type="button" data-action="open-focus-detail" data-focus-id="${escapeHtml(item.id)}"><span>${index + 1}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.impact || item.priority || "Medium")} impact</small></button>`).join("")}</div>`,
+    footer: button({ label: "Open", variant: "primary", action: "open-focus-queue-modal" })
+  });
+}
+
+function renderLastMatchBanner(model = {}, appState = {}) {
+  const lastReflection = (appState.reflections || [])[0];
+  const lastRecord = (model.records || [])[0];
+  const result = lastReflection?.result || lastRecord?.result || "No match";
+  const rrDelta = finite(lastReflection?.rrDelta) ? Number(lastReflection.rrDelta) : Number(lastRecord?.rank?.rrDelta || 0);
+  const focus = lastReflection?.focus || normalizeLoadout(appState.loadout).assignment?.focusTitle || ensureDailyFocus(appState, model).title;
+  const rank = currentRank(model);
+  return `
+    <section class="last-match-banner">
+      <div>
+        <p class="rc-eyebrow">Last Match</p>
+        <h2>${escapeHtml(result === "win" ? "Win" : result === "loss" ? "Loss" : result === "draw" ? "Draw" : "No imported match yet")} ${rankBadge(rank.rank, rank.rr, "sm")} ${formatDelta(rrDelta, " RR")}</h2>
+        <p>Focus adherence: ${escapeHtml(focus || "No focus saved yet")}</p>
+      </div>
+      ${button({ label: "All Reflections", variant: "primary", attrs: `data-review-tab="reflections"` })}
+    </section>
+  `;
+}
+
+function renderReferenceRow() {
+  const cards = [
+    ["All Reflections", "Every saved read", "review", `data-review-tab="reflections"`],
+    ["Map Notes", "Quick map reminders", "library", `data-page-jump="library" data-library-view="maps"`],
+    ["Agent Tips", "Role and ability cues", "review", `data-page-jump="library" data-library-view="agents"`],
+    ["Lineups", "Searchable setups", "focus-queue", `data-page-jump="library" data-library-view="lineups"`],
+    ["Economy", "Buy-round reference", "review", `data-page-jump="learn" data-learn-query="economy"`],
+    ["Weapons", "Damage and fit notes", "library", `data-page-jump="library" data-library-view="weapons"`]
+  ];
+  return `<section class="play-reference-row" aria-label="Reference shortcuts">${cards.map(([title, sub, iconName, attrs]) => `<button type="button" ${attrs}>${icon(iconName)}<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span></button>`).join("")}</section>`;
+}
+
 export function renderPlayPage(root, model, appState = {}) {
   if (!root) return;
+  ensureDailyFocus(appState, model || {});
   root.innerHTML = `
-    <div class="play-grid">
-      <div class="play-area-focus">${renderTodayFocus(model || {}, appState)}</div>
-      <div class="play-area-timeline">${renderImprovementTimeline(model || {})}</div>
-      <div class="play-area-loadout">${renderLoadoutCard(model || {}, appState)}</div>
-      <div class="play-area-compass">${renderCompassMini(model || {})}</div>
-      <div class="play-area-rr">${renderRRCard(model || {})}</div>
-      <div class="play-area-trend">${renderRRTrendMini(model || {})}</div>
-      <div class="play-area-insight">${renderTopInsight(model || {})}</div>
+    <div class="play-dashboard">
+      ${renderTodayFocus(model || {}, appState)}
+      ${renderStatsStrip(model || {}, appState)}
+      <div class="play-row play-row-three">${renderLoadoutMini()}${renderCompassMini(model || {})}${renderRRCard(model || {})}</div>
+      <div class="play-row play-row-three">${renderRRTrendMini(model || {})}${renderTopInsight(model || {})}${renderFocusQueueMini(model || {}, appState)}</div>
+      ${renderLastMatchBanner(model || {}, appState)}
+      ${renderReferenceRow()}
+    </div>
+  `;
+}
+
+function renderLoadoutSelect(label, key, selected, options) {
+  return `<label class="loadout-flow-select"><span>${escapeHtml(label)}</span><select data-loadout-select="${escapeHtml(key)}">${optionList(options, selected)}</select></label>`;
+}
+
+function renderLoadoutFlowSelectors(appState = {}) {
+  const loadout = normalizeLoadout(appState.loadout);
+  const roleOptions = ["Any Role", ...ROLE_ORDER];
+  const agentOptions = ["Any Agent", ...agents().map(agent => agent.label || agent.name || agent.id).filter(Boolean).sort()];
+  const mapOptions = ["Any Map", ...maps().map(map => map.label || map.id).filter(Boolean).sort()];
+  return `<div class="loadout-flow-selectors">${renderLoadoutSelect("Map", "map", loadout.map, mapOptions)}${renderLoadoutSelect("Role", "role", loadout.role, roleOptions)}${renderLoadoutSelect("Agent", "agent", loadout.agent, agentOptions)}</div>`;
+}
+
+function renderFlowSpinner(loadout = {}) {
+  return `
+    <div class="loadout-flow-spinner" aria-live="polite">
+      <svg viewBox="0 0 160 160" aria-hidden="true"><circle cx="80" cy="80" r="60"></circle><path d="M80 18v22M80 120v22M18 80h22M120 80h22M36 36l16 16M108 108l16 16M124 36l-16 16M52 108l-16 16"></path><path class="spinner-blade" d="M80 42 104 80 80 118 56 80Z"></path></svg>
+      <strong>${escapeHtml(loadout.spinStep ? `Resolving ${loadout.spinStep}` : "Ready to spin")}</strong>
+      <p>Map, role, agent, and short-term focus are being locked together.</p>
+    </div>
+  `;
+}
+
+function renderGeneratedLoadout(loadout = {}) {
+  const assignment = loadout.assignment || {};
+  const portrait = getAgentPortraitAsset(assignment.agent || "Jett");
+  return `
+    <div class="loadout-generated-flow">
+      <div class="loadout-generated-left">
+        <p class="rc-eyebrow">Loadout Ready</p>
+        <h2>${escapeHtml(assignment.map || "Map")} / ${escapeHtml(assignment.role || "Role")}</h2>
+        <div class="loadout-generated-stat"><span>Agent</span><strong>${escapeHtml(assignment.agent || "Agent")}</strong></div>
+        <div class="loadout-generated-stat"><span>Match Focus</span><strong>${escapeHtml(assignment.focusTitle || "Short-term focus")}</strong><p>${escapeHtml(assignment.focusText || "")}</p></div>
+        <div class="loadout-generated-meta"><span>Confidence <strong>${whole(assignment.confidence || 78)}%</strong></span><span>Impact <strong>${escapeHtml(assignment.impact || "Medium")}</strong></span></div>
+        <div class="loadout-flow-actions">${button({ label: "Start Match", variant: "primary", action: "start-match" })}${button({ label: "Spin Again", variant: "secondary", action: "spin-loadout" })}${button({ label: "Exit", variant: "tertiary", action: "exit-loadout-flow" })}</div>
+      </div>
+      <div class="loadout-portrait-panel"><img src="${escapeHtml(portrait)}" alt="${escapeHtml(assignment.agent || "Agent")}"></div>
     </div>
   `;
 }
 
 export function renderLoadoutPage(root, model, appState = {}) {
   if (!root) return;
+  const loadout = normalizeLoadout(appState.loadout);
   root.innerHTML = `
-    <div class="route-shell">
-      ${renderLoadoutCard(model || {}, appState, { full: true })}
-      ${card({
-        eyebrow: "How it rolls",
-        title: "Map first, then role, then agent.",
-        body: "<p>The beta generator weighs your selected map, high-rank map pick references, and your recent role comfort. It stays honest: if no map is selected, it starts from your most played or current competitive maps.</p>",
-        className: "side-explain-card"
-      })}
-    </div>
+    <section class="loadout-flow">
+      <header class="loadout-flow-header"><div><p class="rc-eyebrow">Start a Match</p><h1>${loadout.state === "generated" ? "Loadout locked." : loadout.state === "spinning" ? "Spinning..." : "Build the next queue plan."}</h1></div>${button({ label: "Exit", variant: "secondary", action: "exit-loadout-flow" })}</header>
+      ${loadout.state === "generated" && loadout.assignment ? renderGeneratedLoadout(loadout) : `<div class="loadout-idle-flow"><div>${renderLoadoutFlowSelectors(appState)}<div class="loadout-flow-actions">${button({ label: "Spin Loadout", variant: "primary", action: "spin-loadout", disabled: loadout.state === "spinning" })}</div></div>${renderFlowSpinner(loadout)}</div>`}
+    </section>
   `;
 }
 
-function queueRow(item, index, total) {
-  return `
-    <article class="queue-row ${index === 0 ? "is-active" : ""}" draggable="true" data-focus-id="${escapeHtml(item.id)}">
-      <strong class="queue-order">${index + 1}</strong>
-      <span class="queue-icon ${roleClass(item.category)}">${icon("focus-queue")}</span>
-      <div class="queue-main">
-        <button class="queue-title" type="button" data-action="open-focus-detail" data-focus-id="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>
-        <p>${escapeHtml(item.evidence || item.how || "")}</p>
-        <div class="queue-confidence"><span style="--fill:${Math.max(20, 95 - index * 12)}%"></span></div>
-      </div>
-      <button class="pill priority-chip" type="button" data-action="toggle-focus-priority" data-focus-id="${escapeHtml(item.id)}">${escapeHtml(item.priority || "Medium")}</button>
-      <div class="queue-actions">
-        ${button({ label: "", variant: "icon", iconName: "grip", attrs: `aria-label="Drag focus ${index + 1}"` })}
-        ${button({ label: "↑", variant: "icon", action: "queue-up", attrs: `data-focus-id="${escapeHtml(item.id)}" aria-label="Move focus up"`, disabled: index === 0 })}
-        ${button({ label: "↓", variant: "icon", action: "queue-down", attrs: `data-focus-id="${escapeHtml(item.id)}" aria-label="Move focus down"`, disabled: index >= total - 1 })}
-        ${button({ label: "Remove", variant: "tertiary", action: "queue-remove", attrs: `data-focus-id="${escapeHtml(item.id)}"` })}
-      </div>
-    </article>
-  `;
+function queueCard(item = {}, index = 0) {
+  const confidence = clamp(Number(item.confidence || 80));
+  return `<article class="focus-queue-card-row"><button class="queue-dismiss" type="button" data-action="queue-remove" data-focus-id="${escapeHtml(item.id)}" aria-label="Dismiss focus">x</button><span class="queue-number">${index + 1}</span><h3>${escapeHtml(item.title)}</h3><span class="pill warn">${escapeHtml(item.impact || item.priority || "Medium")} impact</span><div class="queue-meter"><span style="--fill:${confidence}%"></span></div><small>Confidence ${whole(confidence)}%</small></article>`;
 }
 
 export function renderFocusQueuePage(root, model, appState = {}) {
   if (!root) return;
-  const queue = getFocusQueue(appState, model || {});
+  const queue = getFocusQueue(appState, model || {}).slice(0, 4);
+  root.innerHTML = `<section class="focus-queue-page">${cardHeader("Focus Queue", "Auto-rotated and self-chosen jobs.", button({ label: "Add Focus", variant: "primary", action: "open-add-focus" }))}<div class="focus-queue-mode">${button({ label: "Auto-Rotate", variant: appState.focusMode === "self" ? "secondary" : "primary", action: "focus-mode-auto" })}${button({ label: "Self-Chosen", variant: appState.focusMode === "self" ? "primary" : "secondary", action: "focus-mode-self" })}</div><div class="focus-queue-cards">${queue.map(queueCard).join("")}</div><button class="focus-add-ghost" type="button" data-action="open-add-focus">+ Add Focus to Queue</button></section>`;
+}
+
+export function openFocusQueueModal(modalRoot, model, appState = {}) {
+  if (!modalRoot) return;
+  const queue = getFocusQueue(appState, model || {}).slice(0, 4);
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-queue-modal" role="dialog" aria-modal="true" aria-labelledby="focusQueueModalTitle"><header class="modal-head"><div><p class="eyebrow">Focus Queue</p><h2 id="focusQueueModalTitle">Next short-term jobs.</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><div class="focus-queue-mode">${button({ label: "Auto-Rotate", variant: appState.focusMode === "self" ? "secondary" : "primary", action: "focus-mode-auto" })}${button({ label: "Self-Chosen", variant: appState.focusMode === "self" ? "primary" : "secondary", action: "focus-mode-self" })}</div><div class="focus-queue-cards">${queue.map(queueCard).join("")}</div><button class="focus-add-ghost" type="button" data-action="open-add-focus">+ Add Focus to Queue</button></div></section></div>`;
+}
+
+function renderPillarTiles(model = {}) {
+  return `<div class="in-game-pillars">${modelPillars(model).map((pillar, index) => `<button class="in-game-pillar pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}"><span>${escapeHtml(pillar.short)}</span><strong>${whole(pillar.score)}</strong></button>`).join("")}</div>`;
+}
+
+function renderReferenceDetail(kind = "", assignment = {}) {
+  if (kind === "agent") return `<h3>${escapeHtml(assignment.agent || "Agent")} tip</h3><p>Use your first utility to help the first contact, not after the fight is already over.</p>`;
+  if (kind === "lineups") return `<label class="lineup-search">Search lineups<input placeholder="Search map, agent, or site"></label><p>Lineups stay compact in Play; the full archive lives in Library.</p>`;
+  if (kind === "weapons") return `<h3>Weapons</h3><p>Pair the weapon to the fight: rifles for repeatable trades, pistols for close swing timing, and snipers for long punished sightlines.</p>`;
+  return `<h3>${escapeHtml(assignment.map || "Map")} notes</h3><p>${escapeHtml(assignment.mapReminder || "Take space with a teammate and keep the spike path simple.")}</p>`;
+}
+
+export function renderInGamePage(root, model, appState = {}) {
+  if (!root) return;
+  const loadout = normalizeLoadout(appState.loadout);
+  const assignment = loadout.assignment || buildLoadoutAssignment(model || {}, appState);
+  const focus = ensureDailyFocus(appState, model || {});
+  const activeReference = appState.inGameReference || "map";
   root.innerHTML = `
-    <div class="focus-queue-layout">
-      <section class="rc-card rc-card--dashboard focus-queue-card">
-        ${cardHeader("Focus Queue", "Short-term practice backlog.", button({ label: "Add Focus", variant: "primary", action: "open-add-focus" }))}
-        <div class="queue-list">
-          ${queue.map((item, index) => queueRow(item, index, queue.length)).join("")}
-          <button class="queue-add-row" type="button" data-action="open-add-focus">+ Add Focus to Queue</button>
-        </div>
-        <footer class="rc-card__foot">${button({ label: "Clear Queue", variant: "danger", action: "queue-clear" })}</footer>
-      </section>
-      ${card({
-        eyebrow: "Graduation check",
-        title: "This improved 14% over 6 matches. Move to next focus?",
-        body: "<p>This banner appears when the model sees a measurable enough improvement window. For now it is wired as a beta-visible completion pattern.</p>",
-        footer: `${button({ label: "Keep", variant: "secondary", action: "queue-keep" })}${button({ label: "Graduate", variant: "primary", action: "queue-graduate" })}`,
-        className: "completion-card"
-      })}
+    <div class="in-game-stack">
+      <section class="in-game-focus-card"><header><div><p class="rc-eyebrow">In-Game Focus</p><h2>${escapeHtml(focus.title)}</h2></div><div class="in-game-focus-meta"><span>Confidence <strong>${whole(focus.confidence || 78)}%</strong></span><span>Impact <strong>${escapeHtml(focus.impact || "Medium")}</strong></span></div></header><p>${escapeHtml(focus.how || focus.evidence || "")}</p></section>
+      ${renderPillarTiles(model || {})}
+      <section class="rc-card rc-card--dashboard focus-checklist-card">${cardHeader("Focus Checklist", "Keep it simple while the match is live.")}<ul class="focus-checklist"><li>Say the focus before pistol and each side swap.</li><li>Use one teammate or one piece of utility before first contact.</li><li>After death, call useful info once, then reset.</li></ul></section>
+      <section class="rc-card rc-card--dashboard quick-reference-card">${cardHeader("Quick Reference", "Relevant to this match")}<div class="quick-reference-tabs">${[["map", "Map Notes"], ["agent", "Agent Tips"], ["lineups", "Lineups"], ["weapons", "Weapons"]].map(([key, label]) => `<button class="${activeReference === key ? "is-active" : ""}" type="button" data-action="open-reference" data-reference="${key}">${escapeHtml(label)}</button>`).join("")}</div><div class="quick-reference-body">${renderReferenceDetail(activeReference, assignment)}</div></section>
+      ${appState.matchCompleteError ? `<div class="sync-error-strip">${escapeHtml(appState.matchCompleteError)} ${button({ label: "Retry", variant: "secondary", action: "match-complete" })}</div>` : ""}
+      <div class="in-game-actions">${button({ label: "Match Complete", variant: "primary", action: "match-complete" })}${button({ label: "Exit", variant: "secondary", action: "exit-in-game" })}</div>
     </div>
   `;
 }
@@ -530,233 +610,81 @@ function logValue(appState = {}, key = "", fallback = "") {
   return escapeHtml(appState.logDraft?.[key] ?? fallback);
 }
 
+function slider(name, key, value = 50, min = 0, max = 100) {
+  return `<label class="percent-slider"><span>${escapeHtml(name)} <strong>${whole(value)}%</strong></span><input type="range" min="${min}" max="${max}" value="${escapeHtml(value)}" data-log-field="${escapeHtml(key)}"></label>`;
+}
+
+function moodSlider(value = 3) {
+  const labels = ["Frustrated", "Rough", "Okay", "Good", "Great"];
+  const active = clamp(Number(value || 3), 1, 5);
+  return `<label class="percent-slider mood-slider"><span>Mood <strong>${escapeHtml(labels[active - 1] || "Okay")}</strong></span><input type="range" min="1" max="5" value="${active}" data-log-field="mood"><div class="mood-labels">${labels.map((label, index) => `<small class="${index + 1 === active ? "is-active" : ""}">${escapeHtml(label)}</small>`).join("")}</div></label>`;
+}
+
 export function renderLogMatchPage(root, model, appState = {}) {
   if (!root) return;
   const assignment = normalizeLoadout(appState.loadout).assignment || {};
-  const activeFocus = getFocusQueue(appState, model || {})[0] || focusFromModel(model || {});
-  const selectedResult = appState.logDraft?.result || "";
-  const resultButton = value => button({
-    label: value,
-    variant: selectedResult === value.toLowerCase() ? "primary" : "secondary",
-    action: "log-result",
-    attrs: `data-log-result="${value.toLowerCase()}"`
-  });
+  const draft = appState.logDraft || {};
+  const activeFocus = ensureDailyFocus(appState, model || {});
+  const selectedResult = draft.result || "";
+  const resultButton = value => button({ label: value, variant: selectedResult === value.toLowerCase() ? "primary" : "secondary", action: "log-result", attrs: `data-log-result="${value.toLowerCase()}"` });
   root.innerHTML = `
-    <form class="log-grid" data-log-form>
-      <section class="rc-card rc-card--dashboard log-match-summary">
-        ${cardHeader("Log Match", "Save this match")}
-        <div class="match-summary-fields">
-          <span><small>Map</small><strong>${logValue(appState, "map", assignment.map || "Unknown")}</strong></span>
-          <span><small>Result</small><strong>${escapeHtml(selectedResult || "Choose")}</strong></span>
-          <span><small>Final Score</small><strong>${logValue(appState, "score", "--")}</strong></span>
-          <span><small>RR Change</small><strong>${logValue(appState, "rrAfter", "--")}</strong></span>
-        </div>
-      </section>
-      <section class="rc-card rc-card--dashboard log-result">
-        ${cardHeader("Result", "Match outcome")}
-        <div class="choice-row">${resultButton("Win")}${resultButton("Loss")}${resultButton("Draw")}${button({ label: "Undo", variant: "tertiary", action: "log-result-undo" })}</div>
-      </section>
-      <section class="rc-card rc-card--dashboard log-rr">
-        ${cardHeader("RR Change", "Before → after")}
-        <div class="field-grid two">
-          <label>RR Before<input data-log-field="rrBefore" inputmode="numeric" value="${logValue(appState, "rrBefore")}"></label>
-          <label>RR After<input data-log-field="rrAfter" inputmode="numeric" value="${logValue(appState, "rrAfter")}"></label>
-        </div>
-      </section>
-      <section class="rc-card rc-card--dashboard log-details">
-        ${cardHeader("Match Details", "Known session info")}
-        <div class="field-grid two">
-          <label>Mode<select data-log-field="mode"><option value="Competitive">Competitive</option><option value="Premier">Premier</option><option value="Unknown">Unknown</option></select></label>
-          <label>Map<input data-log-field="map" value="${logValue(appState, "map", assignment.map || "")}"></label>
-          <label>Agent<input data-log-field="agent" value="${logValue(appState, "agent", assignment.agent || "")}"></label>
-          <label>Role<input data-log-field="role" value="${logValue(appState, "role", assignment.role || "")}"></label>
-        </div>
-      </section>
-      <section class="rc-card rc-card--dashboard log-reflect">
-        ${cardHeader("Your Performance", "Five-star self read")}
-        <div class="rating-row" role="group" aria-label="Your performance rating">${[1, 2, 3, 4, 5].map(value => `<button class="${String(appState.logDraft?.rating || "") === String(value) ? "is-active" : ""}" type="button" data-log-rating="${value}">★</button>`).join("")}</div>
-        <label>Feeling<select data-log-field="feeling"><option value="">Select</option><option>Locked In</option><option>Stable</option><option>Tilted</option><option>Foggy</option></select></label>
-        <label>What went well?<textarea data-log-field="wentWell" maxlength="500">${logValue(appState, "wentWell")}</textarea></label>
-        <label>What could you improve?<textarea data-log-field="improve" maxlength="500">${logValue(appState, "improve")}</textarea></label>
-      </section>
-      <section class="rc-card rc-card--dashboard log-focus">
-        ${cardHeader("Focus Adherence", activeFocus.title)}
-        <p>${escapeHtml(activeFocus.how || activeFocus.evidence || "")}</p>
-        <label>Adherence<select data-log-field="adherence"><option value="">Optional</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-        <div class="focus-adherence-bar"><span style="--fill:${Number(appState.logDraft?.adherence || 0) * 20}%"></span></div>
-        <label class="toggle-row"><input type="checkbox" data-log-field="saveReflection" ${appState.logDraft?.saveReflection === false ? "" : "checked"}> Save to Reflection Matches</label>
-        <div class="save-strip">${button({ label: "Save Match", variant: "primary", action: "save-log-match" })}</div>
-      </section>
+    <form class="log-match-stack" data-log-form>
+      <section class="rc-card rc-card--dashboard log-section log-result">${cardHeader("Result", "Win, loss, or draw")}<div class="choice-row">${resultButton("Win")}${resultButton("Loss")}${resultButton("Draw")}</div></section>
+      <section class="rc-card rc-card--dashboard log-section log-rr">${cardHeader("RR Change", "Verified from sync when available")}<div class="field-grid two"><label>RR Before<input data-log-field="rrBefore" inputmode="numeric" value="${logValue(appState, "rrBefore", draft.rrBefore || "")}"></label><label>RR After<input data-log-field="rrAfter" inputmode="numeric" value="${logValue(appState, "rrAfter", draft.rrAfter || "")}"></label></div></section>
+      <section class="rc-card rc-card--dashboard log-section log-details">${cardHeader("Match Details", "Pulled from the loadout and match sync")}<div class="field-grid two"><label>Mode<select data-log-field="mode"><option value="Competitive">Competitive</option><option value="Premier">Premier</option><option value="Unknown">Unknown</option></select></label><label>Map<input data-log-field="map" value="${logValue(appState, "map", assignment.map || draft.map || "")}"></label><label>Agent<input data-log-field="agent" value="${logValue(appState, "agent", assignment.agent || draft.agent || "")}"></label><label>Role<input data-log-field="role" value="${logValue(appState, "role", assignment.role || draft.role || "")}"></label></div></section>
+      <section class="rc-card rc-card--dashboard log-section log-mood">${cardHeader("Mood", "How the match felt")}${moodSlider(draft.mood || 3)}</section>
+      <section class="rc-card rc-card--dashboard log-section log-performance">${cardHeader("Personal Performance", "Self-read percentage")}${slider("Performance Score", "performanceScore", draft.performanceScore || 60)}</section>
+      <section class="rc-card rc-card--dashboard log-section log-comms">${cardHeader("Comms", "Rate your own comms and the team environment")}<div class="field-grid two">${slider("Self Comms", "selfComms", draft.selfComms || 50)}${slider("Team Comms", "teamComms", draft.teamComms || 50)}</div></section>
+      <section class="rc-card rc-card--dashboard log-section log-reflection">${cardHeader("Reflection", "Notes and quick tips")}<label>Notes<textarea data-log-field="notes" maxlength="700" placeholder="What happened? What was your playstyle? Mention intentions here if they matter.">${logValue(appState, "notes")}</textarea></label><div class="typing-tips"><strong>Quick tip:</strong> Keep the note concrete: one round, one habit, one adjustment.</div></section>
+      <section class="rc-card rc-card--dashboard log-section log-focus">${cardHeader("Focus Adherence", activeFocus.title)}<p>${escapeHtml(activeFocus.how || activeFocus.evidence || "")}</p>${slider("Focus Adherence", "adherence", draft.adherence || 65)}</section>
+      <section class="log-end-strip">${button({ label: "End Match", variant: "primary", action: "save-log-match" })}</section>
     </form>
-  `;
-}
-
-export function renderInGamePage(root, model, appState = {}) {
-  if (!root) return;
-  const loadout = normalizeLoadout(appState.loadout);
-  const assignment = loadout.assignment || buildLoadoutAssignment(model || {}, appState);
-  const activeReference = appState.inGameReference || "";
-  const referenceOpen = Boolean(activeReference);
-  const mapImage = getMapAsset(assignment.map || "");
-  root.innerHTML = `
-    <div class="in-game-layout ${referenceOpen ? "has-reference-open" : ""}">
-      <section class="rc-card rc-card--dashboard one-job-card" style="--agent-art:url('${escapeHtml(getAgentAsset(assignment.agent || "Jett"))}')">
-        ${cardHeader("In-Game Focus", "One Job", button({ label: "Exit In-Game", variant: "secondary", action: "end-match-log" }))}
-        <div class="one-job-hero">
-          <p class="rc-eyebrow">One Job</p>
-          <h2>${escapeHtml(assignment.focusTitle || "Play the active focus.")}</h2>
-          <p>${escapeHtml(assignment.focusText || "Keep your next round tied to the active focus.")}</p>
-          <span>Round 5 · 2-2 · Attacking</span>
-        </div>
-      </section>
-      <aside class="rc-card rc-card--dashboard quick-reference-card">
-        ${cardHeader("Quick Reference", "Relevant to this loadout")}
-        <div class="quick-list">
-          ${[
-            ["map", "Map Notes", "1 key area to watch", "library"],
-            ["agent", "Agent Tips", `${assignment.role || "Role"} reminder`, "review"],
-            ["lineups", "Lineups", "2 useful lineups", "focus-queue"],
-            ["economy", "Economy", "Buy smart this round", "review"]
-          ].map(([key, title, sub, iconName]) => `
-            <button type="button" data-action="open-reference" data-reference="${escapeHtml(key)}">
-              ${icon(iconName)}
-              <span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span>
-            </button>
-          `).join("")}
-        </div>
-        ${button({ label: "Open Reference", variant: "primary", action: "open-reference", attrs: `data-reference="map"` })}
-      </aside>
-      ${referenceOpen ? `
-        <section class="rc-card rc-card--dashboard quick-reference-expanded">
-          ${cardHeader("Quick Reference", activeReference === "map" ? "Map Notes" : activeReference === "agent" ? "Agent Tips" : activeReference === "lineups" ? "Lineups" : "Economy", button({ label: "Close Reference", variant: "secondary", action: "close-reference" }))}
-          <div class="reference-tabs">
-            ${["map", "agent", "lineups", "economy"].map(key => `<button class="rc-button ${activeReference === key ? "rc-button--primary" : "rc-button--secondary"}" type="button" data-action="open-reference" data-reference="${key}">${escapeHtml(key === "map" ? "Map Notes" : key === "agent" ? "Agent Tips" : key === "lineups" ? "Lineups" : "Economy")}</button>`).join("")}
-          </div>
-          <div class="reference-detail-grid">
-            <img src="${escapeHtml(mapImage)}" alt="">
-            <div>
-              <p class="rc-eyebrow">Key Takeaway</p>
-              <h3>${escapeHtml(assignment.map || "Current map")} · ${escapeHtml(assignment.role || "Role")}</h3>
-              <p>${escapeHtml(assignment.mapReminder || "Hold the cleanest space first, then pair the next contact with a teammate before you chase a second duel.")}</p>
-            </div>
-          </div>
-        </section>
-      ` : ""}
-    </div>
   `;
 }
 
 export function openFocusDetailsModal(modalRoot, model, appState = {}, focusId = "") {
   if (!modalRoot) return;
-  const focus = getFocusQueue(appState, model || {}).find(item => item.id === focusId) || getFocusQueue(appState, model || {})[0] || focusFromModel(model || {});
+  const queue = getFocusQueue(appState, model || {});
+  const focus = queue.find(item => item.id === focusId) || getDailyFocus(appState, model || {});
   const behaviors = (focus.behaviors || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
   const related = (focus.related || []).map(item => `<button class="pill" type="button" data-page-jump="learn" data-learn-query="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join("");
-  modalRoot.innerHTML = `
-    <div class="modal-backdrop" data-modal-close>
-      <section class="modal-card focus-modal" role="dialog" aria-modal="true" aria-labelledby="focusModalTitle">
-        <header class="modal-head">
-          <div>
-            <p class="eyebrow">${escapeHtml(focus.category || "Focus")} · ${escapeHtml(focus.priority || "Medium Priority")}</p>
-            <h2 id="focusModalTitle">${escapeHtml(focus.title)}</h2>
-          </div>
-          ${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}
-        </header>
-        <div class="modal-body">
-          <section class="detail-block"><h3>Why this focus?</h3><p>${escapeHtml(focus.why || focus.evidence || "")}</p></section>
-          <section class="detail-block"><h3>What to do</h3><ul>${behaviors || "<li>Pick one repeatable habit and check it after the next import.</li>"}</ul></section>
-          <section class="detail-block"><h3>Success looks like</h3><p>${escapeHtml(focus.how || "The next match shows one cleaner repeated decision tied to this focus.")}</p></section>
-          <section class="detail-block"><h3>Related concepts</h3><div class="recent-list">${related || "<span class=\"muted\">No related concepts yet.</span>"}</div></section>
-        </div>
-        <footer class="modal-actions">
-          ${button({ label: "Change Focus", variant: "secondary", action: "open-add-focus", attrs: `data-focus-id="${escapeHtml(focus.id)}"` })}
-          ${button({ label: "Got It", variant: "primary", action: "use-active-focus", attrs: `data-focus-id="${escapeHtml(focus.id)}"` })}
-        </footer>
-      </section>
-    </div>
-  `;
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-modal" role="dialog" aria-modal="true" aria-labelledby="focusModalTitle"><header class="modal-head"><div><p class="eyebrow">${escapeHtml(focus.category || "Focus")} / ${escapeHtml(focus.impact || focus.priority || "Medium")} Impact</p><h2 id="focusModalTitle">${escapeHtml(focus.title)}</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><section class="detail-block"><h3>Why this focus?</h3><p>${escapeHtml(focus.why || focus.evidence || "")}</p></section><section class="detail-block"><h3>What to do</h3><ul>${behaviors || "<li>Pick one repeatable habit and check it after the next import.</li>"}</ul></section><section class="detail-block"><h3>Success looks like</h3><p>${escapeHtml(focus.how || "The next match shows one cleaner repeated decision tied to this focus.")}</p></section><section class="detail-block"><h3>Related concepts</h3><div class="recent-list">${related || "<span class=\"muted\">No related concepts yet.</span>"}</div></section></div></section></div>`;
 }
 
-export function openAddFocusModal(modalRoot, model, appState = {}) {
+export function openAddFocusModal(modalRoot, model) {
   if (!modalRoot) return;
-  const recommended = getFocusQueue(appState, model || {}).map(item => `
-    <button class="focus-suggestion" type="button" data-action="queue-add-focus" data-focus-title="${escapeHtml(item.title)}" data-focus-category="${escapeHtml(item.category)}">
-      <strong>${escapeHtml(item.title)}</strong>
-      <span>${escapeHtml(item.category)} · ${escapeHtml(item.priority || "Medium")}</span>
-      <p>${escapeHtml(item.evidence || item.how || "")}</p>
-    </button>
-  `).join("");
-  modalRoot.innerHTML = `
-    <div class="modal-backdrop" data-modal-close>
-      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addFocusTitle">
-        <header class="modal-head">
-          <div>
-            <p class="eyebrow">Focus Queue</p>
-            <h2 id="addFocusTitle">Add a focus.</h2>
-          </div>
-          ${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}
-        </header>
-        <div class="modal-body">
-          <div class="local-tabs" role="tablist" aria-label="Add focus sources">
-            <button class="nav-tab is-active" type="button">Recommended</button>
-            <button class="nav-tab" type="button">Insights</button>
-            <button class="nav-tab" type="button">Learn Concepts</button>
-            <button class="nav-tab" type="button">Custom Focus</button>
-          </div>
-          <div class="focus-suggestion-grid">${recommended}</div>
-          <div class="field-grid two">
-            <label>Custom title<input data-custom-focus-field="title" placeholder="Example: Cleaner opening duels"></label>
-            <label>Category<input data-custom-focus-field="category" placeholder="Mechanics"></label>
-          </div>
-          ${button({ label: "Save Custom Focus", variant: "primary", action: "queue-save-custom" })}
-        </div>
-      </section>
-    </div>
-  `;
+  const recommended = focusPool(model || {}).map(item => `<button class="focus-suggestion" type="button" data-action="queue-add-focus" data-focus-title="${escapeHtml(item.title)}" data-focus-category="${escapeHtml(item.category)}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.category)} / ${escapeHtml(item.impact || "Medium")}</span><p>${escapeHtml(item.evidence || item.how || "")}</p></button>`).join("");
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addFocusTitle"><header class="modal-head"><div><p class="eyebrow">Focus Queue</p><h2 id="addFocusTitle">Add a focus.</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><div class="focus-suggestion-grid">${recommended}</div><div class="field-grid two"><label>Custom title<input data-custom-focus-field="title" placeholder="Example: Cleaner opening duels"></label><label>Category<input data-custom-focus-field="category" placeholder="Aim / Mechanics"></label></div>${button({ label: "Save Custom Focus", variant: "primary", action: "queue-save-custom" })}</div></section></div>`;
 }
 
-export function openLogSavedModal(modalRoot, reflectionId = "") {
+export function openLogSavedModal(modalRoot, reflection = {}, model = {}) {
   if (!modalRoot) return;
-  modalRoot.innerHTML = `
-    <div class="modal-backdrop" data-modal-close>
-      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logSavedTitle">
-        <header class="modal-head">
-          <div>
-            <p class="eyebrow">Saved</p>
-            <h2 id="logSavedTitle">Match Saved!</h2>
-          </div>
-          ${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}
-        </header>
-        <div class="modal-body log-saved-body">
-          <span class="save-check">✓</span>
-          <p>Good work. Your reflection is ready for Review${reflectionId ? " and Reflection Matches" : ""}.</p>
-          <div class="choice-row">
-            ${button({ label: "Back to Play", variant: "secondary", attrs: `data-page-jump="play"` })}
-            ${button({ label: "View Reflections", variant: "primary", attrs: `data-review-tab="reflections"` })}
-          </div>
-        </div>
-      </section>
-    </div>
-  `;
+  const rank = currentRank(model);
+  const rrDelta = finite(reflection?.rrDelta) ? Number(reflection.rrDelta) : 0;
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logSavedTitle"><header class="modal-head"><div><p class="eyebrow">Saved</p><h2 id="logSavedTitle">Match Saved!</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body log-saved-body"><span class="save-check">&#10003;</span><p>RR Change: <strong>${formatDelta(rrDelta, " RR")}</strong></p><div class="rank-saved-pair">${rankBadge(rank.rank, rank.rr, "lg")}<strong>${escapeHtml(rank.rank)} ${finite(rank.rr) ? `${whole(rank.rr)} RR` : ""}</strong></div><div class="choice-row">${button({ label: "View Reflection", variant: "primary", attrs: `data-review-tab="reflections"` })}${button({ label: "Back to Play", variant: "secondary", attrs: `data-page-jump="play"` })}</div></div></section></div>`;
 }
 
 export function createReflectionFromDraft(appState = {}) {
   const draft = appState.logDraft || {};
   const assignment = normalizeLoadout(appState.loadout).assignment || {};
   const now = new Date().toISOString();
+  const before = Number(draft.rrBefore);
+  const after = Number(draft.rrAfter);
   return {
     id: `reflection-${Date.now()}`,
     createdAt: now,
     playedAt: now,
     result: draft.result || "unknown",
-    rrDelta: finite(Number(draft.rrAfter) - Number(draft.rrBefore)) ? Number(draft.rrAfter) - Number(draft.rrBefore) : null,
+    rrDelta: finite(after - before) ? after - before : null,
     map: draft.map || assignment.map || "Unknown",
     agent: draft.agent || assignment.agent || "Unknown",
     role: draft.role || assignment.role || "Unknown",
-    focus: assignment.focusTitle || draft.focus || "No active focus",
-    feeling: draft.feeling || "",
-    rating: draft.selfRating || draft.rating || "",
-    wentWell: draft.wentWell || "",
+    focus: assignment.focusTitle || draft.focus || getDailyFocus(appState, {}).title,
+    feeling: draft.mood || "",
+    rating: draft.performanceScore || "",
+    wentWell: draft.notes || "",
     improve: draft.improve || "",
-    saveReflection: draft.saveReflection !== false
+    adherence: draft.adherence || "",
+    saveReflection: true
   };
 }

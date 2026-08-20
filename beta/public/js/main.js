@@ -10,10 +10,12 @@ import { openLessonModal } from "./learn/lesson-modal.js";
 import {
   buildLoadoutAssignment,
   createReflectionFromDraft,
+  ensureDailyFocus,
   getFocusQueue,
   LOADOUT_DEFAULTS,
   openAddFocusModal,
   openFocusDetailsModal,
+  openFocusQueueModal,
   openLogSavedModal,
   renderFocusQueuePage,
   renderInGamePage,
@@ -23,6 +25,9 @@ import {
 } from "./play/play-page.js";
 import { openLineupModal, renderLibrary } from "./library/library-page.js";
 import { openPlanModal, renderSettings } from "./settings/settings-page.js";
+import { createDemoAppState, createDemoSnapshot } from "./demo/fixture.js";
+
+const DEMO_MODE = new URLSearchParams(location.search).get("demo") === "1";
 
 const PAGE_TITLES = {
   play: "Play",
@@ -115,7 +120,19 @@ if (!app.appState.historyFilters) app.appState.historyFilters = {};
 // Only the account identity (riotId/region/puuid) is persisted across reloads.
 // Raw match/MMR history is intentionally not stored in localStorage; real
 // accounts can exceed the browser quota. Reloads re-sync from Henrik.
-if (cachedIdentity) {
+if (DEMO_MODE) {
+  const demoSnapshot = createDemoSnapshot();
+  app.snapshot = demoSnapshot;
+  app.model = buildPlayerModel(demoSnapshot);
+  app.appState = {
+    ...app.appState,
+    ...createDemoAppState(app.model, app.appState)
+  };
+  els.riotIdInput.value = demoSnapshot.riotId;
+  els.regionInput.value = demoSnapshot.region;
+  setStatus(`Demo data loaded: ${app.model.records.length} retained competitive matches.`, "good");
+  setSidebarAccount(demoSnapshot.riotId, `${app.model.records.length} demo matches · ${demoSnapshot.region.toUpperCase()}`);
+} else if (cachedIdentity) {
   els.riotIdInput.value = cachedIdentity.riotId || "";
   els.regionInput.value = cachedIdentity.region || "na";
   setStatus(`Last synced ${cachedIdentity.riotId || "an account"} — sync again to rebuild beta data.`);
@@ -130,6 +147,7 @@ function setStatus(message, tone = "") {
 }
 
 function persistAppState() {
+  if (DEMO_MODE) return;
   const { learnState, ...rest } = app.appState;
   saveAppState({
     ...rest,
@@ -192,6 +210,8 @@ function applyRoute(route = parseRoute(), { replace = false } = {}) {
   els.panels.forEach(panel => panel.classList.toggle("is-active", panel.dataset.pagePanel === app.page));
   if (els.pageTitle) els.pageTitle.textContent = PAGE_TITLES[app.page] || "RankedCoach";
   document.title = `RankedCoach Beta · ${PAGE_TITLES[app.page] || "Play"}`;
+  document.documentElement.dataset.flowMode = app.page === "loadout" ? "loadout" : "";
+  ensureDailyFocus(app.appState, app.model || {});
   persistAppState();
   render();
 }
@@ -232,6 +252,7 @@ function renderHelp() {
 
 function render() {
   applyVisualPreferences();
+  ensureDailyFocus(app.appState, app.model || {});
   renderPlayPage(els.playRoot, app.model, app.appState);
   renderLoadoutPage(els.loadoutRoot, app.model, app.appState);
   renderFocusQueuePage(els.focusQueueRoot, app.model, app.appState);
@@ -282,6 +303,72 @@ async function spinLoadout() {
   };
   persistAppState();
   render();
+}
+
+function normalizeLoadoutForMain(loadout = {}) {
+  return { ...LOADOUT_DEFAULTS, ...(loadout || {}) };
+}
+
+function buildLogDraftFromLatestMatch() {
+  const assignment = normalizeLoadoutForMain(app.appState.loadout).assignment || buildLoadoutAssignment(app.model || {}, app.appState);
+  const latest = (app.model?.records || [])[0] || {};
+  const rank = latest.rank || {};
+  const delta = Number(rank.rrDelta || 0);
+  const rrAfter = Number.isFinite(Number(rank.rr)) ? Number(rank.rr) : "";
+  const rrBefore = rrAfter === "" ? "" : rrAfter - delta;
+  return {
+    result: latest.result || "win",
+    rrBefore,
+    rrAfter,
+    map: latest.map || assignment.map || "",
+    agent: latest.agent || assignment.agent || "",
+    role: latest.role || assignment.role || "",
+    mode: "Competitive",
+    mood: 3,
+    performanceScore: latest.stats?.acs ? Math.max(35, Math.min(100, Math.round(Number(latest.stats.acs) / 3))) : 60,
+    selfComms: 50,
+    teamComms: 50,
+    adherence: assignment.confidence || 65,
+    notes: ""
+  };
+}
+
+async function completeMatchFromInGame() {
+  app.appState.matchCompleteError = "";
+  const current = normalizeLoadoutForMain(app.appState.loadout);
+  app.appState.loadout = {
+    ...current,
+    assignment: current.assignment || buildLoadoutAssignment(app.model || {}, app.appState),
+    state: "started"
+  };
+  if (!DEMO_MODE && els.riotIdInput?.value) {
+    try {
+      const snapshot = await syncHenrikAccount({
+        riotId: els.riotIdInput.value,
+        region: els.regionInput.value,
+        pages: 1,
+        pageSize: 5
+      }, message => setStatus(message));
+      app.snapshot = snapshot;
+      app.model = buildPlayerModel(snapshot);
+      saveState({
+        riotId: snapshot.riotId,
+        region: snapshot.region,
+        puuid: snapshot.puuid,
+        syncedAt: snapshot.syncedAt
+      });
+      setSidebarAccount(snapshot.riotId, `${app.model.records.length} matches · ${snapshot.region.toUpperCase()}`);
+      setStatus("Latest match check complete.", "good");
+    } catch (error) {
+      app.appState.matchCompleteError = error?.message || "Latest match check failed. You can retry or log manually.";
+      persistAppState();
+      renderInGamePage(els.inGameRoot, app.model, app.appState);
+      return;
+    }
+  }
+  app.appState.logDraft = buildLogDraftFromLatestMatch();
+  persistAppState();
+  navigate("log-match");
 }
 
 function openSimpleModal(kind = "info") {
@@ -441,14 +528,24 @@ document.addEventListener("click", event => {
     navigate("review", { reviewTab: "all-matches" });
   } else if (action === "spin-loadout") {
     spinLoadout();
+  } else if (action === "open-loadout-flow") {
+    navigate("loadout");
   } else if (action === "cancel-loadout") {
     app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "idle", spinStep: "", assignment: null };
     persistAppState();
     render();
   } else if (action === "start-match") {
-    app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "started", startedAt: new Date().toISOString() };
+    const current = { ...LOADOUT_DEFAULTS, ...app.appState.loadout };
+    app.appState.loadout = {
+      ...current,
+      assignment: current.assignment || buildLoadoutAssignment(app.model || {}, app.appState),
+      state: "started",
+      startedAt: new Date().toISOString()
+    };
     persistAppState();
     navigate("in-game");
+  } else if (action === "exit-loadout-flow") {
+    navigate("play");
   } else if (action === "open-in-game") {
     navigate("in-game");
   } else if (action === "open-reference") {
@@ -459,12 +556,33 @@ document.addEventListener("click", event => {
     app.appState.inGameReference = "";
     persistAppState();
     renderInGamePage(els.inGameRoot, app.model, app.appState);
-  } else if (action === "end-match-log") {
-    navigate("log-match");
+  } else if (action === "match-complete") {
+    completeMatchFromInGame();
+  } else if (action === "exit-in-game") {
+    app.appState.inGameReference = "";
+    persistAppState();
+    navigate("play");
   } else if (action === "open-focus-detail") {
     openFocusDetailsModal(els.modalRoot, app.model || {}, app.appState, actionTarget.dataset.focusId || "");
+  } else if (action === "open-focus-queue-modal") {
+    openFocusQueueModal(els.modalRoot, app.model || {}, app.appState);
   } else if (action === "open-focus-chooser" || action === "open-add-focus") {
     openAddFocusModal(els.modalRoot, app.model || {}, app.appState);
+  } else if (action === "focus-mode-auto") {
+    app.appState.focusMode = "auto";
+    app.appState.dailyFocus = null;
+    ensureDailyFocus(app.appState, app.model || {});
+    persistAppState();
+    if (els.modalRoot.querySelector(".focus-queue-modal")) openFocusQueueModal(els.modalRoot, app.model || {}, app.appState);
+    render();
+  } else if (action === "focus-mode-self") {
+    app.appState.focusMode = "self";
+    app.appState.selfChosenFocus = app.appState.selfChosenFocus || getFocusQueue(app.appState, app.model || {})[0];
+    app.appState.dailyFocus = null;
+    ensureDailyFocus(app.appState, app.model || {});
+    persistAppState();
+    if (els.modalRoot.querySelector(".focus-queue-modal")) openFocusQueueModal(els.modalRoot, app.model || {}, app.appState);
+    render();
   } else if (action === "keep-focus" || action === "use-active-focus") {
     ensureQueue();
     closeModal(els.modalRoot);
@@ -492,14 +610,18 @@ document.addEventListener("click", event => {
     render();
   } else if (action === "queue-add-focus") {
     const queue = ensureQueue().filter(item => item.title !== actionTarget.dataset.focusTitle);
-    queue.unshift({
+    const addedFocus = {
       id: `custom-${Date.now()}`,
       title: actionTarget.dataset.focusTitle || "Custom focus",
       category: actionTarget.dataset.focusCategory || "Custom",
       priority: "Medium",
+      impact: "Medium",
+      confidence: 80,
       evidence: "Added from the beta focus chooser.",
       how: "Use this as your next short-term ranked cue."
-    });
+    };
+    if (app.appState.focusMode === "self") app.appState.selfChosenFocus = addedFocus;
+    queue.unshift(addedFocus);
     app.appState.focusQueue = queue.slice(0, 5);
     persistAppState();
     closeModal(els.modalRoot);
@@ -508,24 +630,24 @@ document.addEventListener("click", event => {
     const title = els.modalRoot.querySelector("[data-custom-focus-field='title']")?.value?.trim();
     const category = els.modalRoot.querySelector("[data-custom-focus-field='category']")?.value?.trim();
     if (title) {
-      app.appState.focusQueue = [{
+      const customFocus = {
         id: `custom-${Date.now()}`,
         title,
         category: category || "Custom",
         priority: "Medium",
+        impact: "Medium",
+        confidence: 80,
         evidence: "Custom focus created in beta.",
         how: "Keep it small enough to review after one match."
-      }, ...ensureQueue()].slice(0, 5);
+      };
+      if (app.appState.focusMode === "self") app.appState.selfChosenFocus = customFocus;
+      app.appState.focusQueue = [customFocus, ...ensureQueue()].slice(0, 5);
       persistAppState();
       closeModal(els.modalRoot);
       navigate("focus-queue");
     }
   } else if (action === "log-result") {
     app.appState.logDraft = { ...(app.appState.logDraft || {}), result: actionTarget.dataset.logResult };
-    persistAppState();
-    renderLogMatchPage(els.logMatchRoot, app.model, app.appState);
-  } else if (action === "log-result-undo") {
-    app.appState.logDraft = { ...(app.appState.logDraft || {}), result: "" };
     persistAppState();
     renderLogMatchPage(els.logMatchRoot, app.model, app.appState);
   } else if (action === "save-log-match") {
@@ -535,7 +657,12 @@ document.addEventListener("click", event => {
     app.appState.loadout = { ...LOADOUT_DEFAULTS, state: "idle" };
     persistAppState();
     render();
-    openLogSavedModal(els.modalRoot, reflection.saveReflection ? reflection.id : "");
+    openLogSavedModal(els.modalRoot, reflection, app.model || {});
+  } else if (action === "stats-page-prev" || action === "stats-page-next") {
+    const delta = action === "stats-page-next" ? 1 : -1;
+    app.appState.playStatsPage = Math.max(0, Number(app.appState.playStatsPage || 0) + delta);
+    persistAppState();
+    renderPlayPage(els.playRoot, app.model, app.appState);
   } else if (action === "open-lineup-detail") {
     openLineupModal(els.modalRoot, actionTarget.dataset.lineupId);
   } else if (action === "library-new-note") {
