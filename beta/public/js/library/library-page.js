@@ -70,9 +70,10 @@ function renderHome(model = {}, appState = {}) {
   const counts = getCounts(model, appState);
   const metrics = [
     ["Lineups", counts.lineups],
-    ["Lessons", counts.lessons],
-    ["Saved", counts.saved],
-    ["Notes", counts.notes]
+    ["Routines", counts.routines],
+    ["Notes", counts.notes],
+    ["Collections", counts.collections],
+    ["Watch Later", counts.saved]
   ].map(([label, value]) => `
     <div class="library-metric">
       <span>${escapeHtml(label)}</span>
@@ -82,6 +83,7 @@ function renderHome(model = {}, appState = {}) {
   const resourceColumns = [
     ["lineups", "Lineups", counts.lineups, "Map utility, plant plans, and fast pre-round reminders."],
     ["routines", "Routines", counts.routines, "Warm-up and post-match training templates for repeatable work."],
+    ["notes", "Notes", counts.notes, "Private player notes tied to what you are learning and reviewing."],
     ["collections", "Collections", counts.collections, "Grouped concepts and saved reads that belong together."],
     ["saved", "Watch Later", counts.saved, "Lessons and references you marked for another session."]
   ].map(([key, title, count, body]) => `
@@ -94,8 +96,8 @@ function renderHome(model = {}, appState = {}) {
   `).join("");
   return `
     <section class="library-hero rc-card">
-      ${cardHeader("Library", "Your saved coaching shelf.", `<span class="pill">${counts.lessons} learnable references</span>`)}
-      <p class="muted">Lineups, routines, saved lessons, notes, and custom collections live here. The beta starts with local data and a small durable schema for user-saved items.</p>
+      ${cardHeader("Library", "Your saved coaching shelf.", `<span class="pill">${counts.lessons} learnable references behind the shelves</span>`)}
+      <p class="muted">Lineups, routines, notes, collections, and Watch Later are the five player-facing shelves. Lessons still power search and recommendations behind the scenes.</p>
       <div class="library-metric-strip">${metrics}</div>
     </section>
     <section class="rc-card library-section library-resource-section">

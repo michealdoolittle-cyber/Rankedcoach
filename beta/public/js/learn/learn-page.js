@@ -11,13 +11,13 @@ const CATEGORY_META = {
     subtitle: "Ability purpose, fundamentals, and role habits",
     style: "linear-gradient(145deg, rgba(167,139,250,.22), rgba(53,242,255,.08))"
   },
-  Weapons: {
-    subtitle: "Fight ranges, economy, damage, and weapon identity",
-    style: "linear-gradient(145deg, rgba(255,211,77,.2), rgba(255,78,104,.08))"
-  },
   Concepts: {
     subtitle: "Core habits RankedCoach can connect to Review",
     style: "linear-gradient(145deg, rgba(40,232,132,.18), rgba(53,242,255,.08))"
+  },
+  Situations: {
+    subtitle: "Pistol, bonus, retake, clutch, and economy states",
+    style: "linear-gradient(145deg, rgba(255,211,77,.22), rgba(255,78,104,.1))"
   }
 };
 
@@ -38,7 +38,7 @@ export function renderLearn(root, state = {}) {
   `).join("");
   root.innerHTML = `
     <div class="learn-layout">
-      <section class="card learn-hero" aria-labelledby="learnTitle">
+      <section class="rc-card learn-hero" aria-labelledby="learnTitle">
         <div>
           <p class="eyebrow">Learn</p>
           <h2 id="learnTitle">Concepts that connect back to your Review.</h2>
@@ -52,15 +52,15 @@ export function renderLearn(root, state = {}) {
       <section class="learn-section">
         <div class="category-grid">${categoryTiles}</div>
       </section>
-      <section class="card learn-section">
+      <section class="rc-card learn-section">
         <h3>${category ? `${escapeHtml(category)} lessons` : "Popular topics"}</h3>
         <div class="topic-grid">${results.map(renderLessonCard).join("") || "<p class=\"muted\">No lessons matched that search.</p>"}</div>
       </section>
-      <section class="card learn-section">
+      <section class="rc-card learn-section">
         <h3>Recommended for you</h3>
         <div class="topic-grid">${recommended.map(renderLessonCard).join("") || "<p class=\"muted\">Sync an account to personalize recommendations.</p>"}</div>
       </section>
-      <section class="card learn-section">
+      <section class="rc-card learn-section">
         <h3>Recently viewed</h3>
         <div class="recent-list">${recent.map(item => `<span class="pill">${escapeHtml(item.title)}</span>`).join("") || "<span class=\"muted\">Open a lesson to build this list.</span>"}</div>
       </section>

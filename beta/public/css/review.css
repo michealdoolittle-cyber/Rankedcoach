@@ -257,6 +257,126 @@
   margin-bottom: var(--rc-space-4);
 }
 
+.stats-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 0.8fr) minmax(0, 1.05fr);
+  grid-template-areas:
+    "summary peak roles"
+    "trend trend patterns";
+  gap: var(--rc-grid-gap);
+  margin-bottom: var(--rc-grid-gap);
+}
+
+.stats-summary-panel { grid-area: summary; }
+.stats-peak-panel { grid-area: peak; }
+.stats-role-panel { grid-area: roles; }
+.stats-trend-panel { grid-area: trend; }
+.stats-pattern-panel { grid-area: patterns; }
+
+.stats-summary-panel,
+.stats-peak-panel,
+.stats-role-panel,
+.stats-trend-panel,
+.stats-pattern-panel {
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-md);
+  padding: var(--rc-space-4);
+  background: rgba(6, 12, 25, 0.58);
+}
+
+.stats-dashboard-grid .stats-route-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.stats-peak-panel {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: var(--rc-space-2);
+}
+
+.stats-peak-panel strong {
+  font-size: clamp(1.6rem, 3.2vw, 3rem);
+  text-transform: uppercase;
+}
+
+.stats-role-grid,
+.stats-pattern-grid {
+  display: grid;
+  gap: var(--rc-space-3);
+}
+
+.stats-role-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stats-role-card,
+.stats-pattern-card {
+  display: grid;
+  gap: 0.28rem;
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-md);
+  padding: var(--rc-space-3);
+  color: var(--rc-text-1);
+  background: var(--rc-surface-2);
+  text-align: left;
+}
+
+.stats-role-card:hover,
+.stats-role-card:focus-visible,
+.stats-pattern-card:hover {
+  border-color: var(--rc-review);
+  transform: translateY(-2px);
+}
+
+.stats-role-card span,
+.stats-pattern-card > strong {
+  font-weight: 950;
+}
+
+.stats-role-card span {
+  color: var(--rc-text-3);
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.stats-role-card strong {
+  font-size: 1.5rem;
+}
+
+.stats-pattern-card p {
+  margin: 0;
+  color: var(--rc-text-2);
+}
+
+.stats-trend-chart {
+  width: 100%;
+  min-height: 18rem;
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-md);
+  background: rgba(4, 9, 20, 0.7);
+}
+
+.stats-trend-grid line {
+  stroke: rgba(169, 184, 213, 0.18);
+  stroke-width: 0.7;
+}
+
+.stats-trend-bars rect {
+  fill: var(--rc-brand);
+  opacity: 0.76;
+}
+
+.stats-trend-line {
+  stroke: var(--rc-warning);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .timeline-category,
 .timeline-marker,
 .insight-row,
@@ -387,13 +507,25 @@
   .stats-route-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .stats-dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "summary"
+      "peak"
+      "roles"
+      "trend"
+      "patterns";
+  }
 }
 
 @media (max-width: 620px) {
   .timeline-route-grid,
   .stats-route-grid,
   .trend-tile-grid,
-  .last-match-grid {
+  .last-match-grid,
+  .stats-dashboard-grid .stats-route-grid,
+  .stats-role-grid {
     grid-template-columns: 1fr;
   }
 }

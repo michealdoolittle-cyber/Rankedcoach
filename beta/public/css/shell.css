@@ -143,6 +143,10 @@
 .sidebar-item[data-page="settings"] { --sidebar-item-accent: var(--rc-brand-hi); }
 .sidebar-item[data-page="help"] { --sidebar-item-accent: var(--rc-text-2); }
 
+.mobile-more-item {
+  display: none;
+}
+
 .sidebar-spacer {
   flex: 1 1 auto;
 }
@@ -357,6 +361,13 @@
 }
 
 @media (max-width: 900px) {
+  html,
+  body,
+  .app-main {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -365,9 +376,12 @@
     position: fixed;
     inset: auto 0 0 0;
     z-index: 80;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
     height: auto;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
     padding: 8px;
     border-top: 1px solid var(--rc-border);
@@ -397,8 +411,25 @@
     font-size: 0.7rem;
   }
 
+  .mobile-more-item {
+    display: flex;
+  }
+
+  .sidebar-footer .sidebar-item[data-page="settings"] {
+    display: none !important;
+  }
+
   .sidebar-item svg {
     display: none;
+  }
+
+  .mobile-more-item span {
+    font-size: 0;
+  }
+
+  .mobile-more-item span::after {
+    content: "More";
+    font-size: 0.7rem;
   }
 
   .page-header {
@@ -408,13 +439,25 @@
   }
 
   .topbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
     justify-content: stretch;
-    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .topbar-actions .rc-button--secondary,
   .topbar-sync-chip {
-    flex: 1 1 auto;
+    width: 44px;
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .topbar-sync-chip span {
+    display: none;
+  }
+
+  .topbar-actions [data-page-jump="settings"] {
+    display: none;
   }
 
   .page-content {

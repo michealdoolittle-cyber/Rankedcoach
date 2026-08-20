@@ -38,6 +38,15 @@ const PAGE_TITLES = {
   help: "Help & Support"
 };
 
+const PALETTE_TOKENS = {
+  obsidian: ["#8b5cf6", "#b994ff", "#52d2b2"],
+  "neo-mint": ["#4fd1b5", "#9af7e2", "#60a5fa"],
+  sunset: ["#ff4e68", "#f5c451", "#fb7185"],
+  aurora: ["#60a5fa", "#a78bfa", "#52d2b2"],
+  rosewood: ["#fb7185", "#f9a8d4", "#f4c45e"],
+  monochrome: ["#f6f8fc", "#cbd5e1", "#94a3b8"]
+};
+
 const els = {
   nav: [...document.querySelectorAll(".sidebar-item[data-page]")],
   panels: [...document.querySelectorAll("[data-page-panel]")],
@@ -88,6 +97,7 @@ const app = {
     settingsTab: "pipeline",
     learnState: { query: "", category: "", model: null },
     loadout: { ...LOADOUT_DEFAULTS },
+    inGameReference: "",
     focusQueue: [],
     logDraft: {},
     reflections: [],
@@ -97,6 +107,7 @@ const app = {
 
 if (!app.appState.learnState) app.appState.learnState = { query: "", category: "", model: null };
 if (!app.appState.loadout) app.appState.loadout = { ...LOADOUT_DEFAULTS };
+if (typeof app.appState.inGameReference !== "string") app.appState.inGameReference = "";
 if (!Array.isArray(app.appState.focusQueue)) app.appState.focusQueue = [];
 if (!Array.isArray(app.appState.reflections)) app.appState.reflections = [];
 if (!app.appState.historyFilters) app.appState.historyFilters = {};
@@ -127,6 +138,17 @@ function persistAppState() {
       category: learnState?.category || ""
     }
   });
+}
+
+function applyVisualPreferences() {
+  const root = document.documentElement;
+  const palette = app.appState.palette || "obsidian";
+  const [brand, brandHi, review] = PALETTE_TOKENS[palette] || PALETTE_TOKENS.obsidian;
+  root.dataset.palette = palette;
+  root.dataset.density = app.appState.density || "balanced";
+  root.style.setProperty("--rc-brand", brand);
+  root.style.setProperty("--rc-brand-hi", brandHi);
+  root.style.setProperty("--rc-review", review);
 }
 
 function routeFor(page = app.page) {
@@ -209,6 +231,7 @@ function renderHelp() {
 }
 
 function render() {
+  applyVisualPreferences();
   renderPlayPage(els.playRoot, app.model, app.appState);
   renderLoadoutPage(els.loadoutRoot, app.model, app.appState);
   renderFocusQueuePage(els.focusQueueRoot, app.model, app.appState);
@@ -242,10 +265,10 @@ function moveQueueItem(id, direction) {
 async function spinLoadout() {
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || app.appState.reduceMotion;
   const wait = reduceMotion ? 0 : 170;
-  app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "spinning", spinStep: "map", assignment: null };
+  app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "spinning", spinStep: "role", assignment: null };
   persistAppState();
   render();
-  for (const step of ["map", "role", "agent"]) {
+  for (const step of ["role", "agent", "map"]) {
     app.appState.loadout.spinStep = step;
     render();
     if (wait) await new Promise(resolve => setTimeout(resolve, wait));
@@ -363,6 +386,24 @@ document.addEventListener("click", event => {
     return;
   }
 
+  const paletteChoice = event.target.closest("[data-palette-choice]");
+  if (paletteChoice) {
+    app.appState.palette = paletteChoice.dataset.paletteChoice || "obsidian";
+    persistAppState();
+    applyVisualPreferences();
+    renderSettings(els.settingsRoot, app.model, app.appState);
+    return;
+  }
+
+  const densityChoice = event.target.closest("[data-density-choice]");
+  if (densityChoice) {
+    app.appState.density = densityChoice.dataset.densityChoice || "balanced";
+    persistAppState();
+    applyVisualPreferences();
+    renderSettings(els.settingsRoot, app.model, app.appState);
+    return;
+  }
+
   const lessonButton = event.target.closest("[data-lesson-id]");
   if (lessonButton) {
     const lesson = getLearnLibrary().items.find(item => item.id === lessonButton.dataset.lessonId);
@@ -380,6 +421,14 @@ document.addEventListener("click", event => {
     return;
   }
 
+  const logRating = event.target.closest("[data-log-rating]");
+  if (logRating) {
+    app.appState.logDraft = { ...(app.appState.logDraft || {}), rating: logRating.dataset.logRating };
+    persistAppState();
+    renderLogMatchPage(els.logMatchRoot, app.model, app.appState);
+    return;
+  }
+
   const actionTarget = event.target.closest("[data-action]");
   if (!actionTarget) return;
   const action = actionTarget.dataset.action;
@@ -392,12 +441,24 @@ document.addEventListener("click", event => {
     navigate("review", { reviewTab: "all-matches" });
   } else if (action === "spin-loadout") {
     spinLoadout();
+  } else if (action === "cancel-loadout") {
+    app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "idle", spinStep: "", assignment: null };
+    persistAppState();
+    render();
   } else if (action === "start-match") {
     app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "started", startedAt: new Date().toISOString() };
     persistAppState();
     navigate("in-game");
   } else if (action === "open-in-game") {
     navigate("in-game");
+  } else if (action === "open-reference") {
+    app.appState.inGameReference = actionTarget.dataset.reference || "map";
+    persistAppState();
+    renderInGamePage(els.inGameRoot, app.model, app.appState);
+  } else if (action === "close-reference") {
+    app.appState.inGameReference = "";
+    persistAppState();
+    renderInGamePage(els.inGameRoot, app.model, app.appState);
   } else if (action === "end-match-log") {
     navigate("log-match");
   } else if (action === "open-focus-detail") {
@@ -414,6 +475,15 @@ document.addEventListener("click", event => {
     moveQueueItem(actionTarget.dataset.focusId, 1);
   } else if (action === "queue-remove") {
     app.appState.focusQueue = ensureQueue().filter(item => item.id !== actionTarget.dataset.focusId);
+    persistAppState();
+    render();
+  } else if (action === "toggle-focus-priority") {
+    const order = ["Low", "Medium", "High"];
+    app.appState.focusQueue = ensureQueue().map(item => {
+      if (item.id !== actionTarget.dataset.focusId) return item;
+      const current = order.indexOf(item.priority || "Medium");
+      return { ...item, priority: order[(current + 1) % order.length] };
+    });
     persistAppState();
     render();
   } else if (action === "queue-clear") {
@@ -484,6 +554,7 @@ document.addEventListener("click", event => {
     app.appState.density = "balanced";
     app.appState.reduceMotion = false;
     persistAppState();
+    applyVisualPreferences();
     renderSettings(els.settingsRoot, app.model, app.appState);
   } else if (action === "open-search") {
     openSimpleModal("search");
@@ -583,21 +654,6 @@ document.addEventListener("keydown", event => {
   if (event.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
     event.preventDefault();
     openSimpleModal("search");
-  }
-});
-
-document.addEventListener("click", event => {
-  const palette = event.target.closest("[data-palette-choice]");
-  if (palette) {
-    app.appState.palette = palette.dataset.paletteChoice;
-    persistAppState();
-    renderSettings(els.settingsRoot, app.model, app.appState);
-  }
-  const density = event.target.closest("[data-density-choice]");
-  if (density) {
-    app.appState.density = density.dataset.densityChoice;
-    persistAppState();
-    renderSettings(els.settingsRoot, app.model, app.appState);
   }
 });
 

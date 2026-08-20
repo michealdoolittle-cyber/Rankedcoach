@@ -8,12 +8,16 @@ function point(cx, cy, radius, angle, value) {
   };
 }
 
+function angleAt(index, total) {
+  return -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, total);
+}
+
 export function renderCompassBreakdown(model = {}) {
   const pillars = model.pillars || [];
   const size = 320;
   const center = size / 2;
   const radius = 112;
-  const angles = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
+  const angles = pillars.map((_, index) => angleAt(index, pillars.length || 5));
   const polygon = pillars.map((pillar, index) => {
     const p = point(center, center, radius, angles[index] ?? 0, pillar.score);
     return `${p.x},${p.y}`;
@@ -37,12 +41,15 @@ export function renderCompassBreakdown(model = {}) {
   return `
     <section class="rc-card review-section compass-card" aria-labelledby="compassTitle">
       <p class="eyebrow">Compass breakdown</p>
-      <h3 id="compassTitle">Aim · Game Sense · Teamwork · Discipline</h3>
-      <p class="muted">This build keeps the production four-pillar Compass while using the beta visual shell.</p>
+      <h3 id="compassTitle">Mechanics · Mental · Game Sense · Teamwork · Discipline</h3>
+      <p class="muted">The full Compass reads five coaching pillars. Smaller Play surfaces may abbreviate Mechanics as Aim, but Review keeps the full model visible.</p>
       <div class="compass-layout">
         <div class="compass-chart">
           <svg role="img" aria-label="Compass pillar radar" viewBox="0 0 ${size} ${size}">
-            <polygon points="${center},${center - radius} ${center + radius},${center} ${center},${center + radius} ${center - radius},${center}" fill="rgba(53,242,255,.08)" stroke="rgba(148,163,184,.32)" />
+            ${[1, 0.75, 0.5, 0.25].map(scale => `<polygon points="${angles.map(angle => {
+              const ring = point(center, center, radius * scale, angle, 100);
+              return `${ring.x},${ring.y}`;
+            }).join(" ")}" fill="none" stroke="rgba(148,163,184,.22)" />`).join("")}
             ${axes}
             <polygon points="${polygon}" fill="rgba(53,242,255,.22)" stroke="var(--rc-review)" stroke-width="4" />
           </svg>

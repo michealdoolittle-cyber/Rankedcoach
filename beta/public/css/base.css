@@ -91,6 +91,61 @@
   --focus-ring: var(--rc-focus-ring);
 }
 
+:root[data-density="compact"] {
+  --rc-page-pad-y: 12px;
+  --rc-grid-gap: 9px;
+  --rc-gap: 9px;
+  --rc-space-3: 10px;
+  --rc-space-4: 13px;
+  --rc-control-h: 34px;
+  --rc-control-h-lg: 40px;
+}
+
+:root[data-density="comfortable"] {
+  --rc-page-pad-y: 20px;
+  --rc-grid-gap: 16px;
+  --rc-gap: 16px;
+  --rc-space-4: 20px;
+  --rc-space-5: 24px;
+  --rc-control-h: 40px;
+  --rc-control-h-lg: 48px;
+}
+
+@media (max-width: 900px) {
+  .rc-card__head,
+  .rc-section-head {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .page-content,
+  .page-content > .page,
+  .rc-card,
+  .card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .rc-card__head > div,
+  .rc-section-head > div {
+    min-width: 0;
+  }
+
+  .rc-card__head h2,
+  .rc-section-head h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .rc-card__foot {
+    justify-content: stretch;
+  }
+
+  .rc-card__foot .rc-button {
+    flex: 1 1 100%;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

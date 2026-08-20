@@ -108,8 +108,24 @@ function conceptLessons() {
   }));
 }
 
+function situationLessons() {
+  const situations = [
+    ["pistol-rounds", "Pistol Rounds", "Treat pistols as spacing and trade rounds, not solo sheriff auditions.", "Win conditions are clean contact, fast refrags, and using utility to cross the first danger lane without giving a free opener."],
+    ["bonus-rounds", "Bonus Rounds", "Use the bonus to damage economy while protecting the rifles you upgraded into.", "Keep the second-round weapons in favorable ranges, stack trades, and avoid donating rifles through isolated peeks."],
+    ["full-buy-rounds", "Full Buy Rounds", "Spend the full kit with a clear timing plan.", "A full buy should create a real lane claim: smoke, recon, flash, entry timing, and a second body ready to trade."],
+    ["retakes", "Retakes", "Group before the retake breaks open.", "Retakes become winnable when players wait for utility, clear the same slice together, and trade before touching spike."],
+    ["clutches", "Clutches", "Slow the final fight down and make the opponent move first.", "Use spike timing, noise discipline, and off-angles to turn a scary 1vX into one fight at a time."],
+    ["anti-eco", "Anti-Eco", "Do not give short-range weapons the fight they are praying for.", "Hold safer spacing, clear close corners with utility, and make pistols cross distance before they can burst you."]
+  ];
+  return situations.map(([id, title, summary, overview]) => lesson(`situation-${id}`, "Situation", "Situations", title, summary, {
+    overview,
+    examples: ["Use this as a pre-round check when the enemy economy or round state changes the correct risk level."],
+    mistakes: ["Do not let the buy state disappear from your decision-making after the barriers drop."]
+  }));
+}
+
 export function getLearnLibrary() {
-  const items = [...mapLessons(), ...agentLessons(), ...weaponLessons(), ...conceptLessons()];
+  const items = [...mapLessons(), ...agentLessons(), ...weaponLessons(), ...conceptLessons(), ...situationLessons()];
   const byCategory = items.reduce((acc, item) => {
     acc[item.category] = acc[item.category] || [];
     acc[item.category].push(item);

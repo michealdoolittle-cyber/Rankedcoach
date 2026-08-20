@@ -197,7 +197,8 @@ function buildWeapons(records = []) {
 function scorePillars(records = [], roundSummary = {}) {
   if (!records.length) {
     return [
-      { key: "aim", label: "Aim", score: 0, driver: "No retained matches are loaded yet.", statKey: "HS%" },
+      { key: "mechanics", label: "Mechanics", score: 0, driver: "No retained matches are loaded yet.", statKey: "HS%" },
+      { key: "mental", label: "Mental", score: 0, driver: "No retained matches are loaded yet.", statKey: "Consistency" },
       { key: "game-sense", label: "Game Sense", score: 0, driver: "No retained matches are loaded yet.", statKey: "Winrate" },
       { key: "teamwork", label: "Teamwork", score: 0, driver: "No retained matches are loaded yet.", statKey: "KAST" },
       { key: "discipline", label: "Discipline", score: 0, driver: "No retained matches are loaded yet.", statKey: "Deaths" }
@@ -211,13 +212,22 @@ function scorePillars(records = [], roundSummary = {}) {
   const assists = average(values.map(stat => number(stat.assists, 0)));
   const deaths = average(values.map(stat => number(stat.deaths, 0)));
   const kast = roundSummary?.overall?.percentage;
+  const stableDeathScore = clamp(100 - Math.abs(deaths - 14) * 5);
+  const mentalScore = Math.round(average([clamp(win), clamp(kd * 42), stableDeathScore]));
   return [
     {
-      key: "aim",
-      label: "Aim",
+      key: "mechanics",
+      label: "Mechanics",
       score: Math.round(average([clamp(hs * 2.5), clamp(kd * 45), clamp(acs / 3)])),
       driver: finite(hs) ? `HS% is ${Math.round(hs)}% across this window.` : `K/D is ${kd.toFixed(2)} across this window.`,
       statKey: finite(hs) ? "HS%" : "K/D"
+    },
+    {
+      key: "mental",
+      label: "Mental",
+      score: mentalScore,
+      driver: "Mental is reading consistency through win rate, K/D stability, and death pressure across the window.",
+      statKey: "Consistency"
     },
     {
       key: "game-sense",
