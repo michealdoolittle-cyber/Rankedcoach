@@ -1,6 +1,17 @@
 import { finite, number, percent, whole } from "./utils.js";
 
 function fallbackInsight(model = {}) {
+  if (!Array.isArray(model.records) || model.records.length === 0) {
+    return {
+      title: "Sync a real account to build your first beta read.",
+      preview: "Review needs retained competitive match data before it can coach honestly.",
+      tone: "warn",
+      focus: "Setup",
+      why: "No match sample is loaded yet.",
+      action: "Enter a Riot ID, sync the account, then open the generated read.",
+      proof: []
+    };
+  }
   const weakest = (model.pillars || []).slice().sort((a, b) => number(a.score) - number(b.score))[0];
   if (!weakest) {
     return {
@@ -27,11 +38,37 @@ function fallbackInsight(model = {}) {
   };
 }
 
+function interpretMetricHeadline(title = "", preview = "", tone = "") {
+  const clean = String(title || "").trim();
+  const key = clean.toLowerCase();
+  const positive = tone === "good" || /\babove\b|\boutperform|\+\d/.test(String(preview || "").toLowerCase());
+  const negative = tone === "bad" || /\bbelow\b|\bunderperform|-\d/.test(String(preview || "").toLowerCase());
+  const metric = {
+    "overall k/d": "K/D",
+    "k/d": "K/D",
+    "kd": "K/D",
+    "overall win rate": "win rate",
+    "win rate": "win rate",
+    "acs": "ACS",
+    "overall acs": "ACS",
+    "adr": "ADR",
+    "overall adr": "ADR",
+    "hs %": "headshot rate",
+    "headshot %": "headshot rate",
+    "headshot rate": "headshot rate"
+  }[key];
+  if (!metric) return clean;
+  if (positive) return `Your ${metric} is outperforming this rank window.`;
+  if (negative) return `Your ${metric} is dragging this rank window down.`;
+  return `Your ${metric} is defining this rank window.`;
+}
+
 export function getPriorityInsight(model = {}) {
   const trend = (model.trendCards || [])[0];
   if (trend) {
+    const title = interpretMetricHeadline(trend.title || trend.label || "Priority read", trend.preview || trend.detail || "", trend.type === "good" || trend.tone === "up" ? "good" : "warn");
     return {
-      title: trend.title || trend.label || "Priority read",
+      title,
       preview: trend.preview || trend.detail || "",
       tone: trend.type === "good" || trend.tone === "up" ? "good" : "warn",
       focus: trend.focus || trend.category || "Match Trend",

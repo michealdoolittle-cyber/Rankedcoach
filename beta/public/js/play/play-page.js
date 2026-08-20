@@ -22,6 +22,47 @@ const PILLARS = [
   { key: "mental", label: "Mental", short: "Mental", cue: "Reset before the next decision" }
 ];
 
+const RANK_ICON_FILES = Object.freeze({
+  iron1: "iron_1_rank.png",
+  iron2: "iron_2_rank.png",
+  iron3: "iron_3_rank.png",
+  bronze1: "bronze_1_rank.png",
+  bronze2: "bronze_2_rank.png",
+  bronze3: "bronze_3_rank.png",
+  silver1: "silver_1_rank.png",
+  silver2: "silver_2_rank.png",
+  silver3: "silver_3_rank.png",
+  gold1: "gold_1_rank.png",
+  gold2: "gold_2_rank.png",
+  gold3: "gold_3_rank.png",
+  platinum1: "platinum_1_rank.png",
+  platinum2: "platinum_2_rank.png",
+  platinum3: "platinum_3_rank.png",
+  diamond1: "diamond_1_rank.png",
+  diamond2: "diamond_2_rank.png",
+  diamond3: "diamond_3_rank.png",
+  ascendant1: "ascendant_1_rank.png",
+  ascendant2: "ascendant_2_rank.png",
+  ascendant3: "ascendant_3_rank.png",
+  immortal1: "immortal_1_rank.png",
+  immortal2: "immortal_2_rank.png",
+  immortal3: "immortal_3_rank.png",
+  radiant: "radiant_rank.png",
+  radiantplus: "radiant_rank.png"
+});
+
+const RANK_ORDER = [
+  "iron1", "iron2", "iron3",
+  "bronze1", "bronze2", "bronze3",
+  "silver1", "silver2", "silver3",
+  "gold1", "gold2", "gold3",
+  "platinum1", "platinum2", "platinum3",
+  "diamond1", "diamond2", "diamond3",
+  "ascendant1", "ascendant2", "ascendant3",
+  "immortal1", "immortal2", "immortal3",
+  "radiant"
+];
+
 function maps() {
   return Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : [];
 }
@@ -57,6 +98,25 @@ function roleIcon(role = "", size = 48) {
   return icon("focus-queue", { size });
 }
 
+function hasMatchData(model = {}) {
+  return Array.isArray(model.records) && model.records.length > 0;
+}
+
+function emptyFocus() {
+  return {
+    id: "daily-empty",
+    category: "Setup",
+    title: "Sync your account to get your first focus.",
+    evidence: "RankedCoach needs retained competitive match data before it can coach honestly.",
+    why: "No synced match sample is loaded yet.",
+    how: "Enter a Riot ID, sync the account, then open the first generated focus.",
+    priority: "Setup",
+    impact: "Setup",
+    confidence: null,
+    behaviors: ["Sync an account.", "Import retained competitive matches.", "Review the first generated focus."]
+  };
+}
+
 function optionList(values = [], selected = "") {
   return values.map(value => `<option value="${escapeHtml(value)}" ${value === selected ? "selected" : ""}>${escapeHtml(value)}</option>`).join("");
 }
@@ -86,6 +146,7 @@ function modelPillars(model = {}) {
 }
 
 function focusPool(model = {}) {
+  if (!hasMatchData(model)) return [];
   return modelPillars(model)
     .slice()
     .sort((a, b) => Number(a.score || 0) - Number(b.score || 0))
@@ -116,6 +177,7 @@ function focusPool(model = {}) {
 }
 
 function getDailyFocus(appState = {}, model = {}) {
+  if (!hasMatchData(model)) return emptyFocus();
   if (appState.focusMode === "self" && appState.selfChosenFocus?.title) {
     return {
       id: "self-chosen-focus",
@@ -153,6 +215,10 @@ function getDailyFocus(appState = {}, model = {}) {
 export function ensureDailyFocus(appState = {}, model = {}) {
   const key = localDayKey();
   const pool = focusPool(model);
+  if (!pool.length) {
+    appState.dailyFocus = { key, mode: "empty", index: 0 };
+    return getDailyFocus(appState, model);
+  }
   if (!appState.dailyFocus || appState.dailyFocus.key !== key || appState.dailyFocus.mode !== (appState.focusMode || "auto")) {
     appState.dailyFocus = {
       key,
@@ -189,6 +255,7 @@ function firstUsefulAgent(role = "", mapLabel = "", model = {}) {
 }
 
 export function getFocusQueue(appState = {}, model = {}) {
+  if (!hasMatchData(model)) return [];
   const queue = Array.isArray(appState.focusQueue) ? appState.focusQueue : [];
   if (queue.length) {
     return queue.slice(0, 5).map((item, index) => ({
@@ -223,10 +290,29 @@ export function buildLoadoutAssignment(model = {}, appState = {}) {
   };
 }
 
+function getUnratedRankIconUrl() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><radialGradient id="g" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#94a3b8"/><stop offset=".7" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="1.2"/></filter></defs><circle cx="48" cy="48" r="40" fill="url(#g)" stroke="#cbd5e1" stroke-width="4" opacity=".72"/><g filter="url(#b)" opacity=".36"><path d="M27 31 48 17l21 14v34L48 79 27 65z" fill="none" stroke="#e5e7eb" stroke-width="5"/></g><text x="48" y="61" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="44" font-weight="900" fill="#f8fafc">?</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function getRankIconUrl(rank = "") {
+  const key = normalizeKey(String(rank || "").replace(/\+/g, " plus")).replace(/-/g, "");
+  const file = RANK_ICON_FILES[key];
+  return file
+    ? `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${file}`
+    : getUnratedRankIconUrl();
+}
+
+function rankAbsoluteRR(rank = "Unranked", rr = null) {
+  const key = normalizeKey(String(rank || "").replace(/\+/g, " plus")).replace(/-/g, "");
+  const index = RANK_ORDER.indexOf(key);
+  if (index < 0 || !finite(rr)) return null;
+  return index * 100 + Number(rr);
+}
+
 function rankBadge(rank = "Unranked", rr = null, size = "md") {
   const safeRank = escapeHtml(rank || "Unranked");
-  const text = normalizeKey(rank).includes("unranked") ? "?" : safeRank.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
-  return `<span class="rank-badge rank-badge--${escapeHtml(size)}" title="${safeRank}">${escapeHtml(text || "?")}${finite(rr) ? `<small>${whole(rr)}</small>` : ""}</span>`;
+  return `<span class="rank-badge rank-badge--${escapeHtml(size)}" title="${safeRank}"><img src="${escapeHtml(getRankIconUrl(rank))}" alt="${safeRank} rank">${finite(rr) ? `<small>${whole(rr)}</small>` : ""}</span>`;
 }
 
 function currentRank(model = {}) {
@@ -249,7 +335,7 @@ function formatDelta(value = 0, suffix = "") {
   return `${numeric >= 0 ? "+" : ""}${whole(numeric)}${suffix}`;
 }
 
-function spark(values = [], maxValue = 100) {
+function spark(values = [], maxValue = 100, id = "spark") {
   const usable = values.slice(-8).map(Number).filter(Number.isFinite);
   if (!usable.length) return `<svg class="play-spark" viewBox="0 0 100 34" aria-hidden="true"></svg>`;
   const max = Math.max(maxValue, ...usable, 1);
@@ -257,8 +343,30 @@ function spark(values = [], maxValue = 100) {
     const x = usable.length === 1 ? 50 : (index / (usable.length - 1)) * 96 + 2;
     const y = 30 - (clamp(value, 0, max) / max) * 24;
     return `${x},${y}`;
-  }).join(" ");
-  return `<svg class="play-spark" viewBox="0 0 100 34" aria-hidden="true"><polyline points="${points}" /></svg>`;
+  });
+  const pointString = points.join(" ");
+  const baseline = 30;
+  const fillPoints = `${pointString} 100,${baseline} 0,${baseline}`;
+  const valuesWithIndex = usable.map((value, index) => ({ value, index }));
+  const peak = valuesWithIndex.reduce((best, item) => item.value > best.value ? item : best, valuesWithIndex[0]);
+  const valley = valuesWithIndex.reduce((best, item) => item.value < best.value ? item : best, valuesWithIndex[0]);
+  const pointAt = index => {
+    const [x, y] = points[index].split(",");
+    return { x, y };
+  };
+  const peakPoint = pointAt(peak.index);
+  const valleyPoint = pointAt(valley.index);
+  const gradientId = `sparkFill-${normalizeKey(id) || "default"}`;
+  return `
+    <svg class="play-spark" viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="currentColor" stop-opacity=".55"/><stop offset="100%" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+      <polygon class="play-spark-fill" points="${fillPoints}" fill="url(#${gradientId})"></polygon>
+      <line class="play-spark-baseline" x1="0" y1="${baseline}" x2="100" y2="${baseline}"></line>
+      <polyline points="${pointString}"></polyline>
+      <circle class="play-spark-peak" cx="${peakPoint.x}" cy="${peakPoint.y}" r="2.4"></circle>
+      <circle class="play-spark-valley" cx="${valleyPoint.x}" cy="${valleyPoint.y}" r="1.9"></circle>
+    </svg>
+  `;
 }
 
 function statItems(model = {}) {
@@ -298,7 +406,7 @@ function renderStatsStrip(model = {}, appState = {}) {
             <span>${escapeHtml(item.label)}</span>
             <strong>${escapeHtml(item.value)}</strong>
             <small>${escapeHtml(item.delta)}</small>
-            ${spark(item.series, item.max)}
+            ${spark(item.series, item.max, item.label)}
           </button>
         `).join("")}
       </div>
@@ -308,6 +416,19 @@ function renderStatsStrip(model = {}, appState = {}) {
 
 function renderTodayFocus(model = {}, appState = {}) {
   const focus = ensureDailyFocus(appState, model);
+  if (!hasMatchData(model)) {
+    return `
+      <section class="today-focus-panel today-focus-panel--empty">
+        <div class="today-focus-main">
+          <p class="rc-eyebrow">Today's Focus</p>
+          <span class="one-job-label">Setup</span>
+          <h2>${escapeHtml(focus.title)}</h2>
+          <p>${escapeHtml(focus.evidence)}</p>
+          ${button({ label: "Sync Account", variant: "primary", action: "open-sync" })}
+        </div>
+      </section>
+    `;
+  }
   const featuredAgent = normalizeLoadout(appState.loadout).assignment?.agent || model.agents?.[0]?.agent || "Jett";
   const agentImage = getAgentPortraitAsset(featuredAgent);
   return `
@@ -320,32 +441,32 @@ function renderTodayFocus(model = {}, appState = {}) {
         <p>${escapeHtml(focus.evidence || "Your focus will sharpen after sync.")}</p>
         ${button({ label: "View Focus Details", variant: "primary", action: "open-focus-detail", attrs: `data-focus-id="${escapeHtml(focus.id || "")}"` })}
       </div>
-      <div class="today-focus-art">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 98 })}</div>
       <aside class="today-focus-stack" aria-label="Focus confidence and impact">
         <span>Confidence</span><strong>${whole(focus.confidence || 78)}%</strong><hr>
         <span>Impact</span><strong class="impact-word">${escapeHtml(focus.impact || focus.priority || "Medium")}</strong>
       </aside>
+      <div class="today-focus-art"><div class="agent-art-frame">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 98 })}</div></div>
     </section>
   `;
 }
 
 function renderLoadoutMini() {
   return card({
-    eyebrow: "Loadout Generator",
-    title: "Spin when you are ready.",
     className: "play-card loadout-mini-card",
     body: `
-      <div class="loadout-mini-symbol" aria-hidden="true">
-        <svg viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="42"></circle>
-          <path d="M60 18v16M60 86v16M18 60h16M86 60h16M32 32l11 11M77 77l11 11M88 32 77 43M43 77 32 88"></path>
-          <path class="loadout-mini-arrow" d="M60 35 78 60 60 85 42 60Z"></path>
-        </svg>
-      </div>
-      <p>Click start for the spin loadout modal to appear,</p>
+      <div class="lp-icon fancy" aria-hidden="true"><div class="ring"></div><div class="ring2"></div><div class="core"></div></div>
     `,
     footer: button({ label: "Start A Match", variant: "primary", action: "open-loadout-flow" })
   });
+}
+
+function pillarGlyph(key = "") {
+  const common = `fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+  if (key === "mechanics") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" ${common}/><path d="M12 3v4M12 17v4M3 12h4M17 12h4" ${common}/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`;
+  if (key === "game-sense") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" ${common}/><circle cx="12" cy="12" r="3" ${common}/></svg>`;
+  if (key === "teamwork") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="5" ${common}/><circle cx="15" cy="12" r="5" ${common}/></svg>`;
+  if (key === "discipline") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.7 8-7 10-4.3-2-7-5.5-7-10V6l7-3Z" ${common}/><path d="M9 12l2 2 4-5" ${common}/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 18c-2-1.6-3-3.8-3-6.2C5 7.5 8.2 4 12 4s7 3.5 7 7.8c0 2.4-1 4.6-3 6.2" ${common}/><path d="M9 20h6M10 12h.01M14 12h.01M9 15c2 1.2 4 1.2 6 0" ${common}/></svg>`;
 }
 
 function radarPoint(cx, cy, radius, angle, value) {
@@ -382,8 +503,10 @@ function renderCompassMini(model = {}) {
   const pillars = modelPillars(model);
   const avg = pillars.reduce((sum, item) => sum + Number(item.score || 0), 0) / Math.max(1, pillars.length);
   const tiles = pillars.map((pillar, index) => `
-    <button class="compass-pillar-tile pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
-      <span>${escapeHtml(pillar.short)}</span><strong>${whole(pillar.score)}<small>/100</small></strong>
+    <button class="compass-pillar-tile compact pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
+      ${pillarGlyph(pillar.key)}
+      <span>${escapeHtml(pillar.short)}</span>
+      <strong>${whole(pillar.score)}<small>/100</small></strong>
     </button>
   `).join("");
   return card({
@@ -418,24 +541,53 @@ function renderRRCard(model = {}) {
 }
 
 function renderRRTrendMini(model = {}) {
-  const records = (model.records || []).slice(0, 30).reverse();
-  let total = 0;
-  const points = records.map((record, index) => {
-    total += Number(record.rank?.rrDelta || 0);
-    return { x: records.length <= 1 ? 98 : (index / (records.length - 1)) * 96 + 2, y: 54 - clamp(total, -65, 65) * 0.36 };
+  const records = (model.records || []).slice(0, 20).reverse();
+  const values = records.map((record, index) => {
+    const absolute = rankAbsoluteRR(record.rank?.rank, record.rank?.rr);
+    return {
+      value: finite(absolute) ? Number(absolute) : index,
+      date: record.playedAt,
+      delta: Number(record.rank?.rrDelta || 0)
+    };
   });
+  const rawValues = values.map(item => item.value);
+  const minValue = rawValues.length ? Math.min(...rawValues) : 0;
+  const maxValue = rawValues.length ? Math.max(...rawValues) : 100;
+  const yMin = Math.max(0, Math.floor(minValue / 100) * 100);
+  const yMax = Math.max(yMin + 100, Math.ceil(maxValue / 100) * 100);
+  const plot = { left: 34, right: 252, top: 12, bottom: 72 };
+  const x = index => values.length <= 1 ? plot.right : plot.left + (index / (values.length - 1)) * (plot.right - plot.left);
+  const y = value => plot.bottom - ((value - yMin) / Math.max(1, yMax - yMin)) * (plot.bottom - plot.top);
+  const points = values.map((item, index) => ({ x: x(index), y: y(item.value), value: item.value, date: item.date }));
+  const pointString = points.map(point => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  const areaPoints = points.length ? `${pointString} ${plot.right},${plot.bottom} ${plot.left},${plot.bottom}` : "";
+  const ticks = [yMax, Math.round((yMax + yMin) / 200) * 100, yMin];
+  const dateFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+  const dateIndexes = points.length <= 1 ? [0] : [...new Set([0, Math.floor((points.length - 1) / 3), Math.floor((points.length - 1) * 2 / 3), points.length - 1])];
+  const peak = points.reduce((best, point) => point.y < best.y ? point : best, points[0] || { x: 0, y: 0 });
+  const valley = points.reduce((best, point) => point.y > best.y ? point : best, points[0] || { x: 0, y: 0 });
+  const latest = points[points.length - 1];
   const rank = currentRank(model);
   const first = records[0]?.rank?.rr;
   const diff = finite(first) && finite(rank.rr) ? ((Number(rank.rr) - Number(first)) / Math.max(1, Number(first))) * 100 : 0;
   const rawDelta = records.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
   return card({
     eyebrow: "RR Trend",
-    title: "30-day rank line",
+    title: "Rank line (Last 20 Matches)",
     className: "play-card rr-trend-mini-card",
     body: `
       <div class="rr-trend-titlebar"><span>${rankBadge(rank.rank, rank.rr, "sm")}${finite(rank.rr) ? `${whole(rank.rr)} RR` : "Unranked"} <small>${formatDelta(diff, "%")}</small></span><strong>${formatDelta(rawDelta)}</strong></div>
-      <svg class="rr-trend-chart" viewBox="0 0 100 70" preserveAspectRatio="none" role="img" aria-label="30 day RR trend"><line x1="0" x2="100" y1="54" y2="54"></line><polyline points="${points.map(point => `${point.x},${point.y}`).join(" ")}"></polyline>${points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="1.9"></circle>`).join("")}</svg>
-      <div class="rr-trend-labels"><span>30d ago</span><span>20d ago</span><span>10d ago</span><span>Today</span></div>
+      <svg class="rr-trend-chart" viewBox="0 0 260 96" role="img" aria-label="Last 20 match RR trend">
+        <defs><linearGradient id="rrTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--rc-success)" stop-opacity=".48"/><stop offset="100%" stop-color="var(--rc-success)" stop-opacity="0"/></linearGradient></defs>
+        ${ticks.map(value => `<g class="rr-grid-line"><text x="4" y="${y(value).toFixed(1)}" dominant-baseline="middle">${whole(value)}</text><line x1="${plot.left}" x2="${plot.right}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}"></line></g>`).join("")}
+        ${areaPoints ? `<polygon class="rr-trend-fill" points="${areaPoints}"></polygon><polyline class="rr-trend-line" points="${pointString}"></polyline>` : ""}
+        ${[peak, valley, latest].filter(Boolean).map(point => `<circle class="rr-trend-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.1"></circle>`).join("")}
+        ${dateIndexes.map(index => {
+          const point = points[index];
+          const label = point?.date ? dateFormatter.format(new Date(point.date)) : "";
+          return `<text class="rr-date-label" x="${x(index).toFixed(1)}" y="91" text-anchor="${index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"}">${escapeHtml(label)}</text>`;
+        }).join("")}
+      </svg>
     `,
     attrs: `data-review-tab="timeline"`
   });
@@ -454,6 +606,15 @@ function renderTopInsight(model = {}) {
 
 function renderFocusQueueMini(model = {}, appState = {}) {
   const queue = getFocusQueue(appState, model).slice(0, 3);
+  if (!queue.length) {
+    return card({
+      eyebrow: "Focus Queue",
+      title: "Sync to build your first queue.",
+      className: "play-card focus-queue-mini-card focus-queue-mini-card--empty",
+      body: `<p class="empty-copy">Focus Queue needs retained competitive match data before it can rank short-term jobs.</p>`,
+      footer: button({ label: "Sync Account", variant: "primary", action: "open-sync" })
+    });
+  }
   return card({
     eyebrow: "Focus Queue",
     title: "Next jobs",
@@ -468,14 +629,18 @@ function renderLastMatchBanner(model = {}, appState = {}) {
   const lastRecord = (model.records || [])[0];
   const result = lastReflection?.result || lastRecord?.result || "No match";
   const rrDelta = finite(lastReflection?.rrDelta) ? Number(lastReflection.rrDelta) : Number(lastRecord?.rank?.rrDelta || 0);
-  const focus = lastReflection?.focus || normalizeLoadout(appState.loadout).assignment?.focusTitle || ensureDailyFocus(appState, model).title;
+  const adherence = finite(lastReflection?.adherence)
+    ? `${whole(lastReflection.adherence)}%`
+    : finite(appState.logDraft?.adherence)
+      ? `${whole(appState.logDraft.adherence)}% draft`
+      : "Not logged yet";
   const rank = currentRank(model);
   return `
     <section class="last-match-banner">
       <div>
         <p class="rc-eyebrow">Last Match</p>
         <h2>${escapeHtml(result === "win" ? "Win" : result === "loss" ? "Loss" : result === "draw" ? "Draw" : "No imported match yet")} ${rankBadge(rank.rank, rank.rr, "sm")} ${formatDelta(rrDelta, " RR")}</h2>
-        <p>Focus adherence: ${escapeHtml(focus || "No focus saved yet")}</p>
+        <p>Focus adherence: ${escapeHtml(adherence)}</p>
       </div>
       ${button({ label: "All Reflections", variant: "primary", attrs: `data-review-tab="reflections"` })}
     </section>
@@ -568,12 +733,20 @@ function queueCard(item = {}, index = 0) {
 export function renderFocusQueuePage(root, model, appState = {}) {
   if (!root) return;
   const queue = getFocusQueue(appState, model || {}).slice(0, 4);
+  if (!queue.length) {
+    root.innerHTML = `<section class="focus-queue-page focus-queue-page--empty">${cardHeader("Focus Queue", "Sync a real account to build your first beta read.", button({ label: "Sync Account", variant: "primary", action: "open-sync" }))}<p class="empty-copy">No retained competitive match data is loaded yet, so RankedCoach is not ranking coaching jobs from a fake sample.</p></section>`;
+    return;
+  }
   root.innerHTML = `<section class="focus-queue-page">${cardHeader("Focus Queue", "Auto-rotated and self-chosen jobs.", button({ label: "Add Focus", variant: "primary", action: "open-add-focus" }))}<div class="focus-queue-mode">${button({ label: "Auto-Rotate", variant: appState.focusMode === "self" ? "secondary" : "primary", action: "focus-mode-auto" })}${button({ label: "Self-Chosen", variant: appState.focusMode === "self" ? "primary" : "secondary", action: "focus-mode-self" })}</div><div class="focus-queue-cards">${queue.map(queueCard).join("")}</div><button class="focus-add-ghost" type="button" data-action="open-add-focus">+ Add Focus to Queue</button></section>`;
 }
 
 export function openFocusQueueModal(modalRoot, model, appState = {}) {
   if (!modalRoot) return;
   const queue = getFocusQueue(appState, model || {}).slice(0, 4);
+  if (!queue.length) {
+    modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-queue-modal" role="dialog" aria-modal="true" aria-labelledby="focusQueueModalTitle"><header class="modal-head"><div><p class="eyebrow">Focus Queue</p><h2 id="focusQueueModalTitle">Sync to build your first queue.</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><p class="empty-copy">RankedCoach needs retained competitive match data before it can prioritize focus jobs honestly.</p>${button({ label: "Sync Account", variant: "primary", action: "open-sync" })}</div></section></div>`;
+    return;
+  }
   modalRoot.innerHTML = `<div class="modal-backdrop" data-modal-close><section class="modal-card focus-queue-modal" role="dialog" aria-modal="true" aria-labelledby="focusQueueModalTitle"><header class="modal-head"><div><p class="eyebrow">Focus Queue</p><h2 id="focusQueueModalTitle">Next short-term jobs.</h2></div>${button({ label: "Close", variant: "secondary", attrs: "data-modal-close" })}</header><div class="modal-body"><div class="focus-queue-mode">${button({ label: "Auto-Rotate", variant: appState.focusMode === "self" ? "secondary" : "primary", action: "focus-mode-auto" })}${button({ label: "Self-Chosen", variant: appState.focusMode === "self" ? "primary" : "secondary", action: "focus-mode-self" })}</div><div class="focus-queue-cards">${queue.map(queueCard).join("")}</div><button class="focus-add-ghost" type="button" data-action="open-add-focus">+ Add Focus to Queue</button></div></section></div>`;
 }
 

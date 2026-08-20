@@ -284,16 +284,21 @@ function moveQueueItem(id, direction) {
 }
 
 async function spinLoadout() {
+  if (app.appState.loadout?.state === "spinning") return;
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || app.appState.reduceMotion;
-  const wait = reduceMotion ? 0 : 170;
+  const minimumSpinMs = 3500;
+  const stepWait = reduceMotion ? 620 : 820;
+  const startedAt = performance.now();
   app.appState.loadout = { ...LOADOUT_DEFAULTS, ...app.appState.loadout, state: "spinning", spinStep: "role", assignment: null };
   persistAppState();
   render();
-  for (const step of ["role", "agent", "map"]) {
+  for (const step of ["role", "agent", "map", "focus"]) {
     app.appState.loadout.spinStep = step;
     render();
-    if (wait) await new Promise(resolve => setTimeout(resolve, wait));
+    await new Promise(resolve => setTimeout(resolve, stepWait));
   }
+  const remaining = Math.max(0, minimumSpinMs - (performance.now() - startedAt));
+  if (remaining) await new Promise(resolve => setTimeout(resolve, remaining));
   app.appState.loadout = {
     ...app.appState.loadout,
     state: "generated",
