@@ -179,6 +179,19 @@
   background: color-mix(in srgb, var(--rc-review) 10%, transparent);
 }
 
+.pillar-detail strong,
+.timeline-category span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.pillar-detail .pillar-icon,
+.timeline-category .pillar-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
 .last-match-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }

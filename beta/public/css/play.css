@@ -166,36 +166,9 @@ html[data-flow-mode="loadout"] .page-content {
   display: grid;
   align-content: center;
   justify-items: start;
-  gap: 0.24rem;
+  gap: var(--rc-space-2);
   padding: 0.4rem 0;
   text-align: left;
-}
-
-.today-focus-stack span {
-  color: var(--rc-text-3);
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.today-focus-stack strong {
-  color: var(--rc-text-1);
-  font-size: 15px;
-  line-height: 1;
-  font-weight: 950;
-}
-
-.today-focus-stack .impact-word {
-  color: var(--rc-brand-hi);
-  font-size: 15px;
-}
-
-.today-focus-stack hr {
-  width: 100%;
-  margin: 0.22rem 0;
-  border: 0;
-  border-top: 1px solid var(--rc-border);
 }
 
 .today-focus-panel--empty {
@@ -265,6 +238,24 @@ html[data-flow-mode="loadout"] .page-content {
   transition: transform var(--rc-motion-fast), border-color var(--rc-motion-base), box-shadow var(--rc-motion-base);
 }
 
+.play-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--rc-text-3);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.play-stat-label .stat-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--section-accent, var(--rc-brand-hi));
+  stroke-width: 1.65;
+}
+
 .play-stat-tile:hover,
 .play-stat-tile:focus-visible,
 .focus-mini-list button:hover,
@@ -274,7 +265,6 @@ html[data-flow-mode="loadout"] .page-content {
   box-shadow: 0 14px 30px color-mix(in srgb, var(--section-accent, var(--rc-brand-hi)) 14%, transparent);
 }
 
-.play-stat-tile span,
 .loadout-generated-stat span {
   color: var(--rc-text-3);
   font-size: 0.7rem;
@@ -451,7 +441,12 @@ html[data-flow-mode="loadout"] .page-content {
 .compass-pillar-tile.compact svg {
   width: 1.15rem;
   height: 1.15rem;
-  color: var(--section-accent);
+}
+
+.in-game-pillar .pillar-icon {
+  justify-self: center;
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .compass-pillar-tile span,
@@ -664,7 +659,7 @@ html[data-flow-mode="loadout"] .page-content {
   padding-top: var(--rc-space-3);
 }
 
-.insight-confidence-row span {
+.insight-confidence-row > span:not(.metric-pill) {
   color: var(--rc-warning);
   font-weight: 900;
 }
@@ -691,7 +686,7 @@ html[data-flow-mode="loadout"] .page-content {
   text-align: left;
 }
 
-.focus-mini-list button > span {
+.focus-mini-list button > .focus-mini-index {
   width: 1.8rem;
   height: 1.8rem;
   display: grid;
@@ -1049,6 +1044,7 @@ html[data-flow-mode="loadout"] .page-content {
   line-height: 1.55;
 }
 
+.today-focus-stack,
 .in-game-focus-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1056,9 +1052,12 @@ html[data-flow-mode="loadout"] .page-content {
   min-width: min(26rem, 100%);
 }
 
-.in-game-focus-meta span {
+.metric-pill {
+  align-items: center;
+  min-height: 2.45rem;
   display: grid;
-  gap: 0.2rem;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  column-gap: 0.42rem;
   border: 1px solid var(--rc-border);
   border-radius: var(--rc-radius-control);
   padding: var(--rc-space-2);
@@ -1070,9 +1069,94 @@ html[data-flow-mode="loadout"] .page-content {
   text-transform: uppercase;
 }
 
-.in-game-focus-meta strong {
+.metric-pill strong {
   color: var(--rc-text-1);
-  font-size: 1.4rem;
+  font-size: 1rem;
+}
+
+.metric-pill small {
+  color: var(--rc-text-3);
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.metric-pill--high,
+.metric-pill--impact.metric-pill--high {
+  color: var(--rc-danger);
+  border-color: color-mix(in srgb, var(--rc-danger) 55%, var(--rc-border));
+}
+
+.metric-pill--medium,
+.metric-pill--impact.metric-pill--medium {
+  color: var(--rc-warning);
+  border-color: color-mix(in srgb, var(--rc-warning) 55%, var(--rc-border));
+}
+
+.metric-pill--low,
+.metric-pill--impact.metric-pill--low {
+  color: var(--rc-text-3);
+}
+
+.impact-bars {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: end;
+  gap: 2px;
+  width: 1.05rem;
+  height: 0.9rem;
+}
+
+.impact-bars span {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.impact-bars span:nth-child(1) { height: 36%; }
+.impact-bars span:nth-child(2) { height: 66%; }
+.impact-bars span:nth-child(3) { height: 100%; }
+.impact-bars .is-dim { opacity: 0.28; }
+
+.confidence-ring {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.confidence-ring-fill {
+  transform: rotate(-90deg);
+  transform-origin: center;
+  stroke-linecap: round;
+}
+
+.confidence-ring-bg {
+  opacity: 0.25;
+}
+
+.focus-mini-metrics,
+.focus-card-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.focus-card-metrics {
+  justify-content: flex-start;
+}
+
+.focus-mini-metrics .metric-pill,
+.focus-card-metrics .metric-pill,
+.loadout-generated-meta .metric-pill {
+  min-height: 2.2rem;
+  letter-spacing: 0.07em;
+}
+
+.loadout-generated-meta .metric-pill {
+  width: 100%;
 }
 
 .in-game-pillars {
@@ -1094,6 +1178,10 @@ html[data-flow-mode="loadout"] .page-content {
 
 .quick-reference-tabs button {
   min-height: var(--rc-control-h-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   border: 1px solid var(--rc-border);
   border-radius: var(--rc-radius-control);
   color: var(--rc-text-2);
@@ -1282,14 +1370,10 @@ html[data-flow-mode="loadout"] .page-content {
   }
 
   .today-focus-stack {
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     justify-content: start;
     justify-items: start;
     text-align: left;
-  }
-
-  .today-focus-stack hr {
-    display: none;
   }
 
   .play-row-three {
@@ -1330,7 +1414,11 @@ html[data-flow-mode="loadout"] .page-content {
   .last-match-banner,
   .in-game-focus-card header {
     align-items: stretch;
-    flex-direction: column;
+  }
+
+  .today-focus-stack,
+  .in-game-focus-meta {
+    grid-template-columns: 1fr;
   }
 
   .play-stat-row,

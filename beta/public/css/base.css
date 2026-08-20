@@ -292,6 +292,27 @@ textarea {
   pointer-events: none;
 }
 
+.pillar-icon--mechanics,
+.pillar-icon--aim {
+  color: var(--brand-hi, var(--rc-brand-hi));
+}
+
+.pillar-icon--game-sense {
+  color: var(--info, var(--rc-info));
+}
+
+.pillar-icon--teamwork {
+  color: var(--review-accent, var(--rc-review));
+}
+
+.pillar-icon--discipline {
+  color: var(--learn-accent, var(--rc-learn));
+}
+
+.pillar-icon--mental {
+  color: var(--library-accent, var(--rc-library));
+}
+
 .rc-button {
   min-height: var(--rc-control-h);
   display: inline-flex;

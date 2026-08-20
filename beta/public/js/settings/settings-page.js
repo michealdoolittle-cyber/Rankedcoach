@@ -1,4 +1,4 @@
-import { button, card, cardHeader, stateBlock } from "../components/ui.js";
+import { button, card, cardHeader, pillarIcon, stateBlock } from "../components/ui.js";
 import { escapeHtml, percent, whole } from "../model/utils.js";
 
 const PIPELINES = [
@@ -88,6 +88,9 @@ function renderPipeline(model = {}, appState = {}) {
         <div class="local-tabs">${previewTabs.map((tab, index) => `<button class="nav-tab ${index === 0 ? "is-active" : ""}" type="button">${escapeHtml(tab)}</button>`).join("")}</div>
         <div class="preview-panel">
           <strong>${percent(overview.winRate)} winrate · ${whole(overview.matchesPlayed || 0)} matches</strong>
+          <div class="pipeline-pillar-preview" aria-label="Compass pillar icon preview">
+            ${(model.pillars || []).slice(0, 5).map(pillar => `<span>${pillarIcon(pillar.key)}${escapeHtml(pillar.label || pillar.key)} <strong>${whole(pillar.score || 0)}</strong></span>`).join("")}
+          </div>
           <p class="muted">This panel previews real current values under the selected pipeline. Locked presets show the preview without applying gated controls.</p>
         </div>
       </aside>

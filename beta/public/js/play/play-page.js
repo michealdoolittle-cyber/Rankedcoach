@@ -1,4 +1,4 @@
-import { button, card, cardHeader, icon } from "../components/ui.js";
+import { button, card, cardHeader, confidencePill, icon, impactPill, pillarIcon, statIcon } from "../components/ui.js";
 import { getPriorityInsight } from "../model/insights.js";
 import { clamp, escapeHtml, finite, normalizeKey, percent, ratio, whole } from "../model/utils.js";
 import { getAgentPortraitAsset } from "../model/player-model.js";
@@ -403,7 +403,7 @@ function renderStatsStrip(model = {}, appState = {}) {
       <div class="play-stat-row">
         ${visible.map(item => `
           <button class="play-stat-tile" type="button" data-review-tab="stats" data-review-category="${escapeHtml(item.label)}">
-            <span>${escapeHtml(item.label)}</span>
+            <span class="play-stat-label">${statIcon(item.label)}<span>${escapeHtml(item.label)}</span></span>
             <strong>${escapeHtml(item.value)}</strong>
             <small>${escapeHtml(item.delta)}</small>
             ${spark(item.series, item.max, item.label)}
@@ -442,8 +442,8 @@ function renderTodayFocus(model = {}, appState = {}) {
         ${button({ label: "View Focus Details", variant: "primary", action: "open-focus-detail", attrs: `data-focus-id="${escapeHtml(focus.id || "")}"` })}
       </div>
       <aside class="today-focus-stack" aria-label="Focus confidence and impact">
-        <span>Confidence</span><strong>${whole(focus.confidence || 78)}%</strong><hr>
-        <span>Impact</span><strong class="impact-word">${escapeHtml(focus.impact || focus.priority || "Medium")}</strong>
+        ${confidencePill(focus.confidence || 78)}
+        ${impactPill(focus.impact || focus.priority || "Medium")}
       </aside>
       <div class="today-focus-art"><div class="agent-art-frame">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 98 })}</div></div>
     </section>
@@ -458,15 +458,6 @@ function renderLoadoutMini() {
     `,
     footer: button({ label: "Start A Match", variant: "primary", action: "open-loadout-flow" })
   });
-}
-
-function pillarGlyph(key = "") {
-  const common = `fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
-  if (key === "mechanics") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" ${common}/><path d="M12 3v4M12 17v4M3 12h4M17 12h4" ${common}/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>`;
-  if (key === "game-sense") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" ${common}/><circle cx="12" cy="12" r="3" ${common}/></svg>`;
-  if (key === "teamwork") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="5" ${common}/><circle cx="15" cy="12" r="5" ${common}/></svg>`;
-  if (key === "discipline") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.7 8-7 10-4.3-2-7-5.5-7-10V6l7-3Z" ${common}/><path d="M9 12l2 2 4-5" ${common}/></svg>`;
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 18c-2-1.6-3-3.8-3-6.2C5 7.5 8.2 4 12 4s7 3.5 7 7.8c0 2.4-1 4.6-3 6.2" ${common}/><path d="M9 20h6M10 12h.01M14 12h.01M9 15c2 1.2 4 1.2 6 0" ${common}/></svg>`;
 }
 
 function radarPoint(cx, cy, radius, angle, value) {
@@ -504,7 +495,7 @@ function renderCompassMini(model = {}) {
   const avg = pillars.reduce((sum, item) => sum + Number(item.score || 0), 0) / Math.max(1, pillars.length);
   const tiles = pillars.map((pillar, index) => `
     <button class="compass-pillar-tile compact pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
-      ${pillarGlyph(pillar.key)}
+      ${pillarIcon(pillar.key)}
       <span>${escapeHtml(pillar.short)}</span>
       <strong>${whole(pillar.score)}<small>/100</small></strong>
     </button>
@@ -599,7 +590,7 @@ function renderTopInsight(model = {}) {
     eyebrow: "Top Insight",
     title: insight.title || "No insight yet",
     className: "play-card top-insight-card",
-    body: `<p>${escapeHtml(insight.preview || insight.action || "Sync an account to generate the strongest impact read.")}</p><div class="insight-confidence-row"><span>Impact ${escapeHtml(insight.tone === "good" ? "Positive" : "High")}</span><strong>${whole(insight.confidence || 88)}% confidence</strong></div>`,
+    body: `<p>${escapeHtml(insight.preview || insight.action || "Sync an account to generate the strongest impact read.")}</p><div class="insight-confidence-row">${impactPill(insight.impact || insight.priority || "High")}${confidencePill(insight.confidence || 88)}</div>`,
     footer: button({ label: "View Insight", variant: "secondary", action: "open-insight-detail" })
   });
 }
@@ -619,7 +610,7 @@ function renderFocusQueueMini(model = {}, appState = {}) {
     eyebrow: "Focus Queue",
     title: "Next jobs",
     className: "play-card focus-queue-mini-card",
-    body: `<div class="focus-mini-list">${queue.map((item, index) => `<button type="button" data-action="open-focus-detail" data-focus-id="${escapeHtml(item.id)}"><span>${index + 1}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.impact || item.priority || "Medium")} impact</small></button>`).join("")}</div>`,
+    body: `<div class="focus-mini-list">${queue.map((item, index) => `<button type="button" data-action="open-focus-detail" data-focus-id="${escapeHtml(item.id)}"><span class="focus-mini-index">${index + 1}</span><strong>${escapeHtml(item.title)}</strong><span class="focus-mini-metrics">${impactPill(item.impact || item.priority || "Medium")}${confidencePill(item.confidence || 80)}</span></button>`).join("")}</div>`,
     footer: button({ label: "Open", variant: "primary", action: "open-focus-queue-modal" })
   });
 }
@@ -649,12 +640,12 @@ function renderLastMatchBanner(model = {}, appState = {}) {
 
 function renderReferenceRow() {
   const cards = [
-    ["All Reflections", "Every saved read", "review", `data-review-tab="reflections"`],
-    ["Map Notes", "Quick map reminders", "library", `data-page-jump="library" data-library-view="maps"`],
-    ["Agent Tips", "Role and ability cues", "review", `data-page-jump="library" data-library-view="agents"`],
-    ["Lineups", "Searchable setups", "focus-queue", `data-page-jump="library" data-library-view="lineups"`],
-    ["Economy", "Buy-round reference", "review", `data-page-jump="learn" data-learn-query="economy"`],
-    ["Weapons", "Damage and fit notes", "library", `data-page-jump="library" data-library-view="weapons"`]
+    ["All Reflections", "Every saved read", "all-reflections", `data-review-tab="reflections"`],
+    ["Map Notes", "Quick map reminders", "map-notes", `data-page-jump="library" data-library-view="maps"`],
+    ["Agent Tips", "Role and ability cues", "agent-tips", `data-page-jump="library" data-library-view="agents"`],
+    ["Lineups", "Searchable setups", "lineups", `data-page-jump="library" data-library-view="lineups"`],
+    ["Economy", "Buy-round reference", "economy", `data-page-jump="learn" data-learn-query="economy"`],
+    ["Weapons", "Damage and fit notes", "weapons", `data-page-jump="library" data-library-view="weapons"`]
   ];
   return `<section class="play-reference-row" aria-label="Reference shortcuts">${cards.map(([title, sub, iconName, attrs]) => `<button type="button" ${attrs}>${icon(iconName)}<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span></button>`).join("")}</section>`;
 }
@@ -706,7 +697,7 @@ function renderGeneratedLoadout(loadout = {}) {
         <h2>${escapeHtml(assignment.map || "Map")} / ${escapeHtml(assignment.role || "Role")}</h2>
         <div class="loadout-generated-stat"><span>Agent</span><strong>${escapeHtml(assignment.agent || "Agent")}</strong></div>
         <div class="loadout-generated-stat"><span>Match Focus</span><strong>${escapeHtml(assignment.focusTitle || "Short-term focus")}</strong><p>${escapeHtml(assignment.focusText || "")}</p></div>
-        <div class="loadout-generated-meta"><span>Confidence <strong>${whole(assignment.confidence || 78)}%</strong></span><span>Impact <strong>${escapeHtml(assignment.impact || "Medium")}</strong></span></div>
+        <div class="loadout-generated-meta">${confidencePill(assignment.confidence || 78)}${impactPill(assignment.impact || "Medium")}</div>
         <div class="loadout-flow-actions">${button({ label: "Start Match", variant: "primary", action: "start-match" })}${button({ label: "Spin Again", variant: "secondary", action: "spin-loadout" })}${button({ label: "Exit", variant: "tertiary", action: "exit-loadout-flow" })}</div>
       </div>
       <div class="loadout-portrait-panel"><img src="${escapeHtml(portrait)}" alt="${escapeHtml(assignment.agent || "Agent")}"></div>
@@ -727,7 +718,7 @@ export function renderLoadoutPage(root, model, appState = {}) {
 
 function queueCard(item = {}, index = 0) {
   const confidence = clamp(Number(item.confidence || 80));
-  return `<article class="focus-queue-card-row"><button class="queue-dismiss" type="button" data-action="queue-remove" data-focus-id="${escapeHtml(item.id)}" aria-label="Dismiss focus">x</button><span class="queue-number">${index + 1}</span><h3>${escapeHtml(item.title)}</h3><span class="pill warn">${escapeHtml(item.impact || item.priority || "Medium")} impact</span><div class="queue-meter"><span style="--fill:${confidence}%"></span></div><small>Confidence ${whole(confidence)}%</small></article>`;
+  return `<article class="focus-queue-card-row"><button class="queue-dismiss" type="button" data-action="queue-remove" data-focus-id="${escapeHtml(item.id)}" aria-label="Dismiss focus">x</button><span class="queue-number">${index + 1}</span><h3>${escapeHtml(item.title)}</h3><div class="focus-card-metrics">${impactPill(item.impact || item.priority || "Medium")}${confidencePill(confidence)}</div><div class="queue-meter"><span style="--fill:${confidence}%"></span></div></article>`;
 }
 
 export function renderFocusQueuePage(root, model, appState = {}) {
@@ -751,7 +742,7 @@ export function openFocusQueueModal(modalRoot, model, appState = {}) {
 }
 
 function renderPillarTiles(model = {}) {
-  return `<div class="in-game-pillars">${modelPillars(model).map((pillar, index) => `<button class="in-game-pillar pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}"><span>${escapeHtml(pillar.short)}</span><strong>${whole(pillar.score)}</strong></button>`).join("")}</div>`;
+  return `<div class="in-game-pillars">${modelPillars(model).map((pillar, index) => `<button class="in-game-pillar pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">${pillarIcon(pillar.key)}<span>${escapeHtml(pillar.short)}</span><strong>${whole(pillar.score)}</strong></button>`).join("")}</div>`;
 }
 
 function renderReferenceDetail(kind = "", assignment = {}) {
@@ -769,10 +760,10 @@ export function renderInGamePage(root, model, appState = {}) {
   const activeReference = appState.inGameReference || "map";
   root.innerHTML = `
     <div class="in-game-stack">
-      <section class="in-game-focus-card"><header><div><p class="rc-eyebrow">In-Game Focus</p><h2>${escapeHtml(focus.title)}</h2></div><div class="in-game-focus-meta"><span>Confidence <strong>${whole(focus.confidence || 78)}%</strong></span><span>Impact <strong>${escapeHtml(focus.impact || "Medium")}</strong></span></div></header><p>${escapeHtml(focus.how || focus.evidence || "")}</p></section>
+      <section class="in-game-focus-card"><header><div><p class="rc-eyebrow">In-Game Focus</p><h2>${escapeHtml(focus.title)}</h2></div><div class="in-game-focus-meta">${confidencePill(focus.confidence || 78)}${impactPill(focus.impact || "Medium")}</div></header><p>${escapeHtml(focus.how || focus.evidence || "")}</p></section>
       ${renderPillarTiles(model || {})}
       <section class="rc-card rc-card--dashboard focus-checklist-card">${cardHeader("Focus Checklist", "Keep it simple while the match is live.")}<ul class="focus-checklist"><li>Say the focus before pistol and each side swap.</li><li>Use one teammate or one piece of utility before first contact.</li><li>After death, call useful info once, then reset.</li></ul></section>
-      <section class="rc-card rc-card--dashboard quick-reference-card">${cardHeader("Quick Reference", "Relevant to this match")}<div class="quick-reference-tabs">${[["map", "Map Notes"], ["agent", "Agent Tips"], ["lineups", "Lineups"], ["weapons", "Weapons"]].map(([key, label]) => `<button class="${activeReference === key ? "is-active" : ""}" type="button" data-action="open-reference" data-reference="${key}">${escapeHtml(label)}</button>`).join("")}</div><div class="quick-reference-body">${renderReferenceDetail(activeReference, assignment)}</div></section>
+      <section class="rc-card rc-card--dashboard quick-reference-card">${cardHeader("Quick Reference", "Relevant to this match")}<div class="quick-reference-tabs">${[["map", "Map Notes", "map-notes"], ["agent", "Agent Tips", "agent-tips"], ["lineups", "Lineups", "lineups"], ["weapons", "Weapons", "weapons"]].map(([key, label, iconName]) => `<button class="${activeReference === key ? "is-active" : ""}" type="button" data-action="open-reference" data-reference="${key}">${icon(iconName)}${escapeHtml(label)}</button>`).join("")}</div><div class="quick-reference-body">${renderReferenceDetail(activeReference, assignment)}</div></section>
       ${appState.matchCompleteError ? `<div class="sync-error-strip">${escapeHtml(appState.matchCompleteError)} ${button({ label: "Retry", variant: "secondary", action: "match-complete" })}</div>` : ""}
       <div class="in-game-actions">${button({ label: "Match Complete", variant: "primary", action: "match-complete" })}${button({ label: "Exit", variant: "secondary", action: "exit-in-game" })}</div>
     </div>

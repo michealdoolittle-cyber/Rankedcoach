@@ -1,4 +1,4 @@
-import { button, card, cardHeader, stateBlock } from "../components/ui.js";
+import { button, card, cardHeader, pillarIcon, stateBlock } from "../components/ui.js";
 import { getPriorityInsight } from "../model/insights.js";
 import { escapeHtml, formatDate, normalizeKey, percent, ratio, whole } from "../model/utils.js";
 import { renderOverview } from "./overview.js";
@@ -64,7 +64,7 @@ function renderTimeline(model = {}, state = {}) {
       <div class="timeline-route-grid">
         ${pillars.map(pillar => `
           <button class="timeline-category ${normalizeKey(pillar.key) === selected ? "is-active" : ""}" type="button" data-review-tab="timeline" data-review-category="${escapeHtml(pillar.key)}">
-            <span>${escapeHtml(pillar.label)}</span>
+            <span>${pillarIcon(pillar.key)}${escapeHtml(pillar.label)}</span>
             <strong>${whole(pillar.score)}/100</strong>
             <small>${escapeHtml(pillar.trend || "Stable")} · ${escapeHtml(pillar.reference || "current window")}</small>
           </button>

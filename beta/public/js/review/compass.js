@@ -1,3 +1,4 @@
+import { pillarIcon } from "../components/ui.js";
 import { escapeHtml, whole } from "../model/utils.js";
 
 function point(cx, cy, radius, angle, value) {
@@ -33,7 +34,7 @@ export function renderCompassBreakdown(model = {}) {
   }).join("");
   const details = pillars.map(pillar => `
     <article class="pillar-detail">
-      <strong>${escapeHtml(pillar.label)} · ${whole(pillar.score)}/100</strong>
+      <strong>${pillarIcon(pillar.key)}${escapeHtml(pillar.label)} · ${whole(pillar.score)}/100</strong>
       <p>${escapeHtml(pillar.driver || "No driver stat available yet.")}</p>
       <small>${escapeHtml(pillar.trend || "Stable")} · ${escapeHtml(pillar.reference || "current window")}</small>
     </article>

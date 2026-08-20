@@ -78,6 +78,34 @@
   background: rgba(5, 10, 20, 0.72);
 }
 
+.pipeline-pillar-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.75rem;
+  margin: var(--rc-space-3) 0;
+}
+
+.pipeline-pillar-preview span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-width: 0;
+  color: var(--rc-text-2);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.pipeline-pillar-preview .pillar-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pipeline-pillar-preview strong {
+  color: var(--rc-text-1);
+}
+
 .builder-steps {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
