@@ -2,6 +2,8 @@
 
 **Recommended Codex settings: GPT-5.6 Terra · Ultra reasoning · Fast speed.**
 
+**Status: SUPERSEDED 2026-08-21 by `notes/beta-foundation-shell-directive-v3-2026-08-21.md`. Do not use this file — read v3 instead.** Michael decided this directive's "targeted corrections on top of the existing build" approach wasn't enough — he wants every page's content rebuilt clean from the source images, not patched, with the sidebar as the only carryover. Kept only for history; its content research is still accurate, v3 just changes the build approach.
+
 **Status: open — not started. Supersedes `notes/beta-foundation-shell-full-directive-2026-08-20.md` and `notes/beta-foundation-shell-round2-corrections-2026-08-21.md`.** Those two files were written before real Groups 1-7 source images existed in the repo (they only had Claude's earlier text description to go on). Michael has since supplied the actual images — `notes/assets/groups-1-7/originals/` (18 raw concept-art exports) and `notes/assets/groups-1-7/curated/` (44 favorite elements he selected himself: modals, page layouts, styling, components — explicitly **not** a literal spec to copy). This directive is Claude's own synthesis after reviewing that material directly: where the source is clear and consistent, follow it; where the source contradicts itself across images (it does, in a few places) or is silent, Claude made a judgment call and says so; two decisions were explicitly confirmed by Michael and are marked as such. **Do not re-derive structure from the old two files — they're wrong in specific, listed ways below.**
 
 ## What already exists — extend this, don't start from zero
