@@ -3,586 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Foundation Shell</title>
+<title>RankedCoach Beta Foundation Shell</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --rc-canvas:#070b12; --rc-sidebar:#080d16;
-    --rc-surface-1:#0e1622; --rc-surface-2:#121c2a; --rc-surface-3:#172234;
-    --rc-border-subtle:#223047; --rc-border-strong:#37465e;
-    --rc-text-1:#f6f8fc; --rc-text-2:#b8c1d1; --rc-text-3:#7c889c;
-    --rc-brand:#8b5cf6; --rc-brand-strong:#a78bfa; --rc-brand-deep:#5b21b6;
-    --rc-review:#4fd1b5; --rc-learn:#f5c451; --rc-library:#a78bfa;
-    --rc-success:#4ade80; --rc-danger:#f87171; --rc-warning:#fbbf24; --rc-info:#60a5fa;
-    --rc-font-display:'Barlow Condensed',Inter,sans-serif; --rc-font-body:'Inter',sans-serif;
-    --rc-sidebar-w:clamp(148px, 11vw, 208px);
-    --rc-topbar-h:clamp(52px, 4.5vw, 64px);
-    --rc-pad:clamp(14px, 1.6vw, 26px);
-    --rc-gap:clamp(9px, 0.9vw, 14px);
-    --rc-radius:9px;
-    color-scheme:dark;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{background:#05070c;color:var(--rc-text-1);font-family:var(--rc-font-body);font-size:clamp(12px, 0.85vw, 13.5px);padding:20px;}
-  .meta{max-width:1400px;margin:0 auto 14px;}
-  .meta h1{font-family:var(--rc-font-display);font-weight:700;font-size:20px;margin:0 0 4px;}
-  .meta p{color:#6b7688;font-size:12px;margin:0 0 10px;max-width:80ch;}
-  .meta .hint{display:inline-flex;align-items:center;gap:6px;background:#0e1622;border:1px solid var(--rc-border-subtle);border-radius:7px;padding:6px 11px;color:var(--rc-brand-strong);font-size:11px;font-weight:600;}
-
-  /* resizable stage so fluidity is literally testable */
-  .stage{
-    max-width:1400px;margin:0 auto;
-    resize:horizontal; overflow:auto;
-    min-width:340px; max-width:100%;
-    width:100%;
-    border:1px dashed var(--rc-border-strong); border-radius:10px;
-    padding:2px;
-  }
-  .stage-inner{min-width:0;}
-
-  .shell{display:grid;grid-template-columns:var(--rc-sidebar-w) minmax(0,1fr);background:var(--rc-canvas);border-radius:8px;overflow:hidden;min-height:620px;}
-
-  /* sidebar */
-  .sidebar{background:linear-gradient(180deg,var(--rc-sidebar),#070a10 75%);border-right:1px solid var(--rc-border-subtle);display:flex;flex-direction:column;padding:clamp(10px,1.2vw,16px) clamp(8px,1vw,12px);}
-  .brand{display:flex;align-items:center;gap:8px;padding:2px 4px clamp(12px,1.4vw,18px);}
-  .brand-mark{width:26px;height:26px;flex:none;border-radius:7px;background:conic-gradient(from 220deg,var(--rc-brand-deep),var(--rc-brand),var(--rc-brand-strong),var(--rc-brand-deep));position:relative;}
-  .brand-mark::after{content:"";position:absolute;inset:4px;border-radius:4px;background:var(--rc-sidebar);clip-path:polygon(50% 8%,92% 50%,50% 92%,8% 50%);}
-  .brand-word{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(10px,0.85vw,12.5px);line-height:1.05;letter-spacing:.01em;overflow:hidden;white-space:nowrap;}
-  .brand-word b{display:block;color:var(--rc-brand-strong);}
-  .nav-label{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--rc-text-3);text-transform:uppercase;padding:10px 8px 5px;}
-  .nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;color:var(--rc-text-2);font-size:clamp(10.5px,0.85vw,12.5px);font-weight:600;margin-bottom:1px;cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;}
-  .nav-item svg{width:16px;height:16px;flex:none;opacity:.8;}
-  .nav-item:hover{background:rgba(255,255,255,.03);color:var(--rc-text-1);}
-  .nav-item.active{background:rgba(139,92,246,.14);color:var(--rc-text-1);}
-  .nav-item.active svg{color:var(--rc-brand-strong);opacity:1;}
-  .nav-item.active::before{content:"";position:absolute;left:-8px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--rc-brand-strong);}
-  .sidebar-spacer{flex:1;}
-  .sidebar-account{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--rc-surface-1);border:1px solid var(--rc-border-subtle);margin-bottom:6px;}
-  .avatar-dot{width:26px;height:26px;border-radius:7px;background:var(--rc-surface-3);border:1px solid var(--rc-border-strong);flex:none;}
-  .sidebar-account .meta-txt strong{display:block;font-size:11px;color:var(--rc-text-1);}
-  .sidebar-account .meta-txt span{font-size:9.5px;color:var(--rc-text-3);}
-
-  /* main */
-  .main{min-width:0;display:flex;flex-direction:column;}
-  .topbar{height:var(--rc-topbar-h);display:flex;align-items:center;justify-content:space-between;padding:0 var(--rc-pad);border-bottom:1px solid var(--rc-border-subtle);flex:none;}
-  .topbar-title{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(14px,1.3vw,17px);}
-  .topbar-title span{color:var(--rc-text-3);font-family:var(--rc-font-body);font-weight:500;font-size:clamp(9.5px,0.75vw,11px);margin-left:8px;}
-  .content{padding:var(--rc-pad);flex:1;}
-
-  /* page transition */
-  .page{display:none;}
-  .page.active{display:block;animation:pagein .28s cubic-bezier(.2,.8,.2,1);}
-  @keyframes pagein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-  @media (prefers-reduced-motion:reduce){.page.active{animation:none;}}
-
-  /* skeleton primitives — deliberately not "real" card styling, communicates structure-only */
-  .skel-grid{display:grid;gap:var(--rc-gap);}
-  .skel{
-    background:var(--rc-surface-1);
-    border:1px dashed var(--rc-border-strong);
-    border-radius:var(--rc-radius);
-    padding:clamp(10px,1.1vw,16px);
-    min-height:60px;
-    display:flex; flex-direction:column; gap:4px;
-  }
-  .skel .skel-tag{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rc-brand-strong);}
-  .skel .skel-desc{font-size:10.5px;color:var(--rc-text-3);line-height:1.4;}
-  .skel.accent-review .skel-tag{color:var(--rc-review);}
-  .skel.accent-learn .skel-tag{color:var(--rc-learn);}
-  .skel.accent-library .skel-tag{color:var(--rc-library);}
-
-  .tabrow{display:flex;gap:clamp(4px,0.6vw,8px);border-bottom:1px solid var(--rc-border-subtle);margin-bottom:var(--rc-gap);flex-wrap:wrap;}
-  .tabrow button{background:none;border:none;color:var(--rc-text-3);font-size:clamp(10px,0.8vw,12px);font-weight:600;padding:7px 4px;margin-right:clamp(8px,1vw,16px);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;}
-  .tabrow button.active{color:var(--rc-text-1);border-bottom-color:var(--rc-brand-strong);}
-
-  .btn{appearance:none;border-radius:7px;font-weight:700;font-size:clamp(10px,0.8vw,12px);padding:0 clamp(10px,1vw,15px);height:clamp(26px,2.4vw,34px);display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rc-border-strong);background:var(--rc-surface-3);color:var(--rc-text-1);cursor:pointer;font-family:inherit;}
-  .btn.primary{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));border-color:transparent;color:#0c0620;}
-
-  .demo-note{display:flex;align-items:center;gap:8px;margin-top:var(--rc-gap);color:var(--rc-text-3);font-size:10.5px;}
-  .state-dot{width:6px;height:6px;border-radius:50%;background:var(--rc-border-strong);}
-  .state-dot.on{background:var(--rc-brand-strong);}
-  .module-row{display:grid;gap:var(--rc-gap);grid-template-columns:repeat(auto-fit,minmax(145px,1fr));}
-  .rail-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(190px,18vw,260px);gap:var(--rc-gap);}
-  .detail-layout{display:grid;grid-template-columns:minmax(210px,0.9fr) minmax(0,1.6fr);gap:var(--rc-gap);}
-  .split-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rc-gap);}
-  .stack{display:grid;gap:var(--rc-gap);}
-  .mini-list{display:grid;gap:7px;}
-  .mini-line{height:clamp(26px,2.4vw,34px);border-radius:7px;border:1px dashed var(--rc-border-subtle);background:rgba(255,255,255,.025);display:flex;align-items:center;padding:0 10px;color:var(--rc-text-3);font-size:10px;font-weight:650;}
-  .section-kicker{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--rc-text-3);margin:0 0 7px;}
-  .modal-demo{position:fixed;inset:auto clamp(18px,3vw,44px) clamp(18px,3vw,44px) auto;width:min(520px,calc(100vw - 36px));max-height:min(72vh,620px);overflow:auto;background:#0b1220;border:1px solid var(--rc-brand-strong);box-shadow:0 18px 80px rgba(0,0,0,.55);border-radius:14px;padding:18px;z-index:30;display:none;}
-  .modal-demo.open{display:block;animation:pagein .2s cubic-bezier(.2,.8,.2,1);}
-  .mobile-frame{width:min(360px,100%);min-height:620px;border-radius:28px;border:1px solid var(--rc-border-strong);background:#070b12;padding:16px;margin:auto;display:grid;grid-template-rows:auto 1fr auto;gap:var(--rc-gap);}
-  .mobile-bottom-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--rc-border-subtle);padding-top:10px;}
-  .mobile-tab{min-height:46px;border-radius:12px;background:var(--rc-surface-2);border:1px solid var(--rc-border-strong);display:grid;place-items:center;color:var(--rc-text-2);font-size:10px;font-weight:800;text-transform:uppercase;}
-  .mobile-tab.active{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));color:#100924;}
-  .page-note{border:1px solid rgba(167,139,250,.35);background:rgba(139,92,246,.08);border-radius:9px;padding:10px 12px;color:var(--rc-text-2);font-size:11px;margin-bottom:var(--rc-gap);}
-  .query-link{color:var(--rc-brand-strong);text-decoration:none;font-weight:800;}
-  @media (max-width:720px){
-    body{padding:8px;}
-    .shell{grid-template-columns:1fr;}
-    .sidebar{display:none;}
-    .rail-layout,.detail-layout,.split-layout{grid-template-columns:1fr;}
-    .topbar{height:auto;min-height:54px;}
-  }
+ :root{--rc-canvas:#070b12;--rc-sidebar:#080d16;--rc-surface-1:#0e1622;--rc-surface-2:#121c2a;--rc-surface-3:#172234;--rc-surface-glow:#1a2440;--rc-border-subtle:#223047;--rc-border-strong:#37465e;--rc-text-1:#f6f8fc;--rc-text-2:#b8c1d1;--rc-text-3:#7c889c;--rc-brand:#8b5cf6;--rc-brand-strong:#a78bfa;--rc-brand-deep:#5b21b6;--rc-review:#4fd1b5;--rc-learn:#f5c451;--rc-library:#a78bfa;--rc-success:#4ade80;--rc-danger:#f87171;--rc-warning:#fbbf24;--rc-info:#60a5fa;--rc-font-display:'Barlow Condensed',Inter,sans-serif;--rc-font-body:'Inter',sans-serif;--rc-sidebar-w:clamp(168px,13vw,224px);--rc-topbar-h:clamp(58px,4.7vw,72px);--rc-pad:clamp(14px,1.6vw,26px);--rc-gap:clamp(10px,.9vw,16px);--rc-radius:12px;color-scheme:dark}
+ *{box-sizing:border-box}html,body{margin:0;padding:0}
+ body{background:radial-gradient(circle at 20% -10%,rgba(139,92,246,.18),transparent 34%),radial-gradient(circle at 88% 18%,rgba(79,209,181,.1),transparent 30%),#05070c;color:var(--rc-text-1);font-family:var(--rc-font-body);font-size:clamp(12px,.85vw,13.5px);padding:20px}
+ .meta{max-width:1500px;margin:0 auto 14px}.meta h1{font-family:var(--rc-font-display);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:.03em}.meta p{color:#8994a8;font-size:12px;margin:0 0 10px;max-width:92ch;line-height:1.45}.meta .hint{display:inline-flex;align-items:center;gap:6px;background:#0e1622;border:1px solid var(--rc-border-subtle);border-radius:8px;padding:7px 12px;color:var(--rc-brand-strong);font-size:11px;font-weight:700}
+ .stage{max-width:1500px;margin:0 auto;resize:horizontal;overflow:auto;min-width:340px;max-width:100%;width:100%;border:1px solid rgba(167,139,250,.35);border-radius:14px;padding:2px;box-shadow:0 22px 80px rgba(0,0,0,.35)}.stage-inner{min-width:0}.shell{display:grid;grid-template-columns:var(--rc-sidebar-w) minmax(0,1fr);background:linear-gradient(135deg,rgba(139,92,246,.08),transparent 28%),var(--rc-canvas);border-radius:12px;overflow:hidden;min-height:760px}
+ .sidebar{background:linear-gradient(180deg,var(--rc-sidebar),#070a10 75%);border-right:1px solid var(--rc-border-subtle);display:flex;flex-direction:column;padding:clamp(10px,1.2vw,16px) clamp(8px,1vw,12px)}.brand{display:flex;align-items:center;gap:9px;padding:2px 4px clamp(12px,1.4vw,18px)}.brand-mark{width:30px;height:30px;flex:none;border-radius:9px;background:conic-gradient(from 220deg,var(--rc-brand-deep),var(--rc-brand),var(--rc-brand-strong),var(--rc-brand-deep));position:relative;box-shadow:0 0 22px rgba(139,92,246,.45)}.brand-mark:after{content:"";position:absolute;inset:5px;border-radius:5px;background:var(--rc-sidebar);clip-path:polygon(50% 8%,92% 50%,50% 92%,8% 50%)}.brand-word{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(11px,.95vw,14px);line-height:1.05;letter-spacing:.03em;overflow:hidden;white-space:nowrap}.brand-word b{display:block;color:var(--rc-brand-strong)}.nav-label{font-size:9px;font-weight:800;letter-spacing:.13em;color:var(--rc-text-3);text-transform:uppercase;padding:12px 8px 6px}.nav-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;color:var(--rc-text-2);font-size:clamp(10.5px,.85vw,12.5px);font-weight:700;margin-bottom:2px;cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;border:1px solid transparent}.nav-item:hover{background:rgba(255,255,255,.04);color:var(--rc-text-1);border-color:rgba(255,255,255,.06)}.nav-item.active{background:linear-gradient(90deg,rgba(139,92,246,.24),rgba(79,209,181,.06));color:var(--rc-text-1);border-color:rgba(167,139,250,.35)}.nav-item.active:before{content:"";position:absolute;left:-8px;top:7px;bottom:7px;width:3px;border-radius:3px;background:var(--rc-brand-strong);box-shadow:0 0 18px var(--rc-brand-strong)}.sidebar-spacer{flex:1}.sidebar-account{display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:var(--rc-surface-1);border:1px solid var(--rc-border-subtle);margin-bottom:7px}.avatar-dot,.avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#26344b,#101827);border:1px solid var(--rc-border-strong);flex:none;display:grid;place-items:center;font-size:13px}.sidebar-account .meta-txt strong{display:block;font-size:11px;color:var(--rc-text-1)}.sidebar-account .meta-txt span{font-size:9.5px;color:var(--rc-text-3)}
+ .main{min-width:0;display:flex;flex-direction:column}.topbar{height:var(--rc-topbar-h);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 var(--rc-pad);border-bottom:1px solid var(--rc-border-subtle);flex:none;background:linear-gradient(180deg,rgba(18,28,42,.96),rgba(8,13,22,.9))}.topbar-title{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(16px,1.3vw,20px);letter-spacing:.03em}.topbar-title span{color:var(--rc-text-3);font-family:var(--rc-font-body);font-weight:600;font-size:clamp(9.5px,.75vw,11px);margin-left:8px;letter-spacing:0}.topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.quick-pipeline{border:1px solid rgba(167,139,250,.32);background:rgba(139,92,246,.12);border-radius:999px;padding:7px 10px;font-size:10.5px;font-weight:800;color:var(--rc-brand-strong);cursor:pointer}.content{padding:var(--rc-pad);flex:1}
+ .page{display:none}.page.active{display:block;animation:pagein .28s cubic-bezier(.2,.8,.2,1)}@keyframes pagein{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}@media (prefers-reduced-motion:reduce){.page.active{animation:none}}
+ .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:var(--rc-gap)}.section-kicker{font-size:9.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--rc-text-3);margin:0 0 7px}h2,h3{font-family:var(--rc-font-display);letter-spacing:.03em;margin:0}h2{font-size:clamp(22px,2vw,34px)}h3{font-size:clamp(15px,1.2vw,20px)}p{line-height:1.45}.muted{color:var(--rc-text-3)}.strong{font-weight:800;color:var(--rc-text-1)}
+ .grid{display:grid;gap:var(--rc-gap)}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.five{grid-template-columns:repeat(5,minmax(0,1fr))}.grid.six{grid-template-columns:repeat(6,minmax(0,1fr))}.grid.auto{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.layout-rail{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,22vw,310px);gap:var(--rc-gap)}.layout-detail{display:grid;grid-template-columns:minmax(230px,.9fr) minmax(0,1.65fr);gap:var(--rc-gap)}.layout-main{display:grid;grid-template-columns:1.55fr 1fr;gap:var(--rc-gap)}.stack{display:grid;gap:var(--rc-gap)}
+ .card,.hero,.metric,.row-card,.panel{background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.005)),var(--rc-surface-1);border:1px solid var(--rc-border-subtle);border-radius:12px;padding:clamp(12px,1.1vw,17px);box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.16);min-width:0}.hero{background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(79,209,181,.10) 58%,rgba(245,196,81,.06)),var(--rc-surface-1);border-color:rgba(167,139,250,.36)}.hero.review{background:linear-gradient(135deg,rgba(79,209,181,.2),rgba(139,92,246,.12)),var(--rc-surface-1);border-color:rgba(79,209,181,.36)}.hero.learn{background:linear-gradient(135deg,rgba(245,196,81,.2),rgba(139,92,246,.1)),var(--rc-surface-1);border-color:rgba(245,196,81,.36)}.hero.library{background:linear-gradient(135deg,rgba(167,139,250,.2),rgba(79,209,181,.08)),var(--rc-surface-1);border-color:rgba(167,139,250,.42)}.card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.card-title .section-kicker{margin:0}.metric strong{display:block;font-family:var(--rc-font-display);font-size:clamp(23px,2vw,34px);line-height:1;color:var(--rc-text-1)}.metric span{display:block;margin-top:5px;color:var(--rc-text-3);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.accent-bar{height:6px;border-radius:999px;background:#182235;overflow:hidden;margin-top:8px}.accent-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--rc-brand-strong),var(--rc-review))}
+ .pill,.badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;border:1px solid var(--rc-border-strong);background:var(--rc-surface-3);color:var(--rc-text-2);font-size:10px;font-weight:800;padding:5px 8px;white-space:nowrap}.pill.brand{border-color:rgba(167,139,250,.45);color:var(--rc-brand-strong);background:rgba(139,92,246,.16)}.pill.good{border-color:rgba(74,222,128,.35);color:var(--rc-success);background:rgba(74,222,128,.10)}.pill.bad{border-color:rgba(248,113,113,.35);color:var(--rc-danger);background:rgba(248,113,113,.10)}.pill.warn{border-color:rgba(251,191,36,.35);color:var(--rc-warning);background:rgba(251,191,36,.10)}
+ .btn{appearance:none;border-radius:8px;font-weight:800;font-size:clamp(10px,.8vw,12px);padding:0 clamp(10px,1vw,15px);height:clamp(29px,2.45vw,36px);display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--rc-border-strong);background:linear-gradient(180deg,var(--rc-surface-3),var(--rc-surface-2));color:var(--rc-text-1);cursor:pointer;font-family:inherit;white-space:nowrap}.btn:hover{border-color:var(--rc-brand-strong);box-shadow:0 0 18px rgba(139,92,246,.18)}.btn.primary{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));border-color:transparent;color:#100924}.btn.review{background:linear-gradient(180deg,rgba(79,209,181,.28),rgba(79,209,181,.14));border-color:rgba(79,209,181,.35)}.btn.learn{background:linear-gradient(180deg,rgba(245,196,81,.28),rgba(245,196,81,.12));border-color:rgba(245,196,81,.35)}.btn.small{height:28px;padding:0 10px;font-size:10px}.btn.danger{border-color:rgba(248,113,113,.45);color:var(--rc-danger)}.button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+ .tabrow{display:flex;gap:8px;border-bottom:1px solid var(--rc-border-subtle);margin-bottom:var(--rc-gap);flex-wrap:wrap}.tabrow button{background:var(--rc-surface-2);border:1px solid var(--rc-border-subtle);color:var(--rc-text-3);font-size:clamp(10px,.78vw,12px);font-weight:800;padding:8px 11px;border-radius:8px 8px 0 0;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.04em}.tabrow button.active{color:var(--rc-text-1);border-color:rgba(167,139,250,.5);background:linear-gradient(180deg,rgba(139,92,246,.32),rgba(139,92,246,.13));box-shadow:0 -8px 24px rgba(139,92,246,.13)}[data-tab-pane]{display:none}[data-tab-pane].active-pane{display:block;animation:pagein .2s cubic-bezier(.2,.8,.2,1)}
+ .data-table{width:100%;border-collapse:separate;border-spacing:0 7px;font-size:11px}.data-table th{text-align:left;color:var(--rc-text-3);font-size:9px;text-transform:uppercase;letter-spacing:.09em;padding:0 9px}.data-table td{background:rgba(18,28,42,.88);border-top:1px solid var(--rc-border-subtle);border-bottom:1px solid var(--rc-border-subtle);padding:9px;vertical-align:middle}.data-table td:first-child{border-left:1px solid var(--rc-border-subtle);border-radius:8px 0 0 8px}.data-table td:last-child{border-right:1px solid var(--rc-border-subtle);border-radius:0 8px 8px 0;text-align:right}.mini-list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:rgba(18,28,42,.82);border:1px solid var(--rc-border-subtle);border-radius:10px;padding:10px}.list-row strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.list-row small{display:block;color:var(--rc-text-3);margin-top:2px}.icon-dot{width:32px;height:32px;border-radius:10px;background:rgba(139,92,246,.16);border:1px solid rgba(167,139,250,.35);display:grid;place-items:center;font-weight:900;color:var(--rc-brand-strong)}.map-thumb,.thumb{height:54px;border-radius:10px;background:linear-gradient(135deg,#243651,#0b1220);border:1px solid var(--rc-border-subtle);display:grid;place-items:center;color:var(--rc-text-3);font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:10px;overflow:hidden}.thumb.gold{background:linear-gradient(135deg,rgba(245,196,81,.22),#0b1220)}.thumb.teal{background:linear-gradient(135deg,rgba(79,209,181,.22),#0b1220)}.thumb.purple{background:linear-gradient(135deg,rgba(167,139,250,.26),#0b1220)}.radar{width:100%;max-width:260px;margin:auto;display:block}.chart-card svg{width:100%;height:180px;display:block}.donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--rc-success) 0 58%,var(--rc-danger) 58% 76%,var(--rc-warning) 76% 100%);position:relative;margin:auto}.donut:after{content:"58%";position:absolute;inset:16px;border-radius:50%;background:var(--rc-surface-1);display:grid;place-items:center;font-family:var(--rc-font-display);font-size:28px;font-weight:700}
+ .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--rc-gap)}.field{display:grid;gap:6px}.field label{font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--rc-text-3)}input,select,textarea{width:100%;border:1px solid var(--rc-border-subtle);border-radius:9px;background:#08101d;color:var(--rc-text-1);font:inherit;padding:9px 10px}textarea{min-height:86px;resize:vertical}.save-state,.loadout-state{display:none}.save-state.active,.loadout-state.active{display:block}.orb{width:150px;height:150px;border-radius:50%;margin:12px auto;background:radial-gradient(circle at 35% 30%,#fff,var(--rc-review) 14%,var(--rc-brand) 45%,transparent 68%);box-shadow:0 0 70px rgba(139,92,246,.45);animation:pulse 1.8s ease-in-out infinite}@keyframes pulse{50%{transform:scale(1.05);filter:saturate(1.25)}}.toast{position:fixed;right:24px;bottom:24px;z-index:50;display:none;max-width:min(420px,calc(100vw - 48px));border-radius:12px;border:1px solid rgba(79,209,181,.45);background:#07131e;box-shadow:0 18px 70px rgba(0,0,0,.45);padding:13px 15px;color:var(--rc-text-1);font-weight:800}.toast.show{display:block;animation:pagein .18s ease-out}.modal-demo{position:fixed;inset:auto clamp(18px,3vw,44px) clamp(18px,3vw,44px) auto;width:min(620px,calc(100vw - 36px));max-height:min(78vh,720px);overflow:auto;background:#0b1220;border:1px solid var(--rc-brand-strong);box-shadow:0 18px 80px rgba(0,0,0,.55);border-radius:16px;padding:18px;z-index:40;display:none}.modal-demo.open{display:block;animation:pagein .2s cubic-bezier(.2,.8,.2,1)}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.mobile-frame{width:min(360px,100%);min-height:620px;border-radius:28px;border:1px solid var(--rc-border-strong);background:#070b12;padding:16px;margin:auto;display:grid;grid-template-rows:auto 1fr auto;gap:var(--rc-gap)}.mobile-bottom-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--rc-border-subtle);padding-top:10px}.mobile-tab{min-height:46px;border-radius:12px;background:var(--rc-surface-2);border:1px solid var(--rc-border-strong);display:grid;place-items:center;color:var(--rc-text-2);font-size:10px;font-weight:900;text-transform:uppercase}.mobile-tab.active{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));color:#100924}.callout{border:1px solid rgba(167,139,250,.35);background:rgba(139,92,246,.08);border-radius:12px;padding:12px;color:var(--rc-text-2);font-size:11px}.queue-card{grid-template-columns:auto minmax(0,1fr) auto}.drag{font-size:18px;color:var(--rc-text-3)}.status-on{outline:2px solid rgba(79,209,181,.45)}
+ @media (max-width:920px){.layout-main,.layout-rail,.layout-detail,.grid.three,.grid.four,.grid.five,.grid.six{grid-template-columns:1fr}}@media (max-width:720px){body{padding:8px}.shell{grid-template-columns:1fr}.sidebar{display:none}.topbar{height:auto;min-height:58px;align-items:flex-start;padding:12px;flex-direction:column}.topbar-actions{justify-content:flex-start}.grid.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
 <div class="meta">
-  <h1>Foundation Shell — structure only, no real data, no final styling</h1>
-  <p>Every region below is a labeled skeleton, not a finished card — content, exact spacing, and colors come in later phases. This is testing three things: the full information architecture, the page-transition motion between sections, and whether the layout stays proportionally consistent as width changes (no breakpoint redesign).</p>
-  <span class="hint">↘ Drag the bottom-right corner of the frame below to resize — the layout should scale continuously, never jump or rearrange.</span>
+ <h1>RankedCoach Beta Foundation Shell styled clickable prototype</h1>
+ <p>This artifact uses invented example content only. It proves content structure, navigation, button destinations, and the dark Obsidian visual language before live data and production polish are wired in.</p>
+ <span class="hint"> Drag the frame corner to resize. Every visible control should lead to a real populated state, page, tab, modal, or confirmation.</span>
 </div>
+<div class="stage"><div class="stage-inner"><div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="brand-mark"></div><div class="brand-word">RANKED<b>COACH</b></div></div>
+ <div class="nav-label">Main</div><div class="nav-item active" data-page="play"> Play</div><div class="nav-item" data-page="review"> Review</div><div class="nav-item" data-page="learn"> Learn</div><div class="nav-item" data-page="library"> Library</div>
+ <div class="nav-label">Tools</div><div class="nav-item" data-page="logmatch"> Log Match</div><div class="nav-item" data-page="loadout"> Loadout</div><div class="nav-item" data-page="focusqueue"> Focus Queue</div>
+ <div class="nav-label">Reference Pages</div><div class="nav-item" data-page="ingame"> In-Game</div><div class="nav-item" data-page="matchsaved"> Match Saved</div><div class="nav-item" data-page="mobile"> Mobile Ref</div>
+ <div class="sidebar-spacer"></div><button class="quick-pipeline" data-jump="settings" data-tab="st-pipeline">Pipeline: The Competitor</button><div class="sidebar-account"><div class="avatar-dot"> </div><div class="meta-txt"><strong>Demo Account</strong><span>Diamond 1 42 RR</span></div></div><div class="nav-item" data-page="settings"> Settings</div>
+</aside>
+<main class="main"><div class="topbar"><div class="topbar-title" id="pageTitle">Play<span id="pageSub">Home base between matches</span></div><div class="topbar-actions"><button class="btn small" data-modal="modal-search">Search</button><button class="btn small" data-modal="modal-notifications">Bell</button><button class="btn small" data-modal="modal-profile">Profile</button><button class="btn small primary" data-jump="settings" data-tab="st-profile">Settings</button></div></div><div class="content">
 
-<div class="stage">
-<div class="stage-inner">
-  <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark"></div>
-        <div class="brand-word">RANKED<b>COACH</b></div>
-      </div>
-      <div class="nav-label">Main</div>
-      <div class="nav-item active" data-page="play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5.5 4.8 18.7 12 5.5 19.2Z"/></svg>Play</div>
-      <div class="nav-item" data-page="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V14M10 19V10M16 19V6"/></svg>Review</div>
-      <div class="nav-item" data-page="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Learn</div>
-      <div class="nav-item" data-page="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Library</div>
-      <div class="nav-item" data-page="mobile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path d="M10 18.5h4"/></svg>Mobile Ref</div>
-      <div class="nav-label">Tools</div>
-      <div class="nav-item" data-page="logmatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg>Log Match</div>
-      <div class="nav-item" data-page="matchsaved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.5 10 17l9-10"/></svg>Match Saved</div>
-      <div class="nav-item" data-page="loadout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>Loadout</div>
-      <div class="nav-item" data-page="focusqueue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Focus Queue</div>
-      <div class="nav-item" data-page="ingame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>In-Game</div>
-      <div class="sidebar-spacer"></div>
-      <div class="sidebar-account">
-        <div class="avatar-dot"></div>
-        <div class="meta-txt"><strong>Account slot</strong><span>reserved — no import yet</span></div>
-      </div>
-      <div class="nav-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.3"/><path d="M12 2.8v2.7M12 18.5v2.7M21.2 12h-2.7M5.5 12H2.8M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9M18.6 18.6l-1.9-1.9M7.3 7.3 5.4 5.4" stroke-width="2.6" stroke-linecap="round"/></svg>Settings</div>
-    </aside>
+<section class="page active" id="page-play">
+ <div class="page-head"><div><p class="section-kicker">Play dashboard</p><h2>Prep, queue, review, repeat.</h2></div><span class="pill brand">Season 2026 Act 4 demo window</span></div>
+ <div class="layout-main"><div class="stack">
+ <div class="hero"><div class="card-title"><p class="section-kicker">Today's Focus</p><span class="pill warn">Confidence 74%</span></div><h2>Clear the first angle before you swing the second.</h2><p class="muted">Your last five Duelist entries won space, but two deaths happened after you fought the next angle alone. Take the first contact, reset behind cover, then ask for the trade.</p><div class="button-row"><button class="btn primary" data-modal="modal-focus">View Focus Details</button><button class="btn" data-jump="focusqueue">Open Queue</button></div></div>
+ <div class="card"><div class="card-title"><p class="section-kicker">Improvement Timeline</p><button class="btn small review" data-jump="review" data-tab="rv-timeline">View Full Timeline</button></div><div class="grid five"><div class="metric"><strong>76</strong><span>Mechanics +4</span><div class="accent-bar"><i style="width:76%"></i></div></div><div class="metric"><strong>61</strong><span>Game Sense -2</span><div class="accent-bar"><i style="width:61%"></i></div></div><div class="metric"><strong>69</strong><span>Teamwork +6</span><div class="accent-bar"><i style="width:69%"></i></div></div><div class="metric"><strong>72</strong><span>Discipline +1</span><div class="accent-bar"><i style="width:72%"></i></div></div><div class="metric"><strong>64</strong><span>Mental +3</span><div class="accent-bar"><i style="width:64%"></i></div></div></div></div>
+ </div><div class="stack">
+ <div class="card"><div class="card-title"><p class="section-kicker">Current Rank</p><button class="btn small" data-jump="review" data-tab="rv-allmatches">View Match History</button></div><div class="grid two"><div class="metric"><strong>Diamond 1</strong><span>42 RR +18 today</span></div><div class="metric"><strong>3 2</strong><span>recent ranked record</span></div></div><div class="accent-bar"><i style="width:42%"></i></div></div>
+ <div class="card chart-card"><div class="card-title"><p class="section-kicker">RR Trend</p><button class="btn small" data-modal="modal-rr">View RR Calculator</button></div><svg viewBox="0 0 500 180"><path d="M24 145H476M24 100H476M24 55H476" stroke="#223047"/><path d="M24 132 C90 112 122 140 180 96 S286 42 346 70 424 110 476 54" fill="none" stroke="#f5c451" stroke-width="5" stroke-linecap="round"/><g fill="#f5c451"><circle cx="24" cy="132" r="6"/><circle cx="180" cy="96" r="6"/><circle cx="346" cy="70" r="6"/><circle cx="476" cy="54" r="6"/></g></svg></div>
+ </div></div>
+ <div class="grid three" style="margin-top:var(--rc-gap)"><div class="card"><div class="card-title"><p class="section-kicker">Loadout</p><button class="btn small primary" data-jump="loadout">Select Play A Match</button></div><p><b>Any role Any map</b></p><p class="muted">Spin an assignment that gives one agent, one map reminder, and one short-term focus.</p></div><div class="card"><div class="card-title"><p class="section-kicker">Compass</p><button class="btn small" data-jump="review" data-tab="rv-stats">View Compass Breakdown</button></div><svg class="radar" viewBox="0 0 220 160"><polygon points="110,16 193,80 110,144 27,80" fill="#0a1220" stroke="#37465e"/><polygon points="110,32 170,80 110,128 50,80" fill="none" stroke="#223047"/><polygon points="110,38 158,76 126,120 58,88 78,58" fill="rgba(79,209,181,.22)" stroke="#4fd1b5" stroke-width="3"/><g fill="#f6f8fc" font-size="11" font-weight="800"><text x="105" y="12">76</text><text x="198" y="84">61</text><text x="105" y="158">64</text><text x="3" y="84">69</text></g></svg></div><div class="card"><div class="card-title"><p class="section-kicker">Top Insight</p><button class="btn small review" data-jump="review" data-tab="rv-insights">View All Insights</button></div><h3>First deaths are clustering on delayed re-peeks.</h3><ul class="muted"><li>Three recent rounds lost the second fight after winning first contact.</li><li>Best next action: reset behind the smoke, then re-swing with a teammate.</li></ul></div></div>
+ <div class="card" style="margin-top:var(--rc-gap)"><div class="card-title"><p class="section-kicker">Quick Actions</p></div><div class="button-row"><button class="btn primary" data-jump="loadout">Play A Match</button><button class="btn review" data-jump="review" data-tab="rv-allmatches">Review Match</button><button class="btn learn" data-jump="learn" data-tab="ln-concepts">Practice</button><button class="btn learn" data-jump="learn" data-tab="ln-maps">Study a Map</button><button class="btn" data-jump="library">Strategy Library</button></div></div>
+</section>
 
-    <main class="main">
-      <div class="topbar">
-        <div class="topbar-title" id="pageTitle">Play<span id="pageSub">Home base between matches</span></div>
-        <div style="color:var(--rc-text-3);font-size:10.5px;">Account sync — not wired yet</div>
-      </div>
-      <div class="content">
+<section class="page" id="page-loadout">
+ <div class="page-head"><div><p class="section-kicker">Loadout generator</p><h2>Spin one clean job for the next match.</h2></div><button class="btn" data-loadout="lo-idle">Reset demo</button></div><div class="button-row" style="margin-bottom:var(--rc-gap)"><button class="btn small primary" data-loadout="lo-idle">Idle</button><button class="btn small" data-loadout="lo-spinning">Spinning</button><button class="btn small" data-loadout="lo-generated">Generated</button><button class="btn small" data-loadout="lo-started">Started</button><button class="btn small" data-loadout="lo-partial">Error / Partial</button></div>
+ <div id="lo-idle" class="loadout-state active card"><div class="form-grid"><div class="field"><label>Role</label><select><option>Any role</option><option>Duelist</option><option>Controller</option><option>Initiator</option><option>Sentinel</option></select></div><div class="field"><label>Agent</label><select><option>Any agent</option><option>Jett</option><option>Omen</option><option>Sova</option><option>Killjoy</option></select></div><div class="field"><label>Map</label><select><option>Any map</option><option>Ascent</option><option>Bind</option><option>Lotus</option></select></div></div><button class="btn primary" style="margin-top:var(--rc-gap)" data-loadout="lo-spinning">Spin Loadout</button></div>
+ <div id="lo-spinning" class="loadout-state hero"><div class="orb"></div><div class="grid three"><span class="pill brand">Selecting map Lotus locked</span><span class="pill brand">Reading recent matches 5-game window</span><span class="pill brand">Building focused objective trade reset</span></div><div class="button-row" style="justify-content:center;margin-top:var(--rc-gap)"><button class="btn primary" data-loadout="lo-generated">Skip to Generated</button></div></div>
+ <div id="lo-generated" class="loadout-state hero"><p class="section-kicker">Your next match</p><h2>Initiator Sova Lotus</h2><p><b>Focus:</b> Clear utility before first contact. <b>Map reminder:</b> Save one recon for C retake pressure.</p><div class="button-row"><button class="btn primary" data-modal="modal-focus">View Details</button><button class="btn review" data-jump="ingame">Start Match</button></div></div>
+ <div id="lo-started" class="loadout-state card"><h2>Match assignment is active.</h2><p class="muted">Sova on Lotus is preserved until post-match sync detects a ranked result or you clear the assignment.</p><button class="btn primary" data-jump="ingame">Open In-Game View</button></div>
+ <div id="lo-partial" class="loadout-state card"><h2>Partial assignment built.</h2><p class="muted">Map data was unavailable in this example, so RankedCoach keeps the agent/focus and asks you to select the map manually.</p><button class="btn" data-loadout="lo-idle">Return to controls</button></div>
+</section>
 
-        <!-- PLAY -->
-        <section class="page active" id="page-play">
-          <div class="skel-grid" style="grid-template-columns:2fr 1fr;">
-            <div class="skel"><div class="skel-tag">Today's Focus</div><div class="skel-desc">Hero coaching card — one statement, evidence, agent art, primary action.</div></div>
-            <div class="skel"><div class="skel-tag">Improvement Timeline</div><div class="skel-desc">5 coordinated pillar tiles with trend.</div></div>
-          </div>
-          <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:var(--rc-gap);">
-            <div class="skel"><div class="skel-tag">Loadout</div><div class="skel-desc">Passive entry point + active start action.</div></div>
-            <div class="skel"><div class="skel-tag">Compass</div><div class="skel-desc">Five-axis radar, values on the chart itself.</div></div>
-            <div class="skel"><div class="skel-tag">Current Rank</div><div class="skel-desc">Rank/RR + match counters + role + last-match strip.</div></div>
-          </div>
-          <div class="skel-grid" style="grid-template-columns:1fr 1fr;margin-top:var(--rc-gap);">
-            <div class="skel"><div class="skel-tag">RR Trend</div><div class="skel-desc">Recent RR line, W/L/D context.</div></div>
-            <div class="skel"><div class="skel-tag">Top Insight</div><div class="skel-desc">One conclusion + evidence + key takeaways.</div></div>
-          </div>
-          <div class="skel" style="margin-top:var(--rc-gap);">
-            <div class="skel-tag">Quick Actions</div><div class="skel-desc">Play A Match · Review Match · Practice · Study a Map · Strategy Library</div>
-          </div>
-        </section>
+<section class="page" id="page-focusqueue">
+ <div class="page-head"><div><p class="section-kicker">Focus Queue</p><h2>Your personalized queue of focuses to work on in your next matches.</h2></div><div class="button-row"><button class="btn primary" data-modal="modal-add-focus">Add Focus to Queue</button><button class="btn danger" data-action="clear-queue">Clear Queue</button></div></div>
+ <div id="focusQueueList" class="grid auto"><div class="list-row queue-card"><span class="drag"> </span><div><strong>Reset after first contact</strong><small>Discipline high priority recent re-peek deaths</small></div><button class="btn small" data-modal="modal-focus">View</button></div><div class="list-row queue-card"><span class="drag"> </span><div><strong>Trade before chasing damage</strong><small>Teamwork medium priority two untraded openings</small></div><button class="btn small" data-modal="modal-focus">View</button></div><div class="list-row queue-card"><span class="drag"> </span><div><strong>Use utility before the rotate</strong><small>Game Sense medium priority Lotus C retakes</small></div><button class="btn small" data-modal="modal-focus">View</button></div></div>
+</section>
 
-        <!-- REVIEW + STATS -->
-        <section class="page" id="page-review">
-          <div class="page-note">Groups 2 and 3: Review is the analysis hub. Stats stays inside Review as its own sub-system instead of becoming a competing top-level page.</div>
-          <div class="tabrow">
-            <button class="active" data-tab="rv-overview">Overview</button>
-            <button data-tab="rv-timeline">Improvement Timeline</button>
-            <button data-tab="rv-insights">Insights List</button>
-            <button data-tab="rv-insight-detail">Insight Detail</button>
-            <button data-tab="rv-matches">All Matches</button>
-            <button data-tab="rv-match-detail">Match Detail</button>
-            <button data-tab="rv-stats">Stats System</button>
-          </div>
-          <div id="rv-overview" class="rv-tab">
-            <div class="rail-layout">
-              <div class="stack">
-                <div class="skel accent-review" style="min-height:150px;"><div class="skel-tag">Current Read Hero</div><div class="skel-desc">Highest priority conclusion, evidence text, and primary action.</div></div>
-                <div class="module-row">
-                  <div class="skel accent-review"><div class="skel-tag">Recent Signals</div></div>
-                  <div class="skel accent-review"><div class="skel-tag">Role Snapshot</div></div>
-                  <div class="skel accent-review"><div class="skel-tag">Queue Health</div></div>
-                </div>
-              </div>
-              <div class="skel accent-review"><div class="skel-tag">Next Review Action</div><div class="skel-desc">Open insight, log missing reflection, or jump to Learn.</div></div>
-            </div>
-          </div>
-          <div id="rv-timeline" class="rv-tab" style="display:none;">
-            <div class="detail-layout">
-              <div class="skel accent-review"><div class="skel-tag">Timeline Filters</div><div class="skel-desc">Season, role, map, category, confidence.</div></div>
-              <div class="skel accent-review" style="min-height:270px;"><div class="skel-tag">Improvement Timeline</div><div class="skel-desc">Trend line, match markers, promoted cards, stable y-axis region.</div></div>
-            </div>
-          </div>
-          <div id="rv-insights" class="rv-tab" style="display:none;">
-            <div class="rail-layout">
-              <div class="mini-list">
-                <div class="mini-line">Insight row — tone, category, media, confidence, status</div>
-                <div class="mini-line">Insight row — needs work</div>
-                <div class="mini-line">Insight row — watch</div>
-                <div class="mini-line">Insight row — strength</div>
-                <div class="mini-line">Insight row — archived / dismissed state</div>
-              </div>
-              <div class="skel accent-review"><div class="skel-tag">Filters + Sort</div><div class="skel-desc">All / Needs Work / Watch / Strengths, active match window, role.</div></div>
-            </div>
-          </div>
-          <div id="rv-insight-detail" class="rv-tab" style="display:none;">
-            <div class="tabrow">
-              <button class="active" data-tab="ins-overview">Overview</button>
-              <button data-tab="ins-evidence">Evidence</button>
-              <button data-tab="ins-improve">How to Improve</button>
-              <button data-tab="ins-related">Related</button>
-            </div>
-            <div id="ins-overview" class="subpane"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Insight Overview</div><div class="skel-desc">Plain-language read, status, impact, confidence, and priority.</div></div></div>
-            <div id="ins-evidence" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Evidence Stats + Example Rounds</div><div class="skel-desc">Stats, matches, example rounds, seen-in-maps/agents breakdowns.</div></div></div>
-            <div id="ins-improve" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">How to Improve</div><div class="skel-desc">Concrete next-match behavior, short and measurable.</div></div></div>
-            <div id="ins-related" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Related Concepts</div><div class="skel-desc">Chips that make a single hop into Learn, not a duplicate lesson page.</div></div></div>
-          </div>
-          <div id="rv-matches" class="rv-tab" style="display:none;">
-            <div class="rail-layout">
-              <div class="skel accent-review" style="min-height:270px;"><div class="skel-tag">All Matches Table</div><div class="skel-desc">Ranked-only history, search, season window, synced/reflected/unverified states.</div></div>
-              <div class="skel accent-review"><div class="skel-tag">Match Filters</div><div class="skel-desc">Agent, role, map, weapon category, result, reflection status.</div></div>
-            </div>
-          </div>
-          <div id="rv-match-detail" class="rv-tab" style="display:none;">
-            <div class="tabrow">
-              <button class="active" data-tab="md-overview">Overview</button>
-              <button data-tab="md-scoreboard">Scoreboard</button>
-              <button data-tab="md-performance">Performance</button>
-              <button data-tab="md-focus">Focus Adherence</button>
-              <button data-tab="md-roundbreakdown">Round Breakdown</button>
-              <button data-tab="md-matchinsights">Insights</button>
-            </div>
-            <div id="md-overview" class="subpane"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Match Overview</div></div><div class="skel accent-review"><div class="skel-tag">Score + RR</div></div><div class="skel accent-review"><div class="skel-tag">Agent + Role</div></div></div></div>
-            <div id="md-scoreboard" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Scoreboard</div><div class="skel-desc">Team rows, K/D/A, ACS, side split.</div></div></div>
-            <div id="md-performance" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Performance</div><div class="skel-desc">Selectable stat cards and trend graph.</div></div></div>
-            <div id="md-focus" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Focus Adherence</div><div class="skel-desc">Rolled focus, reflection score, and what carried over.</div></div></div>
-            <div id="md-roundbreakdown" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Round Breakdown Grid</div><div class="skel-desc">Timeline, economy, weapons, outcomes, overtime grouping.</div></div></div>
-            <div id="md-matchinsights" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Related Insights Rail</div></div></div>
-          </div>
-          <div id="rv-stats" class="rv-tab" style="display:none;">
-            <div class="tabrow">
-              <button class="active" data-tab="stats-overview">Overview</button>
-              <button data-tab="stats-weapons">Weapons</button>
-              <button data-tab="stats-agents">Agents</button>
-              <button data-tab="stats-maps">Maps</button>
-            </div>
-            <div id="stats-overview" class="subpane">
-              <div class="module-row"><div class="skel accent-review"><div class="skel-tag">6-Stat Summary Strip</div><div class="skel-desc">Value, percentile, and delta.</div></div><div class="skel accent-review"><div class="skel-tag">Trend Chart</div></div><div class="skel accent-review"><div class="skel-tag">Results Breakdown</div></div><div class="skel accent-review"><div class="skel-tag">Most-Played Role</div></div></div>
-              <div class="split-layout" style="margin-top:var(--rc-gap);"><div class="skel accent-review"><div class="skel-tag">Strengths List</div></div><div class="skel accent-review"><div class="skel-tag">Weaknesses List</div></div></div>
-            </div>
-            <div id="stats-weapons" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Most-Used Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Best Performers Row</div></div><div class="skel accent-review"><div class="skel-tag">Accuracy Gauge</div></div></div></div>
-            <div id="stats-agents" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Most-Played Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Role Performance Mini-Radar</div></div></div></div>
-            <div id="stats-maps" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Best-Map Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Win-Rate Ranked List</div></div><div class="skel accent-review"><div class="skel-tag">Round-Differential Widget</div></div></div></div>
-          </div>
-        </section>
+<section class="page" id="page-logmatch">
+ <div class="page-head"><div><p class="section-kicker">Log Match</p><h2>Six-part reflection form.</h2></div><button class="btn" data-jump="play">Back to Play</button></div>
+ <div id="log-form" class="save-state active stack"><div class="grid two"><div class="card"><p class="section-kicker">1. Match Result</p><div class="button-row"><span class="pill good">Win selected</span><span class="pill">Loss</span><span class="pill">Draw</span><button class="btn small" data-toast="Result undo preview">Undo</button></div></div><div class="card"><p class="section-kicker">2. RR Change</p><div class="grid two"><div class="metric"><strong>24</strong><span>RR before</span></div><div class="metric"><strong>42</strong><span>RR after +18</span></div></div></div></div><div class="card"><p class="section-kicker">3. Match Details</p><div class="form-grid"><div class="field"><label>Mode</label><input value="Competitive"></div><div class="field"><label>Map</label><input value="Lotus"></div><div class="field"><label>Duration</label><input value="39 minutes"></div></div></div><div class="grid two"><div class="card"><p class="section-kicker">4. Reflections</p><div class="button-row"><span class="pill"> </span><span class="pill brand"> selected</span><span class="pill"> </span></div><textarea>I kept comms simple and stopped forcing the second fight after round 8.</textarea><textarea>The next change is calling the reset before I move through the second angle.</textarea></div><div class="card"><p class="section-kicker">5. Focus Review</p><p><b>Focus:</b> Reset after first contact.</p><div class="button-row"><span class="pill good">Followed twice</span><span class="pill">Missed once</span><span class="pill">Needs review</span></div></div></div><div class="card"><p class="section-kicker">6. Save options</p><label class="button-row"><input type="checkbox" checked style="width:auto"> Save to Reflection Matches</label><button class="btn primary" data-log-state="log-confirm">Save Match</button></div></div>
+ <div id="log-confirm" class="save-state hero"><h2>Reflection saved.</h2><p>RankedCoach saved Lotus Sova +18 RR with your focus note and self-review.</p><button class="btn primary" data-log-state="log-syncing">Start sync sequence</button></div>
+ <div id="log-syncing" class="save-state hero"><h2>Syncing dashboard.</h2><p>Updating Play dashboard, Review tables, and the improvement timeline in this demo state.</p><button class="btn primary" data-log-state="log-complete">Skip to complete</button></div>
+ <div id="log-complete" class="save-state hero"><h2>Complete.</h2><p>Next stop: review the stored reflection match and compare it against your next ranked block.</p><div class="button-row"><button class="btn review" data-jump="review" data-tab="rv-reflection">Go to Reflection Matches</button><button class="btn" data-jump="play">Back to Play</button></div></div>
+</section>
 
-        <!-- LEARN -->
-        <section class="page" id="page-learn">
-          <div class="page-note">Group 4: Learn is the durable teaching space. Insights can jump here once, but lessons do not become another analytics dashboard.</div>
-          <div class="tabrow">
-            <button class="active" data-tab="ln-categories">Categories</button>
-            <button data-tab="ln-topic">Topic / Lesson</button>
-            <button data-tab="ln-map">Map Detail</button>
-            <button data-tab="ln-agent">Agent Guide</button>
-            <button data-tab="ln-queue">Learning Queue</button>
-            <button data-tab="ln-search">Search Overlay</button>
-          </div>
-          <div id="ln-categories" class="ln-tab">
-            <div class="module-row">
-              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Maps Category</div><div class="skel-desc">Map list, pool state, map notes, plant/default routes.</div></div>
-              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Agents Category</div><div class="skel-desc">Role lanes, agent fundamentals, ability demos.</div></div>
-              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Concepts Category</div><div class="skel-desc">Trading, spacing, economy, retake, tempo, discipline.</div></div>
-              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Situations Category</div><div class="skel-desc">2vX, post-plant, anti-eco, bonus, overtime.</div></div>
-            </div>
-            <div class="split-layout" style="margin-top:var(--rc-gap);">
-              <div class="skel accent-learn"><div class="skel-tag">Insight → Learn Single Hop</div><div class="skel-desc">One CTA from a read to the relevant lesson; no circular browsing trap.</div></div>
-              <div class="skel accent-learn"><div class="skel-tag">Focus From Lesson</div><div class="skel-desc">Confirmation route before adding a lesson outcome to focus queue.</div></div>
-            </div>
-          </div>
-          <div id="ln-topic" class="ln-tab" style="display:none;">
-            <div class="rail-layout">
-              <div class="stack">
-                <div class="split-layout">
-                  <div class="skel accent-learn" style="min-height:170px;"><div class="skel-tag">Video Header</div><div class="skel-desc">Lesson video frame and source/status metadata.</div></div>
-                  <div class="skel accent-learn" style="min-height:170px;"><div class="skel-tag">Takeaways Header</div><div class="skel-desc">3-5 punchy conclusions before the full body.</div></div>
-                </div>
-                <div class="tabrow">
-                  <button class="active" data-tab="lesson-overview">Overview</button>
-                  <button data-tab="lesson-examples">Examples</button>
-                  <button data-tab="lesson-drills">Practice Drills</button>
-                  <button data-tab="lesson-notes">Notes</button>
-                </div>
-                <div id="lesson-overview" class="subpane"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Lesson Body — Overview</div></div></div>
-                <div id="lesson-examples" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Examples</div></div></div>
-                <div id="lesson-drills" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Practice Drills</div></div></div>
-                <div id="lesson-notes" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Notes</div></div></div>
-              </div>
-              <div class="stack">
-                <div class="skel accent-learn"><div class="skel-tag">Strengths / Weaknesses</div></div>
-                <div class="skel accent-learn"><div class="skel-tag">Up Next</div></div>
-                <div class="skel accent-learn"><div class="skel-tag">Add to Focus</div></div>
-              </div>
-            </div>
-          </div>
-          <div id="ln-map" class="ln-tab" style="display:none;"><div class="detail-layout"><div class="skel accent-learn"><div class="skel-tag">Map Selector + Pool State</div></div><div class="skel accent-learn" style="min-height:300px;"><div class="skel-tag">Map Detail</div><div class="skel-desc">Map art, callout/plant layer, attack/defense notes, comp hooks.</div></div></div></div>
-          <div id="ln-agent" class="ln-tab" style="display:none;"><div class="detail-layout"><div class="skel accent-learn"><div class="skel-tag">Agent Selector</div></div><div class="skel accent-learn" style="min-height:300px;"><div class="skel-tag">Agent Guide</div><div class="skel-desc">Role identity, ability grid, ability video region, map fit, routines.</div></div></div></div>
-          <div id="ln-queue" class="ln-tab" style="display:none;"><div class="skel accent-learn" style="min-height:260px;"><div class="skel-tag">Learning Queue</div><div class="skel-desc">Pinned lessons, in-progress lessons, completed history, next suggested lesson.</div></div></div>
-          <div id="ln-search" class="ln-tab" style="display:none;"><div class="skel accent-learn" style="min-height:260px;"><div class="skel-tag">Search Overlay</div><div class="skel-desc">Global query, type filters, keyboard/touch-safe results list.</div></div></div>
-        </section>
+<section class="page" id="page-matchsaved">
+ <div class="hero" style="text-align:center"><p class="section-kicker">Match Saved</p><h2>Lotus reflection stored.</h2><p class="muted">Your saved match is available in Reflection Matches with its focus note, result, RR movement, and review links.</p><div class="grid two" style="margin:var(--rc-gap) 0"><div class="metric"><strong>+18 RR</strong><span>dashboard update preview</span></div><div class="metric"><strong>Reset focus</strong><span>reflection detail</span></div></div><div class="button-row" style="justify-content:center"><button class="btn primary" data-jump="play">Back to Play</button><button class="btn review" data-jump="review" data-tab="rv-matchdetail">Review Match</button></div></div>
+</section>
 
-        <!-- LIBRARY -->
-        <section class="page" id="page-library">
-          <div class="page-note">Group 5: Library is personal storage and playback. It references learning resources, but it does not replace Learn.</div>
-          <div class="tabrow">
-            <button class="active" data-tab="lib-dashboard">Dashboard</button>
-            <button data-tab="lib-lineups">Lineups</button>
-            <button data-tab="lib-routines">Routines</button>
-            <button data-tab="lib-notes">Notes</button>
-            <button data-tab="lib-collections">Collections</button>
-            <button data-tab="lib-watch">Watch Later</button>
-          </div>
-          <div id="lib-dashboard" class="lib-tab">
-            <div class="module-row">
-              <div class="skel accent-library"><div class="skel-tag">Metric Strip</div><div class="skel-desc">Saved items, unfinished videos, lineups, routines.</div></div>
-              <div class="skel accent-library"><div class="skel-tag">Recent Activity</div></div>
-              <div class="skel accent-library"><div class="skel-tag">Most Used</div></div>
-              <div class="skel accent-library"><div class="skel-tag">Recently Viewed</div></div>
-            </div>
-            <div class="skel accent-library" style="min-height:190px;margin-top:var(--rc-gap);"><div class="skel-tag">Resource Dashboard Feed</div><div class="skel-desc">No public transcript/claim data here; published library metadata only.</div></div>
-          </div>
-          <div id="lib-lineups" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Lineups Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Map, agent, site, side, difficulty.</div></div></div></div>
-          <div id="lib-routines" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Routines Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Aim, movement, warm-up, post-match.</div></div></div></div>
-          <div id="lib-notes" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Notes Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Source, tag, date, match, map.</div></div></div></div>
-          <div id="lib-collections" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Collections Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Custom packs, map study packs, creator packs.</div></div></div></div>
-          <div id="lib-watch" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Watch Later Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Video category, watched state, creator, saved date.</div></div></div></div>
-        </section>
+<section class="page" id="page-ingame">
+ <div class="page-head"><div><p class="section-kicker">In-Game</p><h2>One job while the match is live.</h2></div><button class="btn" data-modal="modal-ingame">Compact Modal Variant</button></div><div class="hero review"><div class="layout-main"><div><p class="section-kicker">Current Focus One Job</p><h2>Trade the first teammate through B Main.</h2><p>On Lotus, your job is not to solo-clear every angle. Pair the recon with a teammate's first swing and keep the second fight tradeable.</p><button class="btn primary" data-modal="modal-focus">View Focus Details</button></div><div class="thumb teal">Sova recon portrait card</div></div></div><div class="grid four" style="margin-top:var(--rc-gap)"><div class="card"><p class="section-kicker">Map Notes</p><p>Lotus C mound is the common retake squeeze.</p><button class="btn small learn" data-jump="learn" data-tab="ln-mapdetail">View More</button></div><div class="card"><p class="section-kicker">Agent Tips</p><p>Save recon for contact, not empty space.</p><button class="btn small learn" data-jump="learn" data-tab="ln-agentguide">View More</button></div><div class="card"><p class="section-kicker">Lineups</p><p>Two post-plant arrows are pinned for C.</p><button class="btn small" data-jump="library" data-tab="lib-lineups">View More</button></div><div class="card"><p class="section-kicker">Economy</p><p>Bonus with Spectre + recon; avoid dry long fights.</p><button class="btn small" data-modal="modal-economy">View More</button></div></div><div class="card" style="margin-top:var(--rc-gap)"><p class="section-kicker">Round Score Strip</p><div class="button-row"><span class="pill good">Round 8 won</span><span class="pill">Team 5</span><span class="pill">Enemy 3</span><span class="pill warn">Ult online next round</span></div></div>
+</section>
 
-        <!-- SETTINGS -->
-        <section class="page" id="page-settings">
-          <div class="page-note">Group 6: Settings owns account/config surfaces, component references, and global overlay demos. The visual picker still stays exempt from styling itself recursively.</div>
-          <div class="tabrow">
-            <button class="active" data-tab="st-profile">Profile</button>
-            <button data-tab="st-notifications">Notifications</button>
-            <button data-tab="st-integrations">Integrations</button>
-            <button data-tab="st-billing">Billing</button>
-            <button data-tab="st-pipeline">Pipeline</button>
-            <button data-tab="st-visual">Visual</button>
-            <button data-tab="st-components">Components</button>
-            <button data-tab="st-overlays">Overlays</button>
-          </div>
-          <div id="st-profile" class="st-tab"><div class="module-row"><div class="skel"><div class="skel-tag">Profile Identity</div></div><div class="skel"><div class="skel-tag">Rank + Goal</div></div><div class="skel"><div class="skel-tag">Customization Entry</div></div></div></div>
-          <div id="st-notifications" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Notification Settings</div><div class="skel-desc">Match detected, app updates, sync failed, new videos, patch notes.</div></div></div>
-          <div id="st-integrations" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Integrations</div><div class="skel-desc">Riot, Discord, YouTube review tools, storage state.</div></div></div>
-          <div id="st-billing" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Billing</div><div class="skel-desc">Plan card, checkout, payment state, invoices.</div></div></div>
-          <div id="st-pipeline" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Knowledge Pipeline</div><div class="skel-desc">Review queue, approved queue, rejected bin, publish/process controls.</div></div></div>
-          <div id="st-visual" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Visual Customization</div><div class="skel-desc">Theme, layout style, profile border, avatar, banner, motion mode.</div></div></div>
-          <div id="st-components" class="st-tab" style="display:none;"><div class="module-row"><div class="skel"><div class="skel-tag">Buttons</div></div><div class="skel"><div class="skel-tag">Cards</div></div><div class="skel"><div class="skel-tag">Pills</div></div><div class="skel"><div class="skel-tag">Charts</div></div></div></div>
-          <div id="st-overlays" class="st-tab" style="display:none;">
-            <div class="module-row">
-              <button class="btn primary" data-modal="modal-search">Global Search</button>
-              <button class="btn primary" data-modal="modal-notifications">Notifications Drawer</button>
-              <button class="btn primary" data-modal="modal-profile">Profile Popover</button>
-              <button class="btn primary" data-modal="modal-checkout">Checkout</button>
-            </div>
-          </div>
-        </section>
+<section class="page" id="page-review">
+ <div class="page-head"><div><p class="section-kicker">Review</p><h2>Turn stored matches into sharper reads.</h2></div></div><div class="tabrow" data-tabs="review"><button class="active" data-tab="rv-performance">Performance Review</button><button data-tab="rv-reflection">Reflection Matches</button><button data-tab="rv-allmatches">All Matches</button><button data-tab="rv-timeline">Improvement Timeline</button><button data-tab="rv-insights">Insights List</button><button data-tab="rv-stats">Stats</button></div>
+ <div id="rv-performance" data-tab-pane="review" class="active-pane"><div class="hero review"><p class="section-kicker">Current Read</p><h2>Fight value is improving, but map timing is lagging.</h2><p>Across the active window, you won 58% of first-contact rounds and lost three late rotates after utility had already been spent.</p><button class="btn review" data-jump="review" data-tab="rv-insights">Open Next Review Action</button></div><div class="grid three" style="margin-top:var(--rc-gap)"><div class="metric"><strong>+8%</strong><span>Recent Signals opening survival</span></div><div class="metric"><strong>Controller</strong><span>Role Snapshot 63/100</span></div><div class="metric"><strong>3 queued</strong><span>Queue Health one high priority</span></div></div></div>
+ <div id="rv-reflection" data-tab-pane="review"><p class="callout">Matches you choose to save while logging are stored here. Review your thoughts, focus performance, and outcomes over time.</p><table class="data-table"><thead><tr><th>Date</th><th>Map</th><th>Agent</th><th>Role</th><th>Result</th><th>Score</th><th>RR</th><th>Focus</th><th></th></tr></thead><tbody><tr><td>Aug 21</td><td>Lotus</td><td>Sova</td><td>Initiator</td><td>Win</td><td>13-9</td><td>+18</td><td>Reset after contact</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Review</button></td></tr><tr><td>Aug 20</td><td>Ascent</td><td>Omen</td><td>Controller</td><td>Loss</td><td>10-13</td><td>-14</td><td>Smoke before rotate</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Review</button></td></tr><tr><td>Aug 20</td><td>Haven</td><td>Killjoy</td><td>Sentinel</td><td>Win</td><td>13-7</td><td>+21</td><td>Anchor with teammate</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Review</button></td></tr><tr><td>Aug 19</td><td>Bind</td><td>Raze</td><td>Duelist</td><td>Win</td><td>14-12</td><td>+16</td><td>Clear first angle</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Review</button></td></tr></tbody></table></div>
+ <div id="rv-allmatches" data-tab-pane="review"><div class="card"><div class="form-grid"><div class="field"><label>Role filter</label><select><option>All roles</option><option>Controller</option><option>Initiator</option></select></div><div class="field"><label>Map filter</label><select><option>All maps</option><option>Lotus</option><option>Ascent</option></select></div><div class="field"><label>Sort</label><select><option>Newest first</option><option>RR gained</option><option>ACS</option></select></div></div></div><table class="data-table"><thead><tr><th>Match</th><th>Date</th><th>Map</th><th>Agent</th><th>K/D/A</th><th>ACS</th><th>RR</th><th></th></tr></thead><tbody><tr><td>Match 42</td><td>Aug 21</td><td>Lotus</td><td>Sova</td><td>18/12/8</td><td>241</td><td>+18</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Open</button></td></tr><tr><td>Match 41</td><td>Aug 20</td><td>Ascent</td><td>Omen</td><td>14/17/9</td><td>197</td><td>-14</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Open</button></td></tr><tr><td>Match 40</td><td>Aug 20</td><td>Haven</td><td>Killjoy</td><td>16/9/5</td><td>224</td><td>+21</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Open</button></td></tr><tr><td>Match 39</td><td>Aug 19</td><td>Bind</td><td>Raze</td><td>22/16/4</td><td>271</td><td>+16</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Open</button></td></tr><tr><td>Match 38</td><td>Aug 18</td><td>Sunset</td><td>Skye</td><td>11/15/12</td><td>176</td><td>-11</td><td><button class="btn small" data-jump="review" data-tab="rv-matchdetail">Open</button></td></tr></tbody></table></div>
+ <div id="rv-timeline" data-tab-pane="review"><div class="card"><div class="form-grid"><div class="field"><label>Window</label><select><option>Recent 10</option><option>Season</option></select></div><div class="field"><label>Pillar</label><select><option>All pillars</option><option>Mechanics</option><option>Mental</option></select></div></div></div><div class="grid five" style="margin:var(--rc-gap) 0"><div class="metric"><strong>76</strong><span>Mechanics +4</span></div><div class="metric"><strong>61</strong><span>Game Sense -2</span></div><div class="metric"><strong>69</strong><span>Teamwork +6</span></div><div class="metric"><strong>72</strong><span>Discipline +1</span></div><div class="metric"><strong>64</strong><span>Mental +3</span></div></div><div class="card chart-card"><svg viewBox="0 0 700 220"><path d="M40 180H670M40 120H670M40 60H670" stroke="#223047"/><polyline points="40,150 150,130 260,138 370,95 490,112 610,75 670,84" fill="none" stroke="#4fd1b5" stroke-width="5"/><polyline points="40,170 150,160 260,142 370,156 490,132 610,128 670,110" fill="none" stroke="#f5c451" stroke-width="4"/></svg></div><div class="grid auto" style="margin-top:var(--rc-gap)"><div class="card"><b>Mechanics detail</b><p class="muted">Headshot rate rose from 21% to 27%.</p></div><div class="card"><b>Game Sense detail</b><p class="muted">Rotate timing dipped on Lotus and Ascent.</p></div><div class="card"><b>Teamwork detail</b><p class="muted">Trade participation rose by 11%.</p></div><div class="card"><b>Discipline detail</b><p class="muted">Fewer dry re-peeks after first kill.</p></div><div class="card"><b>Mental detail</b><p class="muted">Tilt notes were lower in two saved matches.</p></div></div></div>
+ <div id="rv-insights" data-tab-pane="review"><div class="button-row" style="margin-bottom:var(--rc-gap)"><button class="btn small primary" data-filter>All</button><button class="btn small" data-filter>Needs Work</button><button class="btn small" data-filter>Watch</button><button class="btn small" data-filter>Strengths</button></div><div class="mini-list"><div class="list-row"><span class="icon-dot">!</span><div><strong>Fights are slipping after the first win.</strong><small>Impact 82 Confidence medium 8 matches</small></div><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Open</button></div><div class="list-row"><span class="icon-dot"> </span><div><strong>Light-buy rounds are converting.</strong><small>Impact 71 Confidence high 5 matches</small></div><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Open</button></div><div class="list-row"><span class="icon-dot">?</span><div><strong>Map awareness needs a cleaner default.</strong><small>Impact 66 Confidence some proof 6 matches</small></div><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Open</button></div><div class="list-row"><span class="icon-dot"> </span><div><strong>Teamwork score is climbing through trades.</strong><small>Impact 58 Confidence medium 4 matches</small></div><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Open</button></div><div class="list-row"><span class="icon-dot"> </span><div><strong>Discipline stabilized after the save-round reset.</strong><small>Impact 54 Confidence low 3 matches</small></div><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Open</button></div></div></div>
+ <div id="rv-stats" data-tab-pane="review"><div class="tabrow" data-tabs="stats"><button class="active" data-tab="stats-overview">Overview</button><button data-tab="stats-weapons">Weapons</button><button data-tab="stats-agents">Agents</button><button data-tab="stats-maps">Maps</button></div><div id="stats-overview" data-tab-pane="stats" class="active-pane"><div class="grid six"><div class="metric"><strong>1.18</strong><span>K/D p68 +.08</span></div><div class="metric"><strong>55%</strong><span>Win Rate p61 +5%</span></div><div class="metric"><strong>151</strong><span>ADR p57 +12</span></div><div class="metric"><strong>27%</strong><span>HS% p72 +4%</span></div><div class="metric"><strong>234</strong><span>ACS p64 +18</span></div><div class="metric"><strong>74%</strong><span>KAST p66 +3%</span></div></div><div class="grid three" style="margin-top:var(--rc-gap)"><div class="card chart-card"><p class="section-kicker">Trend Chart</p><svg viewBox="0 0 420 180"><path d="M30 140H390M30 90H390M30 40H390" stroke="#223047"/><path d="M30 130 C90 80 170 112 240 62 300 20 350 70 390 50" fill="none" stroke="#a78bfa" stroke-width="4"/></svg></div><div class="card"><p class="section-kicker">Results Breakdown</p><div class="donut"></div></div><div class="card"><p class="section-kicker">Most Played Role</p><h3>Initiator 43% of matches</h3><p class="muted">Strengths: trading, utility assists, late-round survival. Improve: mid-round rotate timing.</p></div></div></div><div id="stats-weapons" data-tab-pane="stats"><div class="hero"><h2>Vandal is your best current rifle.</h2><p>59% win rate across 41 rifle rounds, strongest on Ascent mid and Lotus C.</p></div><table class="data-table"><tr><th>Weapon</th><th>Rounds</th><th>WR</th><th>HS%</th><th>Kills</th></tr><tr><td>Vandal</td><td>41</td><td>59%</td><td>31%</td><td>38</td></tr><tr><td>Phantom</td><td>22</td><td>55%</td><td>25%</td><td>19</td></tr><tr><td>Sheriff</td><td>13</td><td>62%</td><td>44%</td><td>11</td></tr><tr><td>Ghost</td><td>10</td><td>50%</td><td>34%</td><td>8</td></tr><tr><td>Operator</td><td>6</td><td>67%</td><td>--</td><td>7</td></tr></table></div><div id="stats-agents" data-tab-pane="stats"><div class="hero"><h2>Sova is the most-played agent.</h2><p>64% win rate, 1.24 K/D, and highest team utility score in the example set.</p></div><table class="data-table"><tr><th>Agent</th><th>Role</th><th>Matches</th><th>WR</th><th>K/D</th></tr><tr><td>Sova</td><td>Initiator</td><td>11</td><td>64%</td><td>1.24</td></tr><tr><td>Omen</td><td>Controller</td><td>9</td><td>56%</td><td>1.08</td></tr><tr><td>Killjoy</td><td>Sentinel</td><td>6</td><td>67%</td><td>1.18</td></tr><tr><td>Raze</td><td>Duelist</td><td>5</td><td>60%</td><td>1.31</td></tr><tr><td>Skye</td><td>Initiator</td><td>4</td><td>50%</td><td>.94</td></tr></table></div><div id="stats-maps" data-tab-pane="stats"><div class="hero"><h2>Lotus is the strongest current map.</h2><p>67% win rate, +18 average round differential, and strongest retake conversion.</p></div><table class="data-table"><tr><th>Map</th><th>Matches</th><th>WR</th><th>Atk</th><th>Def</th></tr><tr><td>Lotus</td><td>9</td><td>67%</td><td>54%</td><td>62%</td></tr><tr><td>Ascent</td><td>8</td><td>50%</td><td>48%</td><td>51%</td></tr><tr><td>Haven</td><td>6</td><td>66%</td><td>57%</td><td>61%</td></tr><tr><td>Bind</td><td>5</td><td>60%</td><td>52%</td><td>59%</td></tr><tr><td>Sunset</td><td>4</td><td>25%</td><td>38%</td><td>41%</td></tr></table></div></div>
+ <div id="rv-matchdetail" data-tab-pane="review"><div class="page-head"><div><p class="section-kicker">Match Detail</p><h2>Lotus Sova 13 9 Win</h2></div><button class="btn" data-tab="rv-allmatches">Back to Matches</button></div><div class="tabrow" data-tabs="matchdetail"><button class="active" data-tab="md-overview">Overview</button><button data-tab="md-scoreboard">Scoreboard</button><button data-tab="md-rounds">Round Breakdown</button><button data-tab="md-performance">Performance</button></div><div id="md-overview" data-tab-pane="matchdetail" class="active-pane"><div class="grid three"><div class="card"><p class="section-kicker">Performance Summary</p><svg class="radar" viewBox="0 0 160 130"><polygon points="80,10 145,52 120,120 40,120 15,52" fill="#0a1220" stroke="#37465e"/><polygon points="80,25 125,58 110,102 50,105 32,62" fill="rgba(167,139,250,.25)" stroke="#a78bfa"/></svg></div><div class="card"><p class="section-kicker">Top Highlights</p><ul><li>Round 4 clutch hold on C site.</li><li>Round 11 key entry trade through B.</li><li>Round 18 retake recon enabled two kills.</li></ul></div><div class="card"><p class="section-kicker">Saved Focus Note</p><p>I stopped ego-swinging after winning first contact and called for the second clear.</p><button class="btn small" data-jump="review" data-tab="rv-insightdetail">Related Insight</button></div></div></div><div id="md-scoreboard" data-tab-pane="matchdetail"><table class="data-table"><tr><th>Player</th><th>Agent</th><th>K/D/A</th><th>ACS</th><th>ADR</th></tr><tr><td>DemoYou</td><td>Sova</td><td>18/12/8</td><td>241</td><td>156</td></tr><tr><td>Nova</td><td>Jett</td><td>21/14/3</td><td>268</td><td>169</td></tr><tr><td>Beacon</td><td>Omen</td><td>13/13/10</td><td>188</td><td>127</td></tr><tr><td>Patch</td><td>Killjoy</td><td>12/10/5</td><td>174</td><td>118</td></tr><tr><td>Rook</td><td>Cypher</td><td>9/11/7</td><td>151</td><td>101</td></tr><tr><td>Enemy A</td><td>Raze</td><td>19/16/4</td><td>251</td><td>161</td></tr><tr><td>Enemy B</td><td>Fade</td><td>15/15/9</td><td>213</td><td>140</td></tr></table></div><div id="md-rounds" data-tab-pane="matchdetail"><div class="card"><p class="section-kicker">Round Breakdown</p><div class="button-row"><span class="pill good">1 W pistol</span><span class="pill good">2 W bonus setup</span><span class="pill bad">3 L retake</span><span class="pill good">4 W clutch</span><span class="pill bad">5 L eco</span><span class="pill good">6 W plant</span><span class="pill good">7 W entry</span><span class="pill bad">8 L save</span><span class="pill good">9 W retake</span><span class="pill good">10 W flank</span><span class="pill bad">11 L operator</span><span class="pill good">12 W</span><span class="pill good">13 W</span><span class="pill bad">14 L</span><span class="pill good">15 W</span><span class="pill bad">16 L</span><span class="pill good">17 W</span><span class="pill good">18 W</span><span class="pill bad">19 L</span><span class="pill good">20 W</span></div></div></div><div id="md-performance" data-tab-pane="matchdetail"><div class="grid four"><div class="metric"><strong>1.50</strong><span>K/D</span></div><div class="metric"><strong>156</strong><span>ADR</span></div><div class="metric"><strong>241</strong><span>ACS</span></div><div class="metric"><strong>78%</strong><span>KAST</span></div></div><div class="card chart-card" style="margin-top:var(--rc-gap)"><svg viewBox="0 0 520 180"><path d="M40 145H500M40 95H500M40 45H500" stroke="#223047"/><rect x="70" y="92" width="38" height="53" fill="#4fd1b5"/><rect x="160" y="74" width="38" height="71" fill="#4fd1b5"/><rect x="250" y="116" width="38" height="29" fill="#f87171"/><rect x="340" y="62" width="38" height="83" fill="#4fd1b5"/><path d="M70 115 180 88 270 120 360 72 460 86" stroke="#f5c451" stroke-width="4" fill="none"/></svg></div></div></div>
+ <div id="rv-insightdetail" data-tab-pane="review"><div class="layout-rail"><div class="stack"><div class="hero review"><p class="section-kicker">Insight Detail</p><h2>Fights are slipping after the first win.</h2><div class="grid three"><span class="pill warn">Impact 82</span><span class="pill brand">Confidence 68%</span><span class="pill">8 matches analyzed</span></div></div><div class="card"><h3>What's happening?</h3><p>Your first contact is winning enough rounds to build pressure, but the next swing often happens before a teammate can trade. The pattern is strongest on attack rounds after utility has already forced defenders off the first angle.</p></div><div class="card"><h3>Recommended Actions</h3><ol><li><button class="btn small learn" data-jump="learn" data-tab="ln-lesson">Drill: Reset after contact</button></li><li><button class="btn small learn" data-jump="learn" data-tab="ln-concepts">Concept: Trade spacing</button></li><li><button class="btn small" data-jump="library" data-tab="lib-lineups">Lineups: Lotus retake utility</button></li></ol></div><div class="card"><h3>Related Concepts</h3><div class="button-row"><button class="btn small learn" data-jump="learn" data-tab="ln-lesson">Trade timing</button><button class="btn small learn" data-jump="learn" data-tab="ln-mapdetail">Lotus B pressure</button><button class="btn small learn" data-jump="learn" data-tab="ln-agentguide">Sova recon rhythm</button></div></div></div><div class="stack"><div class="card"><p class="section-kicker">Evidence Breakdown</p><div class="metric"><strong>43%</strong><span>second fight survival</span></div><div class="accent-bar"><i style="width:43%"></i></div><div class="metric"><strong>62%</strong><span>first contact conversion</span></div><div class="accent-bar"><i style="width:62%"></i></div></div><div class="card"><p class="section-kicker">Insight Status</p><button class="btn primary" data-action="save-insight">Save Insight</button><button class="btn" data-action="add-focus">Add to Focus Queue</button></div></div></div></div>
+</section>
 
-        <!-- LOG MATCH -->
-        <section class="page" id="page-logmatch">
-          <div class="page-note">Group 1: the Log Match form stays eight sections and routes to a confirmation screen after save.</div>
-          <div class="skel-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
-            <div class="skel"><div class="skel-tag">1. Result</div></div>
-            <div class="skel"><div class="skel-tag">2. RR Change</div></div>
-            <div class="skel"><div class="skel-tag">3. Match Details</div></div>
-            <div class="skel"><div class="skel-tag">4. Mood</div></div>
-            <div class="skel"><div class="skel-tag">5. Personal Performance</div></div>
-            <div class="skel"><div class="skel-tag">6. Comms — self &amp; team</div></div>
-            <div class="skel"><div class="skel-tag">7. Reflection</div></div>
-            <div class="skel"><div class="skel-tag">8. Focus Adherence</div></div>
-          </div>
-          <button class="btn primary" style="margin-top:var(--rc-gap);" data-jump="matchsaved">Save -> Match Saved</button>
-        </section>
+<section class="page" id="page-learn">
+ <div class="page-head"><div><p class="section-kicker">Learn</p><h2>Find the exact lesson behind a read.</h2></div><button class="btn learn" data-tab="ln-search">Open Learn Search</button></div><div class="tabrow" data-tabs="learn"><button class="active" data-tab="ln-maps">Maps</button><button data-tab="ln-agents">Agents</button><button data-tab="ln-concepts">Concepts</button><button data-tab="ln-situations">Situations</button><button data-tab="ln-lesson">Lesson</button><button data-tab="ln-mapdetail">Map Detail</button><button data-tab="ln-agentguide">Agent Guide</button><button data-tab="ln-queue">Learning Queue</button><button data-tab="ln-search">Search</button></div>
+ <div id="ln-maps" data-tab-pane="learn" class="active-pane"><div class="form-grid"><input placeholder="Search maps" value="Lotus defaults"><select><option>All difficulties</option><option>Beginner</option><option>Advanced</option></select></div><div class="grid auto" style="margin-top:var(--rc-gap)"><div class="card"><div class="thumb teal">Lotus</div><h3>Lotus B Main Defaults</h3><p class="muted">Map 92% helpful 14k learners 8 min</p><button class="btn small learn" data-tab="ln-mapdetail">Open Map Detail</button></div><div class="card"><div class="thumb">Ascent</div><h3>Ascent Mid Pressure</h3><p class="muted">Map 89% helpful 21k learners 11 min</p><button class="btn small learn" data-tab="ln-mapdetail">Open</button></div><div class="card"><div class="thumb">Bind</div><h3>Bind Teleporter Timing</h3><p class="muted">Map 86% helpful 9k learners 7 min</p><button class="btn small learn" data-tab="ln-mapdetail">Open</button></div><div class="card"><h3>Learning Path</h3><p class="muted">Recommended: Lotus retake basics C mound spacing post-plant denial.</p><button class="btn small learn" data-tab="ln-mapdetail">Start Path</button></div></div></div>
+ <div id="ln-agents" data-tab-pane="learn"><div class="grid auto"><div class="card"><div class="thumb purple">Sova</div><h3>Sova Recon Rhythm</h3><p class="muted">Agent 94% helpful 10 min</p><button class="btn small learn" data-tab="ln-agentguide">Open Agent Guide</button></div><div class="card"><div class="thumb purple">Omen</div><h3>Paranoia Timing</h3><p class="muted">Agent 91% helpful 8 min</p><button class="btn small learn" data-tab="ln-agentguide">Open</button></div><div class="card"><div class="thumb purple">Killjoy</div><h3>Anchor Utility</h3><p class="muted">Agent 87% helpful 9 min</p><button class="btn small learn" data-tab="ln-agentguide">Open</button></div><div class="card"><h3>Suggested for You</h3><p class="muted">Sova on Lotus pairs with your next generated loadout.</p><button class="btn small learn" data-tab="ln-agentguide">Open Suggestion</button></div></div></div>
+ <div id="ln-concepts" data-tab-pane="learn"><div class="grid auto"><div class="card"><h3>Trade Spacing</h3><p class="muted">Concept 95% helpful 6 min</p><button class="btn small learn" data-tab="ln-lesson">Open Lesson</button></div><div class="card"><h3>Late-Round Discipline</h3><p class="muted">Concept 90% helpful 12 min</p><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="card"><h3>Utility Before Contact</h3><p class="muted">Concept 93% helpful 9 min</p><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="hero learn"><h3>Your Weakest Concept</h3><p>Mid-round rotate reads are below your current mechanics score.</p><button class="btn learn" data-tab="ln-lesson">Study Now</button></div></div></div>
+ <div id="ln-situations" data-tab-pane="learn"><div class="grid auto"><div class="card"><h3>2v3 Retake</h3><p class="muted">Situation 7 min 12k learners</p><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="card"><h3>Anti-Eco Hold</h3><p class="muted">Situation 5 min 8k learners</p><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="card"><h3>Post-Plant Delay</h3><p class="muted">Situation 9 min 16k learners</p><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="hero learn"><h3>Situations for You</h3><p>Practice small-number retakes after losing first contact.</p><button class="btn learn" data-tab="ln-lesson">Open Collection</button></div></div></div>
+ <div id="ln-lesson" data-tab-pane="learn"><div class="layout-rail"><div class="stack"><button class="btn small learn" data-tab="ln-concepts"> Back to Concepts</button><div class="hero learn"><p class="section-kicker">Lesson</p><h2>Reset After First Contact</h2><div class="button-row"><span class="pill warn">Discipline</span><span class="pill">8 min</span><button class="btn small" data-action="add-focus">Add to Focus</button><button class="btn small" data-toast="Lesson saved">Save</button><button class="btn small" data-toast="Share sheet preview opened">Share</button></div></div><div class="card thumb" style="height:190px">Lesson video frame</div><div class="card"><h3>Key Takeaways</h3><ul><li>Do not chase the second angle alone.</li><li>Call the next clear before moving.</li><li>Use cover as the reset point.</li><li>Trade timing beats hero damage.</li></ul></div><div class="tabrow" data-tabs="lesson"><button class="active" data-tab="lesson-overview">Overview</button><button data-tab="lesson-examples">Examples</button><button data-tab="lesson-drills">Practice Drills</button><button data-tab="lesson-notes">Notes</button></div><div id="lesson-overview" data-tab-pane="lesson" class="active-pane card"><p>Before: winning first contact but dying to the next angle. After: winning contact, resetting, and forcing a tradeable second fight.</p></div><div id="lesson-examples" data-tab-pane="lesson" class="card"><ol><li>Lotus B Main reset behind rubble.</li><li>Ascent Mid top reset after dart clears close.</li><li>Bind Hookah jump peek before committing.</li></ol></div><div id="lesson-drills" data-tab-pane="lesson" class="card"><ol><li>Deathmatch: one kill, hard reset behind cover.</li><li>Custom: teammate counts second swing timing.</li><li>VOD review: mark every untradeable re-peek.</li></ol></div><div id="lesson-notes" data-tab-pane="lesson" class="card"><textarea>Write what reset cue you want to use next match.</textarea></div></div><div class="stack"><div class="card"><p class="section-kicker">Lesson Sections</p><div class="mini-list"><div class="list-row"><span>1</span><div><strong>Define the reset</strong><small>2 min</small></div></div><div class="list-row"><span>2</span><div><strong>Pair with trade spacing</strong><small>3 min</small></div></div><div class="list-row"><span>3</span><div><strong>Run the drill</strong><small>3 min</small></div></div></div></div><div class="card"><h3>Why This Matters</h3><p class="muted">Example comparison: second-fight survival rises from 43% to 58% when a reset is logged.</p></div><div class="card"><h3>Up Next</h3><button class="btn learn" data-tab="ln-mapdetail">Lotus B Main Defaults</button></div></div></div></div>
+ <div id="ln-mapdetail" data-tab-pane="learn"><div class="hero learn"><p class="section-kicker">Map Detail</p><h2>Lotus Learning Path</h2><p>Example stats: 67% map win rate strongest side defense key location B Main.</p></div><div class="grid two" style="margin-top:var(--rc-gap)"><div class="card thumb" style="height:240px">Interactive Lotus map board</div><div class="card"><p class="section-kicker">Key Locations</p><div class="mini-list"><div class="list-row"><span class="icon-dot">B</span><div><strong>B Main rubble</strong><small>4 lessons</small></div><button class="btn small learn" data-tab="ln-lesson">Lesson</button></div><div class="list-row"><span class="icon-dot">C</span><div><strong>C Mound</strong><small>3 lessons</small></div><button class="btn small learn" data-tab="ln-lesson">Lesson</button></div><div class="list-row"><span class="icon-dot">A</span><div><strong>A Tree timing</strong><small>2 lessons</small></div><button class="btn small learn" data-tab="ln-lesson">Lesson</button></div></div></div></div></div>
+ <div id="ln-agentguide" data-tab-pane="learn"><div class="hero learn"><p class="section-kicker">Agent Guide</p><h2>Sova Initiator Guide</h2><p>Strengths: recon pressure, retake value, safe first-contact setup. Suggested lessons are wired below.</p></div><div class="grid three" style="margin-top:var(--rc-gap)"><div class="card"><h3>Strengths</h3><ul><li>Early information</li><li>Retake utility</li><li>Safe chip damage</li></ul></div><div class="card"><h3>Progress</h3><div class="accent-bar"><i style="width:58%"></i></div><p class="muted">58% guide complete</p></div><div class="card"><h3>Suggested Lessons</h3><button class="btn learn" data-tab="ln-lesson">Recon before contact</button></div></div></div>
+ <div id="ln-queue" data-tab-pane="learn"><div class="card"><p class="section-kicker">Learning Queue</p><div class="mini-list"><div class="list-row"><span class="icon-dot">1</span><div><strong>Reset After First Contact</strong><small>8 min</small></div><button class="btn small learn" data-tab="ln-lesson">Start</button></div><div class="list-row"><span class="icon-dot">2</span><div><strong>Lotus B Main Defaults</strong><small>11 min</small></div><button class="btn small learn" data-tab="ln-mapdetail">Open</button></div><div class="list-row"><span class="icon-dot">3</span><div><strong>Sova Recon Rhythm</strong><small>10 min</small></div><button class="btn small learn" data-tab="ln-agentguide">Open</button></div></div><label class="button-row" style="margin-top:var(--rc-gap)"><input type="checkbox" checked style="width:auto"> Auto-generate from insights</label></div></div>
+ <div id="ln-search" data-tab-pane="learn"><div class="hero learn"><h2>Learn Search</h2><input value="trade spacing Lotus"></div><div class="mini-list" style="margin-top:var(--rc-gap)"><div class="list-row"><span class="icon-dot">1</span><div><strong>Reset After First Contact</strong><small>Concept lesson</small></div><button class="btn small learn" data-tab="ln-lesson">Open</button></div><div class="list-row"><span class="icon-dot">2</span><div><strong>Lotus B Main Defaults</strong><small>Map lesson</small></div><button class="btn small learn" data-tab="ln-mapdetail">Open</button></div><div class="list-row"><span class="icon-dot">3</span><div><strong>Sova Recon Rhythm</strong><small>Agent guide</small></div><button class="btn small learn" data-tab="ln-agentguide">Open</button></div></div></div>
+</section>
 
-        <!-- MATCH SAVED -->
-        <section class="page" id="page-matchsaved">
-          <div class="detail-layout">
-            <div class="skel" style="min-height:260px;align-items:center;justify-content:center;text-align:center;"><div class="skel-tag">Match Saved Confirmation</div><div class="skel-desc">Success state, next best action, and safe route back to Play or Review.</div></div>
-            <div class="stack">
-              <div class="skel"><div class="skel-tag">Dashboard Update Preview</div><div class="skel-desc">Which home widgets changed from this saved reflection.</div></div>
-              <div class="skel"><div class="skel-tag">Reflection Detail</div><div class="skel-desc">Saved note, linked match, source status, edit affordance.</div></div>
-              <div class="module-row"><button class="btn primary" data-jump="play">Back to Play</button><button class="btn" data-jump="review">Review match</button></div>
-            </div>
-          </div>
-        </section>
+<section class="page" id="page-library">
+ <div class="page-head"><div><p class="section-kicker">Library</p><h2>Saved resources and strategy references.</h2></div></div><div class="tabrow" data-tabs="library"><button class="active" data-tab="lib-home">Home</button><button data-tab="lib-lineups">Lineups</button><button data-tab="lib-routines">Routines</button><button data-tab="lib-notes">Notes</button><button data-tab="lib-collections">Custom Collections</button><button data-tab="lib-watch">Watch Later</button></div>
+ <div id="lib-home" data-tab-pane="library" class="active-pane"><div class="grid five"><div class="metric"><strong>84</strong><span>Lineups +6</span></div><div class="metric"><strong>18</strong><span>Routines +2</span></div><div class="metric"><strong>31</strong><span>Notes +4</span></div><div class="metric"><strong>7</strong><span>Collections +1</span></div><div class="metric"><strong>12</strong><span>Watch Later</span></div></div><div class="grid three" style="margin-top:var(--rc-gap)"><div class="card"><p class="section-kicker">Recent Activity</p><div class="mini-list"><div class="list-row"><span> </span><div><strong>Saved Lotus C retake lineup</strong><small>2 hours ago</small></div></div><div class="list-row"><span> </span><div><strong>Watched Ascent mid guide</strong><small>Yesterday</small></div></div><div class="list-row"><span> </span><div><strong>Added Sheriff warmup note</strong><small>Aug 19</small></div></div></div></div><div class="card"><p class="section-kicker">Most Used Maps</p><ol><li>Lotus 14 opens</li><li>Ascent 11 opens</li><li>Bind 8 opens</li></ol></div><div class="card"><p class="section-kicker">Recently Viewed</p><button class="btn small" data-tab="lib-lineups">Lotus post-plant arrows</button><button class="btn small" data-tab="lib-watch">Controller macro playlist</button></div></div></div>
+ <div id="lib-lineups" data-tab-pane="library"><div class="layout-rail"><div class="stack"><div class="form-grid"><input value="Lotus Sova post plant"><select><option>All maps</option><option>Lotus</option></select></div><div class="mini-list"><div class="list-row"><span class="icon-dot">L</span><div><strong>Lotus C Mound shock dart</strong><small>Sova post-plant 92% saved</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">A</span><div><strong>Ascent A main recon</strong><small>Sova execute 88% saved</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">B</span><div><strong>Bind Hookah flash path</strong><small>Skye entry 80% saved</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">S</span><div><strong>Sunset retake molly</strong><small>Viper retake 73% saved</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">H</span><div><strong>Haven garage drone path</strong><small>Fade clear 71% saved</small></div><button class="btn small" data-action="expand-item">Open</button></div></div></div><div class="card"><p class="section-kicker">Pinned collections</p><p>Lotus retakes, Sova openers, Post-plant denial.</p></div></div></div>
+ <div id="lib-routines" data-tab-pane="library"><div class="layout-rail"><div class="mini-list"><div class="list-row"><span class="icon-dot">15</span><div><strong>Fifteen-minute rifle reset</strong><small>Mechanics pre-ranked</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">10</span><div><strong>Post-loss composure loop</strong><small>Mental reset</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">8</span><div><strong>Crosshair placement sweep</strong><small>Discipline daily</small></div><button class="btn small" data-action="expand-item">Open</button></div></div><div class="card"><p class="section-kicker">Streaks</p><p>Warm-up streak: 6 days. Aim review streak: 2 weeks.</p></div></div></div>
+ <div id="lib-notes" data-tab-pane="library"><div class="layout-rail"><div class="mini-list"><div class="list-row"><span class="icon-dot">N</span><div><strong>Lotus rotate note</strong><small>Do not leave C before contact is confirmed.</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">N</span><div><strong>Omen smoke timing</strong><small>Place defensive smoke deeper on A retake.</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">N</span><div><strong>Sheriff eco reminder</strong><small>Hold off-angle, don't wide-swing rifle range.</small></div><button class="btn small" data-action="expand-item">Open</button></div></div><div class="card"><p class="section-kicker">Tags</p><div class="button-row"><span class="pill">Lotus</span><span class="pill">Eco</span><span class="pill">Sova</span></div></div></div></div>
+ <div id="lib-collections" data-tab-pane="library"><div class="layout-rail"><div class="mini-list"><div class="list-row"><span class="icon-dot">C</span><div><strong>Controller Macro Pack</strong><small>9 resources 3 maps</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">C</span><div><strong>Lotus Ranked Night</strong><small>12 resources warmup + notes</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot">C</span><div><strong>Anti-Eco Discipline</strong><small>6 resources mechanics + concepts</small></div><button class="btn small" data-action="expand-item">Open</button></div></div><div class="card"><p class="section-kicker">Collection health</p><p>3 collections have recent updates; 1 needs review.</p></div></div></div>
+ <div id="lib-watch" data-tab-pane="library"><div class="layout-rail"><div class="mini-list"><div class="list-row"><span class="icon-dot"> </span><div><strong>How pro teams split Ascent mid</strong><small>Guide 12 min unwatched</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot"> </span><div><strong>Sova retake timing on Lotus</strong><small>Guide 8 min started</small></div><button class="btn small" data-action="expand-item">Open</button></div><div class="list-row"><span class="icon-dot"> </span><div><strong>Controller smoke fundamentals</strong><small>Guide 15 min saved</small></div><button class="btn small" data-action="expand-item">Open</button></div></div><div class="card"><p class="section-kicker">Watch Later tags</p><p>Maps, Agents, Economy, Teamplay.</p></div></div></div>
+</section>
 
-        <!-- LOADOUT (full route) -->
-        <section class="page" id="page-loadout">
-          <div class="demo-note" style="margin-bottom:var(--rc-gap);">
-            <span class="state-dot on"></span><span class="state-dot"></span><span class="state-dot"></span><span class="state-dot"></span><span class="state-dot"></span>
-            <span id="loadoutStateLabel">State: Idle</span>
-            <button class="btn primary" id="loadoutCycle" style="margin-left:8px;">Cycle state →</button>
-          </div>
-          <div class="skel loadout-state" id="loadoutIdle" style="min-height:280px;align-items:center;justify-content:center;text-align:center;">
-            <div class="skel-tag">Idle</div><div class="skel-desc">Map / role / optional one-trick controls, no hidden generated state.</div>
-          </div>
-          <div class="skel loadout-state" id="loadoutSpinning" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Spinning</div><div class="skel-desc">Resolver animation, locked-in banner, no jarring flash.</div>
-          </div>
-          <div class="skel loadout-state" id="loadoutGenerated" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Generated</div><div class="skel-desc">Agent, map, focus, why, and Start Match.</div>
-          </div>
-          <div class="skel loadout-state" id="loadoutStarted" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Started</div><div class="skel-desc">Active loadout is preserved until match completion or user clears it.</div>
-          </div>
-          <div class="skel loadout-state" id="loadoutPartial" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Error / Partial</div><div class="skel-desc">Graceful recovery if map, role, or data source is temporarily unavailable.</div>
-          </div>
-        </section>
+<section class="page" id="page-settings">
+ <div class="page-head"><div><p class="section-kicker">Settings</p><h2>Profile, pipeline, visuals, and billing.</h2></div></div><div class="tabrow" data-tabs="settings"><button class="active" data-tab="st-profile">Profile</button><button data-tab="st-pipeline">Pipeline</button><button data-tab="st-visual">Visual</button><button data-tab="st-notifications">Notifications</button><button data-tab="st-integrations">Integrations</button><button data-tab="st-billing">Billing</button><button data-tab="st-components">Components</button></div>
+ <div id="st-profile" data-tab-pane="settings" class="active-pane"><div class="grid two"><div class="card"><p class="section-kicker">Profile</p><div class="form-grid"><div class="field"><label>Display name</label><input value="DemoPlayer"></div><div class="field"><label>Region</label><select><option>NA</option><option>EU</option></select></div><div class="field"><label>Goal Rank</label><input value="Ascendant 1"></div></div><button class="btn primary" style="margin-top:var(--rc-gap)" data-tab="st-visual">Customize Visuals</button></div><div class="card"><p class="section-kicker">Avatar</p><div class="thumb purple" style="height:180px">Avatar style preview</div></div></div></div>
+ <div id="st-pipeline" data-tab-pane="settings"><div class="grid two"><div class="card"><p class="section-kicker">Presets</p><div class="mini-list"><div class="list-row status-on"><span class="icon-dot"> </span><div><strong>The Competitor</strong><small>Recommended Free balanced ranked prep</small></div><input type="radio" checked></div><div class="list-row"><span class="icon-dot">A</span><div><strong>The Analyst</strong><small>Pro deeper stat reads</small></div><input type="radio"></div><div class="list-row"><span class="icon-dot">G</span><div><strong>The Grinder</strong><small>Pro repetition and routine heavy</small></div><input type="radio"></div><div class="list-row"><span class="icon-dot">S</span><div><strong>The Strategist</strong><small>Elite map/teamplay heavy</small></div><input type="radio"></div><div class="list-row"><span class="icon-dot">C</span><div><strong>The Challenger</strong><small>Elite aggressive climb mode</small></div><input type="radio"></div></div></div><div class="hero"><p class="section-kicker">Pipeline Preview</p><h2>Competitor focus: win today s next two swing rounds.</h2><div class="grid three"><span class="pill">RR card: +18 projection</span><span class="pill">Compass: Discipline 72</span><span class="pill">Top Insight: second fight reset</span></div><button class="btn primary" style="margin-top:var(--rc-gap)" data-modal="modal-builder">Customize Pipeline</button></div></div></div>
+ <div id="st-visual" data-tab-pane="settings"><div class="layout-detail"><div class="card"><p class="section-kicker">Visual sections</p><div class="mini-list"><button class="btn" data-toast="Theme panel selected">Theme & Colors</button><button class="btn" data-toast="Icons panel selected">Icons</button><button class="btn" data-toast="Graphics panel selected">Graphics & Avatars</button><button class="btn" data-toast="Typography panel selected">Typography</button><button class="btn" data-toast="Layout density selected">Layout Density</button><button class="btn" data-toast="Motion panel selected">Motion & Effects</button><button class="btn" data-toast="Background panel selected">Backgrounds</button><button class="btn primary" data-toast="Visual choices applied">Preview & Apply</button></div></div><div class="stack"><div class="grid three"><div class="card status-on"><h3>Obsidian</h3><p class="muted">Default selected</p><div class="button-row"><span class="pill brand">Purple</span><span class="pill">Navy</span><span class="pill good">Teal</span></div></div><div class="card"><h3>Neo Mint</h3><p class="muted">Cool teal accent</p></div><div class="card"><h3>Sunset</h3><p class="muted">Amber and rose accent</p></div><div class="card"><h3>Aurora</h3><p class="muted">Violet, cyan, and green glow chips.</p></div><div class="card"><h3>Rosewood</h3><p class="muted">Deep burgundy with warm gold accents.</p></div><div class="card"><h3>Monochrome</h3><p class="muted">High-contrast gray scale for clarity.</p></div></div><div class="grid three"><div class="card"><p class="section-kicker">Icon Styles</p><div class="button-row"><span class="pill">Minimal</span><span class="pill">Tactical</span><span class="pill">Outline</span><span class="pill brand">Neon</span><span class="pill">Valorant Inspired</span></div></div><div class="card"><p class="section-kicker">Graphics & Avatars</p><p class="muted">Agent style, rank style, and UI graphics sub-tabs are represented as selectable cards.</p></div><div class="card"><p class="section-kicker">Layout Density</p><div class="button-row"><span class="pill">Compact</span><span class="pill brand">Balanced</span><span class="pill">Spacious</span></div></div></div><div class="card"><p class="section-kicker">Typography</p><select><option>Barlow Condensed + Inter</option><option>Rajdhani + Inter</option><option>Geist + Inter</option></select><p style="font-family:var(--rc-font-display);font-size:24px">Preview: Win the next clean trade.</p></div><div class="card"><p class="section-kicker">Motion & Effects</p><div class="button-row"><span class="pill good">Page transitions on</span><span class="pill good">Loadout burst on</span><span class="pill">Reduced motion off</span></div></div></div></div></div>
+ <div id="st-notifications" data-tab-pane="settings"><div class="grid two"><div class="card"><h3>Match Activity</h3><label><input type="checkbox" checked> New match detected</label><br><label><input type="checkbox" checked> Match report ready</label></div><div class="card"><h3>App Updates</h3><label><input type="checkbox" checked> Patch notes</label><br><label><input type="checkbox"> Beta announcements</label></div><div class="card"><h3>Sync Status</h3><label><input type="checkbox" checked> Sync progress</label><br><label><input type="checkbox" checked> Sync failure</label></div><div class="card"><h3>Content</h3><label><input type="checkbox"> New videos</label><br><label><input type="checkbox" checked> New library resources</label></div></div></div>
+ <div id="st-integrations" data-tab-pane="settings"><div class="grid three"><div class="card"><h3>Riot</h3><span class="pill good">Connected</span><p class="muted">DemoPlayer#NA1</p></div><div class="card"><h3>Discord</h3><span class="pill good">Connected</span><p class="muted">RankedCoach alerts enabled.</p></div><div class="card"><h3>YouTube review tools</h3><span class="pill warn">Not connected</span><p class="muted">Needed for owner video review intake.</p><button class="btn primary" data-toast="YouTube connect flow opened">Connect</button></div></div></div>
+ <div id="st-billing" data-tab-pane="settings"><div class="grid three"><div class="card"><h3>Current Plan</h3><p>Pro $9/month</p></div><div class="card"><h3>Payment Method</h3><p>Visa ending 4242</p></div><div class="card"><h3>Upgrade</h3><button class="btn primary" data-modal="modal-checkout">Open Checkout</button></div></div><table class="data-table"><tr><th>Date</th><th>Plan</th><th>Amount</th><th>Status</th></tr><tr><td>Aug 1</td><td>Pro</td><td>$9</td><td>Paid</td></tr><tr><td>Jul 1</td><td>Pro</td><td>$9</td><td>Paid</td></tr><tr><td>Jun 1</td><td>Pro</td><td>$9</td><td>Paid</td></tr></table></div>
+ <div id="st-components" data-tab-pane="settings"><div class="grid three"><div class="card"><p class="section-kicker">Buttons</p><div class="button-row"><button class="btn primary" data-toast="Primary clicked">Primary</button><button class="btn review" data-toast="Review clicked">Review</button><button class="btn learn" data-toast="Learn clicked">Learn</button></div></div><div class="card"><p class="section-kicker">Badges</p><div class="button-row"><span class="pill good">Strength</span><span class="pill bad">Needs work</span><span class="pill warn">Watch</span></div></div><div class="card chart-card"><p class="section-kicker">Small Chart</p><svg viewBox="0 0 260 120"><path d="M20 100H240M20 60H240M20 20H240" stroke="#223047"/><path d="M20 85 80 55 140 65 200 28 240 42" stroke="#a78bfa" stroke-width="4" fill="none"/></svg></div></div></div>
+</section>
 
-        <!-- FOCUS DETAILS -->
-        <section class="page" id="page-focusqueue">
-          <div class="page-note">Focus Details is merged: generated focus, explanation, coaching history, related lessons, and queue controls live together.</div>
-          <div class="rail-layout">
-            <div class="stack">
-              <div class="skel" style="min-height:145px;"><div class="skel-tag">Current Focus Deep-Dive</div><div class="skel-desc">Statement, why it matters, what to do, success looks like.</div></div>
-              <div class="split-layout"><div class="skel"><div class="skel-tag">Other Trending Focuses</div></div><div class="skel"><div class="skel-tag">Add Your Own</div></div></div>
-              <div class="skel"><div class="skel-tag">Focus History</div><div class="skel-desc">Queued, started, completed, dismissed, user-authored.</div></div>
-            </div>
-            <div class="skel"><div class="skel-tag">Auto-Rotate / Self-Chosen Toggle</div><div class="skel-desc">Mode selection plus queue controls: move up/down, pin, remove, set as next match focus.</div></div>
-          </div>
-        </section>
+<section class="page" id="page-mobile"><div class="page-head"><div><p class="section-kicker">Mobile Reference</p><h2>Bottom-tab pattern reference.</h2></div></div><p class="callout">Full mobile parity is out of scope for this pass. This page keeps the intended bottom-tab pattern visible with minimal example content.</p><div class="mobile-frame"><div class="hero"><h3>Today's Focus</h3><p>Reset after first contact before the second swing.</p></div><div class="stack"><div class="card"><h3>Mobile content card</h3><p class="muted">A single visible card should remain readable inside the phone frame.</p></div><div class="card"><h3>Touch drawer pattern</h3><button class="btn primary" data-modal="modal-focus">Open modal</button></div></div><div class="mobile-bottom-tabs"><div class="mobile-tab active">Play</div><div class="mobile-tab">Review</div><div class="mobile-tab">Learn</div><div class="mobile-tab">Library</div></div></div></section>
 
-        <!-- IN-GAME -->
-        <section class="page" id="page-ingame">
-          <div class="demo-note" style="margin-bottom:var(--rc-gap);"><span class="state-dot on"></span><span class="state-dot"></span><span id="ingameStateLabel">State: Collapsed</span><button class="btn primary" id="ingameCycle">Toggle expanded -></button></div>
-          <div id="ingameCollapsed" class="skel" style="min-height:170px;"><div class="skel-tag">Collapsed In-Game Hero</div><div class="skel-desc">One job, agent/map/focus strip, quick expand action. Designed to stay readable with minimal screen time.</div></div>
-          <div id="ingameExpanded" class="stack" style="display:none;">
-            <div class="skel"><div class="skel-tag">One Job</div><div class="skel-desc">Active focus, tight restatement.</div></div>
-            <div class="split-layout"><div class="skel"><div class="skel-tag">Focus Pillars</div><div class="skel-desc">All 5, reference only.</div></div><div class="skel"><div class="skel-tag">Focus Checklist</div></div></div>
-            <div class="module-row"><div class="skel"><div class="skel-tag">Map Notes</div></div><div class="skel"><div class="skel-tag">Agent Tips</div></div><div class="skel"><div class="skel-tag">Lineups</div></div><div class="skel"><div class="skel-tag">Weapons</div></div></div>
-            <div class="skel"><div class="skel-tag">Match Complete</div><div class="skel-desc">Only sync trigger besides history backfill.</div></div>
-          </div>
-        </section>
+</div></main></div></div></div>
 
-        <!-- MOBILE REFERENCE -->
-        <section class="page" id="page-mobile">
-          <div class="page-note">Group 7: mobile is lower priority here, but the beta shell needs a single reference page for bottom-tab behavior and touch-safe density.</div>
-          <div class="mobile-frame">
-            <div class="skel"><div class="skel-tag">Mobile Top Context</div><div class="skel-desc">Profile, sync state, current page, compact controls.</div></div>
-            <div class="stack">
-              <div class="skel" style="min-height:150px;"><div class="skel-tag">Primary Mobile Content</div><div class="skel-desc">One dominant card per scroll section, no desktop two-column assumptions.</div></div>
-              <div class="skel" style="min-height:150px;"><div class="skel-tag">Touch Drawer / Modal Pattern</div></div>
-            </div>
-            <div class="mobile-bottom-tabs"><div class="mobile-tab active">Play</div><div class="mobile-tab">Review</div><div class="mobile-tab">Learn</div><div class="mobile-tab">Library</div></div>
-          </div>
-        </section>
-
-      </div>
-    </main>
-  </div>
-</div>
-</div>
-
-<div class="modal-demo" id="modal-search"><h2 class="section-kicker">Global Search</h2><div class="skel"><div class="skel-tag">Search Input + Results</div><div class="skel-desc">Search maps, agents, lessons, library items, matches, settings.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
-<div class="modal-demo" id="modal-notifications"><h2 class="section-kicker">Notifications Drawer</h2><div class="mini-list"><div class="mini-line">New match data detected</div><div class="mini-line">New patch notes uploading</div><div class="mini-line">New videos released</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
-<div class="modal-demo" id="modal-profile"><h2 class="section-kicker">Profile Popover</h2><div class="skel"><div class="skel-tag">Profile Actions</div><div class="skel-desc">Switch profile, sync status, customize, account settings.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
-<div class="modal-demo" id="modal-checkout"><h2 class="section-kicker">Checkout</h2><div class="skel"><div class="skel-tag">Billing Modal</div><div class="skel-desc">Plan comparison, payment state, cancel/back affordance.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
-
+<div class="modal-demo" id="modal-focus"><div class="modal-head"><div><p class="section-kicker">Focus Details</p><h2>Reset after first contact.</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="grid two"><div class="card"><h3>Why This Matters</h3><p>The first fight is good enough to create pressure. The second fight needs to be tradeable instead of automatic.</p></div><div class="metric"><strong>+7%</strong><span>Focus Impact Confidence 74%</span></div></div><div class="card" style="margin-top:var(--rc-gap)"><h3>What To Do</h3><ol><li>Call the first clear before crossing.</li><li>Reset behind cover after contact.</li><li>Ask for a teammate before the second swing.</li><li>Save one utility piece for the retake.</li></ol></div><div class="card" style="margin-top:var(--rc-gap)"><h3>Success Looks Like</h3><p>One fewer untradeable death and at least two rounds where your first contact leads to a teammate trade.</p></div></div>
+<div class="modal-demo" id="modal-rr"><div class="modal-head"><div><p class="section-kicker">RR Calculator</p><h2>Demo utility</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="form-grid"><div class="field"><label>Current RR</label><input value="42"></div><div class="field"><label>Expected change</label><input value="+18"></div></div><p class="callout">Projected result: Diamond 1 60 RR. This is invented example content.</p></div>
+<div class="modal-demo" id="modal-add-focus"><div class="modal-head"><div><p class="section-kicker">Add Focus</p><h2>Add a demo focus item.</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="form-grid"><select><option>Trade timing</option><option>Map awareness</option><option>Utility before contact</option></select><select><option>High priority</option><option>Medium priority</option></select></div><button class="btn primary" style="margin-top:var(--rc-gap)" data-action="add-focus" data-close-modal>Add Focus</button></div>
+<div class="modal-demo" id="modal-ingame"><div class="modal-head"><div><p class="section-kicker">In-Game Compact Modal</p><h2>One Job: Trade B Main.</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="grid two"><div class="card"><h3>Focus</h3><p>Hold for the second swing after recon lands.</p></div><div class="card"><h3>Reminder</h3><p>Score 5 3 ult online next.</p></div></div></div>
+<div class="modal-demo" id="modal-economy"><div class="modal-head"><div><p class="section-kicker">Economy reference</p><h2>Buy with the team, not alone.</h2></div><button class="btn small" data-close-modal>Close</button></div><p>Demo guidance: if two teammates cannot buy rifles, keep your utility and play a tradeable light-buy plan.</p></div>
+<div class="modal-demo" id="modal-search"><div class="modal-head"><div><p class="section-kicker">Global Search</p><h2>Search RankedCoach</h2></div><button class="btn small" data-close-modal>Close</button></div><input value="Lotus Sova"><div class="mini-list" style="margin-top:var(--rc-gap)"><div class="list-row"><span>1</span><div><strong>Lotus C Mound lineup</strong><small>Library lineup</small></div><button class="btn small" data-jump="library" data-tab="lib-lineups" data-close-modal>Open</button></div><div class="list-row"><span>2</span><div><strong>Sova Recon Rhythm</strong><small>Learn agent guide</small></div><button class="btn small" data-jump="learn" data-tab="ln-agentguide" data-close-modal>Open</button></div></div></div>
+<div class="modal-demo" id="modal-notifications"><div class="modal-head"><div><p class="section-kicker">Notifications Drawer</p><h2>Recent updates</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="mini-list"><div class="list-row"><span> </span><div><strong>New match detected</strong><small>Lotus +18 RR report ready.</small></div></div><div class="list-row"><span>!</span><div><strong>Patch notes processed</strong><small>Two agent changes summarized.</small></div></div><div class="list-row"><span> </span><div><strong>Three videos added</strong><small>Map guides are ready to review.</small></div></div></div></div>
+<div class="modal-demo" id="modal-profile"><div class="modal-head"><div><p class="section-kicker">Profile Popover</p><h2>DemoPlayer</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="button-row"><button class="btn" data-jump="settings" data-tab="st-profile" data-close-modal>Profile Settings</button><button class="btn" data-jump="settings" data-tab="st-visual" data-close-modal>Customize</button><button class="btn danger" data-toast="Sign out preview">Sign Out</button></div></div>
+<div class="modal-demo" id="modal-checkout"><div class="modal-head"><div><p class="section-kicker">Checkout</p><h2>Choose a plan</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="grid three"><div class="card"><h3>Free</h3><p>$0 core logging</p><button class="btn" data-toast="Free plan selected">Select</button></div><div class="hero"><h3>Pro</h3><p>$9 advanced review</p><button class="btn primary" data-toast="Pro checkout opened">Upgrade</button></div><div class="card"><h3>Elite</h3><p>$19 full strategy tools</p><button class="btn primary" data-toast="Elite checkout opened">Upgrade</button></div></div></div>
+<div class="modal-demo" id="modal-builder"><div class="modal-head"><div><p class="section-kicker">Pipeline Builder</p><h2>Customize Pipeline</h2></div><button class="btn small" data-close-modal>Close</button></div><div class="grid two"><div class="card"><h3>Focus Areas</h3><div class="mini-list"><div class="list-row"><span class="drag"> </span><div><strong>Mechanics</strong><small>High weight</small></div></div><div class="list-row"><span class="drag"> </span><div><strong>Game Sense</strong><small>Medium weight</small></div></div><div class="list-row"><span class="drag"> </span><div><strong>Mental</strong><small>Low weight</small></div></div></div></div><div class="card"><h3>Delivery Style</h3><div class="button-row"><span class="pill brand">Direct</span><span class="pill">Coach-like</span><span class="pill">Detailed</span></div><button class="btn primary" style="margin-top:var(--rc-gap)" data-toast="Pipeline changes saved">Save Changes</button><button class="btn" data-close-modal>Cancel</button></div></div></div>
+<div id="toast" class="toast" role="status"></div>
 <script>
-  const titles = {
-    play:["Play","Home base between matches"], review:["Review","Performance analysis"],
-    learn:["Learn","Discovery workspace"], library:["Library","Your saved resources"],
-    logmatch:["Log Match","Post-game debrief"], loadout:["Loadout","Generate your assignment"],
-    matchsaved:["Match Saved","Confirmation and next action"],
-    focusqueue:["Focus Details","Current focus and queue"], ingame:["In-Game","One job"],
-    mobile:["Mobile Reference","Bottom-tab pattern"],
-    settings:["Settings","Configure the app"]
-  };
-  const activatePage = (page)=>{
-    const target = document.getElementById('page-'+page);
-    if(!target) return;
-    document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.toggle('active', i.dataset.page === page));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    target.classList.remove('active'); void target.offsetWidth; target.classList.add('active');
-    const [t,s] = titles[page] || [page,''];
-    document.getElementById('pageTitle').firstChild.textContent = t;
-    document.getElementById('pageSub').textContent = s;
-  };
-  document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
-    item.addEventListener('click', ()=>{
-      activatePage(item.dataset.page);
-    });
-  });
-  document.querySelectorAll('[data-jump]').forEach(btn=>btn.addEventListener('click',()=>activatePage(btn.dataset.jump)));
-
-  document.querySelectorAll('.tabrow').forEach(row=>{
-    row.querySelectorAll('button').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        row.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        const group = row.parentElement.querySelectorAll('.rv-tab, .st-tab, .ln-tab, .lib-tab, .subpane');
-        group.forEach(g=>g.style.display='none');
-        const target = document.getElementById(btn.dataset.tab);
-        target.style.display='block';
-        const nestedActive = target.querySelector('.tabrow button.active');
-        if(nestedActive) nestedActive.click();
-      });
-    });
-  });
-
-  const loStates = ['idle','spinning','generated','started','partial'];
-  const loIds = ['loadoutIdle','loadoutSpinning','loadoutGenerated','loadoutStarted','loadoutPartial'];
-  let loIdx = 0;
-  document.getElementById('loadoutCycle').addEventListener('click', ()=>{
-    loIdx = (loIdx+1) % loStates.length;
-    loIds.forEach((id,i)=>{document.getElementById(id).style.display = loIdx===i?'flex':'none';});
-    document.querySelectorAll('#page-loadout .state-dot').forEach((d,i)=>d.classList.toggle('on', i===loIdx));
-    document.getElementById('loadoutStateLabel').textContent = 'State: ' + loStates[loIdx][0].toUpperCase()+loStates[loIdx].slice(1);
-  });
-
-  let inGameExpanded = false;
-  document.getElementById('ingameCycle').addEventListener('click', ()=>{
-    inGameExpanded = !inGameExpanded;
-    document.getElementById('ingameCollapsed').style.display = inGameExpanded ? 'none' : 'flex';
-    document.getElementById('ingameExpanded').style.display = inGameExpanded ? 'grid' : 'none';
-    document.querySelectorAll('#page-ingame .state-dot').forEach((d,i)=>d.classList.toggle('on', i === (inGameExpanded ? 1 : 0)));
-    document.getElementById('ingameStateLabel').textContent = 'State: ' + (inGameExpanded ? 'Expanded' : 'Collapsed');
-  });
-
-  document.querySelectorAll('[data-modal]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.modal-demo').forEach(m=>m.classList.remove('open'));
-      document.getElementById(btn.dataset.modal)?.classList.add('open');
-    });
-  });
-  document.querySelectorAll('[data-close-modal]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.modal-demo')?.classList.remove('open')));
-
-  const activateTab = (tabId)=>{
-    const btn = document.querySelector(`[data-tab="${tabId}"]`);
-    if(!btn) return;
-    btn.click();
-  };
-  const params = new URLSearchParams(location.search);
-  const hashParams = Object.fromEntries(location.hash.replace(/^#/,'').split(';').filter(Boolean).map(part=>{
-    const [key,...rest] = part.split('=');
-    return [key, rest.join('=')];
-  }));
-  const initialPage = params.get('page') || hashParams.page;
-  const initialTab = params.get('tab') || hashParams.tab;
-  const initialModal = params.get('modal') || hashParams.modal;
-  if(initialPage) activatePage(initialPage);
-  if(initialTab) activateTab(initialTab);
-  if(initialModal) document.getElementById(initialModal)?.classList.add('open');
+const titles={play:["Play","Home base between matches"],review:["Review","Performance analysis"],learn:["Learn","Discovery workspace"],library:["Library","Saved resources"],logmatch:["Log Match","Post-game debrief"],loadout:["Loadout","Generate your assignment"],matchsaved:["Match Saved","Confirmation and next action"],focusqueue:["Focus Queue","Current focus sequence"],ingame:["In-Game","One job while live"],mobile:["Mobile Reference","Bottom-tab pattern"],settings:["Settings","Configure the app"]};
+function showToast(message){const toast=document.getElementById('toast');toast.textContent=message||'Demo action completed.';toast.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('show'),2100)}
+function activatePage(page,tab){const target=document.getElementById('page-'+page);if(!target)return;document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.toggle('active',i.dataset.page===page));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));target.classList.remove('active');void target.offsetWidth;target.classList.add('active');const [title,sub]=titles[page]||[page,''];const titleNode=document.getElementById('pageTitle');titleNode.firstChild.textContent=title;document.getElementById('pageSub').textContent=sub;if(tab)requestAnimationFrame(()=>activateTab(tab))}
+function activateTab(tabId){const pane=document.getElementById(tabId);const btn=document.querySelector(`[data-tab="${tabId}"]`);const scope=pane?.dataset.tabPane||btn?.closest('.tabrow')?.dataset.tabs;if(!scope)return;document.querySelectorAll(`[data-tab-pane="${scope}"]`).forEach(p=>p.classList.remove('active-pane'));if(pane)pane.classList.add('active-pane');document.querySelectorAll(`.tabrow[data-tabs="${scope}"] button`).forEach(b=>b.classList.toggle('active',b.dataset.tab===tabId))}
+document.querySelectorAll('.nav-item[data-page]').forEach(item=>item.addEventListener('click',()=>activatePage(item.dataset.page)));
+document.querySelectorAll('.tabrow button,[data-tab]:not([data-jump])').forEach(btn=>{btn.addEventListener('click',()=>activateTab(btn.dataset.tab))});
+document.querySelectorAll('[data-jump]').forEach(btn=>{btn.addEventListener('click',()=>{activatePage(btn.dataset.jump,btn.dataset.tab);btn.closest('.modal-demo')?.classList.remove('open')})});
+document.querySelectorAll('[data-modal]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.modal-demo').forEach(m=>m.classList.remove('open'));document.getElementById(btn.dataset.modal)?.classList.add('open')}));
+document.querySelectorAll('[data-close-modal]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.modal-demo')?.classList.remove('open')));
+document.querySelectorAll('[data-loadout]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.loadout-state').forEach(s=>s.classList.remove('active'));document.getElementById(btn.dataset.loadout)?.classList.add('active');showToast('Loadout demo state changed.')}));
+document.querySelectorAll('[data-log-state]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#page-logmatch .save-state').forEach(s=>s.classList.remove('active'));document.getElementById(btn.dataset.logState)?.classList.add('active');showToast('Log-match save sequence advanced.')}));
+document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{btn.parentElement.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('primary'));btn.classList.add('primary');showToast(btn.textContent.trim()+' filter selected.')}));
+document.querySelectorAll('[data-toast]').forEach(btn=>btn.addEventListener('click',()=>showToast(btn.dataset.toast)));
+document.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>{const action=btn.dataset.action;if(action==='clear-queue'){document.getElementById('focusQueueList').innerHTML='<div class="card"><h3>Queue cleared.</h3><p class="muted">Add a focus to restart the demo queue.</p></div>';showToast('Focus queue cleared.')}else if(action==='add-focus'){const list=document.getElementById('focusQueueList');if(list){const item=document.createElement('div');item.className='list-row queue-card';item.innerHTML='<span class="drag"> </span><div><strong>Utility before contact</strong><small>Game Sense added from demo action</small></div><button class="btn small" data-modal="modal-focus">View</button>';item.querySelector('[data-modal]').addEventListener('click',()=>document.getElementById('modal-focus').classList.add('open'));list.appendChild(item)}showToast('Focus added to queue.')}else if(action==='save-insight'){btn.classList.toggle('status-on');btn.textContent=btn.classList.contains('status-on')?'Insight Saved':'Save Insight';showToast('Insight saved state toggled.')}else{showToast('Demo item expanded.')}}));
+const params=new URLSearchParams(location.search);const hashParams=Object.fromEntries(location.hash.replace(/^#/,'').split(';').filter(Boolean).map(part=>{const [key,...rest]=part.split('=');return [key,rest.join('=')]}));const initialPage=params.get('page')||hashParams.page;const initialTab=params.get('tab')||hashParams.tab;const initialModal=params.get('modal')||hashParams.modal;if(initialPage)activatePage(initialPage,initialTab);else if(initialTab)activateTab(initialTab);if(initialModal)document.getElementById(initialModal)?.classList.add('open');
 </script>
 </body>
 </html>
