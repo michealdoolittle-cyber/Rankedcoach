@@ -4,6 +4,8 @@
 
 **Status: open — not started. Supersedes `notes/beta-foundation-shell-full-directive-2026-08-20.md`, `notes/beta-foundation-shell-round2-corrections-2026-08-21.md`, `notes/beta-foundation-shell-directive-v2-2026-08-21.md`, and `notes/beta-foundation-shell-directive-v3-2026-08-21.md`.** All four are kept for history but should not guide further work. v3's per-page content research is still accurate and is carried forward into this file — what changes in v4 is the fidelity bar every page has to hit, explained below.
 
+**Read `notes/beta-foundation-shell-directive-v5-styling-2026-08-21.md` alongside this file.** v5 doesn't replace anything here — it adds the visual styling requirement (real dark Obsidian styling, not flat/dashed placeholders) that this file doesn't cover on its own. Build every section to satisfy both files at once, not this one first and v5 as a second pass.
+
 ## Read this first — the fidelity bar just changed
 
 Every prior pass in this project (all the way back to the original teardown) defined "skeleton" as: a single dashed-border box with a short tag and a one-line description, standing in for a whole section. That was deliberate at the time — Michael didn't want real data or final visual styling this early. **That part hasn't changed: still no live account data, still no final pixel-perfect polish.** What's changed, per Michael's direct instruction, is everything else:
