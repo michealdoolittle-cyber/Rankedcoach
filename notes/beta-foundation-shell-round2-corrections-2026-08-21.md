@@ -2,7 +2,7 @@
 
 **Recommended Codex settings: GPT-5.6 Terra · High reasoning · Fast speed.**
 
-**Status: open — not started.**
+**Status: SUPERSEDED 2026-08-21 by `notes/beta-foundation-shell-directive-v2-2026-08-21.md`. Do not use this file — read the v2 file instead.** This file was written before real Groups 1-7 source images existed in the repo; several guesses here (notably the Settings > Visual "3-column workstation" description) turned out wrong once checked against the real images Michael supplied afterward. Kept only for history.
 
 Michael handed the Groups 1-7 extension to Codex last round (`notes/beta-foundation-shell-full-directive-2026-08-20.md`, commit `98e2664`) because Claude was low on usage. Claude has since independently verified the result — read the full 588-line file directly and ran it through Playwright (every nav item, every visible tab, Loadout's 5-state cycle, In-Game's collapse/expand, all 4 overlay modals). No JS errors, everything functionally wires up. Most of the checklist holds up correctly. But 5 specific items were checked against the directive's content checklist and don't match — this file is scoped to just those 5, so items that already pass (Loadout, Log Match, Focus Details, In-Game, Review's Insight/Match Detail tabs, Stats' 4 tabs, Overlays) don't need to be touched or re-verified.
 
