@@ -43,6 +43,20 @@ const PAGE_TITLES = {
   help: "Help & Support"
 };
 
+const PAGE_SUBTITLES = {
+  play: "Improve. One match at a time.",
+  loadout: "Build a match-ready assignment before queueing.",
+  "focus-queue": "Manage the next short-term jobs.",
+  "log-match": "Capture the match while it is still fresh.",
+  "in-game": "Keep the current plan visible.",
+  review: "Read the imported match story.",
+  history: "Scan your retained match archive.",
+  learn: "Study references tied to your next queue block.",
+  library: "Open strategy, media, and dossier references.",
+  settings: "Tune the beta experience.",
+  help: "Report issues and review support options."
+};
+
 const PALETTE_TOKENS = {
   obsidian: ["#8b5cf6", "#b994ff", "#52d2b2"],
   "neo-mint": ["#4fd1b5", "#9af7e2", "#60a5fa"],
@@ -70,6 +84,7 @@ const els = {
   modalRoot: document.getElementById("modalRoot"),
   syncCard: document.querySelector(".sync-card"),
   syncChipLabel: document.querySelector("[data-action='open-sync'] span"),
+  pageSubtitle: document.getElementById("pageSubtitle"),
   syncForm: document.getElementById("syncForm"),
   syncStatus: document.getElementById("syncStatus"),
   riotIdInput: document.getElementById("riotIdInput"),
@@ -143,7 +158,7 @@ function setStatus(message, tone = "") {
   if (!els.syncStatus) return;
   els.syncStatus.textContent = message;
   els.syncStatus.dataset.tone = tone;
-  if (els.syncChipLabel && tone === "good") els.syncChipLabel.textContent = "Synced";
+  if (els.syncChipLabel) els.syncChipLabel.textContent = tone === "good" ? "Up to date" : "Refresh Data";
 }
 
 function persistAppState() {
@@ -209,6 +224,7 @@ function applyRoute(route = parseRoute(), { replace = false } = {}) {
   els.nav.forEach(button => button.classList.toggle("is-active", button.dataset.page === app.page));
   els.panels.forEach(panel => panel.classList.toggle("is-active", panel.dataset.pagePanel === app.page));
   if (els.pageTitle) els.pageTitle.textContent = PAGE_TITLES[app.page] || "RankedCoach";
+  if (els.pageSubtitle) els.pageSubtitle.textContent = PAGE_SUBTITLES[app.page] || "";
   document.title = `RankedCoach Beta · ${PAGE_TITLES[app.page] || "Play"}`;
   document.documentElement.dataset.flowMode = app.page === "loadout" ? "loadout" : "";
   ensureDailyFocus(app.appState, app.model || {});

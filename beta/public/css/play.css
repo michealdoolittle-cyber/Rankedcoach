@@ -2064,3 +2064,297 @@ html[data-flow-mode="loadout"] .page-content {
     display: none;
   }
 }
+
+/* Beta Play round 3 raster/content corrections — 2026-08-20 */
+.page-subtitle {
+  margin: 0.18rem 0 0;
+  color: var(--rc-text-2);
+  font-size: clamp(0.78rem, 0.9vw, 0.96rem);
+  font-weight: 800;
+}
+
+.play-raster-grid {
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.96fr) minmax(20rem, 0.86fr);
+  grid-template-rows: minmax(13rem, 16.25rem) minmax(13.5rem, 16.25rem) minmax(13.5rem, 16rem) auto;
+}
+
+.today-focus-main h2 {
+  max-width: 18ch;
+  font-size: clamp(2rem, 3vw, 3.6rem);
+  line-height: 0.94;
+  text-transform: none;
+}
+
+.today-focus-art {
+  overflow: hidden;
+  background:
+    radial-gradient(180px 220px at 70% 40%, rgba(167, 139, 250, 0.18), transparent 74%),
+    linear-gradient(90deg, transparent, rgba(4, 8, 17, 0.32));
+}
+
+.today-focus-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(12, 20, 35, 0.96) 0%, rgba(12, 20, 35, 0.42) 32%, rgba(12, 20, 35, 0) 74%);
+}
+
+.today-focus-art img {
+  position: absolute;
+  right: -8%;
+  bottom: -8%;
+  width: min(21rem, 132%);
+  height: 122%;
+  object-fit: contain;
+  object-position: right bottom;
+  filter: saturate(1.05) contrast(1.03) drop-shadow(0 22px 30px rgba(0, 0, 0, 0.5));
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.38) 18%, #000 44%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.38) 18%, #000 44%);
+}
+
+.today-focus-stack {
+  align-content: center;
+  gap: 0.62rem;
+}
+
+.play-signal-stat {
+  display: grid;
+  gap: 0.18rem;
+  width: 100%;
+  min-height: 3.45rem;
+  align-content: center;
+  border: 1px solid color-mix(in srgb, var(--rc-brand-hi) 46%, var(--rc-border));
+  border-radius: var(--rc-radius-control);
+  padding: 0.58rem 0.7rem;
+  background: rgba(6, 12, 25, 0.68);
+}
+
+.play-signal-stat small {
+  color: var(--rc-text-3);
+  font-size: 0.62rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.play-signal-stat strong {
+  color: var(--rc-text-1);
+  font-size: clamp(1.05rem, 1.4vw, 1.42rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.improvement-timeline-step {
+  min-height: 6.4rem;
+  grid-template-rows: auto auto auto auto 1.7rem;
+}
+
+.improvement-timeline-step .play-spark {
+  height: 1.7rem;
+  color: var(--section-accent, var(--rc-brand-hi));
+  opacity: 0.92;
+}
+
+.improvement-timeline-step .play-spark polyline {
+  stroke-width: 2.2;
+}
+
+.compass-mini-card .rc-card__body {
+  display: grid;
+  align-content: center;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+.compass-shell {
+  grid-template-columns: 1fr;
+  min-height: 0;
+}
+
+.compass-radar-wrap {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.compass-radar {
+  width: min(15.8rem, 100%);
+  height: auto;
+  max-height: 14.2rem;
+  overflow: visible;
+}
+
+.compass-axis-label {
+  pointer-events: none;
+}
+
+.compass-axis-name {
+  fill: var(--rc-text-2);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
+.compass-axis-value {
+  fill: var(--rc-brand-hi);
+  font-size: 9px;
+  font-weight: 950;
+}
+
+.compass-pillar-grid {
+  display: none;
+}
+
+.current-rank-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 0.86fr);
+  gap: 0.44rem;
+}
+
+.current-role-card {
+  align-content: center;
+}
+
+.current-role-metrics {
+  display: none;
+}
+
+.current-last-match-strip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.28rem;
+}
+
+.current-last-match-strip span {
+  display: grid;
+  place-items: center;
+  min-height: 2.35rem;
+  border: 1px solid var(--rc-border);
+  border-radius: var(--rc-radius-control);
+  background: rgba(6, 12, 25, 0.68);
+}
+
+.current-last-match-strip small {
+  color: var(--rc-text-3);
+  font-size: 0.52rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.current-last-match-strip strong {
+  color: var(--rc-text-1);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.rr-empty-label {
+  fill: var(--rc-text-2);
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.top-insight-card .rc-card__body {
+  min-height: 0;
+  align-content: stretch;
+}
+
+.top-insight-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(13rem, 0.92fr);
+  gap: var(--rc-space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.top-insight-main {
+  display: grid;
+  align-content: space-between;
+  gap: 0.62rem;
+  min-width: 0;
+}
+
+.top-insight-main > span {
+  color: var(--rc-brand-hi);
+  font-size: 0.64rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.top-insight-takeaways {
+  display: grid;
+  align-content: start;
+  gap: 0.52rem;
+  border: 1px solid color-mix(in srgb, var(--rc-warning) 44%, var(--rc-border));
+  border-radius: var(--rc-radius-control);
+  padding: 0.7rem;
+  background: rgba(6, 12, 25, 0.72);
+}
+
+.top-insight-takeaways h3 {
+  margin: 0;
+  color: var(--rc-warning);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.top-insight-takeaways ul {
+  display: grid;
+  gap: 0.38rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--rc-text-2);
+  font-size: 0.76rem;
+  line-height: 1.28;
+}
+
+.top-insight-card .rc-button {
+  justify-self: start;
+}
+
+.play-reference-row {
+  grid-template-columns: auto repeat(5, minmax(0, 1fr));
+}
+
+.play-reference-row button {
+  min-width: 0;
+  min-height: 4.1rem;
+}
+
+@media (max-width: 1280px) {
+  .play-reference-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .play-reference-row header {
+    grid-column: 1 / -1;
+  }
+
+  .top-insight-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .today-focus-main h2 {
+    font-size: clamp(2rem, 10vw, 3.6rem);
+  }
+
+  .today-focus-art img {
+    right: 0;
+    width: auto;
+    height: 115%;
+  }
+
+  .current-rank-layout,
+  .current-last-match-strip,
+  .play-reference-row {
+    grid-template-columns: 1fr;
+  }
+}

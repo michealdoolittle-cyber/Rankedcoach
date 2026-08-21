@@ -360,6 +360,110 @@ function formatDelta(value = 0, suffix = "") {
   return `${numeric >= 0 ? "+" : ""}${whole(numeric)}${suffix}`;
 }
 
+function ensureSentence(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return /[.!?]$/.test(text) ? text : `${text}.`;
+}
+
+function readableList(items = []) {
+  const values = items.filter(Boolean).map(String);
+  if (values.length <= 1) return values[0] || "";
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+}
+
+function renderSignalStat(label = "", value = "") {
+  return `
+    <span class="play-signal-stat">
+      <small>${escapeHtml(label)}</small>
+      <strong>${escapeHtml(value)}</strong>
+    </span>
+  `;
+}
+
+function lastMatchMetricValue(record = {}, key = "") {
+  const stats = record.stats || {};
+  if (key === "kda") {
+    return `${whole(stats.kills || 0)} / ${whole(stats.deaths || 0)} / ${whole(stats.assists || 0)}`;
+  }
+  if (key === "kast") return finite(stats.kast) ? percent(stats.kast) : "--";
+  if (key === "adr") return finite(stats.adr) ? whole(stats.adr) : "--";
+  if (key === "acs") return finite(stats.acs) ? whole(stats.acs) : "--";
+  if (key === "hs") return finite(stats.hsPercent) ? percent(stats.hsPercent) : "--";
+  return "--";
+}
+
+function pillarTrendSeries(key = "", records = []) {
+  const newestFirst = Array.isArray(records) ? records : [];
+  const oldestFirst = newestFirst.slice().reverse().slice(-8);
+  if (!oldestFirst.length) return [];
+  return oldestFirst.map(record => {
+    const stats = record.stats || {};
+    const kd = Number(stats.kills || 0) / Math.max(1, Number(stats.deaths || 0));
+    const acs = Number(stats.acs || 0);
+    const hs = Number(stats.hsPercent || 0);
+    const assists = Number(stats.assists || 0);
+    const deaths = Number(stats.deaths || 0);
+    if (key === "mechanics") return Math.round((clamp(hs * 2.5) + clamp(kd * 45) + clamp(acs / 3)) / 3);
+    if (key === "game-sense") return record.result === "win" ? 86 : record.result === "draw" ? 52 : 28;
+    if (key === "teamwork") return Math.round(clamp(assists * 12));
+    if (key === "discipline") return Math.round((clamp(100 - deaths * 4) + clamp(kd * 42)) / 2);
+    if (key === "mental") return Math.round((clamp(record.result === "win" ? 84 : 36) + clamp(kd * 42) + clamp(100 - Math.abs(deaths - 14) * 5)) / 3);
+    return Number(stats.acs || 0);
+  }).filter(Number.isFinite);
+}
+
+function isBareStatInsightTitle(title = "") {
+  const clean = String(title || "").trim();
+  if (!clean) return true;
+  if (/[.!?]$/.test(clean)) return false;
+  return /\b(win rate|k\/d|kd|acs|adr|hs|kast|damage|survivability|conversion|first death|first blood|assists?)\b/i.test(clean)
+    || clean.split(/\s+/).length <= 4;
+}
+
+function humanizeInsightTitle(insight = {}) {
+  const title = String(insight.title || "").trim();
+  if (!title) return "Your next match has one clear adjustment.";
+  if (!isBareStatInsightTitle(title)) return ensureSentence(title);
+  const focus = String(insight.focus || insight.category || "").trim();
+  const related = Array.isArray(insight.related) ? insight.related.filter(Boolean)[0] : "";
+  const subject = related || focus || title.replace(/\b(win rate|k\/d|kd|acs|adr|hs|kast)\b/ig, "").trim() || "recent games";
+  const stat = title.match(/\b(win rate|k\/d|kd|acs|adr|hs|kast|damage|survivability|conversion|first death|first blood|assists?)\b/i)?.[0] || "trend";
+  if (insight.tone === "good") return `Your ${subject} ${stat} is creating a reliable win condition.`;
+  if (insight.tone === "bad") return `Your ${subject} ${stat} is the first leak to clean up.`;
+  return `Your ${subject} ${stat} is the clearest trend to play around.`;
+}
+
+function buildInsightExplanation(insight = {}) {
+  const preview = String(insight.preview || "").trim();
+  const why = String(insight.why || "").trim();
+  const action = String(insight.action || "").trim();
+  if (why && why !== preview) return ensureSentence(why);
+  if (action && action !== preview) return ensureSentence(action);
+  if (preview) return ensureSentence(preview);
+  return "RankedCoach needs more synced matches before it can name a sharper takeaway.";
+}
+
+function buildInsightTakeaways(insight = {}) {
+  const proof = Array.isArray(insight.proof) ? insight.proof : [];
+  const related = Array.isArray(insight.related) ? insight.related : [];
+  const items = [
+    insight.focus ? `Primary lens: ${insight.focus}.` : "",
+    proof[0]?.stat ? `${proof[0].label || "Current signal"}: ${proof[0].stat}.` : "",
+    related.length ? `Watch ${readableList(related.slice(0, 2))} next.` : "",
+    insight.action || "Carry one repeatable adjustment into the next queue block."
+  ].filter(Boolean);
+  while (items.length < 4) {
+    items.push([
+      "Compare the next import against this same read.",
+      "Keep the correction small enough to verify after one match.",
+      "Use the focus details panel if you want the full evidence trail."
+    ][items.length - 1] || "Review the next match before changing the focus.");
+  }
+  return items.slice(0, 4);
+}
+
 function spark(values = [], maxValue = 100, id = "spark") {
   const usable = values.slice(-8).map(Number).filter(Number.isFinite);
   if (!usable.length) return `<svg class="play-spark" viewBox="0 0 100 34" aria-hidden="true"></svg>`;
@@ -461,16 +565,16 @@ function renderTodayFocus(model = {}, appState = {}) {
       <div class="today-focus-main">
         <p class="rc-eyebrow">Today's Focus</p>
         <span class="one-job-label">One Job</span>
-        <h2>${escapeHtml(focus.title)}</h2>
+        <h2>${escapeHtml(ensureSentence(focus.title))}</h2>
         <h3>Why this matters</h3>
         <p>${escapeHtml(focus.evidence || "Your focus will sharpen after sync.")}</p>
         ${button({ label: "View Focus Details", variant: "primary", action: "open-focus-detail", attrs: `data-focus-id="${escapeHtml(focus.id || "")}"` })}
       </div>
       <aside class="today-focus-stack" aria-label="Focus confidence and impact">
-        ${confidencePill(focus.confidence || 78)}
-        ${impactPill(focus.impact || focus.priority || "Medium")}
+        ${renderSignalStat("Confidence", focus.confidence ? percent(focus.confidence) : "Pending")}
+        ${renderSignalStat("Impact", focus.impact || focus.priority || "Medium")}
       </aside>
-      <div class="today-focus-art"><div class="agent-art-frame">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="">` : icon("focus-queue", { size: 98 })}</div></div>
+      <div class="today-focus-art">${agentImage ? `<img src="${escapeHtml(agentImage)}" alt="" loading="lazy">` : icon("focus-queue", { size: 98 })}</div>
     </section>
   `;
 }
@@ -534,8 +638,15 @@ function renderCompassRadar(pillars = [], size = 260) {
   }).join("");
   const axes = data.map((pillar, index) => {
     const end = radarPoint(center, center, radius, angles[index], 100);
-    const label = radarPoint(center, center, radius + 30, angles[index], 100);
-    return `<line x1="${center}" y1="${center}" x2="${end.x}" y2="${end.y}" /><text x="${label.x}" y="${label.y}" text-anchor="middle" dominant-baseline="middle">${escapeHtml(pillar.short)}</text>`;
+    const label = radarPoint(center, center, radius + 14, angles[index], 100);
+    const anchor = label.x < center - 12 ? "end" : label.x > center + 12 ? "start" : "middle";
+    return `
+      <line x1="${center}" y1="${center}" x2="${end.x}" y2="${end.y}" />
+      <text class="compass-axis-label compass-label-${index}" x="${label.x}" y="${label.y}" text-anchor="${anchor}" dominant-baseline="middle">
+        <tspan class="compass-axis-name" x="${label.x}">${escapeHtml(pillar.short)}</tspan>
+        <tspan class="compass-axis-value" x="${label.x}" dy="13">${whole(pillar.score)}/100</tspan>
+      </text>
+    `;
   }).join("");
   const polygon = data.map((pillar, index) => {
     const point = radarPoint(center, center, radius, angles[index], pillar.score);
@@ -553,21 +664,13 @@ function renderCompassMini(model = {}) {
   const avg = pillars.reduce((sum, item) => sum + Number(item.score || 0), 0) / Math.max(1, pillars.length);
   const strongest = pillars.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0))[0];
   const weakest = pillars.slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
-  const tiles = pillars.map((pillar, index) => `
-    <button class="compass-pillar-tile compact pillar-${index}" type="button" data-review-tab="stats" data-review-category="${escapeHtml(pillar.key)}">
-      ${pillarIcon(pillar.key)}
-      <span>${escapeHtml(pillar.short)}</span>
-      <strong>${whole(pillar.score)}<small>/100</small></strong>
-    </button>
-  `).join("");
   return card({
     eyebrow: "Compass",
     title: `${whole(avg)}/100 overall`,
     className: "play-card compass-mini-card",
     body: `
       <div class="compass-shell">
-        <div class="compass-pillar-grid">${tiles}</div>
-        <div class="compass-radar-wrap">${renderCompassRadar(pillars)}</div>
+        <div class="compass-radar-wrap">${renderCompassRadar(pillars, 320)}</div>
       </div>
       <p class="compass-summary-copy">Strongest: <strong>${escapeHtml(strongest?.short || "—")}</strong>. Needs work: <strong>${escapeHtml(weakest?.short || "—")}</strong>.</p>
     `
@@ -592,6 +695,7 @@ function renderImprovementTimeline(model = {}) {
             <span>${escapeHtml(pillar.short)}</span>
             <strong>${whole(pillar.score)}<small>/100</small></strong>
             <em class="${Number(pillar.delta || 0) >= 0 ? "semantic-win" : "semantic-loss"}">${formatDelta(pillar.delta || 0)}</em>
+            ${spark(pillarTrendSeries(pillar.key, model.records || []), 100, `timeline-${pillar.key}`)}
           </button>
         `).join("")}
       </div>
@@ -636,17 +740,29 @@ function renderCurrentRankCard(model = {}) {
             <span>Last ACS <strong>${finite(latest.stats?.acs) ? whole(latest.stats.acs) : "—"}</strong></span>
           </div>
         </div>
+        <div class="current-last-match-strip" aria-label="Last match stat strip">
+          ${[
+            ["K/D/A", lastMatchMetricValue(latest, "kda")],
+            ["KAST", lastMatchMetricValue(latest, "kast")],
+            ["ADR", lastMatchMetricValue(latest, "adr")],
+            ["ACS", lastMatchMetricValue(latest, "acs")],
+            ["HS%", lastMatchMetricValue(latest, "hs")]
+          ].map(([label, value]) => `<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>`).join("")}
+        </div>
       </div>
     `
   });
 }
 
 function renderRRTrendMini(model = {}) {
-  const records = (model.records || []).slice(0, 20).reverse();
-  const values = records.map((record, index) => {
+  const allRecent = (model.records || []).slice(0, 20);
+  const records = allRecent
+    .filter(record => finite(rankAbsoluteRR(record.rank?.rank, record.rank?.rr)) && record.playedAt)
+    .reverse();
+  const values = records.map(record => {
     const absolute = rankAbsoluteRR(record.rank?.rank, record.rank?.rr);
     return {
-      value: finite(absolute) ? Number(absolute) : index,
+      value: Number(absolute),
       date: record.playedAt,
       delta: Number(record.rank?.rrDelta || 0)
     };
@@ -670,6 +786,9 @@ function renderRRTrendMini(model = {}) {
   const latest = points[points.length - 1];
   const rank = currentRank(model);
   const rawDelta = records.reduce((sum, record) => sum + Number(record.rank?.rrDelta || 0), 0);
+  const emptyMessage = !points.length
+    ? `<text class="rr-empty-label" x="130" y="50" text-anchor="middle">RR snapshots unavailable for this window</text>`
+    : "";
   return card({
     eyebrow: "RR Trend",
     title: "Rank line (Last 20 Matches)",
@@ -679,7 +798,7 @@ function renderRRTrendMini(model = {}) {
       <svg class="rr-trend-chart" viewBox="0 0 260 96" role="img" aria-label="Last 20 match RR trend">
         <defs><linearGradient id="rrTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--rc-success)" stop-opacity=".48"/><stop offset="100%" stop-color="var(--rc-success)" stop-opacity="0"/></linearGradient></defs>
         ${ticks.map(value => `<g class="rr-grid-line"><text x="4" y="${y(value).toFixed(1)}" dominant-baseline="middle">${whole(value)} RR</text><line x1="${plot.left}" x2="${plot.right}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}"></line></g>`).join("")}
-        ${areaPoints ? `<polygon class="rr-trend-fill" points="${areaPoints}"></polygon><polyline class="rr-trend-line" points="${pointString}"></polyline>` : ""}
+        ${areaPoints ? `<polygon class="rr-trend-fill" points="${areaPoints}"></polygon><polyline class="rr-trend-line" points="${pointString}"></polyline>` : emptyMessage}
         ${[peak, valley, latest].filter(Boolean).map(point => `<circle class="rr-trend-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.1"></circle>`).join("")}
         ${dateIndexes.map(index => {
           const point = points[index];
@@ -694,12 +813,27 @@ function renderRRTrendMini(model = {}) {
 
 function renderTopInsight(model = {}) {
   const insight = getPriorityInsight(model);
+  const conclusion = humanizeInsightTitle(insight);
+  const explanation = buildInsightExplanation(insight);
+  const takeaways = buildInsightTakeaways(insight);
   return card({
     eyebrow: "Top Insight",
-    title: insight.title || "No insight yet",
+    title: conclusion,
     className: "play-card top-insight-card",
-    body: `<p>${escapeHtml(insight.preview || insight.action || "Sync an account to generate the strongest impact read.")}</p><div class="insight-confidence-row">${impactPill(insight.impact || insight.priority || "High")}${confidencePill(insight.confidence || 88)}</div>`,
-    footer: button({ label: "View Insight", variant: "secondary", action: "open-insight-detail" })
+    body: `
+      <div class="top-insight-layout">
+        <div class="top-insight-main">
+          <span>Your biggest takeaway</span>
+          <p>${escapeHtml(explanation)}</p>
+          <div class="insight-confidence-row">${impactPill(insight.impact || insight.priority || "High")}${confidencePill(insight.confidence || 88)}</div>
+          ${button({ label: "View All Insights", variant: "secondary", attrs: `data-review-tab="insights"` })}
+        </div>
+        <aside class="top-insight-takeaways">
+          <h3>Key Takeaways</h3>
+          <ul>${takeaways.map(item => `<li>${escapeHtml(ensureSentence(item))}</li>`).join("")}</ul>
+        </aside>
+      </div>
+    `
   });
 }
 
@@ -748,10 +882,11 @@ function renderLastMatchBanner(model = {}, appState = {}) {
 
 function renderReferenceRow() {
   const cards = [
-    ["Review", "Open match history", "all-reflections", `data-review-tab="all-matches"`],
-    ["Library", "Maps, agents, weapons", "map-notes", `data-page-jump="library"`],
-    ["Learn", "Training references", "agent-tips", `data-page-jump="learn"`],
-    ["Settings", "Customize beta", "settings", `data-page-jump="settings"`]
+    ["Play A Match", "Open pre-game prep", "play", `data-action="open-loadout-flow"`],
+    ["Review Match", "Open match history", "all-reflections", `data-review-tab="all-matches"`],
+    ["Practice", "Warm-up and reps", "review", `data-page-jump="learn" data-learn-query="practice"`],
+    ["Study a Map", "Map notes and plans", "map-notes", `data-page-jump="learn" data-learn-query="maps"`],
+    ["Strategy Library", "Agents, maps, weapons", "library", `data-page-jump="library"`]
   ];
   return `<section class="play-reference-row" aria-label="Quick Actions"><header><p class="rc-eyebrow">Quick Actions</p></header>${cards.map(([title, sub, iconName, attrs]) => `<button type="button" ${attrs}>${icon(iconName)}<span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span></button>`).join("")}</section>`;
 }
