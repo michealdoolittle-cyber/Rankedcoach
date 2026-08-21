@@ -1,0 +1,2 @@
+/* Breakpoints from the validated reference, including the 720px sidebar collapse. */
+ @media (max-width:920px){.layout-main,.layout-rail,.layout-detail,.grid.three,.grid.four,.grid.five,.grid.six{grid-template-columns:1fr}}@media (max-width:720px){body{padding:8px}.shell{grid-template-columns:1fr;min-height:760px}.sidebar{display:none}.topbar{height:auto;min-height:58px;align-items:flex-start;padding:12px;flex-direction:column}.topbar-actions{justify-content:flex-start}.grid.two{grid-template-columns:1fr}}
