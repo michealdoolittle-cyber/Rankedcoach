@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Foundation Shell</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,7 +104,32 @@
   .demo-note{display:flex;align-items:center;gap:8px;margin-top:var(--rc-gap);color:var(--rc-text-3);font-size:10.5px;}
   .state-dot{width:6px;height:6px;border-radius:50%;background:var(--rc-border-strong);}
   .state-dot.on{background:var(--rc-brand-strong);}
+  .module-row{display:grid;gap:var(--rc-gap);grid-template-columns:repeat(auto-fit,minmax(145px,1fr));}
+  .rail-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(190px,18vw,260px);gap:var(--rc-gap);}
+  .detail-layout{display:grid;grid-template-columns:minmax(210px,0.9fr) minmax(0,1.6fr);gap:var(--rc-gap);}
+  .split-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rc-gap);}
+  .stack{display:grid;gap:var(--rc-gap);}
+  .mini-list{display:grid;gap:7px;}
+  .mini-line{height:clamp(26px,2.4vw,34px);border-radius:7px;border:1px dashed var(--rc-border-subtle);background:rgba(255,255,255,.025);display:flex;align-items:center;padding:0 10px;color:var(--rc-text-3);font-size:10px;font-weight:650;}
+  .section-kicker{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--rc-text-3);margin:0 0 7px;}
+  .modal-demo{position:fixed;inset:auto clamp(18px,3vw,44px) clamp(18px,3vw,44px) auto;width:min(520px,calc(100vw - 36px));max-height:min(72vh,620px);overflow:auto;background:#0b1220;border:1px solid var(--rc-brand-strong);box-shadow:0 18px 80px rgba(0,0,0,.55);border-radius:14px;padding:18px;z-index:30;display:none;}
+  .modal-demo.open{display:block;animation:pagein .2s cubic-bezier(.2,.8,.2,1);}
+  .mobile-frame{width:min(360px,100%);min-height:620px;border-radius:28px;border:1px solid var(--rc-border-strong);background:#070b12;padding:16px;margin:auto;display:grid;grid-template-rows:auto 1fr auto;gap:var(--rc-gap);}
+  .mobile-bottom-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--rc-border-subtle);padding-top:10px;}
+  .mobile-tab{min-height:46px;border-radius:12px;background:var(--rc-surface-2);border:1px solid var(--rc-border-strong);display:grid;place-items:center;color:var(--rc-text-2);font-size:10px;font-weight:800;text-transform:uppercase;}
+  .mobile-tab.active{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));color:#100924;}
+  .page-note{border:1px solid rgba(167,139,250,.35);background:rgba(139,92,246,.08);border-radius:9px;padding:10px 12px;color:var(--rc-text-2);font-size:11px;margin-bottom:var(--rc-gap);}
+  .query-link{color:var(--rc-brand-strong);text-decoration:none;font-weight:800;}
+  @media (max-width:720px){
+    body{padding:8px;}
+    .shell{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .rail-layout,.detail-layout,.split-layout{grid-template-columns:1fr;}
+    .topbar{height:auto;min-height:54px;}
+  }
 </style>
+</head>
+<body>
 
 <div class="meta">
   <h1>Foundation Shell — structure only, no real data, no final styling</h1>
@@ -120,8 +150,10 @@
       <div class="nav-item" data-page="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V14M10 19V10M16 19V6"/></svg>Review</div>
       <div class="nav-item" data-page="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Learn</div>
       <div class="nav-item" data-page="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Library</div>
+      <div class="nav-item" data-page="mobile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path d="M10 18.5h4"/></svg>Mobile Ref</div>
       <div class="nav-label">Tools</div>
       <div class="nav-item" data-page="logmatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg>Log Match</div>
+      <div class="nav-item" data-page="matchsaved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.5 10 17l9-10"/></svg>Match Saved</div>
       <div class="nav-item" data-page="loadout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>Loadout</div>
       <div class="nav-item" data-page="focusqueue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Focus Queue</div>
       <div class="nav-item" data-page="ingame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>In-Game</div>
@@ -160,88 +192,215 @@
           </div>
         </section>
 
-        <!-- REVIEW -->
+        <!-- REVIEW + STATS -->
         <section class="page" id="page-review">
+          <div class="page-note">Groups 2 and 3: Review is the analysis hub. Stats stays inside Review as its own sub-system instead of becoming a competing top-level page.</div>
           <div class="tabrow">
-            <button class="active" data-tab="rv-performance">Performance</button>
-            <button data-tab="rv-timeline">Timeline</button>
-            <button data-tab="rv-insights">Insights</button>
-            <button data-tab="rv-reflections">Reflection Matches</button>
+            <button class="active" data-tab="rv-overview">Overview</button>
+            <button data-tab="rv-timeline">Improvement Timeline</button>
+            <button data-tab="rv-insights">Insights List</button>
+            <button data-tab="rv-insight-detail">Insight Detail</button>
             <button data-tab="rv-matches">All Matches</button>
-            <button data-tab="rv-stats">Stats</button>
+            <button data-tab="rv-match-detail">Match Detail</button>
+            <button data-tab="rv-stats">Stats System</button>
           </div>
-          <div id="rv-performance" class="rv-tab">
-            <div class="skel-grid" style="grid-template-columns:1fr 2fr 1fr;">
-              <div class="skel accent-review"><div class="skel-tag">Overview</div></div>
-              <div class="skel accent-review"><div class="skel-tag">Performance Chart</div></div>
-              <div class="skel accent-review"><div class="skel-tag">Coach Summary</div></div>
-            </div>
-            <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:var(--rc-gap);">
-              <div class="skel accent-review"><div class="skel-tag">Last Matches</div></div>
-              <div class="skel accent-review"><div class="skel-tag">Compass Breakdown</div></div>
-              <div class="skel accent-review"><div class="skel-tag">Maps / Weapons / Agents</div></div>
+          <div id="rv-overview" class="rv-tab">
+            <div class="rail-layout">
+              <div class="stack">
+                <div class="skel accent-review" style="min-height:150px;"><div class="skel-tag">Current Read Hero</div><div class="skel-desc">Highest priority conclusion, evidence text, and primary action.</div></div>
+                <div class="module-row">
+                  <div class="skel accent-review"><div class="skel-tag">Recent Signals</div></div>
+                  <div class="skel accent-review"><div class="skel-tag">Role Snapshot</div></div>
+                  <div class="skel accent-review"><div class="skel-tag">Queue Health</div></div>
+                </div>
+              </div>
+              <div class="skel accent-review"><div class="skel-tag">Next Review Action</div><div class="skel-desc">Open insight, log missing reflection, or jump to Learn.</div></div>
             </div>
           </div>
-          <div id="rv-timeline" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Improvement Timeline (full)</div><div class="skel-desc">Category strip + trend graph + match markers.</div></div></div>
-          <div id="rv-insights" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Insights list</div><div class="skel-desc">Prioritized list, status/impact/confidence per row.</div></div></div>
-          <div id="rv-reflections" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Reflection Matches</div><div class="skel-desc">Table: result, map, score, RR change, focus, date.</div></div></div>
-          <div id="rv-matches" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">All Matches</div><div class="skel-desc">Filterable table, full history.</div></div></div>
-          <div id="rv-stats" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Stats</div><div class="skel-desc">Overview / Weapons / Agents / Maps sub-tabs.</div></div></div>
+          <div id="rv-timeline" class="rv-tab" style="display:none;">
+            <div class="detail-layout">
+              <div class="skel accent-review"><div class="skel-tag">Timeline Filters</div><div class="skel-desc">Season, role, map, category, confidence.</div></div>
+              <div class="skel accent-review" style="min-height:270px;"><div class="skel-tag">Improvement Timeline</div><div class="skel-desc">Trend line, match markers, promoted cards, stable y-axis region.</div></div>
+            </div>
+          </div>
+          <div id="rv-insights" class="rv-tab" style="display:none;">
+            <div class="rail-layout">
+              <div class="mini-list">
+                <div class="mini-line">Insight row — tone, category, media, confidence, status</div>
+                <div class="mini-line">Insight row — needs work</div>
+                <div class="mini-line">Insight row — watch</div>
+                <div class="mini-line">Insight row — strength</div>
+                <div class="mini-line">Insight row — archived / dismissed state</div>
+              </div>
+              <div class="skel accent-review"><div class="skel-tag">Filters + Sort</div><div class="skel-desc">All / Needs Work / Watch / Strengths, active match window, role.</div></div>
+            </div>
+          </div>
+          <div id="rv-insight-detail" class="rv-tab" style="display:none;">
+            <div class="tabrow">
+              <button class="active" data-tab="ins-overview">Overview</button>
+              <button data-tab="ins-evidence">Evidence</button>
+              <button data-tab="ins-improve">How to Improve</button>
+              <button data-tab="ins-related">Related</button>
+            </div>
+            <div id="ins-overview" class="subpane"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Insight Overview</div><div class="skel-desc">Plain-language read, status, impact, confidence, and priority.</div></div></div>
+            <div id="ins-evidence" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Evidence Stats + Example Rounds</div><div class="skel-desc">Stats, matches, example rounds, seen-in-maps/agents breakdowns.</div></div></div>
+            <div id="ins-improve" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">How to Improve</div><div class="skel-desc">Concrete next-match behavior, short and measurable.</div></div></div>
+            <div id="ins-related" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:210px;"><div class="skel-tag">Related Concepts</div><div class="skel-desc">Chips that make a single hop into Learn, not a duplicate lesson page.</div></div></div>
+          </div>
+          <div id="rv-matches" class="rv-tab" style="display:none;">
+            <div class="rail-layout">
+              <div class="skel accent-review" style="min-height:270px;"><div class="skel-tag">All Matches Table</div><div class="skel-desc">Ranked-only history, search, season window, synced/reflected/unverified states.</div></div>
+              <div class="skel accent-review"><div class="skel-tag">Match Filters</div><div class="skel-desc">Agent, role, map, weapon category, result, reflection status.</div></div>
+            </div>
+          </div>
+          <div id="rv-match-detail" class="rv-tab" style="display:none;">
+            <div class="tabrow">
+              <button class="active" data-tab="md-overview">Overview</button>
+              <button data-tab="md-scoreboard">Scoreboard</button>
+              <button data-tab="md-performance">Performance</button>
+              <button data-tab="md-focus">Focus Adherence</button>
+              <button data-tab="md-roundbreakdown">Round Breakdown</button>
+              <button data-tab="md-matchinsights">Insights</button>
+            </div>
+            <div id="md-overview" class="subpane"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Match Overview</div></div><div class="skel accent-review"><div class="skel-tag">Score + RR</div></div><div class="skel accent-review"><div class="skel-tag">Agent + Role</div></div></div></div>
+            <div id="md-scoreboard" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Scoreboard</div><div class="skel-desc">Team rows, K/D/A, ACS, side split.</div></div></div>
+            <div id="md-performance" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Performance</div><div class="skel-desc">Selectable stat cards and trend graph.</div></div></div>
+            <div id="md-focus" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Focus Adherence</div><div class="skel-desc">Rolled focus, reflection score, and what carried over.</div></div></div>
+            <div id="md-roundbreakdown" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Round Breakdown Grid</div><div class="skel-desc">Timeline, economy, weapons, outcomes, overtime grouping.</div></div></div>
+            <div id="md-matchinsights" class="subpane" style="display:none;"><div class="skel accent-review" style="min-height:230px;"><div class="skel-tag">Related Insights Rail</div></div></div>
+          </div>
+          <div id="rv-stats" class="rv-tab" style="display:none;">
+            <div class="tabrow">
+              <button class="active" data-tab="stats-overview">Overview</button>
+              <button data-tab="stats-weapons">Weapons</button>
+              <button data-tab="stats-agents">Agents</button>
+              <button data-tab="stats-maps">Maps</button>
+            </div>
+            <div id="stats-overview" class="subpane">
+              <div class="module-row"><div class="skel accent-review"><div class="skel-tag">6-Stat Summary Strip</div><div class="skel-desc">Value, percentile, and delta.</div></div><div class="skel accent-review"><div class="skel-tag">Trend Chart</div></div><div class="skel accent-review"><div class="skel-tag">Results Breakdown</div></div><div class="skel accent-review"><div class="skel-tag">Most-Played Role</div></div></div>
+              <div class="split-layout" style="margin-top:var(--rc-gap);"><div class="skel accent-review"><div class="skel-tag">Strengths List</div></div><div class="skel accent-review"><div class="skel-tag">Weaknesses List</div></div></div>
+            </div>
+            <div id="stats-weapons" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Most-Used Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Best Performers Row</div></div><div class="skel accent-review"><div class="skel-tag">Accuracy Gauge</div></div></div></div>
+            <div id="stats-agents" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Most-Played Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Role Performance Mini-Radar</div></div></div></div>
+            <div id="stats-maps" class="subpane" style="display:none;"><div class="module-row"><div class="skel accent-review"><div class="skel-tag">Best-Map Hero Card</div></div><div class="skel accent-review"><div class="skel-tag">Breakdown Table</div></div><div class="skel accent-review"><div class="skel-tag">Win-Rate Ranked List</div></div><div class="skel accent-review"><div class="skel-tag">Round-Differential Widget</div></div></div></div>
+          </div>
         </section>
 
         <!-- LEARN -->
         <section class="page" id="page-learn">
-          <div class="skel-grid" style="grid-template-columns:repeat(4,1fr);">
-            <div class="skel accent-learn"><div class="skel-tag">Maps</div></div>
-            <div class="skel accent-learn"><div class="skel-tag">Agents</div></div>
-            <div class="skel accent-learn"><div class="skel-tag">Concepts</div></div>
-            <div class="skel accent-learn"><div class="skel-tag">Situations</div></div>
+          <div class="page-note">Group 4: Learn is the durable teaching space. Insights can jump here once, but lessons do not become another analytics dashboard.</div>
+          <div class="tabrow">
+            <button class="active" data-tab="ln-categories">Categories</button>
+            <button data-tab="ln-topic">Topic / Lesson</button>
+            <button data-tab="ln-map">Map Detail</button>
+            <button data-tab="ln-agent">Agent Guide</button>
+            <button data-tab="ln-queue">Learning Queue</button>
+            <button data-tab="ln-search">Search Overlay</button>
           </div>
-          <div class="skel-grid" style="grid-template-columns:1fr 1fr;margin-top:var(--rc-gap);">
-            <div class="skel accent-learn"><div class="skel-tag">Popular Topics</div></div>
-            <div class="skel accent-learn"><div class="skel-tag">Recommended For You</div></div>
+          <div id="ln-categories" class="ln-tab">
+            <div class="module-row">
+              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Maps Category</div><div class="skel-desc">Map list, pool state, map notes, plant/default routes.</div></div>
+              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Agents Category</div><div class="skel-desc">Role lanes, agent fundamentals, ability demos.</div></div>
+              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Concepts Category</div><div class="skel-desc">Trading, spacing, economy, retake, tempo, discipline.</div></div>
+              <div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Situations Category</div><div class="skel-desc">2vX, post-plant, anti-eco, bonus, overtime.</div></div>
+            </div>
+            <div class="split-layout" style="margin-top:var(--rc-gap);">
+              <div class="skel accent-learn"><div class="skel-tag">Insight → Learn Single Hop</div><div class="skel-desc">One CTA from a read to the relevant lesson; no circular browsing trap.</div></div>
+              <div class="skel accent-learn"><div class="skel-tag">Focus From Lesson</div><div class="skel-desc">Confirmation route before adding a lesson outcome to focus queue.</div></div>
+            </div>
           </div>
-          <div class="skel accent-learn" style="margin-top:var(--rc-gap);"><div class="skel-tag">Recently Viewed</div></div>
+          <div id="ln-topic" class="ln-tab" style="display:none;">
+            <div class="rail-layout">
+              <div class="stack">
+                <div class="split-layout">
+                  <div class="skel accent-learn" style="min-height:170px;"><div class="skel-tag">Video Header</div><div class="skel-desc">Lesson video frame and source/status metadata.</div></div>
+                  <div class="skel accent-learn" style="min-height:170px;"><div class="skel-tag">Takeaways Header</div><div class="skel-desc">3-5 punchy conclusions before the full body.</div></div>
+                </div>
+                <div class="tabrow">
+                  <button class="active" data-tab="lesson-overview">Overview</button>
+                  <button data-tab="lesson-examples">Examples</button>
+                  <button data-tab="lesson-drills">Practice Drills</button>
+                  <button data-tab="lesson-notes">Notes</button>
+                </div>
+                <div id="lesson-overview" class="subpane"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Lesson Body — Overview</div></div></div>
+                <div id="lesson-examples" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Examples</div></div></div>
+                <div id="lesson-drills" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Practice Drills</div></div></div>
+                <div id="lesson-notes" class="subpane" style="display:none;"><div class="skel accent-learn" style="min-height:150px;"><div class="skel-tag">Notes</div></div></div>
+              </div>
+              <div class="stack">
+                <div class="skel accent-learn"><div class="skel-tag">Strengths / Weaknesses</div></div>
+                <div class="skel accent-learn"><div class="skel-tag">Up Next</div></div>
+                <div class="skel accent-learn"><div class="skel-tag">Add to Focus</div></div>
+              </div>
+            </div>
+          </div>
+          <div id="ln-map" class="ln-tab" style="display:none;"><div class="detail-layout"><div class="skel accent-learn"><div class="skel-tag">Map Selector + Pool State</div></div><div class="skel accent-learn" style="min-height:300px;"><div class="skel-tag">Map Detail</div><div class="skel-desc">Map art, callout/plant layer, attack/defense notes, comp hooks.</div></div></div></div>
+          <div id="ln-agent" class="ln-tab" style="display:none;"><div class="detail-layout"><div class="skel accent-learn"><div class="skel-tag">Agent Selector</div></div><div class="skel accent-learn" style="min-height:300px;"><div class="skel-tag">Agent Guide</div><div class="skel-desc">Role identity, ability grid, ability video region, map fit, routines.</div></div></div></div>
+          <div id="ln-queue" class="ln-tab" style="display:none;"><div class="skel accent-learn" style="min-height:260px;"><div class="skel-tag">Learning Queue</div><div class="skel-desc">Pinned lessons, in-progress lessons, completed history, next suggested lesson.</div></div></div>
+          <div id="ln-search" class="ln-tab" style="display:none;"><div class="skel accent-learn" style="min-height:260px;"><div class="skel-tag">Search Overlay</div><div class="skel-desc">Global query, type filters, keyboard/touch-safe results list.</div></div></div>
         </section>
 
         <!-- LIBRARY -->
         <section class="page" id="page-library">
-          <div class="skel-grid" style="grid-template-columns:repeat(5,1fr);">
-            <div class="skel accent-library"><div class="skel-tag">Lineups</div></div>
-            <div class="skel accent-library"><div class="skel-tag">Routines</div></div>
-            <div class="skel accent-library"><div class="skel-tag">Notes</div></div>
-            <div class="skel accent-library"><div class="skel-tag">Collections</div></div>
-            <div class="skel accent-library"><div class="skel-tag">Watch Later</div></div>
+          <div class="page-note">Group 5: Library is personal storage and playback. It references learning resources, but it does not replace Learn.</div>
+          <div class="tabrow">
+            <button class="active" data-tab="lib-dashboard">Dashboard</button>
+            <button data-tab="lib-lineups">Lineups</button>
+            <button data-tab="lib-routines">Routines</button>
+            <button data-tab="lib-notes">Notes</button>
+            <button data-tab="lib-collections">Collections</button>
+            <button data-tab="lib-watch">Watch Later</button>
           </div>
-          <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:var(--rc-gap);">
-            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Saved Lineups</div></div>
-            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Routines list</div></div>
-            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Recent Notes</div></div>
-            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Collections</div></div>
+          <div id="lib-dashboard" class="lib-tab">
+            <div class="module-row">
+              <div class="skel accent-library"><div class="skel-tag">Metric Strip</div><div class="skel-desc">Saved items, unfinished videos, lineups, routines.</div></div>
+              <div class="skel accent-library"><div class="skel-tag">Recent Activity</div></div>
+              <div class="skel accent-library"><div class="skel-tag">Most Used</div></div>
+              <div class="skel accent-library"><div class="skel-tag">Recently Viewed</div></div>
+            </div>
+            <div class="skel accent-library" style="min-height:190px;margin-top:var(--rc-gap);"><div class="skel-tag">Resource Dashboard Feed</div><div class="skel-desc">No public transcript/claim data here; published library metadata only.</div></div>
           </div>
+          <div id="lib-lineups" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Lineups Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Map, agent, site, side, difficulty.</div></div></div></div>
+          <div id="lib-routines" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Routines Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Aim, movement, warm-up, post-match.</div></div></div></div>
+          <div id="lib-notes" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Notes Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Source, tag, date, match, map.</div></div></div></div>
+          <div id="lib-collections" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Collections Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Custom packs, map study packs, creator packs.</div></div></div></div>
+          <div id="lib-watch" class="lib-tab" style="display:none;"><div class="rail-layout"><div class="skel accent-library" style="min-height:300px;"><div class="skel-tag">Watch Later Main List</div></div><div class="skel accent-library"><div class="skel-tag">Filters + Right Rail</div><div class="skel-desc">Video category, watched state, creator, saved date.</div></div></div></div>
         </section>
 
         <!-- SETTINGS -->
         <section class="page" id="page-settings">
+          <div class="page-note">Group 6: Settings owns account/config surfaces, component references, and global overlay demos. The visual picker still stays exempt from styling itself recursively.</div>
           <div class="tabrow">
             <button class="active" data-tab="st-profile">Profile</button>
-            <button data-tab="st-pipeline">Pipeline</button>
-            <button data-tab="st-visual">Visual</button>
             <button data-tab="st-notifications">Notifications</button>
             <button data-tab="st-integrations">Integrations</button>
             <button data-tab="st-billing">Billing</button>
+            <button data-tab="st-pipeline">Pipeline</button>
+            <button data-tab="st-visual">Visual</button>
+            <button data-tab="st-components">Components</button>
+            <button data-tab="st-overlays">Overlays</button>
           </div>
-          <div id="st-profile" class="st-tab"><div class="skel" style="min-height:200px;"><div class="skel-tag">Profile</div><div class="skel-desc">Account identity, region, goal rank.</div></div></div>
-          <div id="st-pipeline" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Pipeline</div><div class="skel-desc">Preset list + live preview + builder.</div></div></div>
-          <div id="st-visual" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Visual</div><div class="skel-desc">Theme/palette/icon/density/motion workstation.</div></div></div>
-          <div id="st-notifications" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Notifications</div></div></div>
-          <div id="st-integrations" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Integrations</div><div class="skel-desc">Riot, Discord, etc. connection cards.</div></div></div>
-          <div id="st-billing" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Billing</div></div></div>
+          <div id="st-profile" class="st-tab"><div class="module-row"><div class="skel"><div class="skel-tag">Profile Identity</div></div><div class="skel"><div class="skel-tag">Rank + Goal</div></div><div class="skel"><div class="skel-tag">Customization Entry</div></div></div></div>
+          <div id="st-notifications" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Notification Settings</div><div class="skel-desc">Match detected, app updates, sync failed, new videos, patch notes.</div></div></div>
+          <div id="st-integrations" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Integrations</div><div class="skel-desc">Riot, Discord, YouTube review tools, storage state.</div></div></div>
+          <div id="st-billing" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Billing</div><div class="skel-desc">Plan card, checkout, payment state, invoices.</div></div></div>
+          <div id="st-pipeline" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Knowledge Pipeline</div><div class="skel-desc">Review queue, approved queue, rejected bin, publish/process controls.</div></div></div>
+          <div id="st-visual" class="st-tab" style="display:none;"><div class="skel" style="min-height:220px;"><div class="skel-tag">Visual Customization</div><div class="skel-desc">Theme, layout style, profile border, avatar, banner, motion mode.</div></div></div>
+          <div id="st-components" class="st-tab" style="display:none;"><div class="module-row"><div class="skel"><div class="skel-tag">Buttons</div></div><div class="skel"><div class="skel-tag">Cards</div></div><div class="skel"><div class="skel-tag">Pills</div></div><div class="skel"><div class="skel-tag">Charts</div></div></div></div>
+          <div id="st-overlays" class="st-tab" style="display:none;">
+            <div class="module-row">
+              <button class="btn primary" data-modal="modal-search">Global Search</button>
+              <button class="btn primary" data-modal="modal-notifications">Notifications Drawer</button>
+              <button class="btn primary" data-modal="modal-profile">Profile Popover</button>
+              <button class="btn primary" data-modal="modal-checkout">Checkout</button>
+            </div>
+          </div>
         </section>
 
         <!-- LOG MATCH -->
         <section class="page" id="page-logmatch">
-          <div class="skel-grid" style="grid-template-columns:1fr;">
+          <div class="page-note">Group 1: the Log Match form stays eight sections and routes to a confirmation screen after save.</div>
+          <div class="skel-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
             <div class="skel"><div class="skel-tag">1. Result</div></div>
             <div class="skel"><div class="skel-tag">2. RR Change</div></div>
             <div class="skel"><div class="skel-tag">3. Match Details</div></div>
@@ -251,48 +410,81 @@
             <div class="skel"><div class="skel-tag">7. Reflection</div></div>
             <div class="skel"><div class="skel-tag">8. Focus Adherence</div></div>
           </div>
+          <button class="btn primary" style="margin-top:var(--rc-gap);" data-jump="matchsaved">Save -> Match Saved</button>
+        </section>
+
+        <!-- MATCH SAVED -->
+        <section class="page" id="page-matchsaved">
+          <div class="detail-layout">
+            <div class="skel" style="min-height:260px;align-items:center;justify-content:center;text-align:center;"><div class="skel-tag">Match Saved Confirmation</div><div class="skel-desc">Success state, next best action, and safe route back to Play or Review.</div></div>
+            <div class="stack">
+              <div class="skel"><div class="skel-tag">Dashboard Update Preview</div><div class="skel-desc">Which home widgets changed from this saved reflection.</div></div>
+              <div class="skel"><div class="skel-tag">Reflection Detail</div><div class="skel-desc">Saved note, linked match, source status, edit affordance.</div></div>
+              <div class="module-row"><button class="btn primary" data-jump="play">Back to Play</button><button class="btn" data-jump="review">Review match</button></div>
+            </div>
+          </div>
         </section>
 
         <!-- LOADOUT (full route) -->
         <section class="page" id="page-loadout">
           <div class="demo-note" style="margin-bottom:var(--rc-gap);">
-            <span class="state-dot on" data-state="idle"></span><span class="state-dot" data-state="spinning"></span><span class="state-dot" data-state="generated"></span>
+            <span class="state-dot on"></span><span class="state-dot"></span><span class="state-dot"></span><span class="state-dot"></span><span class="state-dot"></span>
             <span id="loadoutStateLabel">State: Idle</span>
             <button class="btn primary" id="loadoutCycle" style="margin-left:8px;">Cycle state →</button>
           </div>
-          <div class="skel" id="loadoutIdle" style="min-height:260px;align-items:center;justify-content:center;text-align:center;">
-            <div class="skel-tag">Idle</div><div class="skel-desc">Map / Role / Agent selects + Spin action.</div>
+          <div class="skel loadout-state" id="loadoutIdle" style="min-height:280px;align-items:center;justify-content:center;text-align:center;">
+            <div class="skel-tag">Idle</div><div class="skel-desc">Map / role / optional one-trick controls, no hidden generated state.</div>
           </div>
-          <div class="skel" id="loadoutSpinning" style="min-height:260px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Spinning</div><div class="skel-desc">Resolver animation, ~3.5s minimum.</div>
+          <div class="skel loadout-state" id="loadoutSpinning" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Spinning</div><div class="skel-desc">Resolver animation, locked-in banner, no jarring flash.</div>
           </div>
-          <div class="skel" id="loadoutGenerated" style="min-height:260px;align-items:center;justify-content:center;text-align:center;display:none;">
-            <div class="skel-tag">Generated</div><div class="skel-desc">Vertical result, art right, Start Match.</div>
+          <div class="skel loadout-state" id="loadoutGenerated" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Generated</div><div class="skel-desc">Agent, map, focus, why, and Start Match.</div>
+          </div>
+          <div class="skel loadout-state" id="loadoutStarted" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Started</div><div class="skel-desc">Active loadout is preserved until match completion or user clears it.</div>
+          </div>
+          <div class="skel loadout-state" id="loadoutPartial" style="min-height:280px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Error / Partial</div><div class="skel-desc">Graceful recovery if map, role, or data source is temporarily unavailable.</div>
           </div>
         </section>
 
-        <!-- FOCUS QUEUE -->
+        <!-- FOCUS DETAILS -->
         <section class="page" id="page-focusqueue">
-          <div class="skel" style="min-height:140px;"><div class="skel-tag">Current Focus Deep-Dive</div><div class="skel-desc">Statement, why it matters, what to do, success looks like.</div></div>
-          <div class="skel-grid" style="grid-template-columns:repeat(3,1fr);margin-top:var(--rc-gap);">
-            <div class="skel"><div class="skel-tag">Trending Focus</div></div>
-            <div class="skel"><div class="skel-tag">Trending Focus</div></div>
-            <div class="skel"><div class="skel-tag">+ Add Your Own</div></div>
+          <div class="page-note">Focus Details is merged: generated focus, explanation, coaching history, related lessons, and queue controls live together.</div>
+          <div class="rail-layout">
+            <div class="stack">
+              <div class="skel" style="min-height:145px;"><div class="skel-tag">Current Focus Deep-Dive</div><div class="skel-desc">Statement, why it matters, what to do, success looks like.</div></div>
+              <div class="split-layout"><div class="skel"><div class="skel-tag">Other Trending Focuses</div></div><div class="skel"><div class="skel-tag">Add Your Own</div></div></div>
+              <div class="skel"><div class="skel-tag">Focus History</div><div class="skel-desc">Queued, started, completed, dismissed, user-authored.</div></div>
+            </div>
+            <div class="skel"><div class="skel-tag">Auto-Rotate / Self-Chosen Toggle</div><div class="skel-desc">Mode selection plus queue controls: move up/down, pin, remove, set as next match focus.</div></div>
           </div>
         </section>
 
         <!-- IN-GAME -->
         <section class="page" id="page-ingame">
-          <div class="skel"><div class="skel-tag">One Job</div><div class="skel-desc">Active focus, tight restatement.</div></div>
-          <div class="skel" style="margin-top:var(--rc-gap);"><div class="skel-tag">Focus Pillars</div><div class="skel-desc">All 5, reference only.</div></div>
-          <div class="skel" style="margin-top:var(--rc-gap);"><div class="skel-tag">Focus Checklist</div></div>
-          <div class="skel-grid" style="grid-template-columns:repeat(4,1fr);margin-top:var(--rc-gap);">
-            <div class="skel"><div class="skel-tag">Map Notes</div></div>
-            <div class="skel"><div class="skel-tag">Agent Tips</div></div>
-            <div class="skel"><div class="skel-tag">Lineups</div></div>
-            <div class="skel"><div class="skel-tag">Weapons</div></div>
+          <div class="demo-note" style="margin-bottom:var(--rc-gap);"><span class="state-dot on"></span><span class="state-dot"></span><span id="ingameStateLabel">State: Collapsed</span><button class="btn primary" id="ingameCycle">Toggle expanded -></button></div>
+          <div id="ingameCollapsed" class="skel" style="min-height:170px;"><div class="skel-tag">Collapsed In-Game Hero</div><div class="skel-desc">One job, agent/map/focus strip, quick expand action. Designed to stay readable with minimal screen time.</div></div>
+          <div id="ingameExpanded" class="stack" style="display:none;">
+            <div class="skel"><div class="skel-tag">One Job</div><div class="skel-desc">Active focus, tight restatement.</div></div>
+            <div class="split-layout"><div class="skel"><div class="skel-tag">Focus Pillars</div><div class="skel-desc">All 5, reference only.</div></div><div class="skel"><div class="skel-tag">Focus Checklist</div></div></div>
+            <div class="module-row"><div class="skel"><div class="skel-tag">Map Notes</div></div><div class="skel"><div class="skel-tag">Agent Tips</div></div><div class="skel"><div class="skel-tag">Lineups</div></div><div class="skel"><div class="skel-tag">Weapons</div></div></div>
+            <div class="skel"><div class="skel-tag">Match Complete</div><div class="skel-desc">Only sync trigger besides history backfill.</div></div>
           </div>
-          <div class="skel" style="margin-top:var(--rc-gap);text-align:center;"><div class="skel-tag">Match Complete</div><div class="skel-desc">Only sync trigger besides history backfill.</div></div>
+        </section>
+
+        <!-- MOBILE REFERENCE -->
+        <section class="page" id="page-mobile">
+          <div class="page-note">Group 7: mobile is lower priority here, but the beta shell needs a single reference page for bottom-tab behavior and touch-safe density.</div>
+          <div class="mobile-frame">
+            <div class="skel"><div class="skel-tag">Mobile Top Context</div><div class="skel-desc">Profile, sync state, current page, compact controls.</div></div>
+            <div class="stack">
+              <div class="skel" style="min-height:150px;"><div class="skel-tag">Primary Mobile Content</div><div class="skel-desc">One dominant card per scroll section, no desktop two-column assumptions.</div></div>
+              <div class="skel" style="min-height:150px;"><div class="skel-tag">Touch Drawer / Modal Pattern</div></div>
+            </div>
+            <div class="mobile-bottom-tabs"><div class="mobile-tab active">Play</div><div class="mobile-tab">Review</div><div class="mobile-tab">Learn</div><div class="mobile-tab">Library</div></div>
+          </div>
         </section>
 
       </div>
@@ -301,48 +493,96 @@
 </div>
 </div>
 
+<div class="modal-demo" id="modal-search"><h2 class="section-kicker">Global Search</h2><div class="skel"><div class="skel-tag">Search Input + Results</div><div class="skel-desc">Search maps, agents, lessons, library items, matches, settings.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
+<div class="modal-demo" id="modal-notifications"><h2 class="section-kicker">Notifications Drawer</h2><div class="mini-list"><div class="mini-line">New match data detected</div><div class="mini-line">New patch notes uploading</div><div class="mini-line">New videos released</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
+<div class="modal-demo" id="modal-profile"><h2 class="section-kicker">Profile Popover</h2><div class="skel"><div class="skel-tag">Profile Actions</div><div class="skel-desc">Switch profile, sync status, customize, account settings.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
+<div class="modal-demo" id="modal-checkout"><h2 class="section-kicker">Checkout</h2><div class="skel"><div class="skel-tag">Billing Modal</div><div class="skel-desc">Plan comparison, payment state, cancel/back affordance.</div></div><button class="btn" data-close-modal style="margin-top:10px;">Close</button></div>
+
 <script>
   const titles = {
     play:["Play","Home base between matches"], review:["Review","Performance analysis"],
     learn:["Learn","Discovery workspace"], library:["Library","Your saved resources"],
     logmatch:["Log Match","Post-game debrief"], loadout:["Loadout","Generate your assignment"],
+    matchsaved:["Match Saved","Confirmation and next action"],
     focusqueue:["Focus Details","Current focus and queue"], ingame:["In-Game","One job"],
+    mobile:["Mobile Reference","Bottom-tab pattern"],
     settings:["Settings","Configure the app"]
+  };
+  const activatePage = (page)=>{
+    const target = document.getElementById('page-'+page);
+    if(!target) return;
+    document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.toggle('active', i.dataset.page === page));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    target.classList.remove('active'); void target.offsetWidth; target.classList.add('active');
+    const [t,s] = titles[page] || [page,''];
+    document.getElementById('pageTitle').firstChild.textContent = t;
+    document.getElementById('pageSub').textContent = s;
   };
   document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
     item.addEventListener('click', ()=>{
-      document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.remove('active'));
-      item.classList.add('active');
-      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-      const target = document.getElementById('page-'+item.dataset.page);
-      // force reflow to restart animation
-      target.classList.remove('active'); void target.offsetWidth; target.classList.add('active');
-      const [t,s] = titles[item.dataset.page];
-      document.getElementById('pageTitle').firstChild.textContent = t;
-      document.getElementById('pageSub').textContent = s;
+      activatePage(item.dataset.page);
     });
   });
+  document.querySelectorAll('[data-jump]').forEach(btn=>btn.addEventListener('click',()=>activatePage(btn.dataset.jump)));
 
   document.querySelectorAll('.tabrow').forEach(row=>{
     row.querySelectorAll('button').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         row.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
-        const group = row.nextElementSibling.parentElement.querySelectorAll('.rv-tab, .st-tab');
+        const group = row.parentElement.querySelectorAll('.rv-tab, .st-tab, .ln-tab, .lib-tab, .subpane');
         group.forEach(g=>g.style.display='none');
-        document.getElementById(btn.dataset.tab).style.display='block';
+        const target = document.getElementById(btn.dataset.tab);
+        target.style.display='block';
+        const nestedActive = target.querySelector('.tabrow button.active');
+        if(nestedActive) nestedActive.click();
       });
     });
   });
 
-  const loStates = ['idle','spinning','generated'];
+  const loStates = ['idle','spinning','generated','started','partial'];
+  const loIds = ['loadoutIdle','loadoutSpinning','loadoutGenerated','loadoutStarted','loadoutPartial'];
   let loIdx = 0;
   document.getElementById('loadoutCycle').addEventListener('click', ()=>{
-    loIdx = (loIdx+1) % 3;
-    document.getElementById('loadoutIdle').style.display = loIdx===0?'flex':'none';
-    document.getElementById('loadoutSpinning').style.display = loIdx===1?'flex':'none';
-    document.getElementById('loadoutGenerated').style.display = loIdx===2?'flex':'none';
-    document.querySelectorAll('.state-dot').forEach((d,i)=>d.classList.toggle('on', i===loIdx));
+    loIdx = (loIdx+1) % loStates.length;
+    loIds.forEach((id,i)=>{document.getElementById(id).style.display = loIdx===i?'flex':'none';});
+    document.querySelectorAll('#page-loadout .state-dot').forEach((d,i)=>d.classList.toggle('on', i===loIdx));
     document.getElementById('loadoutStateLabel').textContent = 'State: ' + loStates[loIdx][0].toUpperCase()+loStates[loIdx].slice(1);
   });
+
+  let inGameExpanded = false;
+  document.getElementById('ingameCycle').addEventListener('click', ()=>{
+    inGameExpanded = !inGameExpanded;
+    document.getElementById('ingameCollapsed').style.display = inGameExpanded ? 'none' : 'flex';
+    document.getElementById('ingameExpanded').style.display = inGameExpanded ? 'grid' : 'none';
+    document.querySelectorAll('#page-ingame .state-dot').forEach((d,i)=>d.classList.toggle('on', i === (inGameExpanded ? 1 : 0)));
+    document.getElementById('ingameStateLabel').textContent = 'State: ' + (inGameExpanded ? 'Expanded' : 'Collapsed');
+  });
+
+  document.querySelectorAll('[data-modal]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.modal-demo').forEach(m=>m.classList.remove('open'));
+      document.getElementById(btn.dataset.modal)?.classList.add('open');
+    });
+  });
+  document.querySelectorAll('[data-close-modal]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.modal-demo')?.classList.remove('open')));
+
+  const activateTab = (tabId)=>{
+    const btn = document.querySelector(`[data-tab="${tabId}"]`);
+    if(!btn) return;
+    btn.click();
+  };
+  const params = new URLSearchParams(location.search);
+  const hashParams = Object.fromEntries(location.hash.replace(/^#/,'').split(';').filter(Boolean).map(part=>{
+    const [key,...rest] = part.split('=');
+    return [key, rest.join('=')];
+  }));
+  const initialPage = params.get('page') || hashParams.page;
+  const initialTab = params.get('tab') || hashParams.tab;
+  const initialModal = params.get('modal') || hashParams.modal;
+  if(initialPage) activatePage(initialPage);
+  if(initialTab) activateTab(initialTab);
+  if(initialModal) document.getElementById(initialModal)?.classList.add('open');
 </script>
+</body>
+</html>
