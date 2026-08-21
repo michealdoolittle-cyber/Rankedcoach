@@ -1,0 +1,348 @@
+<title>Foundation Shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rc-canvas:#070b12; --rc-sidebar:#080d16;
+    --rc-surface-1:#0e1622; --rc-surface-2:#121c2a; --rc-surface-3:#172234;
+    --rc-border-subtle:#223047; --rc-border-strong:#37465e;
+    --rc-text-1:#f6f8fc; --rc-text-2:#b8c1d1; --rc-text-3:#7c889c;
+    --rc-brand:#8b5cf6; --rc-brand-strong:#a78bfa; --rc-brand-deep:#5b21b6;
+    --rc-review:#4fd1b5; --rc-learn:#f5c451; --rc-library:#a78bfa;
+    --rc-success:#4ade80; --rc-danger:#f87171; --rc-warning:#fbbf24; --rc-info:#60a5fa;
+    --rc-font-display:'Barlow Condensed',Inter,sans-serif; --rc-font-body:'Inter',sans-serif;
+    --rc-sidebar-w:clamp(148px, 11vw, 208px);
+    --rc-topbar-h:clamp(52px, 4.5vw, 64px);
+    --rc-pad:clamp(14px, 1.6vw, 26px);
+    --rc-gap:clamp(9px, 0.9vw, 14px);
+    --rc-radius:9px;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#05070c;color:var(--rc-text-1);font-family:var(--rc-font-body);font-size:clamp(12px, 0.85vw, 13.5px);padding:20px;}
+  .meta{max-width:1400px;margin:0 auto 14px;}
+  .meta h1{font-family:var(--rc-font-display);font-weight:700;font-size:20px;margin:0 0 4px;}
+  .meta p{color:#6b7688;font-size:12px;margin:0 0 10px;max-width:80ch;}
+  .meta .hint{display:inline-flex;align-items:center;gap:6px;background:#0e1622;border:1px solid var(--rc-border-subtle);border-radius:7px;padding:6px 11px;color:var(--rc-brand-strong);font-size:11px;font-weight:600;}
+
+  /* resizable stage so fluidity is literally testable */
+  .stage{
+    max-width:1400px;margin:0 auto;
+    resize:horizontal; overflow:auto;
+    min-width:340px; max-width:100%;
+    width:100%;
+    border:1px dashed var(--rc-border-strong); border-radius:10px;
+    padding:2px;
+  }
+  .stage-inner{min-width:0;}
+
+  .shell{display:grid;grid-template-columns:var(--rc-sidebar-w) minmax(0,1fr);background:var(--rc-canvas);border-radius:8px;overflow:hidden;min-height:620px;}
+
+  /* sidebar */
+  .sidebar{background:linear-gradient(180deg,var(--rc-sidebar),#070a10 75%);border-right:1px solid var(--rc-border-subtle);display:flex;flex-direction:column;padding:clamp(10px,1.2vw,16px) clamp(8px,1vw,12px);}
+  .brand{display:flex;align-items:center;gap:8px;padding:2px 4px clamp(12px,1.4vw,18px);}
+  .brand-mark{width:26px;height:26px;flex:none;border-radius:7px;background:conic-gradient(from 220deg,var(--rc-brand-deep),var(--rc-brand),var(--rc-brand-strong),var(--rc-brand-deep));position:relative;}
+  .brand-mark::after{content:"";position:absolute;inset:4px;border-radius:4px;background:var(--rc-sidebar);clip-path:polygon(50% 8%,92% 50%,50% 92%,8% 50%);}
+  .brand-word{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(10px,0.85vw,12.5px);line-height:1.05;letter-spacing:.01em;overflow:hidden;white-space:nowrap;}
+  .brand-word b{display:block;color:var(--rc-brand-strong);}
+  .nav-label{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--rc-text-3);text-transform:uppercase;padding:10px 8px 5px;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;color:var(--rc-text-2);font-size:clamp(10.5px,0.85vw,12.5px);font-weight:600;margin-bottom:1px;cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;}
+  .nav-item svg{width:16px;height:16px;flex:none;opacity:.8;}
+  .nav-item:hover{background:rgba(255,255,255,.03);color:var(--rc-text-1);}
+  .nav-item.active{background:rgba(139,92,246,.14);color:var(--rc-text-1);}
+  .nav-item.active svg{color:var(--rc-brand-strong);opacity:1;}
+  .nav-item.active::before{content:"";position:absolute;left:-8px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--rc-brand-strong);}
+  .sidebar-spacer{flex:1;}
+  .sidebar-account{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--rc-surface-1);border:1px solid var(--rc-border-subtle);margin-bottom:6px;}
+  .avatar-dot{width:26px;height:26px;border-radius:7px;background:var(--rc-surface-3);border:1px solid var(--rc-border-strong);flex:none;}
+  .sidebar-account .meta-txt strong{display:block;font-size:11px;color:var(--rc-text-1);}
+  .sidebar-account .meta-txt span{font-size:9.5px;color:var(--rc-text-3);}
+
+  /* main */
+  .main{min-width:0;display:flex;flex-direction:column;}
+  .topbar{height:var(--rc-topbar-h);display:flex;align-items:center;justify-content:space-between;padding:0 var(--rc-pad);border-bottom:1px solid var(--rc-border-subtle);flex:none;}
+  .topbar-title{font-family:var(--rc-font-display);font-weight:700;font-size:clamp(14px,1.3vw,17px);}
+  .topbar-title span{color:var(--rc-text-3);font-family:var(--rc-font-body);font-weight:500;font-size:clamp(9.5px,0.75vw,11px);margin-left:8px;}
+  .content{padding:var(--rc-pad);flex:1;}
+
+  /* page transition */
+  .page{display:none;}
+  .page.active{display:block;animation:pagein .28s cubic-bezier(.2,.8,.2,1);}
+  @keyframes pagein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion:reduce){.page.active{animation:none;}}
+
+  /* skeleton primitives — deliberately not "real" card styling, communicates structure-only */
+  .skel-grid{display:grid;gap:var(--rc-gap);}
+  .skel{
+    background:var(--rc-surface-1);
+    border:1px dashed var(--rc-border-strong);
+    border-radius:var(--rc-radius);
+    padding:clamp(10px,1.1vw,16px);
+    min-height:60px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .skel .skel-tag{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rc-brand-strong);}
+  .skel .skel-desc{font-size:10.5px;color:var(--rc-text-3);line-height:1.4;}
+  .skel.accent-review .skel-tag{color:var(--rc-review);}
+  .skel.accent-learn .skel-tag{color:var(--rc-learn);}
+  .skel.accent-library .skel-tag{color:var(--rc-library);}
+
+  .tabrow{display:flex;gap:clamp(4px,0.6vw,8px);border-bottom:1px solid var(--rc-border-subtle);margin-bottom:var(--rc-gap);flex-wrap:wrap;}
+  .tabrow button{background:none;border:none;color:var(--rc-text-3);font-size:clamp(10px,0.8vw,12px);font-weight:600;padding:7px 4px;margin-right:clamp(8px,1vw,16px);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;}
+  .tabrow button.active{color:var(--rc-text-1);border-bottom-color:var(--rc-brand-strong);}
+
+  .btn{appearance:none;border-radius:7px;font-weight:700;font-size:clamp(10px,0.8vw,12px);padding:0 clamp(10px,1vw,15px);height:clamp(26px,2.4vw,34px);display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rc-border-strong);background:var(--rc-surface-3);color:var(--rc-text-1);cursor:pointer;font-family:inherit;}
+  .btn.primary{background:linear-gradient(180deg,var(--rc-brand-strong),var(--rc-brand));border-color:transparent;color:#0c0620;}
+
+  .demo-note{display:flex;align-items:center;gap:8px;margin-top:var(--rc-gap);color:var(--rc-text-3);font-size:10.5px;}
+  .state-dot{width:6px;height:6px;border-radius:50%;background:var(--rc-border-strong);}
+  .state-dot.on{background:var(--rc-brand-strong);}
+</style>
+
+<div class="meta">
+  <h1>Foundation Shell — structure only, no real data, no final styling</h1>
+  <p>Every region below is a labeled skeleton, not a finished card — content, exact spacing, and colors come in later phases. This is testing three things: the full information architecture, the page-transition motion between sections, and whether the layout stays proportionally consistent as width changes (no breakpoint redesign).</p>
+  <span class="hint">↘ Drag the bottom-right corner of the frame below to resize — the layout should scale continuously, never jump or rearrange.</span>
+</div>
+
+<div class="stage">
+<div class="stage-inner">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-word">RANKED<b>COACH</b></div>
+      </div>
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-page="play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5.5 4.8 18.7 12 5.5 19.2Z"/></svg>Play</div>
+      <div class="nav-item" data-page="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V14M10 19V10M16 19V6"/></svg>Review</div>
+      <div class="nav-item" data-page="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Learn</div>
+      <div class="nav-item" data-page="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Library</div>
+      <div class="nav-label">Tools</div>
+      <div class="nav-item" data-page="logmatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg>Log Match</div>
+      <div class="nav-item" data-page="loadout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>Loadout</div>
+      <div class="nav-item" data-page="focusqueue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Focus Queue</div>
+      <div class="nav-item" data-page="ingame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>In-Game</div>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-account">
+        <div class="avatar-dot"></div>
+        <div class="meta-txt"><strong>Account slot</strong><span>reserved — no import yet</span></div>
+      </div>
+      <div class="nav-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.3"/><path d="M12 2.8v2.7M12 18.5v2.7M21.2 12h-2.7M5.5 12H2.8M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9M18.6 18.6l-1.9-1.9M7.3 7.3 5.4 5.4" stroke-width="2.6" stroke-linecap="round"/></svg>Settings</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Play<span id="pageSub">Home base between matches</span></div>
+        <div style="color:var(--rc-text-3);font-size:10.5px;">Account sync — not wired yet</div>
+      </div>
+      <div class="content">
+
+        <!-- PLAY -->
+        <section class="page active" id="page-play">
+          <div class="skel-grid" style="grid-template-columns:2fr 1fr;">
+            <div class="skel"><div class="skel-tag">Today's Focus</div><div class="skel-desc">Hero coaching card — one statement, evidence, agent art, primary action.</div></div>
+            <div class="skel"><div class="skel-tag">Improvement Timeline</div><div class="skel-desc">5 coordinated pillar tiles with trend.</div></div>
+          </div>
+          <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:var(--rc-gap);">
+            <div class="skel"><div class="skel-tag">Loadout</div><div class="skel-desc">Passive entry point + active start action.</div></div>
+            <div class="skel"><div class="skel-tag">Compass</div><div class="skel-desc">Five-axis radar, values on the chart itself.</div></div>
+            <div class="skel"><div class="skel-tag">Current Rank</div><div class="skel-desc">Rank/RR + match counters + role + last-match strip.</div></div>
+          </div>
+          <div class="skel-grid" style="grid-template-columns:1fr 1fr;margin-top:var(--rc-gap);">
+            <div class="skel"><div class="skel-tag">RR Trend</div><div class="skel-desc">Recent RR line, W/L/D context.</div></div>
+            <div class="skel"><div class="skel-tag">Top Insight</div><div class="skel-desc">One conclusion + evidence + key takeaways.</div></div>
+          </div>
+          <div class="skel" style="margin-top:var(--rc-gap);">
+            <div class="skel-tag">Quick Actions</div><div class="skel-desc">Play A Match · Review Match · Practice · Study a Map · Strategy Library</div>
+          </div>
+        </section>
+
+        <!-- REVIEW -->
+        <section class="page" id="page-review">
+          <div class="tabrow">
+            <button class="active" data-tab="rv-performance">Performance</button>
+            <button data-tab="rv-timeline">Timeline</button>
+            <button data-tab="rv-insights">Insights</button>
+            <button data-tab="rv-reflections">Reflection Matches</button>
+            <button data-tab="rv-matches">All Matches</button>
+            <button data-tab="rv-stats">Stats</button>
+          </div>
+          <div id="rv-performance" class="rv-tab">
+            <div class="skel-grid" style="grid-template-columns:1fr 2fr 1fr;">
+              <div class="skel accent-review"><div class="skel-tag">Overview</div></div>
+              <div class="skel accent-review"><div class="skel-tag">Performance Chart</div></div>
+              <div class="skel accent-review"><div class="skel-tag">Coach Summary</div></div>
+            </div>
+            <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:var(--rc-gap);">
+              <div class="skel accent-review"><div class="skel-tag">Last Matches</div></div>
+              <div class="skel accent-review"><div class="skel-tag">Compass Breakdown</div></div>
+              <div class="skel accent-review"><div class="skel-tag">Maps / Weapons / Agents</div></div>
+            </div>
+          </div>
+          <div id="rv-timeline" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Improvement Timeline (full)</div><div class="skel-desc">Category strip + trend graph + match markers.</div></div></div>
+          <div id="rv-insights" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Insights list</div><div class="skel-desc">Prioritized list, status/impact/confidence per row.</div></div></div>
+          <div id="rv-reflections" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Reflection Matches</div><div class="skel-desc">Table: result, map, score, RR change, focus, date.</div></div></div>
+          <div id="rv-matches" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">All Matches</div><div class="skel-desc">Filterable table, full history.</div></div></div>
+          <div id="rv-stats" class="rv-tab" style="display:none;"><div class="skel accent-review" style="min-height:220px;"><div class="skel-tag">Stats</div><div class="skel-desc">Overview / Weapons / Agents / Maps sub-tabs.</div></div></div>
+        </section>
+
+        <!-- LEARN -->
+        <section class="page" id="page-learn">
+          <div class="skel-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="skel accent-learn"><div class="skel-tag">Maps</div></div>
+            <div class="skel accent-learn"><div class="skel-tag">Agents</div></div>
+            <div class="skel accent-learn"><div class="skel-tag">Concepts</div></div>
+            <div class="skel accent-learn"><div class="skel-tag">Situations</div></div>
+          </div>
+          <div class="skel-grid" style="grid-template-columns:1fr 1fr;margin-top:var(--rc-gap);">
+            <div class="skel accent-learn"><div class="skel-tag">Popular Topics</div></div>
+            <div class="skel accent-learn"><div class="skel-tag">Recommended For You</div></div>
+          </div>
+          <div class="skel accent-learn" style="margin-top:var(--rc-gap);"><div class="skel-tag">Recently Viewed</div></div>
+        </section>
+
+        <!-- LIBRARY -->
+        <section class="page" id="page-library">
+          <div class="skel-grid" style="grid-template-columns:repeat(5,1fr);">
+            <div class="skel accent-library"><div class="skel-tag">Lineups</div></div>
+            <div class="skel accent-library"><div class="skel-tag">Routines</div></div>
+            <div class="skel accent-library"><div class="skel-tag">Notes</div></div>
+            <div class="skel accent-library"><div class="skel-tag">Collections</div></div>
+            <div class="skel accent-library"><div class="skel-tag">Watch Later</div></div>
+          </div>
+          <div class="skel-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:var(--rc-gap);">
+            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Saved Lineups</div></div>
+            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Routines list</div></div>
+            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Recent Notes</div></div>
+            <div class="skel accent-library" style="min-height:140px;"><div class="skel-tag">Collections</div></div>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page" id="page-settings">
+          <div class="tabrow">
+            <button class="active" data-tab="st-profile">Profile</button>
+            <button data-tab="st-pipeline">Pipeline</button>
+            <button data-tab="st-visual">Visual</button>
+            <button data-tab="st-notifications">Notifications</button>
+            <button data-tab="st-integrations">Integrations</button>
+            <button data-tab="st-billing">Billing</button>
+          </div>
+          <div id="st-profile" class="st-tab"><div class="skel" style="min-height:200px;"><div class="skel-tag">Profile</div><div class="skel-desc">Account identity, region, goal rank.</div></div></div>
+          <div id="st-pipeline" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Pipeline</div><div class="skel-desc">Preset list + live preview + builder.</div></div></div>
+          <div id="st-visual" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Visual</div><div class="skel-desc">Theme/palette/icon/density/motion workstation.</div></div></div>
+          <div id="st-notifications" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Notifications</div></div></div>
+          <div id="st-integrations" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Integrations</div><div class="skel-desc">Riot, Discord, etc. connection cards.</div></div></div>
+          <div id="st-billing" class="st-tab" style="display:none;"><div class="skel" style="min-height:200px;"><div class="skel-tag">Billing</div></div></div>
+        </section>
+
+        <!-- LOG MATCH -->
+        <section class="page" id="page-logmatch">
+          <div class="skel-grid" style="grid-template-columns:1fr;">
+            <div class="skel"><div class="skel-tag">1. Result</div></div>
+            <div class="skel"><div class="skel-tag">2. RR Change</div></div>
+            <div class="skel"><div class="skel-tag">3. Match Details</div></div>
+            <div class="skel"><div class="skel-tag">4. Mood</div></div>
+            <div class="skel"><div class="skel-tag">5. Personal Performance</div></div>
+            <div class="skel"><div class="skel-tag">6. Comms — self &amp; team</div></div>
+            <div class="skel"><div class="skel-tag">7. Reflection</div></div>
+            <div class="skel"><div class="skel-tag">8. Focus Adherence</div></div>
+          </div>
+        </section>
+
+        <!-- LOADOUT (full route) -->
+        <section class="page" id="page-loadout">
+          <div class="demo-note" style="margin-bottom:var(--rc-gap);">
+            <span class="state-dot on" data-state="idle"></span><span class="state-dot" data-state="spinning"></span><span class="state-dot" data-state="generated"></span>
+            <span id="loadoutStateLabel">State: Idle</span>
+            <button class="btn primary" id="loadoutCycle" style="margin-left:8px;">Cycle state →</button>
+          </div>
+          <div class="skel" id="loadoutIdle" style="min-height:260px;align-items:center;justify-content:center;text-align:center;">
+            <div class="skel-tag">Idle</div><div class="skel-desc">Map / Role / Agent selects + Spin action.</div>
+          </div>
+          <div class="skel" id="loadoutSpinning" style="min-height:260px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Spinning</div><div class="skel-desc">Resolver animation, ~3.5s minimum.</div>
+          </div>
+          <div class="skel" id="loadoutGenerated" style="min-height:260px;align-items:center;justify-content:center;text-align:center;display:none;">
+            <div class="skel-tag">Generated</div><div class="skel-desc">Vertical result, art right, Start Match.</div>
+          </div>
+        </section>
+
+        <!-- FOCUS QUEUE -->
+        <section class="page" id="page-focusqueue">
+          <div class="skel" style="min-height:140px;"><div class="skel-tag">Current Focus Deep-Dive</div><div class="skel-desc">Statement, why it matters, what to do, success looks like.</div></div>
+          <div class="skel-grid" style="grid-template-columns:repeat(3,1fr);margin-top:var(--rc-gap);">
+            <div class="skel"><div class="skel-tag">Trending Focus</div></div>
+            <div class="skel"><div class="skel-tag">Trending Focus</div></div>
+            <div class="skel"><div class="skel-tag">+ Add Your Own</div></div>
+          </div>
+        </section>
+
+        <!-- IN-GAME -->
+        <section class="page" id="page-ingame">
+          <div class="skel"><div class="skel-tag">One Job</div><div class="skel-desc">Active focus, tight restatement.</div></div>
+          <div class="skel" style="margin-top:var(--rc-gap);"><div class="skel-tag">Focus Pillars</div><div class="skel-desc">All 5, reference only.</div></div>
+          <div class="skel" style="margin-top:var(--rc-gap);"><div class="skel-tag">Focus Checklist</div></div>
+          <div class="skel-grid" style="grid-template-columns:repeat(4,1fr);margin-top:var(--rc-gap);">
+            <div class="skel"><div class="skel-tag">Map Notes</div></div>
+            <div class="skel"><div class="skel-tag">Agent Tips</div></div>
+            <div class="skel"><div class="skel-tag">Lineups</div></div>
+            <div class="skel"><div class="skel-tag">Weapons</div></div>
+          </div>
+          <div class="skel" style="margin-top:var(--rc-gap);text-align:center;"><div class="skel-tag">Match Complete</div><div class="skel-desc">Only sync trigger besides history backfill.</div></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+
+<script>
+  const titles = {
+    play:["Play","Home base between matches"], review:["Review","Performance analysis"],
+    learn:["Learn","Discovery workspace"], library:["Library","Your saved resources"],
+    logmatch:["Log Match","Post-game debrief"], loadout:["Loadout","Generate your assignment"],
+    focusqueue:["Focus Details","Current focus and queue"], ingame:["In-Game","One job"],
+    settings:["Settings","Configure the app"]
+  };
+  document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      const target = document.getElementById('page-'+item.dataset.page);
+      // force reflow to restart animation
+      target.classList.remove('active'); void target.offsetWidth; target.classList.add('active');
+      const [t,s] = titles[item.dataset.page];
+      document.getElementById('pageTitle').firstChild.textContent = t;
+      document.getElementById('pageSub').textContent = s;
+    });
+  });
+
+  document.querySelectorAll('.tabrow').forEach(row=>{
+    row.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        row.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const group = row.nextElementSibling.parentElement.querySelectorAll('.rv-tab, .st-tab');
+        group.forEach(g=>g.style.display='none');
+        document.getElementById(btn.dataset.tab).style.display='block';
+      });
+    });
+  });
+
+  const loStates = ['idle','spinning','generated'];
+  let loIdx = 0;
+  document.getElementById('loadoutCycle').addEventListener('click', ()=>{
+    loIdx = (loIdx+1) % 3;
+    document.getElementById('loadoutIdle').style.display = loIdx===0?'flex':'none';
+    document.getElementById('loadoutSpinning').style.display = loIdx===1?'flex':'none';
+    document.getElementById('loadoutGenerated').style.display = loIdx===2?'flex':'none';
+    document.querySelectorAll('.state-dot').forEach((d,i)=>d.classList.toggle('on', i===loIdx));
+    document.getElementById('loadoutStateLabel').textContent = 'State: ' + loStates[loIdx][0].toUpperCase()+loStates[loIdx].slice(1);
+  });
+</script>
