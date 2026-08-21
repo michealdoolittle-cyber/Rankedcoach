@@ -2,6 +2,8 @@
 
 **Recommended Codex settings: GPT-5.6 Terra · Ultra reasoning · Fast speed.**
 
+**Status: SUPERSEDED 2026-08-21 by `notes/beta-foundation-shell-directive-v4-2026-08-21.md`. Do not use this file — read v4 instead.** Michael pointed out this directive never required that every button actually go somewhere, or that destination pages show a real composed layout with example content rather than one abstract description box. v4 carries forward all of this file's content research but adds explicit button-to-destination wiring and a populated-content standard throughout. Kept only for history.
+
 **Status: open — not started. Supersedes `notes/beta-foundation-shell-full-directive-2026-08-20.md`, `notes/beta-foundation-shell-round2-corrections-2026-08-21.md`, and `notes/beta-foundation-shell-directive-v2-2026-08-21.md`.** All three are kept for history but should not guide further work.
 
 ## This is a full clean rebuild, not a patch — read this section first
