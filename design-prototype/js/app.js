@@ -34,6 +34,16 @@ function renderShell(){
   document.getElementById('toastRoot').innerHTML = `<div class="toast-stack" id="toastStack"></div>`;
 }
 
+function wireBgPicker(){
+  document.addEventListener('click', (e)=>{
+    const opt = e.target.closest('[data-bg-select]');
+    if(!opt) return;
+    opt.parentElement.querySelectorAll('.bg-option').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+    toast('Background set to ' + opt.querySelector('.kicker').textContent);
+  });
+}
+
 function wireJumps(){
   document.addEventListener('click', (e)=>{
     const jumper = e.target.closest('[data-jump]');
@@ -56,6 +66,7 @@ function init(){
   initTabs();
   initToastDemoTriggers();
   wireJumps();
+  wireBgPicker();
 
   const params = new URLSearchParams(location.search);
   const startPage = params.get('page') && PAGE_META[params.get('page')] ? params.get('page') : '1A';

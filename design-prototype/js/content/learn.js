@@ -36,7 +36,11 @@ export function page3B(){
   <div class="grid g-3" style="margin-bottom:var(--rc-gap);">
     ${maps.map((m,i)=>`
       <div class="card" style="padding:0;overflow:hidden;cursor:pointer;" data-map-detail="${m}">
-        <div style="width:100%;aspect-ratio:16/9;background:var(--rc-surface-3);"></div>
+        <div style="width:100%;aspect-ratio:16/9;background:var(--rc-surface-3);position:relative;overflow:hidden;">
+          <img src="./assets/maps/${m.toLowerCase()}.jpg" alt="" style="width:100%;height:100%;object-fit:cover;">
+          <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,7,12,.75),transparent 55%);"></div>
+          ${i===0?`<span class="chip positive" style="position:absolute;top:8px;right:8px;">Mastered</span>`:''}
+        </div>
         <div style="padding:12px;"><b>${m}</b><div class="kicker">${i===0?'Personal win rate 60%':'6 lineups · 4 videos'}</div></div>
       </div>`).join('')}
   </div>
@@ -70,7 +74,9 @@ export function page3C(){
   <div class="grid g-3" style="margin-bottom:var(--rc-gap);">
     ${agents.map(a=>`
       <div class="card" style="padding:0;overflow:hidden;cursor:pointer;">
-        <div style="width:100%;aspect-ratio:1;background:var(--rc-surface-3);"></div>
+        <div style="width:100%;aspect-ratio:1;background:var(--rc-surface-3);position:relative;overflow:hidden;">
+          <img src="./assets/agents/${a.n}.png" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;">
+        </div>
         <div style="padding:12px;display:flex;align-items:center;justify-content:space-between;"><div><b>${a.n}</b><div class="kicker">${a.r}</div></div><span class="difficulty ${a.d}">${a.d}</span></div>
       </div>`).join('')}
   </div>

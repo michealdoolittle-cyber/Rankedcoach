@@ -1,5 +1,5 @@
 import { icon } from '../icons.js';
-import { radarChart, trendLine, miniBar } from '../charts.js';
+import { radarChart, trendLine, miniBar, evidenceStat } from '../charts.js';
 
 const METRIC_ROW = [
   ['KAST','72%','+3%',true],['ACS','248','+12',true],['K/D','1.12','-0.04',false],['HS%','24%','+1%',true],['Win Rate','52%','+2%',true],
@@ -112,6 +112,16 @@ export function page2D(){
       <div class="card"><div class="kicker">Recommended Corrective Behavior</div><ul style="margin:6px 0 0;padding-left:18px;color:var(--rc-text-2);font-size:12px;line-height:1.7;"><li>Hold head level on common angles</li><li>Clear close corners with utility before peeking</li><li>Don't re-peek after a trade — reset instead</li></ul></div>
     </div>
     <div class="stack">
+      <div class="card">
+        <div class="kicker">Evidence Breakdown</div>
+        <div style="margin-top:8px;">
+          ${evidenceStat('Opening Duels Taken Alone', '68%', 68, 'var(--rc-danger)')}
+          ${evidenceStat('Duel Loss Rate', '42%', 42, 'var(--rc-warning)')}
+          ${evidenceStat('RR Impact / 10 Matches', '-18 RR', 60, 'var(--rc-brand)')}
+        </div>
+        <div class="kicker">Insight Status</div>
+        <span class="chip positive">Active</span>
+      </div>
       <div class="card" style="cursor:pointer;" data-jump="2F"><div class="kicker">Related Match</div><div style="font-weight:700;font-size:12.5px;">Haven · Win 13-9</div></div>
       <div class="card" style="cursor:pointer;" data-jump="3D"><div class="kicker">Related Content</div><div style="font-weight:700;font-size:12.5px;">Crosshair Placement — Concept</div></div>
       <div class="card"><button class="btn primary" data-jump="1D" data-toast="Added to Focus Queue">Add to Focus Queue</button></div>
@@ -229,9 +239,9 @@ export function page2H(){
     <div class="card">
       <table><thead><tr><th>Weapon</th><th>Kills</th><th>HS%</th><th>Damage/Round</th></tr></thead>
       <tbody>
-        <tr><td>Vandal</td><td>612</td><td>24%</td><td>151</td></tr>
-        <tr><td>Phantom</td><td>389</td><td>21%</td><td>142</td></tr>
-        <tr><td>Sheriff</td><td>98</td><td>32%</td><td>96</td></tr>
+        <tr><td style="display:flex;align-items:center;gap:8px;"><img src="./assets/weapons/vandal.png" style="width:28px;height:16px;object-fit:contain;">Vandal</td><td>612</td><td>24%</td><td>151</td></tr>
+        <tr><td style="display:flex;align-items:center;gap:8px;"><img src="./assets/weapons/phantom.png" style="width:28px;height:16px;object-fit:contain;">Phantom</td><td>389</td><td>21%</td><td>142</td></tr>
+        <tr><td style="display:flex;align-items:center;gap:8px;"><img src="./assets/weapons/sheriff.png" style="width:24px;height:16px;object-fit:contain;">Sheriff</td><td>98</td><td>32%</td><td>96</td></tr>
       </tbody></table>
       <div class="kicker" style="margin-top:10px;">Advanced economy telemetry <span class="needs-validation">Needs Validation</span></div>
     </div>

@@ -29,12 +29,52 @@ export function radarChart(labels, values, opts){
     const [x,y] = pt(i,v);
     return `<text x="${x}" y="${y-9}" text-anchor="middle" fill="var(--rc-text-1)" font-weight="700" font-size="11">${v}</text>`;
   }).join('');
+  const fill = opts.color || 'var(--rc-review)';
   return `<svg class="radar-svg" viewBox="0 0 ${size} ${size}" width="100%" height="${size}">
     ${rings}
-    <polygon class="radar-shape" points="${shapePts}"/>
+    <polygon points="${shapePts}" fill="${fill}" fill-opacity=".28" stroke="${fill}" stroke-width="2"/>
     ${labelsSvg}
     ${valuesSvg}
   </svg>`;
+}
+
+// Small inline sparkline for a single metric tile — no axis, just shape.
+export function sparkline(points, color){
+  const w = 90, h = 28, pad = 2;
+  const max = Math.max(...points), min = Math.min(...points);
+  const range = (max-min)||1;
+  const step = (w-pad*2)/(points.length-1);
+  const xy = points.map((p,i)=>[pad+i*step, h-pad-((p-min)/range)*(h-pad*2)]);
+  const d = xy.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><path d="${d}" fill="none" stroke="${color||'var(--rc-brand-strong)'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+// Color-coded W/L/D result-letter row, used under RR trend charts.
+export function resultLetters(results){
+  const color = { W:'var(--rc-success)', L:'var(--rc-danger)', D:'var(--rc-text-3)' };
+  return `<div style="display:flex;gap:6px;">${results.map(r=>`<span style="font-weight:800;font-size:11px;color:${color[r]};">${r}</span>`).join('')}</div>`;
+}
+
+// Gem-style rank emblem — an approximation of the faceted diamond icon used across the reference art.
+export function rankGem(size){
+  size = size || 48;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 48 48">
+    <defs><linearGradient id="gemGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="var(--rc-brand-strong)"/><stop offset="100%" stop-color="var(--rc-brand-deep)"/>
+    </linearGradient></defs>
+    <polygon points="24,3 40,17 24,45 8,17" fill="url(#gemGrad)" stroke="var(--rc-brand-strong)" stroke-width="1"/>
+    <polygon points="24,3 32,17 24,45 16,17" fill="rgba(255,255,255,.12)"/>
+    <polygon points="8,17 24,17 16,17" fill="rgba(255,255,255,.08)"/>
+    <polygon points="40,17 24,17 32,17" fill="rgba(0,0,0,.1)"/>
+  </svg>`;
+}
+
+// Labeled progress-bar stat, used in Insight Detail's Evidence Breakdown rail.
+export function evidenceStat(label, value, pct, color){
+  return `<div style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span style="color:var(--rc-text-3);">${label}</span><span style="font-weight:700;color:var(--rc-text-1);">${value}</span></div>
+    ${miniBar(pct, color)}
+  </div>`;
 }
 
 export function trendLine(points, opts){

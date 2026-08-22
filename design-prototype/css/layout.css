@@ -1,4 +1,6 @@
-.shell{display:grid;grid-template-columns:var(--rc-sidebar-w) minmax(0,1fr);min-height:100vh;background:var(--rc-canvas);}
+/* .shell sits at 88% opacity over the nebula-bg so the starfield reads as an ambient wash
+   without ever competing with content — cards/sidebar stay fully opaque for readability. */
+.shell{display:grid;grid-template-columns:var(--rc-sidebar-w) minmax(0,1fr);min-height:100vh;background:rgba(7,11,18,.88);}
 
 /* sidebar */
 .sidebar{background:linear-gradient(180deg,var(--rc-sidebar),#070a10 75%);border-right:1px solid var(--rc-border-subtle);display:flex;flex-direction:column;padding:clamp(12px,1.3vw,20px) clamp(10px,1.1vw,14px);position:sticky;top:0;height:100vh;overflow-y:auto;}

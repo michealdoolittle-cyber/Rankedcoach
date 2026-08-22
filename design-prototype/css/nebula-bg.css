@@ -1,0 +1,32 @@
+/*
+  Starry nebula background — the one shared background treatment for the app,
+  referenced by 6B Visual's Backgrounds section as the base/default option.
+  Self-contained, no external image/network dependency: a tiled starfield built
+  from an inline SVG data URI (crisp circles render far more reliably across
+  browsers/zoom levels than 1-2px CSS radial-gradient dots do), layered under
+  a few large soft purple/teal/blue nebula-cloud gradients fixed to the viewport.
+*/
+.nebula-bg{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background-color:#05070c;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27180%27 height=%27180%27%3E%3Ccircle cx=%2714%27 cy=%2722%27 r=%271.4%27 fill=%27white%27 fill-opacity=%27.9%27/%3E%3Ccircle cx=%2763%27 cy=%279%27 r=%271%27 fill=%27white%27 fill-opacity=%27.6%27/%3E%3Ccircle cx=%27102%27 cy=%2740%27 r=%271.6%27 fill=%27white%27 fill-opacity=%27.85%27/%3E%3Ccircle cx=%27150%27 cy=%2718%27 r=%271%27 fill=%27white%27 fill-opacity=%27.55%27/%3E%3Ccircle cx=%2730%27 cy=%2758%27 r=%271.2%27 fill=%27white%27 fill-opacity=%27.7%27/%3E%3Ccircle cx=%2780%27 cy=%2775%27 r=%271.5%27 fill=%27white%27 fill-opacity=%27.8%27/%3E%3Ccircle cx=%27128%27 cy=%2764%27 r=%271%27 fill=%27white%27 fill-opacity=%27.5%27/%3E%3Ccircle cx=%27167%27 cy=%2792%27 r=%271.3%27 fill=%27white%27 fill-opacity=%27.75%27/%3E%3Ccircle cx=%2745%27 cy=%27100%27 r=%271%27 fill=%27white%27 fill-opacity=%27.6%27/%3E%3Ccircle cx=%279%27 cy=%27128%27 r=%271.4%27 fill=%27white%27 fill-opacity=%27.8%27/%3E%3Ccircle cx=%2795%27 cy=%27115%27 r=%271.2%27 fill=%27white%27 fill-opacity=%27.65%27/%3E%3Ccircle cx=%27140%27 cy=%27135%27 r=%271.6%27 fill=%27white%27 fill-opacity=%27.9%27/%3E%3Ccircle cx=%2760%27 cy=%27150%27 r=%271%27 fill=%27white%27 fill-opacity=%27.55%27/%3E%3Ccircle cx=%27175%27 cy=%27155%27 r=%271.2%27 fill=%27white%27 fill-opacity=%27.7%27/%3E%3Ccircle cx=%2722%27 cy=%27170%27 r=%271.3%27 fill=%27white%27 fill-opacity=%27.75%27/%3E%3Ccircle cx=%27115%27 cy=%27165%27 r=%271%27 fill=%27white%27 fill-opacity=%27.5%27/%3E%3C/svg%3E"),
+    /* nebula clouds — large soft purple/teal/blue washes, brand-consistent */
+    radial-gradient(58% 42% at 78% 8%, rgba(139,92,246,.30), transparent 70%),
+    radial-gradient(48% 38% at 8% 22%, rgba(79,209,181,.20), transparent 70%),
+    radial-gradient(55% 45% at 30% 92%, rgba(96,165,250,.20), transparent 70%),
+    radial-gradient(60% 50% at 96% 88%, rgba(167,139,250,.24), transparent 70%);
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-size: 180px 180px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+/* small-scale contexts (Backgrounds picker swatch) tile the starfield tighter so it reads clearly at a glance.
+   z-index:auto is required here, not just position:static — .bg-swatch is a flex item (child of a
+   display:flex parent), and z-index applies to flex/grid items even when position is static, so the
+   inherited z-index:-1 from the base .nebula-bg rule was otherwise sinking it behind its own parent's paint. */
+.bg-swatch.nebula-bg{
+  position:static;
+  z-index:auto;
+  background-size: 90px 90px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}

@@ -56,6 +56,29 @@ export function page6B(){
     <div class="card-head"><div class="card-title">Dashboard Personalization</div></div>
     <div class="kicker">Compact / Balanced / Comfortable · show/hide secondary widgets · saved layouts</div>
   </div>
+
+  <div class="card" style="margin-top:var(--rc-gap);">
+    <div class="card-head"><div class="card-title">Backgrounds</div></div>
+    <div class="grid g-4">
+      <div class="bg-option selected" data-bg-select>
+        <div class="bg-swatch nebula-bg" style="position:static;"></div>
+        <div class="kicker">Starry Nebula</div>
+      </div>
+      <div class="bg-option" data-bg-select>
+        <div class="bg-swatch" style="background:linear-gradient(160deg,#0e1622,#070b12 70%);"></div>
+        <div class="kicker">Dark Gradient</div>
+      </div>
+      <div class="bg-option" data-bg-select>
+        <div class="bg-swatch" style="background:#070b12;background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.15) 1px,transparent 1px);background-size:14px 14px;"></div>
+        <div class="kicker">Subtle Pattern</div>
+      </div>
+      <div class="bg-option" data-bg-select>
+        <div class="bg-swatch" style="background:#070b12;background-image:linear-gradient(rgba(139,92,246,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.15) 1px,transparent 1px);background-size:12px 12px;"></div>
+        <div class="kicker">Matrix Grid</div>
+      </div>
+    </div>
+    <div class="kicker" style="margin-top:8px;">Starry Nebula is the current default across the app — a self-contained CSS starfield with brand-colored nebula clouds, no external image dependency.</div>
+  </div>
   `;
 }
 
