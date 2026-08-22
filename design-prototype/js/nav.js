@@ -54,8 +54,15 @@ export const NAV = [
   ]},
 ];
 
+// Drill-down screens reachable by clicking into a list, not listed in the sidebar itself.
+export const EXTRA_PAGES = [
+  { id:'2D', label:'Insight Detail', group:'review', groupLabel:'Review' },
+  { id:'2F', label:'Match Detail', group:'review', groupLabel:'Review' },
+];
+
 export const PAGE_META = {}; // id -> {group, label, groupLabel}
 NAV.forEach(g => g.children.forEach(c => { PAGE_META[c.id] = { group:g.id, label:c.label, groupLabel:g.label, elite:!!c.elite }; }));
+EXTRA_PAGES.forEach(p => { PAGE_META[p.id] = p; });
 
 const childIconFallback = { '1B':'matchPrep','1C':'inGame','1D':'focusQueue','1E':'logMatch' };
 
