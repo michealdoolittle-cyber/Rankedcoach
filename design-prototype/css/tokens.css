@@ -1,0 +1,37 @@
+:root{
+  /* surfaces */
+  --rc-canvas:#070b12; --rc-sidebar:#080d16;
+  --rc-surface-1:#0e1622; --rc-surface-2:#121c2a; --rc-surface-3:#172234; --rc-surface-4:#1c2a3f;
+  --rc-border-subtle:#223047; --rc-border-strong:#37465e;
+  --rc-text-1:#f6f8fc; --rc-text-2:#b8c1d1; --rc-text-3:#7c889c; --rc-text-4:#586274;
+
+  /* brand + semantic accents */
+  --rc-brand:#8b5cf6; --rc-brand-strong:#a78bfa; --rc-brand-deep:#5b21b6;
+  --rc-review:#4fd1b5; --rc-learn:#f5c451; --rc-library:#a78bfa; --rc-account:#60a5fa; --rc-settings:#f5c451; --rc-help:#4fd1b5;
+  --rc-success:#4ade80; --rc-danger:#f87171; --rc-warning:#fbbf24; --rc-info:#60a5fa;
+  --rc-validation:#fbbf24;
+
+  /* tier accents */
+  --rc-basic:#7c889c; --rc-supporter:#4fd1b5; --rc-elite:#f5c451;
+
+  /* type */
+  --rc-font-display:'Barlow Condensed',Inter,sans-serif;
+  --rc-font-body:'Inter',sans-serif;
+  --rc-fs-body:clamp(12px,0.85vw,14px);
+  --rc-fs-label:clamp(9px,0.65vw,10.5px);
+  --rc-fs-h1:clamp(20px,1.8vw,28px);
+  --rc-fs-h2:clamp(15px,1.15vw,19px);
+  --rc-fs-h3:clamp(12.5px,0.95vw,15px);
+  --rc-fs-stat:clamp(20px,1.7vw,30px);
+
+  /* layout */
+  --rc-sidebar-w:clamp(180px,13.5vw,240px);
+  --rc-topbar-h:clamp(58px,4.7vw,76px);
+  --rc-pad:clamp(16px,1.7vw,30px);
+  --rc-gap:clamp(10px,1vw,16px);
+  --rc-radius-card:12px;
+  --rc-radius-chip:8px;
+  --rc-radius-sm:6px;
+
+  color-scheme:dark;
+}
