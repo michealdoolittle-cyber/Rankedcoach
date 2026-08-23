@@ -11,6 +11,13 @@ import { page6A, page6B, page6C, page6D, page6E, page6F } from './content/settin
 import { page7A, page7B, page7C, page7D, page7E, page7F } from './content/help.js';
 import { renderAllGlobalOverlays } from './content/shared.js';
 
+import { editState } from './edit/state.js';
+import { refreshOnNav, reapplyPageState } from './edit/editor.js';
+import { renderToolbar, initToolbar } from './edit/toolbar.js';
+import { renderPalette, initPalette, reapplyAddedBlocks } from './edit/palette.js';
+import { initAnnotate, renderAnnotationsForPage } from './edit/annotate.js';
+import { renderSidebarEditor, initSidebarEditor } from './edit/sidebar-editor.js';
+
 const PAGES = {
   '1A': page1A, '1B': page1B, '1C': page1C, '1D': page1D, '1E': page1E,
   '2A': page2A, '2B': page2B, '2C': page2C, '2D': page2D, '2E': page2E, '2F': page2F, '2G': page2G, '2H': page2H,
@@ -32,6 +39,7 @@ function renderShell(){
     ${renderAllGlobalOverlays()}
   `;
   document.getElementById('toastRoot').innerHTML = `<div class="toast-stack" id="toastStack"></div>`;
+  document.getElementById('editorRoot').innerHTML = renderToolbar() + renderPalette() + renderSidebarEditor();
 }
 
 function wireBgPicker(){
@@ -46,6 +54,10 @@ function wireBgPicker(){
 
 function wireJumps(){
   document.addEventListener('click', (e)=>{
+    // In edit mode, clicking a card to select/annotate it must not also fire its normal
+    // data-jump navigation — mousedown's stopPropagation() doesn't block the later click
+    // event (they're separate event types), so this has to be guarded here explicitly.
+    if(document.body.classList.contains('edit-mode')) return;
     const jumper = e.target.closest('[data-jump]');
     if(jumper){
       const id = jumper.dataset.jump;
@@ -59,6 +71,16 @@ function wireJumps(){
   });
 }
 
+function reapplyAllSavedEdits(){
+  Object.keys(editState.pages).forEach(pageId=>{
+    reapplyPageState(pageId);
+    const bucket = editState.pages[pageId];
+    if(bucket.added && bucket.added.length) reapplyAddedBlocks(pageId, bucket.added);
+  });
+  const annotatedPages = [...new Set(editState.annotations.map(a=>a.page))];
+  annotatedPages.forEach(pageId => renderAnnotationsForPage(pageId));
+}
+
 function init(){
   renderShell();
   initNav();
@@ -68,9 +90,31 @@ function init(){
   wireJumps();
   wireBgPicker();
 
+  initToolbar();
+  initPalette();
+  initAnnotate();
+  initSidebarEditor();
+
+  window.addEventListener('rc-sandbox-nav', (e)=> activatePage(e.detail));
+
   const params = new URLSearchParams(location.search);
   const startPage = params.get('page') && PAGE_META[params.get('page')] ? params.get('page') : '1A';
   activatePage(startPage, { noHistory:true });
+
+  reapplyAllSavedEdits();
+  refreshOnNav();
+
+  // Whichever page becomes active (sidebar click, data-jump, sandbox sidebar-editor nav, browser
+  // back/forward) — re-wire its editable elements and repaint its annotations. A MutationObserver
+  // on .active is more robust here than chasing every individual call site that can trigger a nav.
+  const observer = new MutationObserver(()=>{
+    refreshOnNav();
+    const pid = document.querySelector('.page.active')?.id.replace('page-','');
+    if(pid) renderAnnotationsForPage(pid);
+  });
+  document.querySelectorAll('.page').forEach(p=>{
+    observer.observe(p, { attributes:true, attributeFilter:['class'] });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

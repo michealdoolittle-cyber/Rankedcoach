@@ -1,7 +1,9 @@
 export function initOverlays(){
   document.addEventListener('click', (e)=>{
     const opener = e.target.closest('[data-modal]');
-    if(opener){
+    // same reasoning as wireJumps: don't let selecting/annotating a card in edit mode
+    // also pop open the modal that card would normally trigger.
+    if(opener && !document.body.classList.contains('edit-mode')){
       const id = opener.dataset.modal;
       openOverlay(id);
       return;

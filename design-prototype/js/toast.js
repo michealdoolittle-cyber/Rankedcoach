@@ -10,6 +10,7 @@ export function toast(msg, type){
 
 export function initToastDemoTriggers(){
   document.addEventListener('click', (e)=>{
+    if(document.body.classList.contains('edit-mode')) return;
     const t = e.target.closest('[data-toast]');
     if(t) toast(t.dataset.toast, t.dataset.toastType||'success');
   });
