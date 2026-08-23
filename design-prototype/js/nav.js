@@ -32,18 +32,6 @@ export const NAV = [
     { id:'4C', label:'Routines' },
     { id:'4D', label:'Videos / Collections' },
   ]},
-  { id:'account', label:'Account', groupIcon:'account', children:[
-    { id:'5A', label:'Profile' },
-    { id:'5B', label:'Profiles', elite:true },
-  ]},
-  { id:'settings', label:'Settings', groupIcon:'settings', children:[
-    { id:'6A', label:'General / Profile' },
-    { id:'6B', label:'Visual' },
-    { id:'6C', label:'Coaching Style' },
-    { id:'6D', label:'Notifications' },
-    { id:'6E', label:'Data / Connections' },
-    { id:'6F', label:'Billing' },
-  ]},
   { id:'help', label:'Help', groupIcon:'help', children:[
     { id:'7A', label:'Help Center' },
     { id:'7B', label:'Getting Started' },
@@ -52,6 +40,21 @@ export const NAV = [
     { id:'7E', label:'Feedback' },
     { id:'7F', label:'About' },
   ]},
+];
+
+// Account and Settings are no longer top-level nav groups in the main list — the account
+// block in the sidebar footer (opens 8H Profile Popover, which already links to Profile/
+// Billing/Help) covers Account, and the new gear icon covers Settings directly. Their pages
+// still exist and are still real navigation targets, just reached from the footer instead.
+export const FOOTER_PAGES = [
+  { id:'5A', label:'Profile', group:'account', groupLabel:'Account' },
+  { id:'5B', label:'Profiles', group:'account', groupLabel:'Account', elite:true },
+  { id:'6A', label:'General / Profile', group:'settings', groupLabel:'Settings' },
+  { id:'6B', label:'Visual', group:'settings', groupLabel:'Settings' },
+  { id:'6C', label:'Coaching Style', group:'settings', groupLabel:'Settings' },
+  { id:'6D', label:'Notifications', group:'settings', groupLabel:'Settings' },
+  { id:'6E', label:'Data / Connections', group:'settings', groupLabel:'Settings' },
+  { id:'6F', label:'Billing', group:'settings', groupLabel:'Settings' },
 ];
 
 // Drill-down screens reachable by clicking into a list, not listed in the sidebar itself.
@@ -63,6 +66,7 @@ export const EXTRA_PAGES = [
 export const PAGE_META = {}; // id -> {group, label, groupLabel}
 NAV.forEach(g => g.children.forEach(c => { PAGE_META[c.id] = { group:g.id, label:c.label, groupLabel:g.label, elite:!!c.elite }; }));
 EXTRA_PAGES.forEach(p => { PAGE_META[p.id] = p; });
+FOOTER_PAGES.forEach(p => { PAGE_META[p.id] = p; });
 
 const childIconFallback = { '1B':'matchPrep','1C':'inGame','1D':'focusQueue','1E':'logMatch' };
 
@@ -88,12 +92,13 @@ export function renderSidebar(){
     </div>
     ${groups}
     <div class="sidebar-spacer"></div>
+    <div class="sidebar-account" data-modal="8H-profile">
+      <div class="avatar-dot"></div>
+      <div class="meta-txt"><strong>DemoPlayer</strong><span>Diamond 1 · 42 RR</span></div>
+      <span class="tier-badge elite">Elite</span>
+    </div>
     <div class="sidebar-footer-row">
-      <div class="sidebar-account" data-modal="8H-profile">
-        <div class="avatar-dot"></div>
-        <div class="meta-txt"><strong>DemoPlayer</strong><span>Diamond 1 · 42 RR</span></div>
-        <span class="tier-badge elite">Elite</span>
-      </div>
+      <button class="icon-btn" data-jump="6A" title="Settings">${icon('settings')}</button>
       <button class="icon-btn" data-toast="No new notifications" title="Notifications">${icon('bell')}</button>
     </div>
   `;

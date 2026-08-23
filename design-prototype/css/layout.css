@@ -19,8 +19,11 @@
 .nav-children{margin-left:22px;display:flex;flex-direction:column;gap:1px;margin-bottom:2px;}
 .nav-children .nav-item{font-size:clamp(10px,0.8vw,17px);padding:6px 8px;font-weight:500;}
 .sidebar-spacer{flex:1;}
-.sidebar-footer-row{display:flex;align-items:center;gap:8px;}
-.sidebar-account{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;background:var(--rc-surface-1);border:1px solid var(--rc-border-subtle);margin-bottom:6px;cursor:pointer;flex:1;min-width:0;}
+/* gear (settings) sits bottom-left, bell (notifications) bottom-right, below the account
+   block — Account and Settings are no longer top-level nav groups, so this footer cluster
+   is now the only way to reach either. */
+.sidebar-footer-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.sidebar-account{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;background:var(--rc-surface-1);border:1px solid var(--rc-border-subtle);margin-bottom:6px;cursor:pointer;min-width:0;}
 .avatar-dot{width:clamp(28px,2vw,44px);height:clamp(28px,2vw,44px);border-radius:8px;background:var(--rc-surface-3);border:1px solid var(--rc-border-strong);flex:none;}
 .sidebar-account .meta-txt{min-width:0;overflow:hidden;}
 .sidebar-account .meta-txt strong{display:block;font-size:clamp(11.5px,0.8vw,18px);color:var(--rc-text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

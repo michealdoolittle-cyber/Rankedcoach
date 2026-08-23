@@ -97,9 +97,12 @@ function applyToLiveSidebar(){
   const sidebar = document.getElementById('sidebar');
   if(!sidebar) return;
   const brandHTML = sidebar.querySelector('.brand').outerHTML;
-  // footer (spacer + account block + notification bell) is fixed chrome, not part of the
-  // editable nav tree — captured once before the rebuild and reattached as-is.
-  const footerHTML = sidebar.querySelector('.sidebar-footer-row')?.outerHTML || '';
+  // footer (account block + the gear/bell row below it) is fixed chrome, not part of the
+  // editable nav tree — captured once before the rebuild and reattached as-is. They're two
+  // separate sibling elements now (account block full-width on its own row, gear+bell in a
+  // second row below it), not one combined row.
+  const accountHTML = sidebar.querySelector('.sidebar-account')?.outerHTML || '';
+  const footerRowHTML = sidebar.querySelector('.sidebar-footer-row')?.outerHTML || '';
   const groups = workingNav.map(g => {
     const items = g.children.map(c => `<div class="nav-item" data-page="${c.id}" data-custom-label="1"><span>${c.label}</span></div>`).join('');
     return `
@@ -108,7 +111,7 @@ function applyToLiveSidebar(){
       <div class="nav-children" data-group-children="${g.id}">${items}</div>
     `;
   }).join('');
-  sidebar.innerHTML = brandHTML + groups + '<div class="sidebar-spacer"></div>' + footerHTML;
+  sidebar.innerHTML = brandHTML + groups + '<div class="sidebar-spacer"></div>' + accountHTML + footerRowHTML;
   // re-wire nav clicks for any items pointing at real, still-existing pages
   sidebar.querySelectorAll('.nav-item[data-page]').forEach(item=>{
     item.addEventListener('click', ()=>{
