@@ -1,6 +1,6 @@
 import { icon } from '../icons.js';
 import { recordAdded, pushUndo } from './state.js';
-import { getCurrentPageId, refreshEditableRegion } from './editor.js';
+import { getCurrentPageId, refreshEditableRegion, getSelected } from './editor.js';
 
 const PRESETS = [
   { type:'stat-tile', label:'Stat Tile', ic:'palStat', w:160, h:100 },
@@ -33,9 +33,13 @@ function blockInnerHTML(preset){
 
 let dragPreset = null;
 
-function addBlock(preset, x, y){
+// parentEl defaults to the whole page; pass an existing [data-eid] card to nest the new
+// block as a real child of it instead (so it moves/resizes together with that card, and
+// can properly "replace" something that was removed from inside it). x/y are relative to
+// whichever parentEl is used, not always the page.
+function addBlock(preset, x, y, parentEl){
   const pageId = getCurrentPageId();
-  const active = document.querySelector('.page.active');
+  const parent = parentEl || document.querySelector('.page.active');
   const eid = pageId + '-add' + Date.now();
 
   const el = document.createElement('div');
@@ -48,9 +52,10 @@ function addBlock(preset, x, y){
   el.style.height = preset.h + 'px';
   el.style.margin = '0';
   el.innerHTML = blockInnerHTML(preset);
-  active.appendChild(el);
+  parent.appendChild(el);
 
-  recordAdded(pageId, { eid, type: preset.type, page: pageId, x, y, w: preset.w, h: preset.h, label: preset.label });
+  const parentEid = parent.dataset && parent.dataset.eid ? parent.dataset.eid : null;
+  recordAdded(pageId, { eid, type: preset.type, page: pageId, x, y, w: preset.w, h: preset.h, label: preset.label, parentEid });
   pushUndo({ type:'add', apply:()=>{ el.remove(); } });
 
   refreshEditableRegion();
@@ -61,11 +66,12 @@ export function renderPalette(){
   return `<div class="edit-palette" id="editPalette">
     <div class="se-group-label">Drag onto the page</div>
     ${PRESETS.map(p=>`<div class="palette-item" draggable="true" data-preset="${p.type}">${icon(p.ic)}<span>${p.label}</span></div>`).join('')}
-    <div class="se-group-label" style="margin-top:12px;">Or click to drop at center</div>
+    <div class="se-group-label" style="margin-top:12px;">Dropping onto an existing card nests it as a real child of that card. Click a palette item to drop it into whatever's currently selected (or the page, if nothing is).</div>
   </div>`;
 }
 
-// Recreate any palette blocks the user added in a prior saved session.
+// Recreate any palette blocks the user added in a prior saved session — including
+// re-nesting into their original parent card (parentEid), if they had one.
 export function reapplyAddedBlocks(pageId, added){
   const active = document.getElementById('page-' + pageId);
   if(!active) return;
@@ -82,7 +88,8 @@ export function reapplyAddedBlocks(pageId, added){
     el.style.height = (a.h||preset.h) + 'px';
     el.style.margin = '0';
     el.innerHTML = blockInnerHTML(preset);
-    active.appendChild(el);
+    const parent = (a.parentEid && active.querySelector(`[data-eid="${a.parentEid}"]`)) || active;
+    parent.appendChild(el);
   });
 }
 
@@ -103,14 +110,19 @@ export function initPalette(){
     if(!active || !dragPreset) return;
     if(!active.contains(e.target) && e.target !== active) return;
     e.preventDefault();
-    const rect = active.getBoundingClientRect();
-    addBlock(dragPreset, Math.max(0, e.clientX - rect.left - dragPreset.w/2), Math.max(0, e.clientY - rect.top - dragPreset.h/2));
+    // whatever [data-eid] card is actually under the drop point becomes the new
+    // element's real parent, so it nests and moves/resizes with that card — not just
+    // a page-level element that happens to visually sit on top of it.
+    const dropTarget = e.target.closest('[data-eid]') || active;
+    const rect = dropTarget.getBoundingClientRect();
+    addBlock(dragPreset, Math.max(0, e.clientX - rect.left - dragPreset.w/2), Math.max(0, e.clientY - rect.top - dragPreset.h/2), dropTarget);
     dragPreset = null;
   });
 
   // click-to-add fallback — also what Playwright/automation should use, since native HTML5
-  // drag-and-drop doesn't simulate reliably. Drops the block at a default spot in the visible
-  // content area; the user (or a test) can then drag it wherever it belongs.
+  // drag-and-drop doesn't simulate reliably. If something is currently selected, the new
+  // block nests inside it (this is the intended way to put something back into a card after
+  // removing one of its children); otherwise it drops at the page level.
   document.addEventListener('click', (e)=>{
     const item = e.target.closest('.palette-item');
     if(!item) return;
@@ -118,6 +130,11 @@ export function initPalette(){
     if(!preset) return;
     const active = document.querySelector('.page.active');
     if(!active) return;
-    addBlock(preset, 40, 40 + (active.scrollTop || 0));
+    const selected = getSelected();
+    if(selected){
+      addBlock(preset, 16, 16, selected);
+    } else {
+      addBlock(preset, 40, 40 + (active.scrollTop || 0));
+    }
   });
 }
