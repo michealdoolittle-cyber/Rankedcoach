@@ -9,13 +9,19 @@ const METRICS = [
   { key:'Win Rate', icon:'metricWinRate', value:'52%', delta:'+2%', up:true, trend:[46,48,47,50,49,51,52] },
 ];
 
-function metricTiles(){
-  return `<div class="grid g-5">${METRICS.map(m=>`
-    <div class="metric-tile" data-jump="2B" data-tab-hint="${m.key}" style="cursor:pointer;">
-      ${icon(m.icon)}
-      <div class="value">${m.value}</div>
-      <div class="kicker">${m.key}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+// Same 5 metrics, laid out as a vertical stack for the tall right-hand rail on 1A —
+// each row keeps icon+value+label on the left and delta+sparkline on the right.
+function metricTilesVertical(){
+  return `<div class="stack" style="flex:1;">${METRICS.map(m=>`
+    <div class="metric-tile" data-jump="2B" data-tab-hint="${m.key}" style="cursor:pointer;flex-direction:row;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${icon(m.icon)}
+        <div>
+          <div class="value" style="font-size:19px;">${m.value}</div>
+          <div class="kicker">${m.key}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
         <div class="delta ${m.up?'up':'down'}" style="font-size:11px;font-weight:700;">${m.delta}</div>
         ${sparkline(m.trend, m.up ? 'var(--rc-success)' : 'var(--rc-danger)')}
       </div>
@@ -27,8 +33,8 @@ export function page1A(){
   <div class="section-id">1A · Play Home</div>
   <h1 class="page-title">Home base between matches.</h1>
 
-  <div class="grid g-2" style="margin-bottom:var(--rc-gap);">
-    <div class="card hero" style="position:relative;overflow:hidden;min-height:220px;">
+  <div class="grid play-main-row" style="margin-bottom:var(--rc-gap);">
+    <div class="card hero" style="position:relative;overflow:hidden;">
       <img src="./assets/agents/Reyna.png" alt="" style="position:absolute;right:-10px;bottom:-18px;height:115%;max-width:46%;object-fit:contain;object-position:bottom right;opacity:.92;-webkit-mask-image:linear-gradient(90deg,transparent,black 28%);mask-image:linear-gradient(90deg,transparent,black 28%);pointer-events:none;">
       <div style="position:relative;max-width:62%;">
         <div class="card-head">
@@ -45,43 +51,64 @@ export function page1A(){
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-title">Current Rank</div></div>
-      <div style="display:flex;align-items:center;gap:16px;">
-        ${rankGem(52)}
-        <div>
-          <div style="font-family:var(--rc-font-display);font-size:22px;font-weight:700;">Diamond 1</div>
-          <div class="kicker">42 RR</div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Current Rank</div></div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          ${rankGem(52)}
+          <div>
+            <div style="font-family:var(--rc-font-display);font-size:22px;font-weight:700;">Diamond 1</div>
+            <div class="kicker">42 RR</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <span class="chip positive">14 Wins</span>
+          <span class="chip" style="color:var(--rc-danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08);">11 Losses</span>
+          <span class="chip">1 Draw</span>
+        </div>
+        <div class="kicker" style="margin-top:6px;">Impact (Controller)</div>
+        <div style="display:flex;gap:2px;">${['var(--rc-success)','var(--rc-success)','var(--rc-success)','var(--rc-warning)','var(--rc-warning)','var(--rc-text-4)'].map(c=>`<div style="flex:1;height:6px;background:${c};border-radius:2px;"></div>`).join('')}</div>
+        <div class="kicker">Preferred role: Duelist</div>
+        <div style="display:flex;gap:16px;font-size:11px;color:var(--rc-text-3);border-top:1px solid var(--rc-border-subtle);padding-top:8px;">
+          <span>Last match: <b style="color:var(--rc-text-1);">K/D 1.4</b></span>
+          <span>ACS <b style="color:var(--rc-text-1);">261</b></span>
+          <span>KAST <b style="color:var(--rc-text-1);">76%</b></span>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <span class="chip positive">14 Wins</span>
-        <span class="chip" style="color:var(--rc-danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08);">11 Losses</span>
-        <span class="chip">1 Draw</span>
+
+      <div class="card" style="cursor:pointer;" data-jump="2B">
+        <div class="card-head"><div class="card-title">Rank Progress</div></div>
+        <div style="font-family:var(--rc-font-display);font-size:20px;font-weight:700;">42 RR</div>
+        ${trendLine([18,24,20,30,26,34,42],{h:90})}
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="kicker">Last 7 matches</span>
+          ${resultLetters(['W','W','L','W','D','W','W'])}
+        </div>
       </div>
-      <div class="kicker" style="margin-top:6px;">Impact (Controller)</div>
-      <div style="display:flex;gap:2px;">${['var(--rc-success)','var(--rc-success)','var(--rc-success)','var(--rc-warning)','var(--rc-warning)','var(--rc-text-4)'].map(c=>`<div style="flex:1;height:6px;background:${c};border-radius:2px;"></div>`).join('')}</div>
-      <div class="kicker">Preferred role: Duelist</div>
-      <div style="display:flex;gap:16px;font-size:11px;color:var(--rc-text-3);border-top:1px solid var(--rc-border-subtle);padding-top:8px;">
-        <span>Last match: <b style="color:var(--rc-text-1);">K/D 1.4</b></span>
-        <span>ACS <b style="color:var(--rc-text-1);">261</b></span>
-        <span>KAST <b style="color:var(--rc-text-1);">76%</b></span>
-      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="card-head"><div class="card-title">Improvement Metrics</div></div>
+      <div class="kicker" style="margin-bottom:2px;">Click a metric to see its trend</div>
+      ${metricTilesVertical()}
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:var(--rc-gap);">
-    <div class="card-head"><div class="card-title">Improvement Metrics</div><span class="kicker">Click a metric to see its trend</span></div>
-    ${metricTiles()}
-  </div>
-
-  <div class="grid g-3" style="margin-bottom:var(--rc-gap);">
-    <div class="card" style="cursor:pointer;" data-jump="1B">
-      <div class="card-head"><div class="card-title">Loadout</div></div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0;">
-        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--rc-brand-strong)" stroke-width="1.6"><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/><circle cx="12" cy="12" r="2.4" fill="var(--rc-brand-strong)" stroke="none"/></svg>
-        <button class="btn primary">Start Match</button>
+  <div class="grid g-3">
+    <div class="card" style="cursor:pointer;" data-jump="2D">
+      <div class="card-head">
+        <div class="kicker">Top Insight</div>
+        <span class="chip impact-high">High Impact</span>
       </div>
+      <div class="card-title" style="font-size:var(--rc-fs-h2);">Your crosshair placement is winning you more fights.</div>
+      <div class="card-sub">You win 63% of duels when your crosshair is already head-level on the angle. Hold discipline instead of tracking down.</div>
+      <div style="display:flex;gap:14px;margin-bottom:6px;"><span class="chip confidence">Confidence 83%</span></div>
+      <div class="kicker">Key Takeaways</div>
+      <ul style="margin:4px 0 0;padding-left:16px;color:var(--rc-text-2);font-size:11.5px;line-height:1.6;">
+        <li>Hold head level on common angles</li>
+        <li>Clear close corners with utility</li>
+        <li>Play with a trading mindset</li>
+      </ul>
     </div>
 
     <div class="card" style="cursor:pointer;" data-jump="2A">
@@ -89,35 +116,12 @@ export function page1A(){
       ${radarChart(['Mechanics','Game Sense','Teamwork','Discipline','Mental'],[68,74,62,58,64],{size:190, color:'var(--rc-brand-strong)'})}
     </div>
 
-    <div class="card" style="cursor:pointer;" data-jump="2B">
-      <div class="card-head"><div class="card-title">Rank Progress</div></div>
-      <div style="font-family:var(--rc-font-display);font-size:20px;font-weight:700;">42 RR</div>
-      ${trendLine([18,24,20,30,26,34,42],{h:90})}
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span class="kicker">Last 7 matches</span>
-        ${resultLetters(['W','W','L','W','D','W','W'])}
+    <div class="card" style="cursor:pointer;" data-jump="1B">
+      <div class="card-head"><div class="card-title">Loadout</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0;">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--rc-brand-strong)" stroke-width="1.6"><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/><circle cx="12" cy="12" r="2.4" fill="var(--rc-brand-strong)" stroke="none"/></svg>
+        <button class="btn primary">Start Match</button>
       </div>
-    </div>
-  </div>
-
-  <div class="card" style="flex-direction:row;gap:var(--rc-gap);">
-    <div style="flex:1.4;cursor:pointer;" data-jump="2D">
-      <div class="card-head">
-        <div class="kicker">Top Insight — your biggest takeaway</div>
-        <span class="chip impact-high">High Impact</span>
-      </div>
-      <div class="card-title" style="font-size:var(--rc-fs-h2);">Your crosshair placement is winning you more fights.</div>
-      <div class="card-sub">You win 63% of duels when your crosshair is already head-level on the angle. Hold discipline instead of tracking down.</div>
-      <div style="display:flex;gap:14px;"><span class="chip confidence">Confidence 83%</span></div>
-    </div>
-    <div style="flex:1;background:var(--rc-surface-2);border:1px solid var(--rc-border-subtle);border-radius:var(--rc-radius-card);padding:14px;">
-      <div class="kicker">Key Takeaways</div>
-      <ul style="margin:6px 0 0;padding-left:16px;color:var(--rc-text-2);font-size:11.5px;line-height:1.7;">
-        <li>Hold head level on common angles</li>
-        <li>Clear close corners with utility</li>
-        <li>Play with a trading mindset</li>
-        <li>Don't re-peek after damage</li>
-      </ul>
     </div>
   </div>
   `;
