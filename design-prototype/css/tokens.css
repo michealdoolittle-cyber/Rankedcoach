@@ -14,21 +14,24 @@
   /* tier accents */
   --rc-basic:#7c889c; --rc-supporter:#4fd1b5; --rc-elite:#f5c451;
 
-  /* type */
+  /* type — ceilings raised ~2x over what a normal desktop monitor needs, so these keep
+     climbing all the way to true 4K widths instead of capping out around 1920-2560px like
+     the beta app's tokens originally did (same root-cause bug, same fix: see
+     notes/beta-foundation-shell-4k-scaling-2026-08-21.md for the prior write-up of this). */
   --rc-font-display:'Barlow Condensed',Inter,sans-serif;
   --rc-font-body:'Inter',sans-serif;
-  --rc-fs-body:clamp(12px,0.85vw,14px);
-  --rc-fs-label:clamp(9px,0.65vw,10.5px);
-  --rc-fs-h1:clamp(20px,1.8vw,28px);
-  --rc-fs-h2:clamp(15px,1.15vw,19px);
-  --rc-fs-h3:clamp(12.5px,0.95vw,15px);
-  --rc-fs-stat:clamp(20px,1.7vw,30px);
+  --rc-fs-body:clamp(12px,0.85vw,22px);
+  --rc-fs-label:clamp(9px,0.65vw,16px);
+  --rc-fs-h1:clamp(20px,1.8vw,46px);
+  --rc-fs-h2:clamp(15px,1.15vw,30px);
+  --rc-fs-h3:clamp(12.5px,0.95vw,24px);
+  --rc-fs-stat:clamp(20px,1.7vw,48px);
 
   /* layout */
-  --rc-sidebar-w:clamp(180px,13.5vw,240px);
-  --rc-topbar-h:clamp(58px,4.7vw,76px);
-  --rc-pad:clamp(16px,1.7vw,30px);
-  --rc-gap:clamp(10px,1vw,16px);
+  --rc-sidebar-w:clamp(180px,13.5vw,380px);
+  --rc-topbar-h:clamp(58px,4.7vw,120px);
+  --rc-pad:clamp(16px,1.7vw,48px);
+  --rc-gap:clamp(10px,1vw,26px);
   --rc-radius-card:12px;
   --rc-radius-chip:8px;
   --rc-radius-sm:6px;

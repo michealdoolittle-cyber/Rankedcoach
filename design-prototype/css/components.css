@@ -69,7 +69,8 @@ tr:hover td{background:rgba(255,255,255,.02);cursor:pointer;}
 .metric-tile{background:var(--rc-surface-2);border:1px solid var(--rc-border-subtle);border-radius:var(--rc-radius-card);padding:14px;display:flex;flex-direction:column;gap:6px;}
 .metric-tile .value{font-family:var(--rc-font-display);font-size:var(--rc-fs-stat);font-weight:700;}
 .metric-tile .delta.up{color:var(--rc-success);} .metric-tile .delta.down{color:var(--rc-danger);}
-.metric-tile svg{width:18px;height:18px;color:var(--rc-brand-strong);}
+.metric-tile svg:not(.sparkline){width:clamp(18px,1.2vw,30px);height:clamp(18px,1.2vw,30px);color:var(--rc-brand-strong);}
+.sparkline{width:clamp(70px,4.8vw,140px);height:auto;flex:none;}
 
 /* modal / drawer shells — fade + slide on open, consistent across every overlay in the system */
 .overlay-scrim{

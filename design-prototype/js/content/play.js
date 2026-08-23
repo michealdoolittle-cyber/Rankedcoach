@@ -17,12 +17,12 @@ function metricTilesVertical(){
       <div style="display:flex;align-items:center;gap:10px;">
         ${icon(m.icon)}
         <div>
-          <div class="value" style="font-size:19px;">${m.value}</div>
+          <div class="value" style="font-size:clamp(15px,1.1vw,28px);">${m.value}</div>
           <div class="kicker">${m.key}</div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
-        <div class="delta ${m.up?'up':'down'}" style="font-size:11px;font-weight:700;">${m.delta}</div>
+        <div class="delta ${m.up?'up':'down'}" style="font-size:clamp(10px,0.7vw,18px);font-weight:700;">${m.delta}</div>
         ${sparkline(m.trend, m.up ? 'var(--rc-success)' : 'var(--rc-danger)')}
       </div>
     </div>`).join('')}</div>`;

@@ -40,13 +40,16 @@ export function radarChart(labels, values, opts){
 
 // Small inline sparkline for a single metric tile — no axis, just shape.
 export function sparkline(points, color){
+  // viewBox fixes the internal coordinate system/aspect ratio; the .sparkline class (not a
+  // fixed width/height attribute) is what lets this actually grow at large viewports instead
+  // of staying a tiny fixed 90x28px next to text that scales up around it via clamp().
   const w = 90, h = 28, pad = 2;
   const max = Math.max(...points), min = Math.min(...points);
   const range = (max-min)||1;
   const step = (w-pad*2)/(points.length-1);
   const xy = points.map((p,i)=>[pad+i*step, h-pad-((p-min)/range)*(h-pad*2)]);
   const d = xy.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><path d="${d}" fill="none" stroke="${color||'var(--rc-brand-strong)'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `<svg class="sparkline" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${color||'var(--rc-brand-strong)'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
 // Color-coded W/L/D result-letter row, used under RR trend charts.
