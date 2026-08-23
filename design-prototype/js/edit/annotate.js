@@ -65,7 +65,7 @@ export function addAnnotationAt(x, y){
   editState.annotations.push(record);
   const active = document.querySelector('.page.active');
   const note = makeNote(pageId, x, y, 180, 90, '', id);
-  (active.querySelector(':scope > *') || active).appendChild(note);
+  active.appendChild(note);
   note.querySelector('textarea').focus();
   pushUndo({ type:'annotate-add', apply:()=>{
     editState.annotations = editState.annotations.filter(a=>a.id!==id);
@@ -92,9 +92,8 @@ export function initAnnotate(){
 export function renderAnnotationsForPage(pageId){
   const active = document.getElementById('page-' + pageId);
   if(!active) return;
-  const container = active.querySelector(':scope > *') || active;
   editState.annotations.filter(a=>a.page===pageId).forEach(a=>{
     if(active.querySelector(`[data-ann-id="${a.id}"]`)) return;
-    container.appendChild(makeNote(pageId, a.x, a.y, a.w, a.h, a.text, a.id));
+    active.appendChild(makeNote(pageId, a.x, a.y, a.w, a.h, a.text, a.id));
   });
 }

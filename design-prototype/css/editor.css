@@ -108,5 +108,13 @@ body.edit-mode [data-eid]:hover{outline:1.5px dashed rgba(139,92,246,.55);outlin
 .sandbox-block .sb-label{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rc-brand-strong);}
 .sandbox-block .sb-name{font-size:12px;font-weight:700;color:var(--rc-text-1);outline:none;}
 
-body.edit-mode .content{padding-bottom:120px;position:relative;}
+body.edit-mode .content{padding-bottom:120px;}
+/* Every page section is the positioning context for its own edited/added elements — NOT
+   .content (the shared wrapper around all 36 pages). That mismatch was the layering bug:
+   elements nested only inside untagged wrapper divs (.grid rows) fell back to .content as
+   their containing block while newly-added blocks got inserted deep inside .section-id,
+   so their paint order no longer matched simple DOM order and they could render behind
+   whichever card happened to sit later in the tree. .page as the single consistent anchor
+   fixes both the containing-block math and the stacking order at once. */
+body.edit-mode .page{position:relative;}
 body.edit-mode .nav-item{cursor:default;}

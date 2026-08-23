@@ -48,7 +48,7 @@ function addBlock(preset, x, y){
   el.style.height = preset.h + 'px';
   el.style.margin = '0';
   el.innerHTML = blockInnerHTML(preset);
-  (active.querySelector(':scope > *') || active).appendChild(el);
+  active.appendChild(el);
 
   recordAdded(pageId, { eid, type: preset.type, page: pageId, x, y, w: preset.w, h: preset.h, label: preset.label });
   pushUndo({ type:'add', apply:()=>{ el.remove(); } });
@@ -82,7 +82,7 @@ export function reapplyAddedBlocks(pageId, added){
     el.style.height = (a.h||preset.h) + 'px';
     el.style.margin = '0';
     el.innerHTML = blockInnerHTML(preset);
-    (active.querySelector(':scope > *') || active).appendChild(el);
+    active.appendChild(el);
   });
 }
 
