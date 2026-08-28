@@ -1,7 +1,6 @@
 # Production App Issues — Round 1
 
-**Recommended Codex settings for Parts 1-2: GPT-5.5 · High reasoning · Fast speed.** Every item below has a confirmed root cause and exact file:line — this is "diagnosed, touches several coordinated spots" work, not open research.
-**Recommended Codex settings for Part 3: GPT-5.6 Terra · Extra High reasoning · Fast speed.** These are new features being built from nothing, not fixes to existing code — more design judgment required.
+**Recommended Codex settings: GPT-5.6 Terra · Extra High reasoning · Fast speed.** Most items below are fully diagnosed with exact file:line, but this is being run as one pass covering everything — including Part 3's from-scratch feature builds (map zoom, twinkling stars) and the dummy-avatar task's open-ended pieces (guest-session wiring not yet located, SVG restyling) — so the setting is picked for the hardest item in the batch, not the average.
 
 **Status:** New directive, 2026-08-28. Not started. All findings below verified by direct code read against `Desktop/rankedcoach-production` — not assumed.
 
