@@ -6,6 +6,28 @@
 
 ---
 
+## 0. Quick facts (copy-paste reference)
+
+| | |
+|---|---|
+| Production domain | `rankedcoach.gg` |
+| Production repo (HTTPS) | `https://github.com/michealdoolittle-cyber/art-keeper-collection.git` |
+| Clone command used | `git clone https://github.com/michealdoolittle-cyber/art-keeper-collection.git rankedcoach-production` |
+| Local checkout | `Desktop/rankedcoach-production` (sibling of this repo) |
+| GitHub repo visibility | Private |
+| Beta repo (this one) | `Rankedcoach-main-sync`, serves `beta.rankedcoach.gg` only |
+| Correct git identity for the production repo | `Michael Doolittle <245895280+michealdoolittle-cyber@users.noreply.github.com>` |
+| Lovable app id / template | `.lovable/project.json` → `"template": "tanstack_start_ts_current"`, `"revision": "tanstack_start_ts_current-b3e81c491308"` |
+| Pre-existing fix commit (Lovable/bot) | `8abd4c5` "Fixed pistol off-by-one & bugs" (merge commit, authored by `gpt-engineer-app[bot]` + `michealdoolittle-cyber`) |
+| Follow-up branch (this session) | `claude/language-clarity-followup-2026-08-28` |
+| Follow-up commit | `f12d489` "Finish language-clarity backlog left over from 8abd4c5" |
+| PR | #1, `https://github.com/michealdoolittle-cyber/art-keeper-collection/pull/1` |
+| Merge commit | `a729e1a` "Merge pull request #1 from michealdoolittle-cyber/claude/language-clarity-followup-2026-08-28" |
+| Live prod HTTP headers seen | `server: cloudflare`, `x-deployment-id: 17573d6c83c3181984a71c0de5c0d63ad79ba36dfb5c3a27a05397224cc725be` (snapshot from 2026-08-28 ~14:45 UTC — will change on redeploy, useful only as a "did this change" marker, not an absolute reference) |
+| `.env.example` keys present | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_ID`, `VITE_SITE_URL`, `VITE_ADSENSE_CLIENT_ID`, `VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`, `VITE_PADDLE_PRICE_SUPPORTER_MONTHLY`, `VITE_PADDLE_PRICE_SUPPORTER_YEARLY`, `VITE_PADDLE_PRICE_PRO_MONTHLY`, `VITE_PADDLE_PRICE_PRO_YEARLY`, `VITE_CHECKOUT_ENABLED`, `PADDLE_API_KEY`, `PADDLE_ENV`, `PADDLE_WEBHOOK_SECRET`, `VITE_DONATE_URL` — no Cloudflare/Vercel/Netlify/CI deploy tokens anywhere. |
+
+---
+
 ## 1. The split — read this first
 
 **`Rankedcoach-main-sync` (this repo) no longer serves the production root domain.** It serves `beta.rankedcoach.gg` only. If you're reading this from inside this repo and a task references `rankedcoach.gg` (the live root domain), the code for that is **not here**.
@@ -27,7 +49,8 @@ Confirmed directly from Lovable (relayed 2026-08-28):
 - **Bidirectional, real-time, no manual pull/push step.** Lovable's own editor auto-commits and pushes to GitHub on every change made there. Commits pushed to GitHub from anywhere else (a local clone, Codex, Claude) sync back into the Lovable editor automatically.
 - **No defined conflict-resolution strategy** for two simultaneous edits to the same file from both sides. Lovable has version history (Google-Docs-style restore) and branch switching as fallbacks, but real-time merge of concurrent edits isn't guaranteed clean.
 - **Safe working pattern, per Lovable's own recommendation:** work on a feature branch, not `main`. Push the branch, open a PR, merge on GitHub. Tell Lovable/whoever else has the editor open which branch is active so nobody edits the same file in the Lovable UI while it's also being edited locally. Lovable can switch to a branch in its editor too.
-- This was used successfully end-to-end on 2026-08-28: branch `claude/language-clarity-followup-2026-08-28` → PR → merged on GitHub → confirmed synced into Lovable's editor by pasting the post-merge file content and diffing it against the local copy (byte-for-byte identical except one pre-existing cosmetic `’` vs literal `’` difference unrelated to the change).
+- This was used successfully end-to-end on 2026-08-28: branch `claude/language-clarity-followup-2026-08-28` → PR #1 → merged on GitHub (merge commit `a729e1a`) → confirmed synced into Lovable's editor by pasting the post-merge `src/lib/mechanisms.ts` content from the Lovable code view and diffing it against the local copy (`diff <(tr -d '\r' < pasted.ts) <(tr -d '\r' < local.ts)`) — byte-for-byte identical across all 299 lines except one pre-existing cosmetic difference (a literal `’` vs. an escaped `’`, from before this session's changes, unrelated to the fix).
+- **Reusable verification recipe:** to confirm any future GitHub→Lovable sync without spending Lovable tokens — (1) merge on GitHub, (2) open the file in Lovable's code *view* (not chat) and copy its content, (3) paste into a local scratch file, (4) `diff` (with `tr -d '\r'` on both sides to neutralize CRLF/LF) against the working tree's copy of the same file. Exact match = synced.
 
 ---
 
@@ -64,7 +87,20 @@ Michael wants Lovable AI/chat token usage minimized — it's "incredibly ineffic
 
 A handoff doc from an earlier Lovable-side chat described 3 coaching-engine defects and a language-clarity standard. Verified against the real repo once it became accessible:
 - Pistol-round off-by-one (`round-metrics.ts`) and the ADR/K-D role-nudge double-count (`coaching-expectations.ts`) — both fixed cleanly in commit `8abd4c5`.
-- The residual-trade "bought for" claim (`mechanisms.ts`) — the exclusion logic was fixed in `8abd4c5`, but the sentence text and several other language-clarity items (`role mix`, "carrying rounds", a phrasing regression in `close enough to answer`, a freshly-introduced "rifle-tier loadout") were left over. Fixed on branch `claude/language-clarity-followup-2026-08-28`, PR'd, merged into `main`, confirmed synced into Lovable's editor.
+- The residual-trade "bought for" claim (`mechanisms.ts`) — the exclusion logic was fixed in `8abd4c5`, but the sentence text and several other language-clarity items were left over (some regressed by `8abd4c5` itself). Fixed on branch `claude/language-clarity-followup-2026-08-28` (commit `f12d489`), PR #1, merged into `main` (`a729e1a`), confirmed synced into Lovable's editor.
 - Deployment status of that merge (live on rankedcoach.gg or not) — unconfirmed as of this writing, per Section 4 above.
+
+**Exact fixes applied in `f12d489`, for reference:**
+
+| File | Line(s) (pre-fix) | Before | After |
+|---|---|---|---|
+| `src/lib/mechanisms.ts` | ~185, `no-response` case in `tradeMechanism` | `` `${share} passed without you shooting at that enemy at all, in rounds where you were alive and had bought a rifle-tier loadout.` `` (broken clause + invented jargon) | `` `${share}, and you never fired at that enemy — these were rounds where you were alive and had bought a gun.` `` |
+| `src/lib/coaching-rules.ts` | ~163 (new line added after `roleNote`) | — | Added `const roleLabel = (m: RoundMetrics) => (m.primaryRole ? \`${m.primaryRole}s\` : "your role");` |
+| `src/lib/coaching-rules.ts` | 339 (`duel-efficiency` body) | `...expected for your role mix in ${tierLabel(...)} lobbies.` | `...expected for ${roleLabel(m)} in ${tierLabel(...)} lobbies.` |
+| `src/lib/coaching-rules.ts` | 370 (`low-adr` body) | same "role mix" pattern | same `roleLabel(m)` swap |
+| `src/lib/coaching-rules.ts` | 514 (`damage-strength` title) | `"Your damage output is carrying rounds"` (unsupported "carrying" claim) | `"Your damage output is having a big impact"` |
+| `src/lib/coaching-rules.ts` | 534 (`damage-strength` body) | "role mix" pattern | `roleLabel(m)` swap |
+| `src/lib/coaching-rules.ts` | 617, 650 (`trade-back-strength` and `trade-given` evidence) | `` `${m.tradeChances} teammate deaths you were close enough to answer` `` — this was `8abd4c5` moving the phrasing in the *wrong* direction | `` `${m.tradeChances} teammate deaths you were in range to trade` `` |
+| `src/lib/coaching-rules.ts` | 646 (`trade-given` first step) | `"Stand within trade distance of the first contact, not behind a wall"` (static positioning, not the intended dynamic-readiness point) | `"Play close to your teammates and stay mentally ready to trade in, whether you are holding an angle or clearing one"` |
 
 **How to apply:** if a future task touches `rankedcoach.gg` production behavior, start in `Desktop/rankedcoach-production`, not this repo — and re-check whether GitHub two-way sync and the identity/deploy notes above are still accurate, since this was all set up for the first time this session.
