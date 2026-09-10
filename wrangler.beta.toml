@@ -1,6 +1,15 @@
 name = "rankedcoach-beta"
 compatibility_date = "2026-07-18"
-main = "./beta/worker/index.js"
+# 2026-08-26 cutover prep: repointed to deploy the SAME code as production
+# (wrangler.toml) rather than the beta/ redesign-prototype shell. Goal: when
+# the root domain moves to the new Lovable app, beta.rankedcoach.gg keeps
+# serving today's real production app, unchanged, under a different Worker
+# name/domain. See notes/cutover-beta-snapshot-2026-08-26.md.
+#
+# The beta/ redesign-prototype (beta/worker/, beta/public/) is untouched on
+# disk and not deleted — it's just not wired to a domain via this config
+# anymore. Point a wrangler config back at it whenever that work resumes.
+main = "./worker/index.js"
 
 [observability]
 enabled = true
@@ -15,10 +24,11 @@ binding = "CONTENT_AUTOMATION"
 id = "ae66a938fffc4177a899337ba55165eb"
 
 [assets]
-directory = "./beta/public"
+directory = "./public"
 binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
 # Custom domain route for beta.rankedcoach.gg is set in the Cloudflare
 # dashboard (Workers & Pages > rankedcoach-beta > Domains & Routes) —
-# not required here. See beta/README.md for the full manual setup checklist.
+# not required here. See notes/cutover-beta-snapshot-2026-08-26.md for the
+# full manual setup checklist (secrets, deploy, domain routing).
