@@ -1,8 +1,7 @@
 name: Library content pipeline
 
 on:
-  schedule:
-    - cron: "29 */6 * * *"
+  # Retired 2026-10-19: no automatic runs for the legacy app.
   workflow_dispatch:
 
 permissions:

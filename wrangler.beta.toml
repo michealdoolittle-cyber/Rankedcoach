@@ -14,10 +14,10 @@ main = "./worker/index.js"
 [observability]
 enabled = true
 
-# Deliberately no [triggers] crons here — the content-automation/knowledge
-# pipeline scheduled jobs already run on the production worker (wrangler.toml)
-# against the shared CONTENT_AUTOMATION KV below. Running them a second time
-# from this worker would risk duplicate writes against that same store.
+# Legacy automation retired 2026-10-19. Neither legacy Worker should schedule
+# jobs against the shared CONTENT_AUTOMATION KV or retired Supabase dependency.
+[triggers]
+crons = []
 
 [[kv_namespaces]]
 binding = "CONTENT_AUTOMATION"

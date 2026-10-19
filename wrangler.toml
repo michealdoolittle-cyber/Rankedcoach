@@ -6,7 +6,8 @@ main = "./worker/index.js"
 enabled = true
 
 [triggers]
-crons = ["17 */6 * * *", "43 9 * * *"]
+# Retired 2026-10-19: keep empty so future deploys cannot restore obsolete jobs.
+crons = []
 
 [vars]
 NTFY_TOPIC = "rankedcoach-deploys-mk7x2q"
